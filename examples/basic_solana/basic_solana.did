@@ -1,0 +1,21 @@
+type InitArg = record {
+    // The canister will interact with this Solana network.
+    solana_network : opt SolanaNetwork;
+};
+
+type SolanaNetwork = variant {
+    // Live production environment.
+    Mainnet;
+    // Public testing and development.
+    Devnet;
+    // Validator and stress testing.
+    Testnet;
+};
+
+service : (opt InitArg) -> {
+    // Returns the Solana address to which the owner should send Solana before sending
+    // the amount to another address via the canister using the [send_sol] endpoint.
+    //
+    // If the owner is not set, it defaults to the caller's principal.
+    solana_address : (owner: opt principal) -> (text);
+}
