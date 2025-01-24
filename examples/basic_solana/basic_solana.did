@@ -21,10 +21,17 @@ type Ed25519KeyName = variant {
     ProductionKey1;
 };
 
+// Atomic unit of SOL, i.e., 1 SOL = 10^9 Lamports
+type Lamport = nat;
+
 service : (opt InitArg) -> {
     // Returns the Solana account to which the owner should send Solana before sending
     // the amount to another account via the canister using the [send_sol] endpoint.
     //
     // If the owner is not set, it defaults to the caller's principal.
     solana_account : (owner: opt principal) -> (text);
+
+    // Returns the lamport balance of the given Solana account.
+    // If no address is provided, the address derived from the caller's principal is used.
+    get_balance : (address: opt text) -> (Lamport);
 }

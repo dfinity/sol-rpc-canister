@@ -42,6 +42,10 @@ impl State {
             name: self.ed25519_key_name.to_string(),
         }
     }
+
+    pub fn solana_network(&self) -> SolanaNetwork {
+        self.solana_network
+    }
 }
 
 impl From<InitArg> for State {
