@@ -12,10 +12,19 @@ type SolanaNetwork = variant {
     Testnet;
 };
 
+type Ed25519KeyName = variant {
+    // For local development with `dfx`
+    TestKeyLocalDevelopment;
+    // For testing with the Internet Computer's test key.
+    TestKey1;
+    // For running the canister in a production environment using the Internet Computer's production key.
+    ProductionKey1;
+};
+
 service : (opt InitArg) -> {
-    // Returns the Solana address to which the owner should send Solana before sending
-    // the amount to another address via the canister using the [send_sol] endpoint.
+    // Returns the Solana account to which the owner should send Solana before sending
+    // the amount to another account via the canister using the [send_sol] endpoint.
     //
     // If the owner is not set, it defaults to the caller's principal.
-    solana_address : (owner: opt principal) -> (text);
+    solana_account : (owner: opt principal) -> (text);
 }
