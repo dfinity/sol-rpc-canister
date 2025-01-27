@@ -10,4 +10,5 @@ license.workspace = true
 crate-type = ["cdylib"]
 
 [dependencies]
+candid = {workspace = true}
 ic-cdk = {workspace = true}
