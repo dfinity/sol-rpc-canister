@@ -1,5 +1,5 @@
 [package]
-name = "client"
+name = "sol_rpc_client"
 version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
@@ -8,3 +8,4 @@ homepage.workspace = true
 license.workspace = true
 
 [dependencies]
+sol_rpc_types =  {path = "../types"}

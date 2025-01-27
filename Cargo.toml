@@ -20,3 +20,4 @@ strip = true
 opt-level = 's'
 
 [workspace.dependencies]
+ic-cdk = "0.17.1"
