@@ -1,0 +1,16 @@
+[workspace]
+resolver = "2"
+members = [
+#    "canister",
+    "libs/client",
+#    "libs/types",
+]
+
+[workspace.package]
+authors = ["DFINITY Stiftung"]
+edition = "2021"
+repository = "https://github.com/dfinity/sol-rpc-canister"
+homepage = "https://github.com/dfinity/sol-rpc-canister#readme"
+license = "Apache-2.0"
+
+[workspace.dependencies]
