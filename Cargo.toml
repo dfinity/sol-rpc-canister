@@ -1,9 +1,9 @@
 [workspace]
 resolver = "2"
 members = [
-#    "canister",
+    #    "canister",
     "libs/client",
-#    "libs/types",
+    "libs/types",
 ]
 
 [workspace.package]
