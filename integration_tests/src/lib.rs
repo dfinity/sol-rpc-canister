@@ -7,11 +7,9 @@ use pocket_ic::{nonblocking::PocketIc, PocketIcBuilder, WasmResult};
 use serde::de::DeserializeOwned;
 use sol_rpc_client::{Runtime, SolRpcClient};
 use std::path::PathBuf;
-use std::sync::Arc;
 
-#[derive(Clone)]
 pub struct Setup {
-    env: Arc<PocketIc>,
+    env: PocketIc,
     caller: Principal,
     controller: Principal,
     canister_id: CanisterId,
@@ -47,21 +45,26 @@ impl Setup {
         let caller = DEFAULT_CALLER_TEST_ID;
 
         Self {
-            env: Arc::new(env),
+            env,
             caller,
             controller,
             canister_id,
         }
     }
 
-    pub async fn new_with_client() -> (Self, SolRpcClient<Self>) {
-        let setup = Setup::new().await;
-        let client = setup.client();
-        (setup, client)
+    pub fn client(&self) -> SolRpcClient<PocketIcRuntime> {
+        SolRpcClient::new(self.new_pocket_ic(), self.canister_id)
     }
 
-    pub fn client(&self) -> SolRpcClient<Self> {
-        SolRpcClient::new(self.clone(), self.canister_id)
+    fn new_pocket_ic(&self) -> PocketIcRuntime {
+        PocketIcRuntime {
+            env: &self.env,
+            caller: self.caller,
+        }
+    }
+
+    pub async fn drop(self) {
+        self.env.drop().await
     }
 }
 
@@ -73,7 +76,14 @@ fn sol_rpc_wasm() -> Vec<u8> {
     )
 }
 
-impl Runtime for Setup {
+#[derive(Clone)]
+pub struct PocketIcRuntime<'a> {
+    env: &'a PocketIc,
+    caller: Principal,
+}
+
+#[async_trait]
+impl<'a> Runtime for PocketIcRuntime<'a> {
     async fn call<In, Out>(
         &self,
         id: Principal,
@@ -91,7 +101,7 @@ impl Runtime for Setup {
             .update_call(id, self.caller, method, args_raw)
             .await
         {
-            Ok(WasmResult::Reply(bytes)) => decode_args(&bytes).map(|(res, )| res).map_err(|e| {
+            Ok(WasmResult::Reply(bytes)) => decode_args(&bytes).map(|(res,)| res).map_err(|e| {
                 (
                     RejectionCode::CanisterError,
                     format!(

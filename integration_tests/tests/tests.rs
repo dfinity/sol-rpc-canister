@@ -3,7 +3,8 @@ use sol_rpc_types::{DummyRequest, DummyResponse};
 
 #[tokio::test]
 async fn should_greet() {
-    let (setup, client) = Setup::new_with_client().await;
+    let setup = Setup::new().await;
+    let client = setup.client();
 
     let response = client
         .greet(DummyRequest {
@@ -16,5 +17,7 @@ async fn should_greet() {
         DummyResponse {
             output: "Hello, world!".to_string()
         }
-    )
+    );
+
+    setup.drop().await;
 }
