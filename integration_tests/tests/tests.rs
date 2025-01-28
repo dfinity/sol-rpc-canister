@@ -7,14 +7,14 @@ async fn should_greet() {
 
     let response = client
         .greet(DummyRequest {
-            input: "world!".to_string(),
+            input: "world".to_string(),
         })
         .await;
 
     assert_eq!(
         response,
         DummyResponse {
-            output: "Hello, World!".to_string()
+            output: "Hello, world!".to_string()
         }
     )
 }

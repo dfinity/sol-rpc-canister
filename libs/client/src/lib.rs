@@ -46,7 +46,6 @@ impl<R: Runtime> SolRpcClient<R> {
         self.runtime
             .call(self.sol_rpc_canister, "greet", (request,), 10_000)
             .await
-            .map(|(res,)| res)
             .unwrap()
     }
 }

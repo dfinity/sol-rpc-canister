@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use candid::utils::ArgumentEncoder;
 use candid::{decode_args, encode_args, CandidType, Encode, Principal};
 use ic_cdk::api::call::RejectionCode;
@@ -90,10 +91,14 @@ impl Runtime for Setup {
             .update_call(id, self.caller, method, args_raw)
             .await
         {
-            Ok(WasmResult::Reply(bytes)) => decode_args(&bytes).map(|(res,)| res).map_err(|e| {
+            Ok(WasmResult::Reply(bytes)) => decode_args(&bytes).map(|(res, )| res).map_err(|e| {
                 (
                     RejectionCode::CanisterError,
-                    format!("failed to decode canister response: {e}"),
+                    format!(
+                        "failed to decode canister response as {}: {}",
+                        std::any::type_name::<Out>(),
+                        e
+                    ),
                 )
             }),
             Ok(WasmResult::Reject(s)) => Err((RejectionCode::CanisterReject, s)),
