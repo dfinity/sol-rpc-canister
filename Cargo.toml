@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-    "canister",
+    "canister", "integration_tests",
     "libs/client",
     "libs/types",
 ]
