@@ -8,3 +8,6 @@ homepage.workspace = true
 license.workspace = true
 
 [dependencies]
+candid = { workspace = true }
+ic-test-utilities-load-wasm = { workspace = true }
+pocket-ic = { workspace = true }

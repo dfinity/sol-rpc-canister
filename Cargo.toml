@@ -19,8 +19,14 @@ lto = true
 strip = true
 opt-level = 's'
 
+# Required by `ic-test-utilities-load-wasm`
+[profile.canister-release]
+inherits = "release"
+
 [workspace.dependencies]
 candid = "0.10.13"
 candid_parser = "0.1.4"
 ic-cdk = "0.17.1"
+ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", tag = "release-2025-01-23_03-04-base" }
+pocket-ic = "6.0.0"
 serde = "1.0.217"
