@@ -8,3 +8,5 @@ homepage.workspace = true
 license.workspace = true
 
 [dependencies]
+candid = {workspace = true}
+serde = {workspace = true}

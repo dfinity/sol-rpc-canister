@@ -7,8 +7,13 @@ repository.workspace = true
 homepage.workspace = true
 license.workspace = true
 
+[lib]
 crate-type = ["cdylib"]
 
 [dependencies]
 candid = {workspace = true}
 ic-cdk = {workspace = true}
+sol_rpc_types =  {path = "../libs/types"}
+
+[dev-dependencies]
+candid_parser = {workspace = true}

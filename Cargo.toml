@@ -21,4 +21,6 @@ opt-level = 's'
 
 [workspace.dependencies]
 candid = "0.10.13"
+candid_parser = "0.1.4"
 ic-cdk = "0.17.1"
+serde = "1.0.217"
