@@ -1,14 +1,19 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+use candid::Principal;
+use sol_rpc_types::{DummyRequest, DummyResponse};
+
+pub struct SolRpcClient {
+    sol_rpc_canister: Principal,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+impl SolRpcClient {
+    pub fn new(sol_rpc_canister: Principal) -> Self {
+        Self { sol_rpc_canister }
+    }
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    pub async fn greet(&self, request: DummyRequest) -> DummyResponse {
+        ic_cdk::api::call::call_with_payment128(self.sol_rpc_canister, "greet", (request,), 10_000)
+            .await
+            .map(|(res,)| res)
+            .unwrap()
     }
 }

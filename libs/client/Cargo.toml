@@ -8,4 +8,6 @@ homepage.workspace = true
 license.workspace = true
 
 [dependencies]
-sol_rpc_types =  {path = "../types"}
+candid = { workspace = true }
+ic-cdk = { workspace = true }
+sol_rpc_types = { path = "../types" }
