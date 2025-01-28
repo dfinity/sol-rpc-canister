@@ -11,15 +11,26 @@ on:
       - "README.md"
 env:
   CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-Dwarnings"
 
 jobs:
-  build:
-
+  lint:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
-      - name: Build
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      - name: 'Check code'
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --locked --verbose --tests --benches --workspace -- -D clippy::all
+          cargo clippy --locked --verbose --target wasm32-unknown-unknown -p sol_rpc_canister -- -D clippy::all
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      - name: 'Build'
         run: cargo build --verbose
-      - name: Run tests
+      - name: 'Run tests'
         run: cargo test --verbose
