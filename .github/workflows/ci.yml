@@ -39,7 +39,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sol_rpc_canister.wasm.gz
-          path: sol_rpc_canister.wasm.gz
+          path: ./wasms/sol_rpc_canister.wasm.gz
           if-no-files-found: error
 
       - name: 'Add summary'
