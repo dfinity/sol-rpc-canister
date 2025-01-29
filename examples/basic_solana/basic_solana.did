@@ -34,4 +34,8 @@ service : (opt InitArg) -> {
     // Returns the lamport balance of the given Solana account.
     // If no address is provided, the address derived from the caller's principal is used.
     get_balance : (address: opt text) -> (Lamport);
+
+    // Sends the given amount of SOL in base unit (Lamport) to the given Solana account.
+    // Returns the transaction ID.
+    send_sol : (to: text, amount: Lamport) -> (text);
 }
