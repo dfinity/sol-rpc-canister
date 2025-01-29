@@ -44,7 +44,7 @@ impl SolanaRpcCanister {
             .json_rpc_request(solana_network, json, num_cycles, max_response_size_bytes)
             .await;
         // The response to a successful `sendTransaction` call has the following format:
-        // { "id": "[ID]", "jsonrpc": "2.0", "result": [TRANSACTION ID], }
+        // { "id": "[ID]", "jsonrpc": "2.0", "result": [TXID], }
         response["result"]
             .as_str()
             .expect(&format!("Failed to extract transaction ID: {:?}", response))
