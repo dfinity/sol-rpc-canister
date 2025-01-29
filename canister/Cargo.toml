@@ -1,6 +1,7 @@
 [package]
 name = "sol_rpc_canister"
 version = "0.1.0"
+description = "Interact with the Solana blockchain from the Internet Computer."
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
