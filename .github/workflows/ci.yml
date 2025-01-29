@@ -32,7 +32,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Docker build
         run: |
-          ./scripts/docker-build
+          cargo build --locked --target wasm32-unknown-unknown --release --package sol_rpc_canister
+          gzip -fckn9 target/wasm32-unknown-unknown/release/sol_rpc_canister.wasm >./wasms/sol_rpc_canister.wasm.gz
 
       - name: 'Archive Artifact'
         uses: actions/upload-artifact@v4
