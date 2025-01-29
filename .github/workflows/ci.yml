@@ -1,4 +1,4 @@
-name: Rust
+name: 'SOL RPC'
 
 on:
   pull_request:
