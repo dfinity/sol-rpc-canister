@@ -44,7 +44,7 @@ jobs:
 
       - name: 'Add summary'
         run: |
-          hash=`sha256sum sol_rpc_canister.wasm.gz`
+          hash=`sha256sum ./wasms/sol_rpc_canister.wasm.gz`
           echo "SHA-256 :hash: ${hash}" >> $GITHUB_STEP_SUMMARY
 
   unit-tests:
