@@ -11,7 +11,7 @@ use std::path::PathBuf;
 pub struct Setup {
     env: PocketIc,
     caller: Principal,
-    controller: Principal,
+    _controller: Principal,
     canister_id: CanisterId,
 }
 
@@ -47,7 +47,7 @@ impl Setup {
         Self {
             env,
             caller,
-            controller,
+            _controller: controller,
             canister_id,
         }
     }
