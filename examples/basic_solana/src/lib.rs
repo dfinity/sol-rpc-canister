@@ -20,6 +20,8 @@ use solana_pubkey::Pubkey;
 use solana_signature::Signature;
 use solana_transaction::Transaction;
 use std::{fmt::Display, str::FromStr};
+use solana_hash::Hash;
+use solana_instruction::Instruction;
 
 const SOL_RPC: SolanaRpcCanister = SolanaRpcCanister;
 
@@ -77,31 +79,29 @@ pub async fn send_sol(to: String, amount: Nat) -> String {
     let from = Pubkey::from_str(&wallet.solana_account().to_string()).unwrap();
     let amount = amount.0.to_u64().unwrap();
 
-    let instruction = system_instruction::transfer(&from, &to, amount);
-    let mut message = Message::new(&[instruction], Some(&from));
-
-    let latest_blockhash = SOL_RPC
+    let instruction = &[system_instruction::transfer(&from, &to, amount)];
+    let blockhash = SOL_RPC
         .get_latest_blockhash(solana_network, num_cycles, max_response_size_bytes)
-        .await
-        .parse()
-        .unwrap();
-    message.recent_blockhash = latest_blockhash;
+        .await;
 
-    let signature = wallet.sign_with_ed25519(message.serialize()).await;
-    let mut transaction = Transaction::new_unsigned(message);
-    transaction.signatures = vec![Signature::from(signature)];
-
-    let serialized_tx = bincode::serialize(&transaction).expect("Failed to serialize transaction");
-    let base64_tx = base64::encode(serialized_tx);
+    let transaction = create_and_sign_transaction(wallet, &from, instruction, &blockhash).await;
 
     SOL_RPC
         .send_transaction(
             solana_network,
             num_cycles,
             max_response_size_bytes,
-            base64_tx,
+            transaction,
         )
         .await
+}
+
+async fn create_and_sign_transaction(wallet: SolanaWallet, from: &Pubkey, instruction: &[Instruction], blockhash: &Hash) -> Transaction {
+    let message = Message::new_with_blockhash(instruction, Some(&from), &blockhash);
+    let signature = wallet.sign_with_ed25519(message.serialize()).await;
+    let mut transaction = Transaction::new_unsigned(message);
+    transaction.signatures = vec![Signature::from(signature)];
+    transaction
 }
 
 // TODO: Remove!

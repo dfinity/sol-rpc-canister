@@ -4,6 +4,8 @@ use ic_cdk::api::management_canister::http_request::{
     TransformContext,
 };
 use serde_json::Value;
+use solana_hash::Hash;
+use solana_transaction::Transaction;
 
 const CONTENT_TYPE_HEADER_LOWERCASE: &str = "content-type";
 const CONTENT_TYPE_VALUE: &str = "application/json";
@@ -16,7 +18,7 @@ impl SolanaRpcCanister {
         solana_network: SolanaNetwork,
         num_cycles: u128,
         max_response_size_bytes: u64,
-    ) -> String {
+    ) -> Hash {
         let json = r#"{ "jsonrpc": "2.0", "method": "getLatestBlockhash", "params": [], "id": 1 }"#
             .to_string();
         let response = self
@@ -28,17 +30,22 @@ impl SolanaRpcCanister {
             .as_str()
             .expect("Failed to extract blockhash")
             .to_string()
+            .parse()
+            .unwrap()
     }
+    
     pub async fn send_transaction(
         &self,
         solana_network: SolanaNetwork,
         num_cycles: u128,
         max_response_size_bytes: u64,
-        transaction: String,
+        transaction: Transaction,
     ) -> String {
+        let transaction =
+            bincode::serialize(&transaction).expect("Failed to serialize transaction");
         let json = format!(
             r#"{{ "jsonrpc": "2.0", "method": "sendTransaction", "params": ["{}", {{ "encoding": "base64" }}], "id": 1 }}"#,
-            transaction
+            base64::encode(transaction)
         );
         let response = self
             .json_rpc_request(solana_network, json, num_cycles, max_response_size_bytes)

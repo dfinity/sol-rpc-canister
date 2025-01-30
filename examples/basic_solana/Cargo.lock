@@ -85,6 +85,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_json",
+ "solana-hash",
  "solana-instruction",
  "solana-program",
  "solana-pubkey",
