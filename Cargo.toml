@@ -12,6 +12,7 @@ edition = "2021"
 repository = "https://github.com/dfinity/sol-rpc-canister"
 homepage = "https://github.com/dfinity/sol-rpc-canister#readme"
 license = "Apache-2.0"
+readme = "README.md"
 
 [profile.release]
 debug = false

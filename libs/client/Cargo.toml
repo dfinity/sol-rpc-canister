@@ -7,6 +7,8 @@ edition.workspace = true
 repository.workspace = true
 homepage.workspace = true
 license.workspace = true
+readme = "README.md"
+include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
 
 [dependencies]
 async-trait = { workspace = true }
