@@ -40,6 +40,7 @@ jobs:
           name: sol_rpc_canister.wasm.gz
           path: ./wasms/sol_rpc_canister.wasm.gz
           if-no-files-found: error
+          compression-level: 0
 
       - name: 'Add summary'
         run: |
