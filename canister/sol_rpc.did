@@ -1,0 +1,6 @@
+type DummyRequest = record {input : text};
+type DummyResponse = record {output : text};
+
+service : {
+    greet: (DummyRequest) -> (DummyResponse) query;
+}

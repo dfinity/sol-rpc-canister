@@ -1,0 +1,35 @@
+[workspace]
+resolver = "2"
+members = [
+    "canister", "integration_tests",
+    "libs/client",
+    "libs/types",
+]
+
+[workspace.package]
+authors = ["DFINITY Stiftung"]
+edition = "2021"
+repository = "https://github.com/dfinity/sol-rpc-canister"
+homepage = "https://github.com/dfinity/sol-rpc-canister#readme"
+license = "Apache-2.0"
+readme = "README.md"
+
+[profile.release]
+debug = false
+lto = true
+strip = true
+opt-level = 's'
+
+# Required by `ic-test-utilities-load-wasm`
+[profile.canister-release]
+inherits = "release"
+
+[workspace.dependencies]
+async-trait = "0.1.85"
+candid = "0.10.13"
+candid_parser = "0.1.4"
+ic-cdk = "0.17.1"
+ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", tag = "release-2025-01-23_03-04-base" }
+pocket-ic = "6.0.0"
+serde = "1.0.217"
+tokio = "1.43.0"
