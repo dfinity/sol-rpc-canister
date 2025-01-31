@@ -30,11 +30,9 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
-#        TODO XC-283: setup reproducible build with Docker
       - name: Docker build
         run: |
-          cargo build --locked --target wasm32-unknown-unknown --release --package sol_rpc_canister
-          gzip -fckn9 target/wasm32-unknown-unknown/release/sol_rpc_canister.wasm >./wasms/sol_rpc_canister.wasm.gz
+          ./scripts/docker-build
 
       - name: 'Archive Artifact'
         uses: actions/upload-artifact@v4
