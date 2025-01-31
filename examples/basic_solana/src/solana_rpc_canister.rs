@@ -33,7 +33,7 @@ impl SolanaRpcCanister {
             .parse()
             .unwrap()
     }
-    
+
     pub async fn send_transaction(
         &self,
         solana_network: SolanaNetwork,

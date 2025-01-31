@@ -4,24 +4,26 @@
 //! can be signed. It is missing several pieces that any production-grade wallet would have,
 //! such as error handling, access-control, caching, etc.
 
+use crate::ed25519::DerivationPath;
 use crate::state::read_state;
 use crate::{ed25519::Ed25519ExtendedPublicKey, state::lazy_call_ed25519_public_key};
 use candid::Principal;
 use ic_cdk::api::management_canister::schnorr::SignWithSchnorrResponse;
-use ic_crypto_ed25519::{DerivationIndex, DerivationPath};
-use ic_management_canister_types::{BoundedVec, SignWithSchnorrArgs};
-use serde_bytes::ByteBuf;
+use ic_management_canister_types::SignWithSchnorrArgs;
+use solana_message::Message;
+use solana_pubkey::Pubkey;
+use solana_signature::Signature;
 use std::fmt::Display;
 
+#[derive(Clone)]
 pub struct SolanaAccount {
-    ed25519_public_key: [u8; 32],
+    pub ed25519_public_key: Pubkey,
+    pub derivation_path: DerivationPath,
 }
 
-impl From<&Ed25519ExtendedPublicKey> for SolanaAccount {
-    fn from(public_key: &Ed25519ExtendedPublicKey) -> Self {
-        Self {
-            ed25519_public_key: public_key.public_key.serialize_raw(),
-        }
+impl AsRef<Pubkey> for SolanaAccount {
+    fn as_ref(&self) -> &Pubkey {
+        &self.ed25519_public_key
     }
 }
 
@@ -38,29 +40,47 @@ impl Display for SolanaAccount {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SolanaWallet {
     owner: Principal,
-    derived_public_key: Ed25519ExtendedPublicKey,
+    root_public_key: Ed25519ExtendedPublicKey,
 }
 
 impl SolanaWallet {
     pub async fn new(owner: Principal) -> Self {
-        let derived_public_key = derive_public_key(&owner, &lazy_call_ed25519_public_key().await);
+        let root_public_key = lazy_call_ed25519_public_key().await;
         Self {
             owner,
-            derived_public_key,
+            root_public_key,
+        }
+    }
+
+    pub fn derive_account(&self, derivation_path: DerivationPath) -> SolanaAccount {
+        let ed25519_public_key = self
+            .root_public_key
+            .derive_public_key(&derivation_path)
+            .public_key
+            .serialize_raw()
+            .into();
+        SolanaAccount {
+            ed25519_public_key,
+            derivation_path,
         }
     }
 
     pub fn solana_account(&self) -> SolanaAccount {
-        SolanaAccount::from(&self.derived_public_key)
+        self.derive_account(self.owner.as_slice().into())
     }
 
-    pub async fn sign_with_ed25519(&self, message: Vec<u8>) -> [u8; 64] {
-        let derivation_path = BoundedVec::new(
-            derivation_path(&self.owner)
-                .into_iter()
-                .map(ByteBuf::from)
-                .collect(),
-        );
+    pub fn derived_nonce_account(&self) -> SolanaAccount {
+        self.derive_account(
+            [&self.owner.as_slice(), "nonce-account".as_bytes()]
+                .concat()
+                .as_slice()
+                .into(),
+        )
+    }
+
+    pub async fn sign_with_ed25519(&self, message: &Message, signer: &SolanaAccount) -> Signature {
+        let message = message.serialize();
+        let derivation_path = signer.derivation_path.clone().into();
         let key_id = read_state(|s| s.ed25519_key_id());
 
         let (response,): (SignWithSchnorrResponse,) = ic_cdk::call(
@@ -76,35 +96,12 @@ impl SolanaWallet {
         .await
         .expect("failed to sign with ed25519");
         let signature_length = response.signature.len();
-        <[u8; 64]>::try_from(response.signature).unwrap_or_else(|_| {
+        let signature = <[u8; 64]>::try_from(response.signature).unwrap_or_else(|_| {
             panic!(
                 "BUG: invalid signature from management canister. Expected 64 bytes but got {} bytes",
                 signature_length
             )
-        })
+        });
+        Signature::from(signature)
     }
-}
-
-fn derive_public_key(
-    owner: &Principal,
-    public_key: &Ed25519ExtendedPublicKey,
-) -> Ed25519ExtendedPublicKey {
-    let derivation_path = DerivationPath::new(
-        derivation_path(owner)
-            .into_iter()
-            .map(DerivationIndex)
-            .collect(),
-    );
-    public_key.derive_new_public_key(&derivation_path)
-}
-
-fn derivation_path(owner: &Principal) -> Vec<Vec<u8>> {
-    const SCHEMA_V1: u8 = 1;
-    [
-        ByteBuf::from(vec![SCHEMA_V1]),
-        ByteBuf::from(owner.as_slice().to_vec()),
-    ]
-    .iter()
-    .map(|x| x.to_vec())
-    .collect()
 }
