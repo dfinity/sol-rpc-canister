@@ -1,11 +1,11 @@
 # Use this with
 #
-#  docker build -t evm_rpc .
+#  docker build -t sol_rpc_canister.
 #  or use ./scripts/docker-build
 #
 # The docker image. To update, run `docker pull ubuntu` locally, and update the
 # sha256:... accordingly.
-FROM --platform=linux/amd64 ubuntu@sha256:626ffe58f6e7566e00254b638eb7e0f3b11d4da9675088f4781a50ae288f3322 as deps
+FROM --platform=linux/amd64 ubuntu@sha256:626ffe58f6e7566e00254b638eb7e0f3b11d4da9675088f4781a50ae288f3322 AS deps
 
 ENV TZ=UTC
 
@@ -19,7 +19,7 @@ ENV RUSTUP_HOME=/opt/rustup \
     CARGO_HOME=/cargo \
     PATH=/cargo/bin:$PATH
 
-WORKDIR /evm_rpc
+WORKDIR /sol_rpc_canister
 
 RUN mkdir -p ./scripts
 COPY ./scripts/bootstrap ./scripts/bootstrap
@@ -33,27 +33,23 @@ RUN ./scripts/bootstrap
 # that cargo knows to rebuild it with the new content.
 COPY Cargo.lock .
 COPY Cargo.toml .
-COPY e2e/rust/Cargo.toml e2e/rust/Cargo.toml
 COPY ./scripts/build ./scripts/build
 RUN mkdir -p src \
     && echo "fn main() {}" > src/main.rs \
     && touch src/lib.rs \
-    && mkdir -p e2e/rust/src \
-    && touch e2e/rust/src/lib.rs \
     && ./scripts/build --only-dependencies \
     && rm -rf src \
-    && rm -rf e2e \
     && rm Cargo.toml \
     && rm Cargo.lock
 
-FROM deps as build
+FROM deps AS build
 
 COPY . .
 
-RUN touch src/main.rs
+RUN touch canister/src/main.rs
 
-RUN ./scripts/build --evm-rpc
-RUN sha256sum evm_rpc.wasm.gz
+RUN ./scripts/build --sol_rpc_canister
+RUN sha256sum sol_rpc_canister.wasm.gz
 
-FROM scratch as scratch_evm_rpc
-COPY --from=build evm_rpc/evm_rpc.wasm.gz /
+FROM scratch AS scratch_sol_rpc_canister
+COPY --from=build sol_rpc_canister/sol_rpc_canister.wasm.gz /

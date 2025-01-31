@@ -12,7 +12,7 @@ cd "$SCRIPTS_DIR/.."
 #########
 
 function title() {
-    echo "Builds EVM RPC canister"
+    echo "Builds SOL RPC canister"
 }
 
 function usage() {
@@ -29,7 +29,7 @@ EOF
 function help() {
     cat << EOF
 
-Builds the EVM RPC canister.
+Builds the SOL RPC canister.
 
 NOTE: This requires a working rust toolchain as well as ic-wasm.
 EOF
@@ -57,8 +57,8 @@ do
             RUN_CARGO_TEST=1
             shift
             ;;
-        --evm-rpc)
-            CANISTERS+=("evm_rpc")
+        --sol_rpc_canister)
+            CANISTERS+=("sol_rpc_canister")
             shift
             ;;
         *)
@@ -97,7 +97,8 @@ function build_canister() {
     cargo_build_args=(
         --target "$TARGET"
         --release
-        -j1
+        --package "$canister"
+        --jobs 1
         )
     # XXX: for bash > 4.4, empty arrays are considered unset, so do some substitution
     cargo_build_args+=(${extra_build_args[@]+"${extra_build_args[@]}"})
@@ -118,15 +119,15 @@ function build_canister() {
             "./target/$TARGET/release/$canister.wasm" \
             -o "./$canister.wasm" \
             shrink
-        ic-wasm "$canister.wasm" -o "$canister.wasm" metadata candid:service -f "candid/$canister.did" -v public
+        ic-wasm "$canister.wasm" -o "$canister.wasm" metadata candid:service -f "canister/$canister.did" -v public
 
-        # Indicate the EVM RPC canister init argument type
+        # Indicate the SOL RPC canister init argument type
         ic-wasm "$canister.wasm" -o "$canister.wasm" metadata candid:args -d "(InstallArgs)" -v public
 
         # Write metadata for dfx
-        asset_name="evm_rpc.wasm.gz"
-        wasm_url="https://github.com/internet-computer-protocol/evm-rpc-canister/releases/latest/download/evm_rpc.wasm.gz"
-        init_guide="https://internetcomputer.org/docs/current/developer-docs/multi-chain/ethereum/evm-rpc/evm-rpc-canister"
+        asset_name="sol_rpc_canister.wasm.gz"
+        wasm_url="https://github.com/dfinity/sol-rpc-canister/releases/latest/download/sol_rpc_canister.wasm.gz"
+        init_guide="https://internetcomputer.org/docs/current/developer-docs/multi-chain/solana/sol-rpc/sol-rpc-canister"
         metadata_json=$(echo '{}' | jq -cMr \
             --arg wasm_url "$wasm_url" \
             --arg init_guide "$init_guide" \
