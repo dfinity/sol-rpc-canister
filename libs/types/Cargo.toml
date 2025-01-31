@@ -1,0 +1,15 @@
+[package]
+name = "sol_rpc_types"
+version = "0.1.0"
+description = "Candid types used by the SOL RPC canister"
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme = "README.md"
+include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
+
+[dependencies]
+candid = {workspace = true}
+serde = {workspace = true}
