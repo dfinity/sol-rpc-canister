@@ -5,6 +5,7 @@ use ic_cdk::api::management_canister::http_request::{
 };
 use serde_json::Value;
 use solana_hash::Hash;
+use solana_nonce::{state::State, versions::Versions as NonceVersions};
 use solana_transaction::Transaction;
 
 const CONTENT_TYPE_HEADER_LOWERCASE: &str = "content-type";
@@ -13,6 +14,41 @@ const CONTENT_TYPE_VALUE: &str = "application/json";
 pub struct SolanaRpcCanister;
 
 impl SolanaRpcCanister {
+    pub async fn get_nonce_account_blockhash(
+        &self,
+        solana_network: SolanaNetwork,
+        num_cycles: u128,
+        max_response_size_bytes: u64,
+        account: String,
+    ) -> Hash {
+        let json = format!(
+            r#"{{ "jsonrpc": "2.0", "method": "getAccountInfo", "params": ["{}", {{ "encoding": "base64" }}], "id": 1 }}"#,
+            account
+        );
+
+        let response = self
+            .json_rpc_request(solana_network, json, num_cycles, max_response_size_bytes)
+            .await;
+
+        // The response to a successful `getAccountInfo` call has the following format:
+        // { "id": "[ID]", "jsonrpc": "2.0", "result": { ..., "value": { "data": [DATA, "base64"], ... } }, }
+        let account_data = response["result"]["value"]["data"].as_array().unwrap()[0]
+            .as_str()
+            .unwrap();
+
+        let account_data = bincode::deserialize::<NonceVersions>(
+            base64::decode(account_data)
+                .expect("Failed to decode account data")
+                .as_slice(),
+        )
+        .expect("Failed to deserialize nonce account");
+
+        match account_data.state() {
+            State::Uninitialized => panic!("Nonce account is uninitialized"),
+            State::Initialized(data) => data.blockhash(),
+        }
+    }
+
     pub async fn get_latest_blockhash(
         &self,
         solana_network: SolanaNetwork,

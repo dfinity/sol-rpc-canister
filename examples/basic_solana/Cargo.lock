@@ -88,6 +88,7 @@ dependencies = [
  "solana-hash",
  "solana-instruction",
  "solana-message",
+ "solana-nonce",
  "solana-program",
  "solana-pubkey",
  "solana-signature",

@@ -14,7 +14,8 @@ use ic_cdk::{
     init, query, update,
 };
 use num::{BigUint, ToPrimitive};
-use solana_program::{message::Message, system_instruction};
+use solana_message::Message;
+use solana_program::system_instruction;
 use solana_pubkey::Pubkey;
 use solana_transaction::Transaction;
 use std::{fmt::Display, str::FromStr};
@@ -79,17 +80,17 @@ pub async fn send_sol(to: String, amount: Nat) -> String {
     let caller = validate_caller_not_anonymous();
     let wallet = SolanaWallet::new(caller).await;
 
-    let to = Pubkey::from_str(to.as_str()).unwrap();
-    let from = wallet.solana_account();
+    let recipient = Pubkey::from_str(to.as_str()).unwrap();
+    let payer = wallet.solana_account();
     let amount = amount.0.to_u64().unwrap();
 
-    let instruction = system_instruction::transfer(from.as_ref(), &to, amount);
+    let instruction = system_instruction::transfer(payer.as_ref(), &recipient, amount);
     let blockhash = SOL_RPC
         .get_latest_blockhash(solana_network, num_cycles, max_response_size_bytes)
         .await;
 
-    let message = Message::new_with_blockhash(&[instruction], Some(from.as_ref()), &blockhash);
-    let signatures = vec![wallet.sign_with_ed25519(&message, &from).await];
+    let message = Message::new_with_blockhash(&[instruction], Some(payer.as_ref()), &blockhash);
+    let signatures = vec![wallet.sign_with_ed25519(&message, &payer).await];
     let transaction = Transaction {
         message,
         signatures,
@@ -135,6 +136,62 @@ pub async fn create_nonce_account() -> String {
         wallet.sign_with_ed25519(&message, &payer).await,
         wallet.sign_with_ed25519(&message, &nonce_account).await,
     ];
+    let transaction = Transaction {
+        message,
+        signatures,
+    };
+
+    SOL_RPC
+        .send_transaction(
+            solana_network,
+            num_cycles,
+            max_response_size_bytes,
+            transaction,
+        )
+        .await
+}
+
+#[update]
+pub async fn get_nonce(account: Option<String>) -> String {
+    let account = account.unwrap_or(nonce_account(None).await);
+
+    let solana_network = read_state(|s| s.solana_network());
+
+    let max_response_size_bytes = 500_u64;
+    let num_cycles = 1_000_000_000u128;
+
+    let blockhash = SOL_RPC
+        .get_nonce_account_blockhash(solana_network, num_cycles, max_response_size_bytes, account)
+        .await;
+
+    blockhash.to_string()
+}
+
+#[update]
+pub async fn send_sol_with_durable_nonce(to: String, amount: Nat) -> String {
+    let solana_network = read_state(|s| s.solana_network());
+
+    let max_response_size_bytes = 500_u64;
+    let num_cycles = 1_000_000_000u128;
+
+    let caller = validate_caller_not_anonymous();
+    let wallet = SolanaWallet::new(caller).await;
+
+    let recipient = Pubkey::from_str(to.as_str()).unwrap();
+    let payer = wallet.solana_account();
+    let amount = amount.0.to_u64().unwrap();
+    let nonce_account = wallet.derived_nonce_account();
+
+    let instructions = &[
+        system_instruction::advance_nonce_account(nonce_account.as_ref(), payer.as_ref()),
+        system_instruction::transfer(payer.as_ref(), &recipient, amount),
+    ];
+    let blockhash = SOL_RPC
+        .get_nonce_account_blockhash(solana_network, num_cycles, max_response_size_bytes, nonce_account.to_string())
+        .await;
+
+    let message = Message::new_with_blockhash(instructions, Some(payer.as_ref()), &blockhash);
+    let signatures = vec![wallet.sign_with_ed25519(&message, &payer).await];
     let transaction = Transaction {
         message,
         signatures,
