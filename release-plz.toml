@@ -14,6 +14,9 @@ git_tag_enable = true
 # disable GitHub releases
 git_release_enable = false
 
+# creates the git release as draft
+git_release_draft = true
+
 # labels for the release PR
 pr_labels = ["release"]
 
