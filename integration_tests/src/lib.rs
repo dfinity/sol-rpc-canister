@@ -83,7 +83,7 @@ pub struct PocketIcRuntime<'a> {
 }
 
 #[async_trait]
-impl<'a> Runtime for PocketIcRuntime<'a> {
+impl Runtime for PocketIcRuntime<'_> {
     async fn call<In, Out>(
         &self,
         id: Principal,
