@@ -1,8 +1,8 @@
 //! Candid types used by the candid interface of the SOL RPC canister.
 
 #![forbid(unsafe_code)]
-#![forbid(missing_docs)]
 
+pub mod management_canister;
 #[cfg(test)]
 mod tests;
 

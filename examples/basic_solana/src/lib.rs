@@ -34,7 +34,7 @@ pub async fn solana_account(owner: Option<Principal>) -> String {
     let caller = validate_caller_not_anonymous();
     let owner = owner.unwrap_or(caller);
     let wallet = SolanaWallet::new(owner).await;
-    wallet.solana_account().to_string()
+    wallet.solana_account().await.to_string()
 }
 
 #[update]
@@ -42,7 +42,7 @@ pub async fn nonce_account(owner: Option<Principal>) -> String {
     let caller = validate_caller_not_anonymous();
     let owner = owner.unwrap_or(caller);
     let wallet = SolanaWallet::new(owner).await;
-    wallet.derived_nonce_account().to_string()
+    wallet.derived_nonce_account().await.to_string()
 }
 
 #[update]
@@ -81,7 +81,7 @@ pub async fn send_sol(to: String, amount: Nat) -> String {
     let wallet = SolanaWallet::new(caller).await;
 
     let recipient = Pubkey::from_str(to.as_str()).unwrap();
-    let payer = wallet.solana_account();
+    let payer = wallet.solana_account().await;
     let amount = amount.0.to_u64().unwrap();
 
     let instruction = system_instruction::transfer(payer.as_ref(), &recipient, amount);
@@ -116,8 +116,8 @@ pub async fn create_nonce_account() -> String {
     let caller = validate_caller_not_anonymous();
     let wallet = SolanaWallet::new(caller).await;
 
-    let payer = wallet.solana_account();
-    let nonce_account = wallet.derived_nonce_account();
+    let payer = wallet.solana_account().await;
+    let nonce_account = wallet.derived_nonce_account().await;
 
     let instructions = system_instruction::create_nonce_account(
         payer.as_ref(),
@@ -178,16 +178,21 @@ pub async fn send_sol_with_durable_nonce(to: String, amount: Nat) -> String {
     let wallet = SolanaWallet::new(caller).await;
 
     let recipient = Pubkey::from_str(to.as_str()).unwrap();
-    let payer = wallet.solana_account();
+    let payer = wallet.solana_account().await;
     let amount = amount.0.to_u64().unwrap();
-    let nonce_account = wallet.derived_nonce_account();
+    let nonce_account = wallet.derived_nonce_account().await;
 
     let instructions = &[
         system_instruction::advance_nonce_account(nonce_account.as_ref(), payer.as_ref()),
         system_instruction::transfer(payer.as_ref(), &recipient, amount),
     ];
     let blockhash = SOL_RPC
-        .get_nonce_account_blockhash(solana_network, num_cycles, max_response_size_bytes, nonce_account.to_string())
+        .get_nonce_account_blockhash(
+            solana_network,
+            num_cycles,
+            max_response_size_bytes,
+            nonce_account.to_string(),
+        )
         .await;
 
     let message = Message::new_with_blockhash(instructions, Some(payer.as_ref()), &blockhash);

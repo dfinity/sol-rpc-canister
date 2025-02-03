@@ -4,12 +4,10 @@
 //! can be signed. It is missing several pieces that any production-grade wallet would have,
 //! such as error handling, access-control, caching, etc.
 
-use crate::ed25519::DerivationPath;
+use crate::ed25519::{sign_with_ed25519, DerivationPath};
+use crate::state::lazy_call_ed25519_public_key;
 use crate::state::read_state;
-use crate::{ed25519::Ed25519ExtendedPublicKey, state::lazy_call_ed25519_public_key};
 use candid::Principal;
-use ic_cdk::api::management_canister::schnorr::SignWithSchnorrResponse;
-use ic_management_canister_types::SignWithSchnorrArgs;
 use solana_message::Message;
 use solana_pubkey::Pubkey;
 use solana_signature::Signature;
@@ -40,68 +38,39 @@ impl Display for SolanaAccount {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SolanaWallet {
     owner: Principal,
-    root_public_key: Ed25519ExtendedPublicKey,
 }
 
 impl SolanaWallet {
     pub async fn new(owner: Principal) -> Self {
-        let root_public_key = lazy_call_ed25519_public_key().await;
-        Self {
-            owner,
-            root_public_key,
-        }
+        Self { owner }
     }
 
-    pub fn derive_account(&self, derivation_path: DerivationPath) -> SolanaAccount {
-        let ed25519_public_key = self
-            .root_public_key
-            .derive_public_key(&derivation_path)
-            .public_key
-            .serialize_raw()
-            .into();
+    pub async fn derive_account(&self, derivation_path: DerivationPath) -> SolanaAccount {
+        let extended_key = lazy_call_ed25519_public_key(&derivation_path).await;
+        let ed25519_public_key = Pubkey::from(extended_key.public_key);
         SolanaAccount {
             ed25519_public_key,
             derivation_path,
         }
     }
 
-    pub fn solana_account(&self) -> SolanaAccount {
-        self.derive_account(self.owner.as_slice().into())
+    pub async fn solana_account(&self) -> SolanaAccount {
+        self.derive_account(self.owner.as_slice().into()).await
     }
 
-    pub fn derived_nonce_account(&self) -> SolanaAccount {
+    pub async fn derived_nonce_account(&self) -> SolanaAccount {
         self.derive_account(
             [&self.owner.as_slice(), "nonce-account".as_bytes()]
                 .concat()
                 .as_slice()
                 .into(),
-        )
+        ).await
     }
 
     pub async fn sign_with_ed25519(&self, message: &Message, signer: &SolanaAccount) -> Signature {
         let message = message.serialize();
         let derivation_path = signer.derivation_path.clone().into();
-        let key_id = read_state(|s| s.ed25519_key_id());
-
-        let (response,): (SignWithSchnorrResponse,) = ic_cdk::call(
-            Principal::management_canister(),
-            "sign_with_schnorr",
-            (SignWithSchnorrArgs {
-                message,
-                derivation_path,
-                key_id,
-                aux: None,
-            },),
-        )
-        .await
-        .expect("failed to sign with ed25519");
-        let signature_length = response.signature.len();
-        let signature = <[u8; 64]>::try_from(response.signature).unwrap_or_else(|_| {
-            panic!(
-                "BUG: invalid signature from management canister. Expected 64 bytes but got {} bytes",
-                signature_length
-            )
-        });
-        Signature::from(signature)
+        let key_id = read_state(|s| s.ed25519_key_name());
+        Signature::from(sign_with_ed25519(message, derivation_path, key_id).await)
     }
 }

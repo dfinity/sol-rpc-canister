@@ -1,9 +1,6 @@
-use crate::{ed25519::Ed25519ExtendedPublicKey, Ed25519KeyName, InitArg, SolanaNetwork};
-use candid::Principal;
-use ic_management_canister_types::{
-    BoundedVec, SchnorrAlgorithm, SchnorrKeyId, SchnorrPublicKeyArgs,
-    SchnorrPublicKeyResponse,
-};
+use crate::ed25519::DerivationPath;
+use crate::{ed25519, ed25519::Ed25519ExtendedPublicKey, Ed25519KeyName, InitArg, SolanaNetwork};
+use std::collections::BTreeMap;
 use std::{
     cell::RefCell,
     ops::{Deref, DerefMut},
@@ -31,16 +28,13 @@ where
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct State {
     solana_network: SolanaNetwork,
-    ed25519_public_key: Option<Ed25519ExtendedPublicKey>,
+    ed25519_public_keys: BTreeMap<DerivationPath, Ed25519ExtendedPublicKey>,
     ed25519_key_name: Ed25519KeyName,
 }
 
 impl State {
-    pub fn ed25519_key_id(&self) -> SchnorrKeyId {
-        SchnorrKeyId {
-            algorithm: SchnorrAlgorithm::Ed25519,
-            name: self.ed25519_key_name.to_string(),
-        }
+    pub fn ed25519_key_name(&self) -> String {
+        self.ed25519_key_name.to_string()
     }
 
     pub fn solana_network(&self) -> SolanaNetwork {
@@ -58,29 +52,21 @@ impl From<InitArg> for State {
     }
 }
 
-pub async fn lazy_call_ed25519_public_key() -> Ed25519ExtendedPublicKey {
-    if let Some(ed25519_pk) = read_state(|s| s.ed25519_public_key.clone()) {
-        return ed25519_pk;
+pub async fn lazy_call_ed25519_public_key<'a, 'b>(
+    derivation_path: &DerivationPath,
+) -> Ed25519ExtendedPublicKey {
+    if let Some(public_key) = read_state(|s| {
+        s.ed25519_public_keys
+            .get(derivation_path)
+            .map(|public_key| public_key.clone())
+    }) {
+        return public_key;
     }
-    let key_id = read_state(|s| s.ed25519_key_id());
-
-    let (response,): (SchnorrPublicKeyResponse,) = ic_cdk::call(
-        Principal::management_canister(),
-        "schnorr_public_key",
-        (SchnorrPublicKeyArgs {
-            canister_id: None,
-            derivation_path: BoundedVec::new(vec![]),
-            key_id,
-        },),
-    )
-    .await
-    .unwrap_or_else(|(error_code, message)| {
-        ic_cdk::trap(&format!(
-            "failed to get canister's public key: {} (error code = {:?})",
-            message, error_code,
-        ))
+    let key_id = read_state(|s| s.ed25519_key_name());
+    let public_key = ed25519::get_ed25519_public_key(key_id, &derivation_path).await;
+    mutate_state(|s| {
+        s.ed25519_public_keys
+            .insert(derivation_path.clone(), public_key.clone());
     });
-    let pk = Ed25519ExtendedPublicKey::from(response);
-    mutate_state(|s| s.ed25519_public_key = Some(pk.clone()));
-    pk
+    public_key
 }
