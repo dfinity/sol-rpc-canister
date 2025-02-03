@@ -4,7 +4,6 @@ keywords: [ advanced, rust, solana, sol, integration, solana integration ]
 
 # Basic Solana
 
-[View this sample's code on GitHub](https://github.com/dfinity/sol-rpc-canister/tree/master/examples/basic_solana)
 
 ## Overview
 
