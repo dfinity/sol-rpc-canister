@@ -1,0 +1,34 @@
+[workspace]
+# path of the git-cliff configuration
+changelog_config = "cliff.toml"
+
+# enable changelog updates
+changelog_update = true
+
+# update dependencies with `cargo update`
+dependencies_update = true
+
+# create tags for the releases
+git_tag_enable = true
+
+# disable GitHub releases
+git_release_enable = false
+
+# labels for the release PR
+pr_labels = ["release"]
+
+# disallow updating repositories with uncommitted changes
+allow_dirty = false
+
+# disallow packaging with uncommitted changes
+publish_allow_dirty = false
+
+[[package]] # the double square brackets define a TOML table array
+name = "sol_rpc_canister"
+changelog_update = true # enable changelog update for `package_a`
+git_release_enable = true # enable GitHub/Gitea releases for `package_a`
+publish = false # disable `cargo publish` for `package_a`
+
+[[package]]
+name = "sol_rpc_int_tests"
+release = false # don't process this package
