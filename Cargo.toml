@@ -25,7 +25,7 @@ opt-level = 's'
 inherits = "release"
 
 [workspace.dependencies]
-async-trait = "0.1.85"
+async-trait = "0.1.86"
 candid = "0.10.13"
 candid_parser = "0.1.4"
 ic-cdk = "0.17.1"
