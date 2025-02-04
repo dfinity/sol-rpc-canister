@@ -45,12 +45,6 @@ impl Ed25519ExtendedPublicKey {
     }
 }
 
-impl AsRef<PublicKey> for Ed25519ExtendedPublicKey {
-    fn as_ref(&self) -> &PublicKey {
-        &self.public_key
-    }
-}
-
 impl From<SchnorrPublicKeyResponse> for Ed25519ExtendedPublicKey {
     fn from(value: SchnorrPublicKeyResponse) -> Self {
         Ed25519ExtendedPublicKey {

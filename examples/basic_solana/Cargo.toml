@@ -20,6 +20,7 @@ num = "0.4.3"
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 solana-hash = { workspace = true }
+solana-instruction = { workspace = true }
 solana-message = { workspace = true }
 solana-nonce = { workspace = true }
 solana-program = { workspace = true }

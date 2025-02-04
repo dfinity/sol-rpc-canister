@@ -36,6 +36,11 @@ service : (opt InitArg) -> {
     // If the owner is not set, it defaults to the caller's principal.
     nonce_account : (owner: opt principal) -> (text);
 
+    // Returns the Solana owner's associated token account (ATA) for the given mint address.
+    //
+    // If the owner is not set, it defaults to the caller's principal.
+    associated_token_account : (owner: opt principal, mint: text) -> (text);
+
     // Returns the lamport balance of the given Solana account.
     // If no address is provided, the address derived from the caller's principal is used.
     get_balance : (address: opt text) -> (Lamport);
@@ -53,4 +58,10 @@ service : (opt InitArg) -> {
     // blockhash.
     // Returns the transaction ID.
     send_sol_with_durable_nonce : (to: text, amount: Lamport) -> (text);
+
+    // Sends the given amount of SOL in base unit (Lamport) to the given Solana account
+    // but use the durable nonce from the associated nonce account instead of the latest
+    // blockhash.
+    // Returns the transaction ID.
+    send_spl_token : (minter: text, to: text, amount: nat) -> (text);
 }

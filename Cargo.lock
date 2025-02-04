@@ -154,6 +154,7 @@ dependencies = [
  "serde",
  "serde_json",
  "solana-hash",
+ "solana-instruction",
  "solana-message",
  "solana-nonce",
  "solana-program",

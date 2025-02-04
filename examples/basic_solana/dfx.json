@@ -7,7 +7,7 @@
       "build": [
         "cargo build --no-default-features --target wasm32-unknown-unknown --release"
       ],
-      "wasm": "target/wasm32-unknown-unknown/release/basic_solana.wasm",
+      "wasm": "../../target/wasm32-unknown-unknown/release/basic_solana.wasm",
       "metadata": [
         {
           "name": "candid:service"
