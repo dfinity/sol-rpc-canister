@@ -4,7 +4,6 @@ keywords: [ advanced, rust, solana, sol, integration, solana integration ]
 
 # Basic Solana
 
-
 ## Overview
 
 This tutorial will walk you through how to deploy a
@@ -42,7 +41,9 @@ git submodule update --init --recursive
 
 ### Acquire cycles to deploy
 
-Deploying to the Internet Computer requires [cycles](https://internetcomputer.org/docs/current/developer-docs/getting-started/tokens-and-cycles) (the equivalent of "gas" on other blockchains).
+Deploying to the Internet Computer
+requires [cycles](https://internetcomputer.org/docs/current/developer-docs/getting-started/tokens-and-cycles) (the
+equivalent of "gas" on other blockchains).
 
 ### Deploy the smart contract to the Internet Computer
 
@@ -80,7 +81,8 @@ Your canister is live and ready to use! You can interact with it using either th
 which is the link you see in the output above.
 
 In the output above, to see the Candid Web UI for your Solana canister, you would use the
-URL `https://bd3sg-teaaa-aaaaa-qaaba-cai.raw.icp0.io/?id=<YOUR-CANISTER-ID>`. You should see the methods specified in the Candid file `basic_solana.did`.
+URL `https://bd3sg-teaaa-aaaaa-qaaba-cai.raw.icp0.io/?id=<YOUR-CANISTER-ID>`. You should see the methods specified in
+the Candid file `basic_solana.did`.
 
 ## Step 2: Generating a Solana account
 
@@ -94,7 +96,8 @@ dfx canister --ic call basic_solana solana_account
 ```
 
 This will return a Solana account such as `("2kqg1tEj59FNe3hSiLH88SySB9D7fUSArum6TP6iHFQY")` that is tied to your
-principal. Your account will be different. You can view such accounts on any Solana block explorer such as [Solana Explorer](https://explorer.solana.com/?cluster=devnet).
+principal. Your account will be different. You can view such accounts on any Solana block explorer such
+as [Solana Explorer](https://explorer.solana.com/?cluster=devnet).
 
 If you want to send some SOL to someone else, you can also use the above method to enquire about their Solana account
 given their IC principal:
@@ -114,12 +117,14 @@ Now that you have your Solana account, let us send some (Devnet) SOL to it:
 2. Send some Devnet SOL to the address you obtained in the previous step. You can use any Solana wallet to do so.
 
 Once the transaction is confirmed, you'll be able to see it in your Solana account's balance, which should be visible
-in a Solana block explorer, e.g., https://explorer.solana.com/address/2kqg1tEj59FNe3hSiLH88SySB9D7fUSArum6TP6iHFQY?cluster=devnet.
+in a Solana block explorer,
+e.g., https://explorer.solana.com/address/2kqg1tEj59FNe3hSiLH88SySB9D7fUSArum6TP6iHFQY?cluster=devnet.
 
 ## Step 4: Sending SOL
 
 You can send ETH using the `send_sol` endpoint on your canister, specifying a Solana destination account and an amount
-in the smallest unit (Lamport). For example, to send 1 Lamport to `8HNiduWaBanrBv8c2pgGXZWnpKBdEYuQNHnspqto4yyq`, run the 
+in the smallest unit (Lamport). For example, to send 1 Lamport to `8HNiduWaBanrBv8c2pgGXZWnpKBdEYuQNHnspqto4yyq`, run
+the
 following command:
 
 ```shell
@@ -131,14 +136,46 @@ The `send_sol` endpoint sends SOL by executing the following steps:
 1. Retrieving a recent blockhash. This is necessary because all Solana transactions must include a blockhash within the
    151 most recent stored hashes (which corresponds to about 60 to 90 seconds).
 2. Estimating the current transaction fees. For simplicity, the current fees are hard-coded with a generous limit. A
-   real world application would dynamically fetch the latest transaction fees, for example using the [`getRecentPrioritizationFees`](TODO)
+   real world application would dynamically fetch the latest transaction fees, for example using the [
+   `getRecentPrioritizationFees`](TODO)
    method in the [SOL-RPC canister](TODO).
 3. Building a Solana transaction to send the specified amount to the given receiver's address.
-4. Signing the Solana transaction using the [sign_with_schnorr API](https://internetcomputer.org/docs/current/developer-docs/smart-contracts/signatures/signing-messages-t-schnorr).
-5. Sending the signed transaction to the Solana network using the [`sendTransaction`](TODO) method in the [SOL-RPC canister](TODO).
+4. Signing the Solana transaction using
+   the [sign_with_schnorr API](https://internetcomputer.org/docs/current/developer-docs/smart-contracts/signatures/signing-messages-t-schnorr).
+5. Sending the signed transaction to the Solana network using the [`sendTransaction`](TODO) method in
+   the [SOL-RPC canister](TODO).
 
-The `send_sol` endpoint returns the transaction ID of the transaction sent to the Solana network, which can for example be used
+The `send_sol` endpoint returns the transaction ID of the transaction sent to the Solana network, which can for example
+be used
 to track the transaction on a Solana blockchain explorer.
+
+## Step 5: Sending SOL using durable nonces
+
+TODO.
+
+## Step 6: Sending USDC (using the Solana Token Library)
+
+Send some USDC on Solana Devnet using the SPL. The USDC mint address on Devnet is
+`4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`.
+
+1. Create the sender and recipient Associated Token Accounts (ATA):
+   ```shell
+    dfx identity use sender
+    dfx canister call basic_solana create_associated_token_account '("<TOKEN MINT ADDRESS`>")'
+    dfx identity use recipient
+    dfx canister call basic_solana create_associated_token_account '("<TOKEN MINT ADDRESS`>")'
+    ```
+2. Send some tokens to the sender ATA using e.g. [this faucet](https://faucet.circle.com/). To get the ATA, run:
+   ```shell
+    dfx identity use sender
+    dfx canister call basic_solana associated_token_account '("<TOKEN MINT ADDRESS`>")'
+    ```
+3. Transfer some tokens from the sender to the recipient
+   ```shell
+    dfx identity use sender
+    dfx canister call basic_solana send_spl_token '("<TOKEN MINT ADDRESS>", "<RECIPIENT SOLANA ADDRESS>", <AMOUNT>)'
+    ```
+4. Check out the transaction on [Solana Explorer](https://explorer.solana.com/?cluster=devnet). 
 
 ## Conclusion
 
