@@ -4,9 +4,10 @@
 //! can be signed. It is missing several pieces that any production-grade wallet would have,
 //! such as error handling, access-control, caching, etc.
 
-use crate::ed25519::{sign_with_ed25519, DerivationPath};
-use crate::state::lazy_call_ed25519_public_key;
-use crate::state::read_state;
+use crate::{
+    ed25519::{sign_with_ed25519, DerivationPath, Ed25519ExtendedPublicKey},
+    state::{lazy_call_ed25519_public_key, read_state},
+};
 use candid::Principal;
 use solana_message::Message;
 use solana_pubkey::Pubkey;
@@ -38,39 +39,48 @@ impl Display for SolanaAccount {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SolanaWallet {
     owner: Principal,
+    root_public_key: Ed25519ExtendedPublicKey,
 }
 
 impl SolanaWallet {
     pub async fn new(owner: Principal) -> Self {
-        Self { owner }
+        let root_public_key = lazy_call_ed25519_public_key().await;
+        Self {
+            owner,
+            root_public_key,
+        }
     }
 
-    pub async fn derive_account(&self, derivation_path: DerivationPath) -> SolanaAccount {
-        let extended_key = lazy_call_ed25519_public_key(&derivation_path).await;
-        let ed25519_public_key = Pubkey::from(extended_key.public_key);
+    pub fn derive_account(&self, derivation_path: DerivationPath) -> SolanaAccount {
+        let ed25519_public_key = self
+            .root_public_key
+            .derive_public_key(&derivation_path)
+            .public_key
+            .serialize_raw()
+            .into();
         SolanaAccount {
             ed25519_public_key,
             derivation_path,
         }
     }
 
-    pub async fn solana_account(&self) -> SolanaAccount {
-        self.derive_account(self.owner.as_slice().into()).await
+    pub fn solana_account(&self) -> SolanaAccount {
+        self.derive_account(self.owner.as_slice().into())
     }
 
-    pub async fn derived_nonce_account(&self) -> SolanaAccount {
+    pub fn derived_nonce_account(&self) -> SolanaAccount {
         self.derive_account(
             [&self.owner.as_slice(), "nonce-account".as_bytes()]
                 .concat()
                 .as_slice()
                 .into(),
-        ).await
+        )
     }
 
     pub async fn sign_with_ed25519(&self, message: &Message, signer: &SolanaAccount) -> Signature {
         let message = message.serialize();
-        let derivation_path = signer.derivation_path.clone().into();
-        let key_id = read_state(|s| s.ed25519_key_name());
-        Signature::from(sign_with_ed25519(message, derivation_path, key_id).await)
+        let derivation_path = &signer.derivation_path;
+        let key_name = &read_state(|s| s.ed25519_key_name());
+        Signature::from(sign_with_ed25519(message, derivation_path, key_name).await)
     }
 }

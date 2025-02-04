@@ -1,6 +1,7 @@
-use crate::ed25519::DerivationPath;
-use crate::{ed25519, ed25519::Ed25519ExtendedPublicKey, Ed25519KeyName, InitArg, SolanaNetwork};
-use std::collections::BTreeMap;
+use crate::{
+    ed25519::{get_ed25519_public_key, Ed25519ExtendedPublicKey},
+    Ed25519KeyName, InitArg, SolanaNetwork,
+};
 use std::{
     cell::RefCell,
     ops::{Deref, DerefMut},
@@ -28,13 +29,13 @@ where
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct State {
     solana_network: SolanaNetwork,
-    ed25519_public_keys: BTreeMap<DerivationPath, Ed25519ExtendedPublicKey>,
+    ed25519_public_key: Option<Ed25519ExtendedPublicKey>,
     ed25519_key_name: Ed25519KeyName,
 }
 
 impl State {
-    pub fn ed25519_key_name(&self) -> String {
-        self.ed25519_key_name.to_string()
+    pub fn ed25519_key_name(&self) -> Ed25519KeyName {
+        self.ed25519_key_name.clone()
     }
 
     pub fn solana_network(&self) -> SolanaNetwork {
@@ -52,21 +53,12 @@ impl From<InitArg> for State {
     }
 }
 
-pub async fn lazy_call_ed25519_public_key<'a, 'b>(
-    derivation_path: &DerivationPath,
-) -> Ed25519ExtendedPublicKey {
-    if let Some(public_key) = read_state(|s| {
-        s.ed25519_public_keys
-            .get(derivation_path)
-            .map(|public_key| public_key.clone())
-    }) {
+pub async fn lazy_call_ed25519_public_key() -> Ed25519ExtendedPublicKey {
+    if let Some(public_key) = read_state(|s| s.ed25519_public_key.clone()) {
         return public_key;
     }
-    let key_id = read_state(|s| s.ed25519_key_name());
-    let public_key = ed25519::get_ed25519_public_key(key_id, &derivation_path).await;
-    mutate_state(|s| {
-        s.ed25519_public_keys
-            .insert(derivation_path.clone(), public_key.clone());
-    });
+    let public_key =
+        get_ed25519_public_key(&read_state(|s| s.ed25519_key_name()), &Default::default()).await;
+    mutate_state(|s| s.ed25519_public_key = Some(public_key.clone()));
     public_key
 }

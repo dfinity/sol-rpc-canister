@@ -13,4 +13,3 @@ include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
 [dependencies]
 candid = { workspace = true }
 serde = { workspace = true }
-serde_bytes = { workspace = true }
