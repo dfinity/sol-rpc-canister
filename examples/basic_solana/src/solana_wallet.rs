@@ -4,7 +4,10 @@
 //! can be signed. It is missing several pieces that any production-grade wallet would have,
 //! such as error handling, access-control, caching, etc.
 
-use crate::{ed25519::{sign_with_ed25519, DerivationPath, Ed25519ExtendedPublicKey}, spl, state::{lazy_call_ed25519_public_key, read_state}};
+use crate::{
+    ed25519::{sign_with_ed25519, DerivationPath, Ed25519ExtendedPublicKey},
+    state::{lazy_call_ed25519_public_key, read_state},
+};
 use candid::Principal;
 use solana_message::Message;
 use solana_pubkey::Pubkey;
@@ -72,10 +75,6 @@ impl SolanaWallet {
                 .as_slice()
                 .into(),
         )
-    }
-
-    pub fn associated_token_account(&self, token_mint_address: &Pubkey) -> Pubkey {
-        spl::get_associated_token_account(self.solana_account().as_ref(), token_mint_address)
     }
 
     pub async fn sign_with_ed25519(&self, message: &Message, signer: &SolanaAccount) -> Signature {

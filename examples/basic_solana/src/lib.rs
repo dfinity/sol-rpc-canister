@@ -32,42 +32,38 @@ pub fn init(maybe_init: Option<InitArg>) {
 
 #[update]
 pub async fn solana_account(owner: Option<Principal>) -> String {
-    let caller = validate_caller_not_anonymous();
-    let owner = owner.unwrap_or(caller);
+    let owner = owner.unwrap_or_else(validate_caller_not_anonymous);
     let wallet = SolanaWallet::new(owner).await;
     wallet.solana_account().to_string()
 }
 
 #[update]
 pub async fn nonce_account(owner: Option<Principal>) -> String {
-    let caller = validate_caller_not_anonymous();
-    let owner = owner.unwrap_or(caller);
+    let owner = owner.unwrap_or_else(validate_caller_not_anonymous);
     let wallet = SolanaWallet::new(owner).await;
     wallet.derived_nonce_account().to_string()
 }
 
 #[update]
 pub async fn associated_token_account(owner: Option<Principal>, mint: String) -> String {
-    let caller = validate_caller_not_anonymous();
-    let owner = owner.unwrap_or(caller);
-    let mint = Pubkey::from_str(mint.as_str()).unwrap();
+    let owner = owner.unwrap_or_else(validate_caller_not_anonymous);
+    let mint = Pubkey::from_str(&mint).unwrap();
     let wallet = SolanaWallet::new(owner).await;
-    wallet.associated_token_account(&mint).to_string()
+    spl::get_associated_token_address(wallet.solana_account().as_ref(), &mint).to_string()
 }
 
 #[update]
 pub async fn get_balance(account: Option<String>) -> Nat {
+    let solana_network = read_state(|s| s.solana_network());
+    let max_response_size_bytes = 500_u64;
+    let num_cycles = 1_000_000_000u128;
+
     let account = account.unwrap_or(solana_account(None).await);
 
     let json = format!(
         r#"{{ "jsonrpc": "2.0", "method": "getBalance", "params": ["{}"], "id": 1 }}"#,
         account
     );
-
-    let solana_network = read_state(|s| s.solana_network());
-
-    let max_response_size_bytes = 500_u64;
-    let num_cycles = 1_000_000_000u128;
 
     let response = SOL_RPC
         .json_rpc_request(solana_network, json, num_cycles, max_response_size_bytes)
@@ -81,50 +77,53 @@ pub async fn get_balance(account: Option<String>) -> Nat {
 }
 
 #[update]
-pub async fn send_sol(to: String, amount: Nat) -> String {
+pub async fn get_nonce(account: Option<String>) -> String {
     let solana_network = read_state(|s| s.solana_network());
-
     let max_response_size_bytes = 500_u64;
     let num_cycles = 1_000_000_000u128;
 
-    let caller = validate_caller_not_anonymous();
-    let wallet = SolanaWallet::new(caller).await;
+    let account = account.unwrap_or(nonce_account(None).await);
 
-    let recipient = Pubkey::from_str(to.as_str()).unwrap();
-    let payer = wallet.solana_account();
-    let amount = amount.0.to_u64().unwrap();
-
-    let instruction = system_instruction::transfer(payer.as_ref(), &recipient, amount);
     let blockhash = SOL_RPC
-        .get_latest_blockhash(solana_network, num_cycles, max_response_size_bytes)
+        .get_nonce_account_blockhash(solana_network, num_cycles, max_response_size_bytes, account)
         .await;
 
-    let message = Message::new_with_blockhash(&[instruction], Some(payer.as_ref()), &blockhash);
-    let signatures = vec![wallet.sign_with_ed25519(&message, &payer).await];
-    let transaction = Transaction {
-        message,
-        signatures,
-    };
-
-    SOL_RPC
-        .send_transaction(
-            solana_network,
-            num_cycles,
-            max_response_size_bytes,
-            transaction,
-        )
-        .await
+    blockhash.to_string()
 }
 
 #[update]
-pub async fn create_nonce_account() -> String {
+pub async fn get_spl_token_balance(account: Option<String>, mint: String) -> String {
     let solana_network = read_state(|s| s.solana_network());
-
     let max_response_size_bytes = 500_u64;
     let num_cycles = 1_000_000_000u128;
 
-    let caller = validate_caller_not_anonymous();
-    let wallet = SolanaWallet::new(caller).await;
+    let account = account.unwrap_or(associated_token_account(None, mint).await);
+
+    let json = format!(
+        r#"{{ "jsonrpc": "2.0", "method": "getTokenAccountBalance", "params": ["{}"], "id": 1 }}"#,
+        account
+    );
+
+    let response = SOL_RPC
+        .json_rpc_request(solana_network, json, num_cycles, max_response_size_bytes)
+        .await;
+
+    // The response to a successful `getTokenAccountBalance` call has the following format:
+    // { "id": "[ID]", "jsonrpc": "2.0", "result": { "context": { "slot": [SLOT] } }, "value": [ { "uiAmountString": "FORMATTED AMOUNT" } ] }, }
+    response["result"]["value"]["uiAmountString"]
+        .as_str()
+        .unwrap()
+        .to_string()
+}
+
+#[update]
+pub async fn create_nonce_account(owner: Option<Principal>) -> String {
+    let solana_network = read_state(|s| s.solana_network());
+    let max_response_size_bytes = 500_u64;
+    let num_cycles = 1_000_000_000u128;
+
+    let owner = owner.unwrap_or_else(validate_caller_not_anonymous);
+    let wallet = SolanaWallet::new(owner).await;
 
     let payer = wallet.solana_account();
     let nonce_account = wallet.derived_nonce_account();
@@ -162,32 +161,90 @@ pub async fn create_nonce_account() -> String {
 }
 
 #[update]
-pub async fn get_nonce(account: Option<String>) -> String {
-    let account = account.unwrap_or(nonce_account(None).await);
-
+pub async fn create_associated_token_account(owner: Option<Principal>, mint: String) -> String {
     let solana_network = read_state(|s| s.solana_network());
-
     let max_response_size_bytes = 500_u64;
     let num_cycles = 1_000_000_000u128;
 
+    let owner = owner.unwrap_or_else(validate_caller_not_anonymous);
+    let wallet = SolanaWallet::new(owner).await;
+
+    let payer = wallet.solana_account();
+    let mint = Pubkey::from_str(&mint).unwrap();
+
+    let instruction =
+        spl::create_associated_token_account_instruction(payer.as_ref(), payer.as_ref(), &mint);
     let blockhash = SOL_RPC
-        .get_nonce_account_blockhash(solana_network, num_cycles, max_response_size_bytes, account)
+        .get_latest_blockhash(solana_network, num_cycles, max_response_size_bytes)
         .await;
 
-    blockhash.to_string()
+    let message = Message::new_with_blockhash(&[instruction], Some(payer.as_ref()), &blockhash);
+
+    let signatures = vec![wallet.sign_with_ed25519(&message, &payer).await];
+    let transaction = Transaction {
+        message,
+        signatures,
+    };
+
+    SOL_RPC
+        .send_transaction(
+            solana_network,
+            num_cycles,
+            max_response_size_bytes,
+            transaction,
+        )
+        .await
 }
 
 #[update]
-pub async fn send_sol_with_durable_nonce(to: String, amount: Nat) -> String {
+pub async fn send_sol(owner: Option<Principal>, to: String, amount: Nat) -> String {
     let solana_network = read_state(|s| s.solana_network());
-
     let max_response_size_bytes = 500_u64;
     let num_cycles = 1_000_000_000u128;
 
-    let caller = validate_caller_not_anonymous();
-    let wallet = SolanaWallet::new(caller).await;
+    let owner = owner.unwrap_or_else(validate_caller_not_anonymous);
+    let wallet = SolanaWallet::new(owner).await;
 
-    let recipient = Pubkey::from_str(to.as_str()).unwrap();
+    let recipient = Pubkey::from_str(&to).unwrap();
+    let payer = wallet.solana_account();
+    let amount = amount.0.to_u64().unwrap();
+
+    let instruction = system_instruction::transfer(payer.as_ref(), &recipient, amount);
+    let blockhash = SOL_RPC
+        .get_latest_blockhash(solana_network, num_cycles, max_response_size_bytes)
+        .await;
+
+    let message = Message::new_with_blockhash(&[instruction], Some(payer.as_ref()), &blockhash);
+    let signatures = vec![wallet.sign_with_ed25519(&message, &payer).await];
+    let transaction = Transaction {
+        message,
+        signatures,
+    };
+
+    SOL_RPC
+        .send_transaction(
+            solana_network,
+            num_cycles,
+            max_response_size_bytes,
+            transaction,
+        )
+        .await
+}
+
+#[update]
+pub async fn send_sol_with_durable_nonce(
+    owner: Option<Principal>,
+    to: String,
+    amount: Nat,
+) -> String {
+    let solana_network = read_state(|s| s.solana_network());
+    let max_response_size_bytes = 500_u64;
+    let num_cycles = 1_000_000_000u128;
+
+    let owner = owner.unwrap_or_else(validate_caller_not_anonymous);
+    let wallet = SolanaWallet::new(owner).await;
+
+    let recipient = Pubkey::from_str(&to).unwrap();
     let payer = wallet.solana_account();
     let amount = amount.0.to_u64().unwrap();
     let nonce_account = wallet.derived_nonce_account();
@@ -223,59 +280,26 @@ pub async fn send_sol_with_durable_nonce(to: String, amount: Nat) -> String {
 }
 
 #[update]
-pub async fn create_associated_token_account(mint: String) -> String {
+pub async fn send_spl_token(
+    owner: Option<Principal>,
+    mint: String,
+    to: String,
+    amount: Nat,
+) -> String {
     let solana_network = read_state(|s| s.solana_network());
-
     let max_response_size_bytes = 500_u64;
     let num_cycles = 1_000_000_000u128;
 
-    let caller = validate_caller_not_anonymous();
-    let wallet = SolanaWallet::new(caller).await;
+    let owner = owner.unwrap_or_else(validate_caller_not_anonymous);
+    let wallet = SolanaWallet::new(owner).await;
 
     let payer = wallet.solana_account();
-    let mint = Pubkey::from_str(mint.as_str()).unwrap();
-
-    let instruction =
-        spl::create_associated_token_account_instruction(payer.as_ref(), payer.as_ref(), &mint);
-    let blockhash = SOL_RPC
-        .get_latest_blockhash(solana_network, num_cycles, max_response_size_bytes)
-        .await;
-
-    let message = Message::new_with_blockhash(&[instruction], Some(payer.as_ref()), &blockhash);
-
-    let signatures = vec![wallet.sign_with_ed25519(&message, &payer).await];
-    let transaction = Transaction {
-        message,
-        signatures,
-    };
-
-    SOL_RPC
-        .send_transaction(
-            solana_network,
-            num_cycles,
-            max_response_size_bytes,
-            transaction,
-        )
-        .await
-}
-
-#[update]
-pub async fn send_spl_token(mint: String, to: String, amount: Nat) -> String {
-    let solana_network = read_state(|s| s.solana_network());
-
-    let max_response_size_bytes = 500_u64;
-    let num_cycles = 1_000_000_000u128;
-
-    let caller = validate_caller_not_anonymous();
-    let wallet = SolanaWallet::new(caller).await;
-
-    let payer = wallet.solana_account();
-    let recipient = Pubkey::from_str(to.as_str()).unwrap();
-    let mint = Pubkey::from_str(mint.as_str()).unwrap();
+    let recipient = Pubkey::from_str(&to).unwrap();
+    let mint = Pubkey::from_str(&mint).unwrap();
     let amount = amount.0.to_u64().unwrap();
 
-    let from = spl::get_associated_token_account(payer.as_ref(), &mint);
-    let to = spl::get_associated_token_account(&recipient, &mint);
+    let from = spl::get_associated_token_address(payer.as_ref(), &mint);
+    let to = spl::get_associated_token_address(&recipient, &mint);
 
     let instruction = spl::transfer_instruction(&from, &to, payer.as_ref(), amount);
     let blockhash = SOL_RPC

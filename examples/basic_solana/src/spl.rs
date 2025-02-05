@@ -11,7 +11,7 @@ mod associated_token_account_program {
     solana_pubkey::declare_id!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 }
 
-pub fn get_associated_token_account(
+pub fn get_associated_token_address(
     wallet_address: &Pubkey,
     token_mint_address: &Pubkey,
 ) -> Pubkey {
@@ -32,7 +32,7 @@ pub fn create_associated_token_account_instruction(
     token_mint_address: &Pubkey,
 ) -> Instruction {
     let associated_account_address =
-        get_associated_token_account(wallet_address, token_mint_address);
+        get_associated_token_address(wallet_address, token_mint_address);
     Instruction {
         program_id: associated_token_account_program::id(),
         accounts: vec![
@@ -44,29 +44,24 @@ pub fn create_associated_token_account_instruction(
             AccountMeta::new_readonly(token_program::id(), false),
         ],
         data: vec![
-            0, // AssociatedTokenAccountInstruction::Create
+            0, // SPL Associated Token Account program "create" instruction
         ],
     }
 }
 
 pub fn transfer_instruction(
-    source_pubkey: &Pubkey,
-    destination_pubkey: &Pubkey,
-    authority_pubkey: &Pubkey,
+    source_address: &Pubkey,
+    destination_address: &Pubkey,
+    authority_address: &Pubkey,
     amount: u64,
 ) -> Instruction {
-    let mut data = vec![3]; // SPL token program transfer instruction
-    data.extend_from_slice(&amount.to_le_bytes());
-
-    let accounts = vec![
-        AccountMeta::new(*source_pubkey, false),
-        AccountMeta::new(*destination_pubkey, false),
-        AccountMeta::new_readonly(*authority_pubkey, true),
-    ];
-
     Instruction {
         program_id: token_program::id(),
-        accounts,
-        data,
+        accounts: vec![
+            AccountMeta::new(*source_address, false),
+            AccountMeta::new(*destination_address, false),
+            AccountMeta::new_readonly(*authority_address, true),
+        ],
+        data: [vec![3], amount.to_le_bytes().to_vec()].concat(), // SPL token program "transfer" instruction
     }
 }

@@ -25,43 +25,63 @@ type Ed25519KeyName = variant {
 type Lamport = nat;
 
 service : (opt InitArg) -> {
-    // Returns the Solana account to which the owner should send Solana before sending
-    // the amount to another account via the canister using the [send_sol] endpoint.
+    // Returns the Solana account derived from the owner principal.
     //
     // If the owner is not set, it defaults to the caller's principal.
     solana_account : (owner: opt principal) -> (text);
 
-    // Returns the Solana nonce account associated to the owner.
+    // Returns the Solana nonce account derived from the owner principal.
     //
     // If the owner is not set, it defaults to the caller's principal.
     nonce_account : (owner: opt principal) -> (text);
 
-    // Returns the Solana owner's associated token account (ATA) for the given mint address.
+    // Returns the Solana associated token account (ATA) for the account derived
+    // from the owner principal and the given SPL token mint address.
     //
     // If the owner is not set, it defaults to the caller's principal.
     associated_token_account : (owner: opt principal, mint: text) -> (text);
 
     // Returns the lamport balance of the given Solana account.
-    // If no address is provided, the address derived from the caller's principal is used.
-    get_balance : (address: opt text) -> (Lamport);
+    //
+    // If no account is provided, the account derived from the caller's principal is used.
+    get_balance : (account: opt text) -> (Lamport);
 
     // Returns the current blockhash for the given Solana nonce account.
-    // If no address is provided, the address derived from the caller's principal is used.
-    get_nonce : (address: opt text) -> (Lamport);
+    //
+    // If no account is provided, the nonce account derived from the caller's principal is used.
+    get_nonce : (account: opt text) -> (Lamport);
 
-    // Sends the given amount of SOL in base unit (Lamport) to the given Solana account.
-    // Returns the transaction ID.
-    send_sol : (to: text, amount: Lamport) -> (text);
+    // Returns the balance of the given Solana account for the SPL token associated with
+    // the given token mint address.
+    //
+    // If no account is provided, the account derived from the caller's principal is used.
+    get_spl_token_balance : (account: opt text, mint: text) -> (text);
 
-    // Sends the given amount of SOL in base unit (Lamport) to the given Solana account
-    // but use the durable nonce from the associated nonce account instead of the latest
-    // blockhash.
-    // Returns the transaction ID.
-    send_sol_with_durable_nonce : (to: text, amount: Lamport) -> (text);
+    // Sends the given amount of SOL in base unit (Lamport) from the account derived from
+    // the owner principal to the given Solana account.
+    //
+    // Returns the resulting transaction ID.
+    //
+    // If the owner is not set, the funds are sent from the account derived from the
+    // caller's principal.
+    send_sol : (owner: opt principal, to: text, amount: Lamport) -> (text);
 
-    // Sends the given amount of SOL in base unit (Lamport) to the given Solana account
-    // but use the durable nonce from the associated nonce account instead of the latest
-    // blockhash.
-    // Returns the transaction ID.
-    send_spl_token : (minter: text, to: text, amount: nat) -> (text);
+    // Sends the given amount of SOL in base unit (Lamport) from the account derived from
+    // the owner principal to the given Solana account, and uses the durable nonce from the
+    // derived nonce account instead of a recent blockhash in the transaction.
+    //
+    // Returns the resulting transaction ID.
+    //
+    // If the owner is not set, the funds are sent from the account derived from the
+    // caller's principal.
+    send_sol_with_durable_nonce : (owner: opt principal, to: text, amount: Lamport) -> (text);
+
+    // Sends the given amount of SPL tokens for the given token mint address in base unit
+    // from the ATA derived from the owner principal to the ATA for the given Solana account.
+    //
+    // Returns the resulting transaction ID.
+    //
+    // If the owner is not set, the funds are sent from the ATA of the account derived from the
+    // caller's principal.
+    send_spl_token : (owner: opt principal, minter: text, to: text, amount: nat) -> (text);
 }
