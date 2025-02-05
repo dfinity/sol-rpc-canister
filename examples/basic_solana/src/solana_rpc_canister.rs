@@ -90,7 +90,7 @@ impl SolanaRpcCanister {
         // { "id": "[ID]", "jsonrpc": "2.0", "result": [TXID], }
         response["result"]
             .as_str()
-            .expect(&format!("Failed to extract transaction ID: {:?}", response))
+            .unwrap_or_else(|| panic!("Failed to extract transaction ID: {:?}", response))
             .to_string()
     }
 

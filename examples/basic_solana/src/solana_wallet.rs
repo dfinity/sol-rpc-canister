@@ -70,7 +70,7 @@ impl SolanaWallet {
 
     pub fn derived_nonce_account(&self) -> SolanaAccount {
         self.derive_account(
-            [&self.owner.as_slice(), "nonce-account".as_bytes()]
+            [self.owner.as_slice(), "nonce-account".as_bytes()]
                 .concat()
                 .as_slice()
                 .into(),

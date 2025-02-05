@@ -94,11 +94,10 @@ pub async fn sign_with_ed25519(
         .await
         .expect("failed to sign with ed25519");
     let signature_length = response.signature.len();
-    let signature = <[u8; 64]>::try_from(response.signature).unwrap_or_else(|_| {
+    <[u8; 64]>::try_from(response.signature).unwrap_or_else(|_| {
         panic!(
             "BUG: invalid signature from management canister. Expected 64 bytes but got {} bytes",
             signature_length
         )
-    });
-    signature
+    })
 }
