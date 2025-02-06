@@ -18,8 +18,8 @@ fn check_candid_interface_compatibility() {
     let new_interface = __export_service();
 
     // check the public interface against the actual one
-    let old_interface =
-        std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("sol_rpc.did");
+    let old_interface = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
+        .join("sol_rpc_canister.did");
 
     service_equal(
         CandidSource::Text(dbg!(&new_interface)),
