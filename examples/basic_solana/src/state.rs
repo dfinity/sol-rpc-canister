@@ -47,7 +47,7 @@ impl From<InitArg> for State {
     fn from(init_arg: InitArg) -> Self {
         State {
             solana_network: init_arg.solana_network.unwrap_or_default(),
-            ed25519_key_name: init_arg.ed5519_key_name.unwrap_or_default(),
+            ed25519_key_name: init_arg.ed25519_key_name.unwrap_or_default(),
             ..Default::default()
         }
     }

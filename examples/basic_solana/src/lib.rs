@@ -338,7 +338,7 @@ fn transform(args: TransformArgs) -> HttpResponse {
 #[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq)]
 pub struct InitArg {
     pub solana_network: Option<SolanaNetwork>,
-    pub ed5519_key_name: Option<Ed25519KeyName>,
+    pub ed25519_key_name: Option<Ed25519KeyName>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq, Clone, Copy)]

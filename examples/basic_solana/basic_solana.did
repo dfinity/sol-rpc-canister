@@ -2,7 +2,7 @@ type InitArg = record {
     // The canister will interact with this Solana network.
     solana_network : opt SolanaNetwork;
     // EdDSA keys will be derived from this key.
-    eddsa_key_name : opt Ed25519KeyName;
+    ed25519_key_name : opt Ed25519KeyName;
 };
 
 type SolanaNetwork = variant {
@@ -32,7 +32,7 @@ type Address = text;
 // A transaction ID on Solana, i.e. the first signature in a transaction.
 type Txid = text;
 
-service : (opt InitArg) -> {
+service : (InitArg) -> {
     // Returns the Solana account derived from the owner principal.
     //
     // If the owner is not set, it defaults to the caller's principal.

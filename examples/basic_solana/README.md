@@ -46,7 +46,7 @@ equivalent of "gas" on other blockchains).
 ### Deploy the smart contract to the Internet Computer
 
 ```bash
-dfx deploy --ic basic_solana --argument '(opt record {solana_network = opt variant {Devnet}; ed25519_key_name = opt variant {TestKey1}})'
+dfx deploy --ic basic_solana --argument '(record {solana_network = opt variant {Devnet}; ed25519_key_name = opt variant {TestKey1}})'
 ```
 
 #### What this does
