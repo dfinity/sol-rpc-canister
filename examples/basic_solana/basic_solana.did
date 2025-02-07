@@ -66,10 +66,16 @@ service : (opt InitArg) -> {
     // If no account is provided, the account derived from the caller's principal is used.
     get_spl_token_balance : (account: opt Address, mint_account: Address) -> (text);
 
-    // TODO XC-281
+    // Creates a nonce account with the given Solana account as nonce authority. Returns the
+    // resulting nonce account address.
+    //
+    // If no account is provided, the account derived from the caller's principal is used.
     create_nonce_account : (owner: opt principal) -> (Address);
 
-    // TODO XC-281
+    // Creates an SPL associated token account for the given Solana account and mint account.
+    // Returns the resulting associated token account address.
+    //
+    // If no account is provided, the account derived from the caller's principal is used.
     create_associated_token_account : (owner: opt principal, mint_account: Address) -> (Address);
 
     // Sends the given amount of SOL in base unit (Lamport) from the account derived from

@@ -164,7 +164,10 @@ pub async fn create_nonce_account(owner: Option<Principal>) -> String {
 }
 
 #[update]
-pub async fn create_associated_token_account(owner: Option<Principal>, mint_account: String) -> String {
+pub async fn create_associated_token_account(
+    owner: Option<Principal>,
+    mint_account: String,
+) -> String {
     let solana_network = read_state(|s| s.solana_network());
     let max_response_size_bytes = 500_u64;
     let num_cycles = 1_000_000_000u128;
