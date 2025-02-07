@@ -20,6 +20,23 @@ pub struct SolanaAccount {
     pub derivation_path: DerivationPath,
 }
 
+impl SolanaAccount {
+    pub fn new_derived_account(
+        root_public_key: &Ed25519ExtendedPublicKey,
+        derivation_path: DerivationPath,
+    ) -> Self {
+        let ed25519_public_key = root_public_key
+            .derive_public_key(&derivation_path)
+            .public_key
+            .serialize_raw()
+            .into();
+        Self {
+            ed25519_public_key,
+            derivation_path,
+        }
+    }
+}
+
 impl AsRef<Pubkey> for SolanaAccount {
     fn as_ref(&self) -> &Pubkey {
         &self.ed25519_public_key
@@ -52,16 +69,7 @@ impl SolanaWallet {
     }
 
     pub fn derive_account(&self, derivation_path: DerivationPath) -> SolanaAccount {
-        let ed25519_public_key = self
-            .root_public_key
-            .derive_public_key(&derivation_path)
-            .public_key
-            .serialize_raw()
-            .into();
-        SolanaAccount {
-            ed25519_public_key,
-            derivation_path,
-        }
+        SolanaAccount::new_derived_account(&self.root_public_key, derivation_path)
     }
 
     pub fn solana_account(&self) -> SolanaAccount {

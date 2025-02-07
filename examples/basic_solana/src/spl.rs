@@ -11,6 +11,8 @@ mod associated_token_account_program {
     solana_pubkey::declare_id!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 }
 
+/// Derives the Associated Token Account address for the given mint address.
+/// This implementation was taken from [the associated token account repository](https://github.com/solana-program/associated-token-account/blob/main/interface/src/address.rs).
 pub fn get_associated_token_address(
     wallet_address: &Pubkey,
     token_mint_address: &Pubkey,
@@ -26,6 +28,8 @@ pub fn get_associated_token_address(
     program_derived_address
 }
 
+/// Creates an instruction to run the [`AssociatedTokenAccountInstruction`](https://github.com/solana-program/associated-token-account/blob/main/interface/src/instruction.rs)
+/// in the SPL Associated Token Account program.
 pub fn create_associated_token_account_instruction(
     funding_address: &Pubkey,
     wallet_address: &Pubkey,
@@ -49,6 +53,8 @@ pub fn create_associated_token_account_instruction(
     }
 }
 
+/// Creates an instruction to run the [`Transfer` instruction](https://github.com/solana-program/token/blob/main/interface/src/instruction.rs)
+/// in the SPL Token program.
 pub fn transfer_instruction(
     source_address: &Pubkey,
     destination_address: &Pubkey,

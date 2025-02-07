@@ -12,7 +12,7 @@ use crate::{
 use candid::{CandidType, Deserialize, Nat, Principal};
 use ic_cdk::{
     api::management_canister::http_request::{HttpResponse, TransformArgs},
-    init, query, update,
+    init, post_upgrade, query, update,
 };
 use num::{BigUint, ToPrimitive};
 use solana_message::Message;
@@ -24,10 +24,13 @@ use std::{fmt::Display, str::FromStr};
 const SOL_RPC: SolanaRpcCanister = SolanaRpcCanister;
 
 #[init]
-pub fn init(maybe_init: Option<InitArg>) {
-    if let Some(init_arg) = maybe_init {
-        init_state(init_arg)
-    }
+pub fn init(init_arg: InitArg) {
+    init_state(init_arg)
+}
+
+#[post_upgrade]
+fn post_upgrade(init_arg: InitArg) {
+    init(init_arg);
 }
 
 #[update]
@@ -45,9 +48,9 @@ pub async fn nonce_account(owner: Option<Principal>) -> String {
 }
 
 #[update]
-pub async fn associated_token_account(owner: Option<Principal>, mint: String) -> String {
+pub async fn associated_token_account(owner: Option<Principal>, mint_account: String) -> String {
     let owner = owner.unwrap_or_else(validate_caller_not_anonymous);
-    let mint = Pubkey::from_str(&mint).unwrap();
+    let mint = Pubkey::from_str(&mint_account).unwrap();
     let wallet = SolanaWallet::new(owner).await;
     spl::get_associated_token_address(wallet.solana_account().as_ref(), &mint).to_string()
 }
@@ -92,12 +95,12 @@ pub async fn get_nonce(account: Option<String>) -> String {
 }
 
 #[update]
-pub async fn get_spl_token_balance(account: Option<String>, mint: String) -> String {
+pub async fn get_spl_token_balance(account: Option<String>, mint_account: String) -> String {
     let solana_network = read_state(|s| s.solana_network());
     let max_response_size_bytes = 500_u64;
     let num_cycles = 1_000_000_000u128;
 
-    let account = account.unwrap_or(associated_token_account(None, mint).await);
+    let account = account.unwrap_or(associated_token_account(None, mint_account).await);
 
     let json = format!(
         r#"{{ "jsonrpc": "2.0", "method": "getTokenAccountBalance", "params": ["{}"], "id": 1 }}"#,
@@ -161,7 +164,7 @@ pub async fn create_nonce_account(owner: Option<Principal>) -> String {
 }
 
 #[update]
-pub async fn create_associated_token_account(owner: Option<Principal>, mint: String) -> String {
+pub async fn create_associated_token_account(owner: Option<Principal>, mint_account: String) -> String {
     let solana_network = read_state(|s| s.solana_network());
     let max_response_size_bytes = 500_u64;
     let num_cycles = 1_000_000_000u128;
@@ -170,7 +173,7 @@ pub async fn create_associated_token_account(owner: Option<Principal>, mint: Str
     let wallet = SolanaWallet::new(owner).await;
 
     let payer = wallet.solana_account();
-    let mint = Pubkey::from_str(&mint).unwrap();
+    let mint = Pubkey::from_str(&mint_account).unwrap();
 
     let instruction =
         spl::create_associated_token_account_instruction(payer.as_ref(), payer.as_ref(), &mint);
@@ -282,7 +285,7 @@ pub async fn send_sol_with_durable_nonce(
 #[update]
 pub async fn send_spl_token(
     owner: Option<Principal>,
-    mint: String,
+    mint_account: String,
     to: String,
     amount: Nat,
 ) -> String {
@@ -295,7 +298,7 @@ pub async fn send_spl_token(
 
     let payer = wallet.solana_account();
     let recipient = Pubkey::from_str(&to).unwrap();
-    let mint = Pubkey::from_str(&mint).unwrap();
+    let mint = Pubkey::from_str(&mint_account).unwrap();
     let amount = amount.0.to_u64().unwrap();
 
     let from = spl::get_associated_token_address(payer.as_ref(), &mint);

@@ -48,6 +48,9 @@ solana-signature = "2.2.0"
 solana-transaction = { version = "2.2.0", features = ["bincode"] }
 tokio = "1.43.0"
 
+# TODO XC-297: Currently, the solana-* crates have a dependency on wasm-bindgen
+#   when they are built for wasm32-unknown-unknown target. For this reason, we
+#   are using forked version of the relevant repositories.
 [patch.crates-io]
 solana-hash = { git = "https://github.com/lpahlavi/agave.git" }
 solana-instruction = { git = "https://github.com/lpahlavi/agave.git" }
