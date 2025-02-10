@@ -29,8 +29,10 @@ pub fn init(init_arg: InitArg) {
 }
 
 #[post_upgrade]
-fn post_upgrade(init_arg: InitArg) {
-    init(init_arg);
+fn post_upgrade(init_arg: Option<InitArg>) {
+    if let Some(init_arg) = init_arg {
+        init_state(init_arg)
+    }
 }
 
 #[update]
