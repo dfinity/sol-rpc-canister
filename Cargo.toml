@@ -29,11 +29,11 @@ inherits = "release"
 async-trait = "0.1.86"
 candid = "0.10.13"
 candid_parser = "0.1.4"
-# Transitive dependency of ic-crypto-ed25519
+# Transitive dependency of ic-ed25519
 # See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
 getrandom = { version = "*", default-features = false, features = ["custom"] }
 ic-cdk = "0.17.1"
-ic-crypto-ed25519 = { git = "https://github.com/dfinity/ic", tag = "release-2025-01-23_03-04-base", package = "ic-crypto-ed25519" }
+ic-ed25519 = "0.1.0"
 ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", tag = "release-2025-01-23_03-04-base" }
 pocket-ic = "6.0.0"
 serde = "1.0.217"
