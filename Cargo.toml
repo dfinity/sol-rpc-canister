@@ -4,6 +4,7 @@ members = [
     "canister", "integration_tests",
     "libs/client",
     "libs/types",
+    "examples/basic_solana"
 ]
 
 [workspace.package]
@@ -28,8 +29,36 @@ inherits = "release"
 async-trait = "0.1.86"
 candid = "0.10.13"
 candid_parser = "0.1.4"
+# Transitive dependency of ic-crypto-ed25519
+# See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
+getrandom = { version = "*", default-features = false, features = ["custom"] }
 ic-cdk = "0.17.1"
+ic-crypto-ed25519 = { git = "https://github.com/dfinity/ic", tag = "release-2025-01-23_03-04-base", package = "ic-crypto-ed25519" }
 ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", tag = "release-2025-01-23_03-04-base" }
 pocket-ic = "6.0.0"
 serde = "1.0.217"
+serde_json = "1.0.138"
+solana-hash = "2.2.0"
+solana-instruction = "2.2.0"
+solana-message = "2.2.0"
+solana-nonce = "2.2.0"
+solana-program = "2.2.0"
+solana-pubkey = "2.2.0"
+solana-signature = "2.2.0"
+solana-transaction = { version = "2.2.0", features = ["bincode"] }
 tokio = "1.43.0"
+
+# TODO XC-297: Currently, the solana-* crates have a dependency on wasm-bindgen
+#   when they are built for wasm32-unknown-unknown target. For this reason, we
+#   are using forked version of the relevant repositories.
+[patch.crates-io]
+solana-hash = { git = "https://github.com/lpahlavi/agave.git" }
+solana-instruction = { git = "https://github.com/lpahlavi/agave.git" }
+solana-keypair = { git = "https://github.com/lpahlavi/agave.git" }
+solana-message = { git = "https://github.com/lpahlavi/agave.git" }
+solana-nonce = { git = "https://github.com/lpahlavi/agave.git" }
+solana-program = { git = "https://github.com/lpahlavi/agave.git" }
+solana-pubkey = { git = "https://github.com/lpahlavi/agave.git" }
+solana-signature = { git = "https://github.com/lpahlavi/agave.git" }
+solana-transaction = { git = "https://github.com/lpahlavi/agave.git" }
+solana-system-interface = { git = "https://github.com/lpahlavi/solana-program-system.git" }
