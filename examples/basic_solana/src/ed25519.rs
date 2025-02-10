@@ -3,7 +3,7 @@ use ic_cdk::api::management_canister::schnorr::{
     SchnorrAlgorithm, SchnorrKeyId, SchnorrPublicKeyArgument, SchnorrPublicKeyResponse,
     SignWithSchnorrArgument, SignWithSchnorrResponse,
 };
-use ic_crypto_ed25519::PublicKey;
+use ic_ed25519::PublicKey;
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct DerivationPath(Vec<Vec<u8>>);
@@ -29,10 +29,10 @@ pub struct Ed25519ExtendedPublicKey {
 
 impl Ed25519ExtendedPublicKey {
     pub fn derive_public_key(&self, derivation_path: &DerivationPath) -> Ed25519ExtendedPublicKey {
-        let derivation_path = ic_crypto_ed25519::DerivationPath::new(
+        let derivation_path = ic_ed25519::DerivationPath::new(
             <Vec<Vec<u8>>>::from(derivation_path)
                 .into_iter()
-                .map(ic_crypto_ed25519::DerivationIndex)
+                .map(ic_ed25519::DerivationIndex)
                 .collect(),
         );
         let (public_key, chain_code) = self

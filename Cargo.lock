@@ -149,7 +149,7 @@ dependencies = [
  "candid",
  "getrandom 0.2.15",
  "ic-cdk",
- "ic-crypto-ed25519",
+ "ic-ed25519",
  "num",
  "serde",
  "serde_json",
@@ -463,9 +463,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.2.12"
+version = "1.2.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "755717a7de9ec452bf7f3f1a3099085deabd7f2962b861dae91ecd7a365903d2"
+checksum = "c7777341816418c02e033934a09f20dc0ccaf65a5201ef8a450ae0105a573fda"
 dependencies = [
  "shlex",
 ]
@@ -642,9 +642,9 @@ dependencies = [
 
 [[package]]
 name = "data-encoding"
-version = "2.7.0"
+version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e60eed09d8c01d3cee5b7d30acb059b76614c918fa0f992e0dd6eeb10daad6f"
+checksum = "575f75dfd25738df5b91b8e43e14d44bda14637a58fae779fd2b064f8bf3e010"
 
 [[package]]
 name = "der"
@@ -1198,9 +1198,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "ic-crypto-ed25519"
-version = "0.9.0"
-source = "git+https://github.com/dfinity/ic?tag=release-2025-01-23_03-04-base#550209a750be0575cc4afff5e23c04b03048c08e"
+name = "ic-ed25519"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad54a38b73acee769666b5e9f61c3f8a33f20967d14ad3a0ab56ddff4af9c9f0"
 dependencies = [
  "curve25519-dalek 4.1.3",
  "ed25519-dalek 2.1.1",
@@ -1795,9 +1796,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.20.2"
+version = "1.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1261fe7e33c73b354eab43b1273a57c8f967d0391e80353e51f764ac02cf6775"
+checksum = "945462a4b81e43c4e3ba96bd7b49d834c6f61198356aa858733bc4acf3cbe62e"
 
 [[package]]
 name = "opaque-debug"
@@ -2292,9 +2293,9 @@ checksum = "719b953e2095829ee67db738b3bfa9fa368c94900df327b3f07fe6e794d2fe1f"
 
 [[package]]
 name = "rustc-hash"
-version = "2.1.0"
+version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7fb8039b3032c191086b10f11f319a6e99e1e82889c5cc6046f515c9db1d497"
+checksum = "357703d41365b4b27c590e3ed91eabb1b663f07c4c084095e60cbed4362dff0d"
 
 [[package]]
 name = "rustc_version"
@@ -2831,9 +2832,9 @@ dependencies = [
 
 [[package]]
 name = "solana-decode-error"
-version = "2.1.13"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a1d529c1056b4d461609224fa1bf2a6584eafddf435c6394697b0f5de8c812c"
+checksum = "f2249dcb5383b8f91777475eaffb71192be5ffa2b2f7ef34b89b4fa2975f0bed"
 dependencies = [
  "num-traits",
 ]
@@ -3127,7 +3128,7 @@ dependencies = [
  "solana-borsh",
  "solana-clock",
  "solana-cpi",
- "solana-decode-error 2.2.0",
+ "solana-decode-error 2.2.0 (git+https://github.com/lpahlavi/agave.git)",
  "solana-define-syscall",
  "solana-epoch-rewards",
  "solana-epoch-schedule",
@@ -3191,7 +3192,7 @@ dependencies = [
  "num-traits",
  "serde",
  "serde_derive",
- "solana-decode-error 2.2.0",
+ "solana-decode-error 2.2.0 (git+https://github.com/lpahlavi/agave.git)",
  "solana-instruction",
  "solana-msg",
  "solana-pubkey",
@@ -3235,7 +3236,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "solana-atomic-u64",
- "solana-decode-error 2.2.0",
+ "solana-decode-error 2.2.0 (git+https://github.com/lpahlavi/agave.git)",
  "solana-define-syscall",
  "solana-sanitize",
  "solana-sha256-hasher",
@@ -3397,7 +3398,7 @@ dependencies = [
  "num-traits",
  "serde",
  "serde_derive",
- "solana-decode-error 2.1.13",
+ "solana-decode-error 2.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-instruction",
  "solana-pubkey",
 ]
@@ -3489,7 +3490,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "solana-clock",
- "solana-decode-error 2.2.0",
+ "solana-decode-error 2.2.0 (git+https://github.com/lpahlavi/agave.git)",
  "solana-hash",
  "solana-instruction",
  "solana-pubkey",
