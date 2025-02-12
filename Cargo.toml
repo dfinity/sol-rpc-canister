@@ -34,10 +34,8 @@ candid_parser = "0.1.4"
 getrandom = { version = "*", default-features = false, features = ["custom"] }
 ic-cdk = "0.17.1"
 ic-ed25519 = "0.1.0"
-ic-stable-structures = "0.6.7"
 ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", tag = "release-2025-01-23_03-04-base" }
 pocket-ic = "6.0.0"
-proptest = "1.6.0"
 serde = "1.0.217"
 serde_json = "1.0.138"
 solana-hash = "2.2.0"
@@ -52,7 +50,6 @@ strum = { version = "0.27.0", features = ["derive"] }
 thiserror = "2.0.11"
 tokio = "1.43.0"
 url = "2.5"
-zeroize = { version = "1.8", features = ["zeroize_derive"] }
 
 # TODO XC-297: Currently, the solana-* crates have a dependency on wasm-bindgen
 #   when they are built for wasm32-unknown-unknown target. For this reason, we
