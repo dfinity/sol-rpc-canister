@@ -3,8 +3,7 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 
-#[cfg(test)]
-mod tests;
+mod rpc_client;
 
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
