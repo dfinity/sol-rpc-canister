@@ -8,7 +8,6 @@ use candid::utils::ArgumentEncoder;
 use candid::{CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
-use sol_rpc_types::{DummyRequest, DummyResponse};
 
 /// Abstract the canister runtime so that the client code can be reused:
 /// * in production using `ic_cdk`,
@@ -59,10 +58,10 @@ impl<R: Runtime> SolRpcClient<R> {
         }
     }
 
-    /// Call `greet` on the SOL RPC canister.
-    pub async fn greet(&self, request: DummyRequest) -> DummyResponse {
+    /// Call `get_providers` on the SOL RPC canister.
+    pub async fn get_providers(&self) -> Vec<sol_rpc_types::Provider> {
         self.runtime
-            .call(self.sol_rpc_canister, "greet", (request,), 10_000)
+            .call(self.sol_rpc_canister, "get_providers", (), 10_000)
             .await
             .unwrap()
     }

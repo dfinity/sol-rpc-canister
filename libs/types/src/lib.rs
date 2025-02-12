@@ -5,19 +5,6 @@
 
 mod rpc_client;
 
-use candid::CandidType;
-use serde::{Deserialize, Serialize};
-
-/// A dummy request
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, CandidType)]
-pub struct DummyRequest {
-    /// Input
-    pub input: String,
-}
-
-/// A dummy response
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, CandidType)]
-pub struct DummyResponse {
-    /// Output
-    pub output: String,
-}
+pub use rpc_client::{
+    HttpHeader, Provider, RpcAccess, RpcAuth, RpcService, SolDevnetService, SolMainnetService,
+};
