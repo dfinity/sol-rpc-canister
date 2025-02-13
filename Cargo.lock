@@ -2705,7 +2705,6 @@ dependencies = [
  "pocket-ic",
  "serde",
  "sol_rpc_client",
- "sol_rpc_types",
  "tokio",
 ]
 

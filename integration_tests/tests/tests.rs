@@ -1,20 +1,7 @@
 use sol_rpc_int_tests::Setup;
-use sol_rpc_types::Provider;
 
 #[tokio::test]
-async fn should_get_providers() {
-    let setup = Setup::new().await;
-    let client = setup.client();
-
-    let response = client.get_providers().await;
-
-    assert_eq!(response, vec![]);
-
-    setup.drop().await;
-}
-
-#[tokio::test]
-async fn should_get_service_provider_map() {
+async fn should_get_providers_and_get_service_provider_map_be_consistent() {
     let setup = Setup::new().await;
     let client = setup.client();
     let providers = client.get_providers().await;
@@ -26,10 +13,7 @@ async fn should_get_service_provider_map() {
             .iter()
             .find(|p| p.provider_id == provider_id)
             .unwrap();
-        assert!(matches!(
-            found_provider,
-            Some(Provider { alias: service, .. })
-        ));
+        assert_eq!(found_provider.alias, Some(service));
     }
 
     setup.drop().await;

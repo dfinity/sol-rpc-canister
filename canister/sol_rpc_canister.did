@@ -28,6 +28,7 @@ type RpcService = variant {
 type SolMainnetService = variant {
   Alchemy;
   Ankr;
+  PublicNode;
 };
 type SolDevnetService = variant {
   Alchemy;

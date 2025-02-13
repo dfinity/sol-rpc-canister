@@ -1,7 +1,7 @@
+use crate::constants::{SOL_DEVNET_CHAIN_ID, SOL_MAINNET_CHAIN_ID};
 use crate::types::{Provider, ProviderId, RpcAccess, RpcAuth};
 use sol_rpc_types::{RpcService, SolDevnetService, SolMainnetService};
 use std::collections::HashMap;
-use crate::constants::{SOL_DEVNET_CHAIN_ID, SOL_MAINNET_CHAIN_ID};
 
 pub const PROVIDERS: &[Provider] = &[
     Provider {
@@ -46,7 +46,7 @@ pub const PROVIDERS: &[Provider] = &[
             },
             public_url: Some("https://rpc.ankr.com/solana_devnet/"),
         },
-        alias: Some(RpcService::SolMainnet(SolMainnetService::Ankr)),
+        alias: Some(RpcService::SolDevnet(SolDevnetService::Ankr)),
     },
     Provider {
         provider_id: 4,
@@ -147,7 +147,7 @@ mod test {
                 assert!(
                     inverse_map.contains_key(&provider.provider_id),
                     "Missing service mapping for provider with ID: {}",
-                    provider.provider_id
+                    provider.provider_id,
                 );
             }
         })
