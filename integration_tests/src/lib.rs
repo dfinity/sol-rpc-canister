@@ -95,12 +95,11 @@ impl<'a> Runtime for PocketIcRuntime<'a> {
         In: ArgumentEncoder + Send + 'static,
         Out: CandidType + DeserializeOwned + 'static,
     {
-        let args_raw = encode_args(args).expect("Failed to encode arguments.");
-        self.env
-            .update_call(id, self.caller, method, args_raw)
-            .await
-            .map(map_wasm_result)
-            .map_err(map_user_error)
+        PocketIcRuntime::decode_call_result(
+            self.env
+                .update_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
+                .await,
+        )
     }
 
     async fn call_query<In, Out>(
@@ -113,45 +112,51 @@ impl<'a> Runtime for PocketIcRuntime<'a> {
         In: ArgumentEncoder + Send + 'static,
         Out: CandidType + DeserializeOwned + 'static,
     {
-        let args_raw = encode_args(args).expect("Failed to encode arguments.");
-        self.env
-            .update_call(id, self.caller, method, args_raw)
-            .await
-            .map(map_wasm_result)
-            .map_err(map_user_error)
+        PocketIcRuntime::decode_call_result(
+            self.env
+                .query_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
+                .await,
+        )
     }
 }
 
-fn map_user_error<Out>(error: UserError) -> (RejectionCode, String)
-where
-    Out: CandidType + DeserializeOwned + 'static,
-{
-    let rejection_code = match error.code as u64 {
-        100..=199 => RejectionCode::SysFatal,
-        200..=299 => RejectionCode::SysTransient,
-        300..=399 => RejectionCode::DestinationInvalid,
-        400..=499 => RejectionCode::CanisterReject,
-        500..=599 => RejectionCode::CanisterError,
-        _ => RejectionCode::Unknown,
-    };
-    (rejection_code, error.description)
-}
+impl PocketIcRuntime<'_> {
+    fn encode_args<In>(args: In) -> Vec<u8>
+    where
+        In: ArgumentEncoder,
+    {
+        encode_args(args).expect("Failed to encode arguments.")
+    }
 
-fn map_wasm_result<Out>(result: WasmResult) -> Result<Out, (RejectionCode, String)>
-where
-    Out: CandidType + DeserializeOwned + 'static,
-{
-    match result {
-        WasmResult::Reply(bytes) => decode_args(&bytes).map(|(res,)| res).map_err(|e| {
-            (
-                RejectionCode::CanisterError,
-                format!(
-                    "failed to decode canister response as {}: {}",
-                    std::any::type_name::<Out>(),
-                    e
-                ),
-            )
-        }),
-        WasmResult::Reject(s) => Err((RejectionCode::CanisterReject, s)),
+    fn decode_call_result<Out>(
+        result: Result<WasmResult, UserError>,
+    ) -> Result<Out, (RejectionCode, String)>
+    where
+        Out: CandidType + DeserializeOwned + 'static,
+    {
+        match result {
+            Ok(WasmResult::Reply(bytes)) => decode_args(&bytes).map(|(res,)| res).map_err(|e| {
+                (
+                    RejectionCode::CanisterError,
+                    format!(
+                        "failed to decode canister response as {}: {}",
+                        std::any::type_name::<Out>(),
+                        e
+                    ),
+                )
+            }),
+            Ok(WasmResult::Reject(s)) => Err((RejectionCode::CanisterReject, s)),
+            Err(e) => {
+                let rejection_code = match e.code as u64 {
+                    100..=199 => RejectionCode::SysFatal,
+                    200..=299 => RejectionCode::SysTransient,
+                    300..=399 => RejectionCode::DestinationInvalid,
+                    400..=499 => RejectionCode::CanisterReject,
+                    500..=599 => RejectionCode::CanisterError,
+                    _ => RejectionCode::Unknown,
+                };
+                Err((rejection_code, e.description))
+            }
+        }
     }
 }
