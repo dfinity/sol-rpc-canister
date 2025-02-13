@@ -11,3 +11,15 @@ async fn should_get_providers() {
 
     setup.drop().await;
 }
+
+#[tokio::test]
+async fn should_get_service_provider_map() {
+    let setup = Setup::new().await;
+    let client = setup.client();
+
+    let response = client.get_service_provider_map().await;
+
+    assert_eq!(response, vec![]);
+
+    setup.drop().await;
+}

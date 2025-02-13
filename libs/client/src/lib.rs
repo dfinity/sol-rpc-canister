@@ -15,13 +15,24 @@ use serde::de::DeserializeOwned;
 /// * in integration tests by implementing this trait for `PocketIc`.
 #[async_trait]
 pub trait Runtime {
-    /// Defines how asynchronous inter-canister calls are made.
-    async fn call<In, Out>(
+    /// Defines how asynchronous inter-canister update calls are made.
+    async fn call_update<In, Out>(
         &self,
         id: Principal,
         method: &str,
         args: In,
         cycles: u128,
+    ) -> Result<Out, (RejectionCode, String)>
+    where
+        In: ArgumentEncoder + Send + 'static,
+        Out: CandidType + DeserializeOwned + 'static;
+
+    /// Defines how asynchronous inter-canister query calls are made.
+    async fn call_query<In, Out>(
+        &self,
+        id: Principal,
+        method: &str,
+        args: In,
     ) -> Result<Out, (RejectionCode, String)>
     where
         In: ArgumentEncoder + Send + 'static,
@@ -61,7 +72,17 @@ impl<R: Runtime> SolRpcClient<R> {
     /// Call `get_providers` on the SOL RPC canister.
     pub async fn get_providers(&self) -> Vec<sol_rpc_types::Provider> {
         self.runtime
-            .call(self.sol_rpc_canister, "get_providers", (), 10_000)
+            .call_query(self.sol_rpc_canister, "get_providers", ())
+            .await
+            .unwrap()
+    }
+
+    /// Call `get_service_provider_map` on the SOL RPC canister.
+    pub async fn get_service_provider_map(
+        &self,
+    ) -> Vec<(sol_rpc_types::RpcService, sol_rpc_types::ProviderId)> {
+        self.runtime
+            .call_query(self.sol_rpc_canister, "get_service_provider_map", ())
             .await
             .unwrap()
     }
@@ -72,7 +93,7 @@ struct IcRuntime {}
 
 #[async_trait]
 impl Runtime for IcRuntime {
-    async fn call<In, Out>(
+    async fn call_update<In, Out>(
         &self,
         id: Principal,
         method: &str,
@@ -84,6 +105,21 @@ impl Runtime for IcRuntime {
         Out: CandidType + DeserializeOwned + 'static,
     {
         ic_cdk::api::call::call_with_payment128(id, method, args, cycles)
+            .await
+            .map(|(res,)| res)
+    }
+
+    async fn call_query<In, Out>(
+        &self,
+        id: Principal,
+        method: &str,
+        args: In,
+    ) -> Result<Out, (RejectionCode, String)>
+    where
+        In: ArgumentEncoder + Send + 'static,
+        Out: CandidType + DeserializeOwned + 'static,
+    {
+        ic_cdk::api::call::call(id, method, args)
             .await
             .map(|(res,)| res)
     }
