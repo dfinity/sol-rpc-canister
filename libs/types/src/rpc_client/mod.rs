@@ -25,6 +25,8 @@ pub enum SolMainnetService {
     Alchemy,
     /// [Ankr](https://www.ankr.com/) Solana Mainnet RPC provider.
     Ankr,
+    /// [PublicNode](https://www.publicnode.com/) Solana Mainnet RPC provider.
+    PublicNode,
 }
 
 impl SolMainnetService {

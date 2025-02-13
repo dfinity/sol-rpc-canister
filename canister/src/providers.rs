@@ -1,8 +1,62 @@
-use crate::types::{Provider, ProviderId};
-use sol_rpc_types::RpcService;
+use crate::types::{Provider, ProviderId, RpcAccess, RpcAuth};
+use sol_rpc_types::{RpcService, SolDevnetService, SolMainnetService};
 use std::collections::HashMap;
+use crate::constants::{SOL_DEVNET_CHAIN_ID, SOL_MAINNET_CHAIN_ID};
 
-pub const PROVIDERS: &[Provider] = &[];
+pub const PROVIDERS: &[Provider] = &[
+    Provider {
+        provider_id: 0,
+        chain_id: SOL_MAINNET_CHAIN_ID,
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::BearerToken {
+                url: "https://solana-mainnet.g.alchemy.com/v2",
+            },
+            public_url: Some("https://solana-mainnet.g.alchemy.com/v2/demo"),
+        },
+        alias: Some(RpcService::SolMainnet(SolMainnetService::Alchemy)),
+    },
+    Provider {
+        provider_id: 1,
+        chain_id: SOL_DEVNET_CHAIN_ID,
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::BearerToken {
+                url: "https://solana-devnet.g.alchemy.com/v2",
+            },
+            public_url: Some("https://solana-devnet.g.alchemy.com/v2/demo"),
+        },
+        alias: Some(RpcService::SolDevnet(SolDevnetService::Alchemy)),
+    },
+    Provider {
+        provider_id: 2,
+        chain_id: SOL_MAINNET_CHAIN_ID,
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::UrlParameter {
+                url_pattern: "https://rpc.ankr.com/solana/{API_KEY}",
+            },
+            public_url: None,
+        },
+        alias: Some(RpcService::SolMainnet(SolMainnetService::Ankr)),
+    },
+    Provider {
+        provider_id: 3,
+        chain_id: SOL_DEVNET_CHAIN_ID,
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::UrlParameter {
+                url_pattern: "https://rpc.ankr.com/solana_devnet/{API_KEY}",
+            },
+            public_url: Some("https://rpc.ankr.com/solana_devnet/"),
+        },
+        alias: Some(RpcService::SolMainnet(SolMainnetService::Ankr)),
+    },
+    Provider {
+        provider_id: 4,
+        chain_id: SOL_MAINNET_CHAIN_ID,
+        access: RpcAccess::Unauthenticated {
+            public_url: "https://solana-rpc.publicnode.com",
+        },
+        alias: Some(RpcService::SolMainnet(SolMainnetService::PublicNode)),
+    },
+];
 
 thread_local! {
     pub static PROVIDER_MAP: HashMap<ProviderId, Provider> =
