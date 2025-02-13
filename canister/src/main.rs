@@ -1,5 +1,6 @@
 use candid::candid_method;
 use ic_cdk::query;
+use sol_rpc_canister::providers::SERVICE_PROVIDER_MAP;
 use sol_rpc_canister::{
     providers::PROVIDERS,
     types::{Provider, RpcAccess, RpcAuth},
@@ -38,6 +39,12 @@ fn get_providers() -> Vec<sol_rpc_types::Provider> {
         }
     }
     PROVIDERS.iter().cloned().map(into_provider).collect()
+}
+
+#[query(name = "getServiceProviderMap")]
+#[candid_method(query, rename = "getServiceProviderMap")]
+fn get_service_provider_map() -> Vec<(sol_rpc_types::RpcService, sol_rpc_types::ProviderId)> {
+    SERVICE_PROVIDER_MAP.with(|map| map.iter().map(|(k, v)| (k.clone(), *v)).collect())
 }
 
 fn main() {}

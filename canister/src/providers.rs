@@ -1,64 +1,8 @@
-use crate::{
-    constants::{SOL_DEVNET_CHAIN_ID, SOL_MAINNET_CHAIN_ID},
-    types::{Provider, ProviderId, RpcAccess, RpcAuth},
-};
-use sol_rpc_types::{RpcService, SolDevnetService, SolMainnetService};
+use crate::types::{Provider, ProviderId};
+use sol_rpc_types::RpcService;
 use std::collections::HashMap;
 
-pub const PROVIDERS: &[Provider] = &[
-    Provider {
-        provider_id: 1,
-        chain_id: SOL_MAINNET_CHAIN_ID,
-        access: RpcAccess::Authenticated {
-            auth: RpcAuth::UrlParameter {
-                url_pattern: "https://rpc.ankr.com/eth/{API_KEY}",
-            },
-            public_url: Some("https://rpc.ankr.com/eth"),
-        },
-        alias: Some(RpcService::SolMainnet(SolMainnetService::Ankr)),
-    },
-    Provider {
-        provider_id: 2,
-        chain_id: SOL_MAINNET_CHAIN_ID,
-        access: RpcAccess::Unauthenticated {
-            public_url: "https://ethereum-rpc.publicnode.com",
-        },
-        alias: Some(RpcService::SolMainnet(SolMainnetService::PublicNode)),
-    },
-    Provider {
-        provider_id: 5,
-        chain_id: SOL_DEVNET_CHAIN_ID,
-        access: RpcAccess::Authenticated {
-            auth: RpcAuth::UrlParameter {
-                url_pattern: "https://rpc.ankr.com/eth_sepolia/{API_KEY}",
-            },
-            public_url: Some("https://rpc.ankr.com/eth_sepolia"),
-        },
-        alias: Some(RpcService::SolDevnet(SolDevnetService::Ankr)),
-    },
-    Provider {
-        provider_id: 8,
-        chain_id: SOL_MAINNET_CHAIN_ID,
-        access: RpcAccess::Authenticated {
-            auth: RpcAuth::BearerToken {
-                url: "https://eth-mainnet.g.alchemy.com/v2",
-            },
-            public_url: Some("https://eth-mainnet.g.alchemy.com/v2/demo"),
-        },
-        alias: Some(RpcService::SolMainnet(SolMainnetService::Alchemy)),
-    },
-    Provider {
-        provider_id: 9,
-        chain_id: SOL_DEVNET_CHAIN_ID,
-        access: RpcAccess::Authenticated {
-            auth: RpcAuth::BearerToken {
-                url: "https://eth-sepolia.g.alchemy.com/v2",
-            },
-            public_url: Some("https://eth-sepolia.g.alchemy.com/v2/demo"),
-        },
-        alias: Some(RpcService::SolDevnet(SolDevnetService::Alchemy)),
-    },
-];
+pub const PROVIDERS: &[Provider] = &[];
 
 thread_local! {
     pub static PROVIDER_MAP: HashMap<ProviderId, Provider> =
