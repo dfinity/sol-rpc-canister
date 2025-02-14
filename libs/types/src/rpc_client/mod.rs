@@ -5,6 +5,17 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use strum::VariantArray;
 
+/// [Solana clusters](https://solana.com/docs/references/clusters).
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize, Serialize)]
+pub enum SolanaCluster {
+    /// Mainnet: live production environment for deployed applications.
+    Mainnet,
+    /// Devnet: Testing with public accessibility for developers experimenting with their applications.
+    Devnet,
+    /// Testnet: Stress-testing for network upgrades and validator performance.
+    Testnet,
+}
+
 /// Service providers to access the [Solana Mainnet](https://solana.com/docs/references/clusters).
 #[derive(
     Clone,
@@ -89,7 +100,7 @@ impl Debug for RpcService {
 }
 
 /// Unique identifier for a [`Provider`] provider.
-pub type ProviderId = u64;
+pub type ProviderId = String;
 
 /// Defines an RPC provider.
 #[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize, Serialize)]
@@ -97,9 +108,8 @@ pub struct Provider {
     /// Unique identifier for this provider.
     #[serde(rename = "providerId")]
     pub provider_id: ProviderId,
-    /// Unique identifier for the blockchain network this provider gives access to.
-    #[serde(rename = "chainId")]
-    pub chain_id: u64,
+    /// The Solana cluster this provider gives access to.
+    pub cluster: SolanaCluster,
     /// The access method for this provider.
     pub access: RpcAccess,
     /// The service this provider offers.

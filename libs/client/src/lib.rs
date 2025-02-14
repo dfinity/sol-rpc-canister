@@ -16,7 +16,7 @@ use serde::de::DeserializeOwned;
 #[async_trait]
 pub trait Runtime {
     /// Defines how asynchronous inter-canister update calls are made.
-    async fn call_update<In, Out>(
+    async fn update_call<In, Out>(
         &self,
         id: Principal,
         method: &str,
@@ -28,7 +28,7 @@ pub trait Runtime {
         Out: CandidType + DeserializeOwned + 'static;
 
     /// Defines how asynchronous inter-canister query calls are made.
-    async fn call_query<In, Out>(
+    async fn query_call<In, Out>(
         &self,
         id: Principal,
         method: &str,
@@ -72,7 +72,7 @@ impl<R: Runtime> SolRpcClient<R> {
     /// Call `getProviders` on the SOL RPC canister.
     pub async fn get_providers(&self) -> Vec<sol_rpc_types::Provider> {
         self.runtime
-            .call_query(self.sol_rpc_canister, "getProviders", ())
+            .query_call(self.sol_rpc_canister, "getProviders", ())
             .await
             .unwrap()
     }
@@ -82,7 +82,7 @@ impl<R: Runtime> SolRpcClient<R> {
         &self,
     ) -> Vec<(sol_rpc_types::RpcService, sol_rpc_types::ProviderId)> {
         self.runtime
-            .call_query(self.sol_rpc_canister, "getServiceProviderMap", ())
+            .query_call(self.sol_rpc_canister, "getServiceProviderMap", ())
             .await
             .unwrap()
     }
@@ -93,7 +93,7 @@ struct IcRuntime {}
 
 #[async_trait]
 impl Runtime for IcRuntime {
-    async fn call_update<In, Out>(
+    async fn update_call<In, Out>(
         &self,
         id: Principal,
         method: &str,
@@ -109,7 +109,7 @@ impl Runtime for IcRuntime {
             .map(|(res,)| res)
     }
 
-    async fn call_query<In, Out>(
+    async fn query_call<In, Out>(
         &self,
         id: Principal,
         method: &str,

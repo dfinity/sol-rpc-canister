@@ -7,5 +7,5 @@ mod rpc_client;
 
 pub use rpc_client::{
     HttpHeader, Provider, ProviderId, RpcAccess, RpcAuth, RpcService, SolDevnetService,
-    SolMainnetService,
+    SolMainnetService, SolanaCluster,
 };

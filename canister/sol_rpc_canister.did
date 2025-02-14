@@ -1,11 +1,15 @@
 type Provider = record {
   providerId : ProviderId;
-  chainId : ChainId;
+  cluster : SolanaCluster;
   access : RpcAccess;
   alias : opt RpcService;
 };
-type ProviderId = nat64;
-type ChainId = nat64;
+type ProviderId = text;
+type SolanaCluster = variant {
+  Mainnet;
+  Devnet;
+  Testnet;
+};
 type RpcAccess = variant {
   Authenticated : record {
     auth : RpcAuth;
@@ -36,5 +40,4 @@ type SolDevnetService = variant {
 };
 service : {
   getProviders : () -> (vec Provider) query;
-  getServiceProviderMap : () -> (vec record { RpcService; ProviderId }) query;
 };

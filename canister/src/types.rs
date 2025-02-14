@@ -1,9 +1,9 @@
-pub type ProviderId = u64;
+pub type ProviderId = &'static str;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Provider {
     pub provider_id: ProviderId,
-    pub chain_id: u64,
+    pub cluster: sol_rpc_types::SolanaCluster,
     pub access: RpcAccess,
     pub alias: Option<sol_rpc_types::RpcService>,
 }

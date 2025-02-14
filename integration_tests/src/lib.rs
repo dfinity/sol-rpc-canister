@@ -84,7 +84,7 @@ pub struct PocketIcRuntime<'a> {
 
 #[async_trait]
 impl<'a> Runtime for PocketIcRuntime<'a> {
-    async fn call_update<In, Out>(
+    async fn update_call<In, Out>(
         &self,
         id: Principal,
         method: &str,
@@ -102,7 +102,7 @@ impl<'a> Runtime for PocketIcRuntime<'a> {
         )
     }
 
-    async fn call_query<In, Out>(
+    async fn query_call<In, Out>(
         &self,
         id: Principal,
         method: &str,
