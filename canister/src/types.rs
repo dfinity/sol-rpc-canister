@@ -1,9 +1,10 @@
+use crate::{constants::{API_KEY_REPLACE_STRING, API_KEY_MAX_SIZE}, validate::validate_api_key};
 use ic_stable_structures::{storable::Bound, Storable};
-use std::borrow::Cow;
-use std::fmt;
-use crate::constants::API_KEY_MAX_SIZE;
+use serde::{Deserialize, Serialize};
+use std::{borrow::Cow, fmt};
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
-#[derive(Zeroize, ZeroizeOnDrop)]
+#[derive(Clone, PartialEq, Zeroize, ZeroizeOnDrop, Deserialize, Serialize)]
 pub struct ApiKey(String);
 
 impl ApiKey {

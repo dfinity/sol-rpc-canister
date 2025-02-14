@@ -17,6 +17,10 @@ candid = { workspace = true }
 ic-cdk = { workspace = true }
 ic-stable-structures = { workspace = true }
 sol_rpc_types = { path = "../libs/types" }
+zeroize = { workspace = true }
+serde = { version = "1.0.217", features = ["derive"] }
+ciborium = "0.2.2"
+hex = "0.4.3"
 
 [dev-dependencies]
 candid_parser = { workspace = true }

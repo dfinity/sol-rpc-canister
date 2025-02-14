@@ -38,6 +38,9 @@ type SolDevnetService = variant {
   Alchemy;
   Ankr;
 };
-service : {
+type InstallArgs = record {
+  manageApiKeys: opt vec principal;
+};
+service : (InstallArgs,) -> {
   getProviders : () -> (vec Provider) query;
 };

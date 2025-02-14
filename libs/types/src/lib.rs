@@ -3,8 +3,10 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 
+mod lifecycle;
 mod rpc_client;
 
+pub use lifecycle::InstallArgs;
 pub use rpc_client::{
     HttpHeader, Provider, ProviderId, RpcAccess, RpcAuth, RpcService, SolDevnetService,
     SolMainnetService, SolanaCluster,

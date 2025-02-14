@@ -6,6 +6,7 @@ use pocket_ic::management_canister::{CanisterId, CanisterSettings};
 use pocket_ic::{nonblocking::PocketIc, PocketIcBuilder, UserError, WasmResult};
 use serde::de::DeserializeOwned;
 use sol_rpc_client::{Runtime, SolRpcClient};
+use sol_rpc_types::InstallArgs;
 use std::path::PathBuf;
 
 pub struct Setup {
@@ -38,7 +39,7 @@ impl Setup {
         env.install_canister(
             canister_id,
             sol_rpc_wasm(),
-            Encode!().unwrap(),
+            Encode!(&InstallArgs::default()).unwrap(),
             Some(controller),
         )
         .await;

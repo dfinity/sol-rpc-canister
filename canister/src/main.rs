@@ -1,6 +1,21 @@
 use candid::candid_method;
 use ic_cdk::query;
-use sol_rpc_canister::providers::PROVIDERS;
+use sol_rpc_canister::{
+    providers::PROVIDERS,
+    state::{init_state, State},
+};
+
+#[ic_cdk::init]
+fn init(args: sol_rpc_types::InstallArgs) {
+    init_state(State::from(args))
+}
+
+#[ic_cdk::post_upgrade]
+fn post_upgrade(args: Option<sol_rpc_types::InstallArgs>) {
+    if let Some(args) = args {
+        init_state(State::from(args))
+    }
+}
 
 #[query(name = "getProviders")]
 #[candid_method(query, rename = "getProviders")]
