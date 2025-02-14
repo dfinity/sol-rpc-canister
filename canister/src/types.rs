@@ -1,4 +1,7 @@
-use crate::{constants::{API_KEY_REPLACE_STRING, API_KEY_MAX_SIZE}, validate::validate_api_key};
+use crate::{
+    constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING},
+    validate::validate_api_key,
+};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, fmt};
