@@ -25,9 +25,17 @@ type RpcAuth = variant {
 };
 type RpcService = variant {
   Provider : ProviderId;
-  // TODO: Custom : RpcApi;
+  Custom : RpcApi;
   SolMainnet : SolMainnetService;
   SolDevnet : SolDevnetService;
+};
+type RpcApi = record {
+  url : text;
+  headers : opt vec HttpHeader
+};
+type HttpHeader = record {
+  value : text;
+  name : text
 };
 type SolMainnetService = variant {
   Alchemy;
