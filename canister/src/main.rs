@@ -5,7 +5,7 @@ use sol_rpc_canister::providers::PROVIDERS;
 #[query(name = "getProviders")]
 #[candid_method(query, rename = "getProviders")]
 fn get_providers() -> Vec<sol_rpc_types::Provider> {
-    PROVIDERS.with(|providers| providers.clone())
+    PROVIDERS.with(|providers| providers.clone().into_iter().collect())
 }
 
 fn main() {}

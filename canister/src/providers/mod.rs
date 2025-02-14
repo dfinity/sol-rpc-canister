@@ -6,7 +6,7 @@ use sol_rpc_types::{RpcService, SolDevnetService, SolMainnetService, SolanaClust
 use std::collections::HashMap;
 
 thread_local! {
-    pub static PROVIDERS: Vec<Provider> = vec![
+    pub static PROVIDERS: [Provider; 5] = [
         Provider {
             provider_id: String::from("alchemy-mainnet"),
             cluster: SolanaCluster::Mainnet,
