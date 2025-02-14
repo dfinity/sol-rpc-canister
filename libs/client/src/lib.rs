@@ -76,16 +76,6 @@ impl<R: Runtime> SolRpcClient<R> {
             .await
             .unwrap()
     }
-
-    /// Call `getServiceProviderMap` on the SOL RPC canister.
-    pub async fn get_service_provider_map(
-        &self,
-    ) -> Vec<(sol_rpc_types::RpcService, sol_rpc_types::ProviderId)> {
-        self.runtime
-            .query_call(self.sol_rpc_canister, "getServiceProviderMap", ())
-            .await
-            .unwrap()
-    }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
