@@ -52,7 +52,7 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
-      - name: 'Run unit tests.rs'
+      - name: 'Run unit tests'
         run: cargo test --locked --workspace --exclude sol_rpc_int_tests
 
   integration-tests:

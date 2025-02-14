@@ -11,8 +11,8 @@ use serde::de::DeserializeOwned;
 
 /// Abstract the canister runtime so that the client code can be reused:
 /// * in production using `ic_cdk`,
-/// * in unit tests.rs by mocking this trait,
-/// * in integration tests.rs by implementing this trait for `PocketIc`.
+/// * in unit tests by mocking this trait,
+/// * in integration tests by implementing this trait for `PocketIc`.
 #[async_trait]
 pub trait Runtime {
     /// Defines how asynchronous inter-canister update calls are made.
