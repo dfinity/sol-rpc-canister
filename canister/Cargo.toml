@@ -15,6 +15,7 @@ path = "src/main.rs"
 [dependencies]
 candid = { workspace = true }
 ic-cdk = { workspace = true }
+ic-stable-structures = { workspace = true }
 sol_rpc_types = { path = "../libs/types" }
 
 [dev-dependencies]
