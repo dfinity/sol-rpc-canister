@@ -1,12 +1,10 @@
 use candid::candid_method;
 use ic_cdk::api::is_controller;
 use ic_cdk::{query, update};
-use sol_rpc_canister::state::{mutate_state, read_state};
 use sol_rpc_canister::{
-    providers::PROVIDERS,
-    state::{init_state, State},
+    providers::{find_provider, PROVIDERS},
+    state::{init_state, mutate_state, read_state, State},
 };
-use sol_rpc_canister::providers::find_provider;
 use sol_rpc_types::{ProviderId, RpcAccess};
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
