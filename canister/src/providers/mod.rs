@@ -8,54 +8,54 @@ use std::collections::HashMap;
 thread_local! {
     pub static PROVIDERS: [Provider; 5] = [
         Provider {
-            provider_id: String::from("alchemy-mainnet"),
+            provider_id: "alchemy-mainnet".to_string(),
             cluster: SolanaCluster::Mainnet,
             access: RpcAccess::Authenticated {
                 auth: RpcAuth::BearerToken {
-                    url: String::from("https://solana-mainnet.g.alchemy.com/v2"),
+                    url: "https://solana-mainnet.g.alchemy.com/v2".to_string(),
                 },
-                public_url: Some(String::from("https://solana-mainnet.g.alchemy.com/v2/demo")),
+                public_url: Some("https://solana-mainnet.g.alchemy.com/v2/demo".to_string()),
             },
             alias: Some(RpcService::SolMainnet(SolMainnetService::Alchemy)),
         },
         Provider {
-            provider_id: String::from("alchemy-devnet"),
+            provider_id: "alchemy-devnet".to_string(),
             cluster: SolanaCluster::Devnet,
             access: RpcAccess::Authenticated {
                 auth: RpcAuth::BearerToken {
-                    url: String::from("https://solana-devnet.g.alchemy.com/v2"),
+                    url: "https://solana-devnet.g.alchemy.com/v2".to_string(),
                 },
-                public_url: Some(String::from("https://solana-devnet.g.alchemy.com/v2/demo")),
+                public_url: Some("https://solana-devnet.g.alchemy.com/v2/demo".to_string()),
             },
             alias: Some(RpcService::SolDevnet(SolDevnetService::Alchemy)),
         },
         Provider {
-            provider_id: String::from("ankr-mainnet"),
+            provider_id: "ankr-mainnet".to_string(),
             cluster: SolanaCluster::Mainnet,
             access: RpcAccess::Authenticated {
                 auth: RpcAuth::UrlParameter {
-                    url_pattern: String::from("https://rpc.ankr.com/solana/{API_KEY}"),
+                    url_pattern: "https://rpc.ankr.com/solana/{API_KEY}".to_string(),
                 },
                 public_url: None,
             },
             alias: Some(RpcService::SolMainnet(SolMainnetService::Ankr)),
         },
         Provider {
-            provider_id: String::from("ankr-devnet"),
+            provider_id: "ankr-devnet".to_string(),
             cluster: SolanaCluster::Devnet,
             access: RpcAccess::Authenticated {
                 auth: RpcAuth::UrlParameter {
-                    url_pattern: String::from("https://rpc.ankr.com/solana_devnet/{API_KEY}"),
+                    url_pattern: "https://rpc.ankr.com/solana_devnet/{API_KEY}".to_string(),
                 },
-                public_url: Some(String::from("https://rpc.ankr.com/solana_devnet/")),
+                public_url: Some("https://rpc.ankr.com/solana_devnet/".to_string()),
             },
             alias: Some(RpcService::SolDevnet(SolDevnetService::Ankr)),
         },
         Provider {
-            provider_id: String::from("publicnode-mainnet"),
+            provider_id: "publicnode-mainnet".to_string(),
             cluster: SolanaCluster::Mainnet,
             access: RpcAccess::Unauthenticated {
-                public_url: String::from("https://solana-rpc.publicnode.com"),
+                public_url: "https://solana-rpc.publicnode.com".to_string(),
             },
             alias: Some(RpcService::SolMainnet(SolMainnetService::PublicNode)),
         },

@@ -12,13 +12,13 @@ async fn should_get_providers() {
     assert_eq!(
         providers[0],
         Provider {
-            provider_id: String::from("alchemy-mainnet"),
+            provider_id: "alchemy-mainnet".to_string(),
             cluster: SolanaCluster::Mainnet,
             access: RpcAccess::Authenticated {
                 auth: RpcAuth::BearerToken {
-                    url: String::from("https://solana-mainnet.g.alchemy.com/v2"),
+                    url: "https://solana-mainnet.g.alchemy.com/v2".to_string(),
                 },
-                public_url: Some(String::from("https://solana-mainnet.g.alchemy.com/v2/demo")),
+                public_url: Some("https://solana-mainnet.g.alchemy.com/v2/demo".to_string()),
             },
             alias: Some(RpcService::SolMainnet(SolMainnetService::Alchemy)),
         }
