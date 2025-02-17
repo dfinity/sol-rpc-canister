@@ -4,7 +4,7 @@ use ic_cdk::{query, update};
 use sol_rpc_canister::{
     lifecycle,
     providers::{find_provider, PROVIDERS},
-    state::{init_state, mutate_state, read_state, State},
+    state::{mutate_state, read_state},
 };
 use sol_rpc_types::{ProviderId, RpcAccess};
 
