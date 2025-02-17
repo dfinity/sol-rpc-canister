@@ -64,6 +64,19 @@ async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
     }
 }
 
+#[query(
+    name = "verifyApiKey",
+    guard = "require_api_key_principal_or_controller"
+)]
+#[candid_method(query, rename = "verifyApiKey")]
+async fn verify_api_key(api_key: (ProviderId, Option<String>)) {
+    let (provider_id, api_key) = api_key;
+    let api_key = api_key.map(|key| TryFrom::try_from(key).expect("Invalid API key"));
+    if read_state(|state| state.get_api_key(provider_id)) != api_key {
+        panic!("API key does not match input")
+    }
+}
+
 #[ic_cdk::init]
 fn init(args: sol_rpc_types::InstallArgs) {
     lifecycle::init(args);
