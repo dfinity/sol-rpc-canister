@@ -2,6 +2,7 @@ use candid::candid_method;
 use ic_cdk::api::is_controller;
 use ic_cdk::{query, update};
 use sol_rpc_canister::{
+    lifecycle,
     providers::{find_provider, PROVIDERS},
     state::{init_state, mutate_state, read_state, State},
 };
@@ -48,15 +49,12 @@ async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
     for (provider_id, api_key) in api_keys {
         let provider = find_provider(|provider| provider.provider_id == provider_id)
             .unwrap_or_else(|| panic!("Provider not found: {}", provider_id));
-        match provider.access {
-            RpcAccess::Authenticated { .. } => {}
-            RpcAccess::Unauthenticated { .. } => {
-                panic!(
-                    "Trying to set API key for unauthenticated provider: {}",
-                    provider_id
-                )
-            }
-        };
+        if let RpcAccess::Unauthenticated { .. } = provider.access {
+            panic!(
+                "Trying to set API key for unauthenticated provider: {}",
+                provider_id
+            )
+        }
         match api_key {
             Some(key) => mutate_state(|state| {
                 state.insert_api_key(provider_id, key.try_into().expect("Invalid API key"))
@@ -68,14 +66,12 @@ async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
 
 #[ic_cdk::init]
 fn init(args: sol_rpc_types::InstallArgs) {
-    init_state(State::from(args))
+    lifecycle::init(args);
 }
 
 #[ic_cdk::post_upgrade]
 fn post_upgrade(args: Option<sol_rpc_types::InstallArgs>) {
-    if let Some(args) = args {
-        init_state(State::from(args))
-    }
+    lifecycle::post_upgrade(args);
 }
 
 fn main() {}
