@@ -34,7 +34,6 @@ async fn should_update_api_key() {
     let authorized_caller = ADDITIONAL_TEST_ID;
     let setup = Setup::with_args(InstallArgs {
         manage_api_keys: Some(vec![authorized_caller]),
-        ..Default::default()
     })
     .await
     .as_caller(authorized_caller);
@@ -106,13 +105,11 @@ async fn upgrade_should_keep_manage_api_key_principals() {
     let authorized_caller = ADDITIONAL_TEST_ID;
     let setup = Setup::with_args(InstallArgs {
         manage_api_keys: Some(vec![authorized_caller]),
-        ..Default::default()
     })
     .await;
     setup
         .upgrade_canister(InstallArgs {
             manage_api_keys: None,
-            ..Default::default()
         })
         .await;
     setup
@@ -131,13 +128,11 @@ async fn upgrade_should_change_manage_api_key_principals() {
     let deauthorized_caller = ADDITIONAL_TEST_ID;
     let setup = Setup::with_args(InstallArgs {
         manage_api_keys: Some(vec![deauthorized_caller]),
-        ..Default::default()
     })
     .await;
     setup
         .upgrade_canister(InstallArgs {
             manage_api_keys: Some(vec![]),
-            ..Default::default()
         })
         .await;
     setup
