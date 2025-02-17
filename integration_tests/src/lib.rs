@@ -3,7 +3,7 @@ use candid::utils::ArgumentEncoder;
 use candid::{decode_args, encode_args, CandidType, Encode, Principal};
 use ic_cdk::api::call::RejectionCode;
 use pocket_ic::management_canister::{CanisterId, CanisterSettings};
-use pocket_ic::{nonblocking::PocketIc, PocketIcBuilder, WasmResult};
+use pocket_ic::{nonblocking::PocketIc, PocketIcBuilder, UserError, WasmResult};
 use serde::de::DeserializeOwned;
 use sol_rpc_client::{Runtime, SolRpcClient};
 use std::path::PathBuf;
@@ -84,7 +84,7 @@ pub struct PocketIcRuntime<'a> {
 
 #[async_trait]
 impl<'a> Runtime for PocketIcRuntime<'a> {
-    async fn call<In, Out>(
+    async fn update_call<In, Out>(
         &self,
         id: Principal,
         method: &str,
@@ -95,12 +95,46 @@ impl<'a> Runtime for PocketIcRuntime<'a> {
         In: ArgumentEncoder + Send + 'static,
         Out: CandidType + DeserializeOwned + 'static,
     {
-        let args_raw = encode_args(args).expect("Failed to encode arguments.");
-        match self
-            .env
-            .update_call(id, self.caller, method, args_raw)
-            .await
-        {
+        PocketIcRuntime::decode_call_result(
+            self.env
+                .update_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
+                .await,
+        )
+    }
+
+    async fn query_call<In, Out>(
+        &self,
+        id: Principal,
+        method: &str,
+        args: In,
+    ) -> Result<Out, (RejectionCode, String)>
+    where
+        In: ArgumentEncoder + Send + 'static,
+        Out: CandidType + DeserializeOwned + 'static,
+    {
+        PocketIcRuntime::decode_call_result(
+            self.env
+                .query_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
+                .await,
+        )
+    }
+}
+
+impl PocketIcRuntime<'_> {
+    fn encode_args<In>(args: In) -> Vec<u8>
+    where
+        In: ArgumentEncoder,
+    {
+        encode_args(args).expect("Failed to encode arguments.")
+    }
+
+    fn decode_call_result<Out>(
+        result: Result<WasmResult, UserError>,
+    ) -> Result<Out, (RejectionCode, String)>
+    where
+        Out: CandidType + DeserializeOwned + 'static,
+    {
+        match result {
             Ok(WasmResult::Reply(bytes)) => decode_args(&bytes).map(|(res,)| res).map_err(|e| {
                 (
                     RejectionCode::CanisterError,

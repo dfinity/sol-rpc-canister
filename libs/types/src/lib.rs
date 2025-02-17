@@ -3,22 +3,9 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 
-#[cfg(test)]
-mod tests;
+mod rpc_client;
 
-use candid::CandidType;
-use serde::{Deserialize, Serialize};
-
-/// A dummy request
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, CandidType)]
-pub struct DummyRequest {
-    /// Input
-    pub input: String,
-}
-
-/// A dummy response
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, CandidType)]
-pub struct DummyResponse {
-    /// Output
-    pub output: String,
-}
+pub use rpc_client::{
+    HttpHeader, Provider, ProviderId, RpcAccess, RpcAuth, RpcService, SolDevnetService,
+    SolMainnetService, SolanaCluster,
+};

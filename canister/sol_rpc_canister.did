@@ -1,6 +1,43 @@
-type DummyRequest = record {input : text};
-type DummyResponse = record {output : text};
-
+type Provider = record {
+  providerId : ProviderId;
+  cluster : SolanaCluster;
+  access : RpcAccess;
+  alias : opt RpcService;
+};
+type ProviderId = text;
+type SolanaCluster = variant {
+  Mainnet;
+  Devnet;
+  Testnet;
+};
+type RpcAccess = variant {
+  Authenticated : record {
+    auth : RpcAuth;
+    publicUrl : opt text;
+  };
+  Unauthenticated : record {
+    publicUrl : text;
+  };
+};
+type RpcAuth = variant {
+  BearerToken : record { url : text };
+  UrlParameter : record { urlPattern : text };
+};
+type RpcService = variant {
+  Provider : ProviderId;
+  // TODO: Custom : RpcApi;
+  SolMainnet : SolMainnetService;
+  SolDevnet : SolDevnetService;
+};
+type SolMainnetService = variant {
+  Alchemy;
+  Ankr;
+  PublicNode;
+};
+type SolDevnetService = variant {
+  Alchemy;
+  Ankr;
+};
 service : {
-    greet: (DummyRequest) -> (DummyResponse) query;
-}
+  getProviders : () -> (vec Provider) query;
+};

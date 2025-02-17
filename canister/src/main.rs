@@ -1,10 +1,11 @@
-use sol_rpc_types::{DummyRequest, DummyResponse};
+use candid::candid_method;
+use ic_cdk::query;
+use sol_rpc_canister::providers::PROVIDERS;
 
-#[ic_cdk::query]
-fn greet(request: DummyRequest) -> DummyResponse {
-    DummyResponse {
-        output: format!("Hello, {}!", request.input),
-    }
+#[query(name = "getProviders")]
+#[candid_method(query, rename = "getProviders")]
+fn get_providers() -> Vec<sol_rpc_types::Provider> {
+    PROVIDERS.with(|providers| providers.clone().into_iter().collect())
 }
 
 fn main() {}

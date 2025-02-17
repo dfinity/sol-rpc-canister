@@ -8,7 +8,6 @@ use candid::utils::ArgumentEncoder;
 use candid::{CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
-use sol_rpc_types::{DummyRequest, DummyResponse};
 
 /// Abstract the canister runtime so that the client code can be reused:
 /// * in production using `ic_cdk`,
@@ -16,13 +15,24 @@ use sol_rpc_types::{DummyRequest, DummyResponse};
 /// * in integration tests by implementing this trait for `PocketIc`.
 #[async_trait]
 pub trait Runtime {
-    /// Defines how asynchronous inter-canister calls are made.
-    async fn call<In, Out>(
+    /// Defines how asynchronous inter-canister update calls are made.
+    async fn update_call<In, Out>(
         &self,
         id: Principal,
         method: &str,
         args: In,
         cycles: u128,
+    ) -> Result<Out, (RejectionCode, String)>
+    where
+        In: ArgumentEncoder + Send + 'static,
+        Out: CandidType + DeserializeOwned + 'static;
+
+    /// Defines how asynchronous inter-canister query calls are made.
+    async fn query_call<In, Out>(
+        &self,
+        id: Principal,
+        method: &str,
+        args: In,
     ) -> Result<Out, (RejectionCode, String)>
     where
         In: ArgumentEncoder + Send + 'static,
@@ -59,10 +69,10 @@ impl<R: Runtime> SolRpcClient<R> {
         }
     }
 
-    /// Call `greet` on the SOL RPC canister.
-    pub async fn greet(&self, request: DummyRequest) -> DummyResponse {
+    /// Call `getProviders` on the SOL RPC canister.
+    pub async fn get_providers(&self) -> Vec<sol_rpc_types::Provider> {
         self.runtime
-            .call(self.sol_rpc_canister, "greet", (request,), 10_000)
+            .query_call(self.sol_rpc_canister, "getProviders", ())
             .await
             .unwrap()
     }
@@ -73,7 +83,7 @@ struct IcRuntime {}
 
 #[async_trait]
 impl Runtime for IcRuntime {
-    async fn call<In, Out>(
+    async fn update_call<In, Out>(
         &self,
         id: Principal,
         method: &str,
@@ -85,6 +95,21 @@ impl Runtime for IcRuntime {
         Out: CandidType + DeserializeOwned + 'static,
     {
         ic_cdk::api::call::call_with_payment128(id, method, args, cycles)
+            .await
+            .map(|(res,)| res)
+    }
+
+    async fn query_call<In, Out>(
+        &self,
+        id: Principal,
+        method: &str,
+        args: In,
+    ) -> Result<Out, (RejectionCode, String)>
+    where
+        In: ArgumentEncoder + Send + 'static,
+        Out: CandidType + DeserializeOwned + 'static,
+    {
+        ic_cdk::api::call::call(id, method, args)
             .await
             .map(|(res,)| res)
     }
