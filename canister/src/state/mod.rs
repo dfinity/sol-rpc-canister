@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests;
 
-use crate::types::ApiKey;
+use crate::types::{ApiKey, OverrideProvider};
 use candid::{Deserialize, Principal};
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
@@ -83,11 +83,12 @@ fn decode<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> T {
 pub struct State {
     api_keys: BTreeMap<ProviderId, ApiKey>,
     api_key_principals: Vec<Principal>,
+    override_provider: OverrideProvider,
 }
 
 impl State {
-    pub fn get_api_key(&self, provider_id: ProviderId) -> Option<ApiKey> {
-        self.api_keys.get(&provider_id).cloned()
+    pub fn get_api_key(&self, provider_id: &ProviderId) -> Option<ApiKey> {
+        self.api_keys.get(provider_id).cloned()
     }
 
     pub fn insert_api_key(&mut self, provider_id: ProviderId, api_key: ApiKey) {
@@ -112,6 +113,14 @@ impl State {
             self.api_key_principals.push(principal);
         }
     }
+
+    pub fn get_override_provider(&self) -> OverrideProvider {
+        self.override_provider.clone()
+    }
+
+    pub fn set_override_provider(&mut self, override_provider: OverrideProvider) {
+        self.override_provider = override_provider
+    }
 }
 
 impl From<InstallArgs> for State {
@@ -119,6 +128,7 @@ impl From<InstallArgs> for State {
         Self {
             api_keys: Default::default(),
             api_key_principals: value.manage_api_keys.unwrap_or_default(),
+            override_provider: value.override_provider.unwrap_or_default().into(),
         }
     }
 }
@@ -158,4 +168,14 @@ pub fn init_state(state: State) {
             .set(ConfigState::Initialized(state))
             .expect("failed to initialize state in stable cell")
     });
+}
+
+/// Resets the state to [`ConfigState::Uninitialized`] which is useful e.g. in property tests where
+/// the thread gets re-used and thus the state persists across test instances.
+pub fn reset_state() {
+    STATE.with(|cell| {
+        cell.borrow_mut()
+            .set(ConfigState::Uninitialized)
+            .unwrap_or_else(|err| panic!("Could not reset state: {:?}", err));
+    })
 }

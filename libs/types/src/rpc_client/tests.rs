@@ -1,5 +1,4 @@
-use crate::RpcApi;
-use ic_cdk::api::management_canister::http_request::HttpHeader;
+use crate::{HttpHeader, RpcApi};
 
 #[test]
 fn should_contain_host_without_sensitive_information() {
