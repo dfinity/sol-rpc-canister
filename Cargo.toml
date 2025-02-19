@@ -32,6 +32,7 @@ candid_parser = "0.1.4"
 ciborium = "0.2.2"
 # Transitive dependency of ic-ed25519
 # See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
+const_format = "0.2.34"
 getrandom = { version = "*", default-features = false, features = ["custom"] }
 hex = "0.4.3"
 ic-cdk = "0.17.1"

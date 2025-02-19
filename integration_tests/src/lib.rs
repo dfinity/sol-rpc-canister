@@ -6,7 +6,7 @@ use pocket_ic::management_canister::{CanisterId, CanisterSettings};
 use pocket_ic::{nonblocking::PocketIc, PocketIcBuilder, UserError, WasmResult};
 use serde::de::DeserializeOwned;
 use sol_rpc_client::{Runtime, SolRpcClient};
-use sol_rpc_types::InstallArgs;
+use sol_rpc_types::{InstallArgs, ProviderId};
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -90,16 +90,8 @@ impl Setup {
         self.env.drop().await
     }
 
-    /// Shorthand for deriving a `Setup` with an arbitrary caller.
-    pub fn as_caller<T: Into<Principal>>(mut self, id: T) -> Self {
-        self.caller = id.into();
-        self
-    }
-
-    /// Shorthand for deriving a `Setup` with the caller as the canister controller.
-    pub fn as_controller(mut self) -> Self {
-        self.caller = self.controller;
-        self
+    pub fn controller(&self) -> Principal {
+        self.controller
     }
 }
 
@@ -193,5 +185,26 @@ impl PocketIcRuntime<'_> {
                 Err((rejection_code, e.description))
             }
         }
+    }
+}
+
+#[async_trait]
+pub trait SolRpcTestClient<R: Runtime> {
+    async fn verify_api_key(&self, api_key: (ProviderId, Option<String>));
+    fn as_caller<T: Into<Principal>>(self, id: T) -> Self;
+}
+
+#[async_trait]
+impl SolRpcTestClient<PocketIcRuntime<'_>> for SolRpcClient<PocketIcRuntime<'_>> {
+    async fn verify_api_key(&self, api_key: (ProviderId, Option<String>)) {
+        self.runtime
+            .query_call(self.sol_rpc_canister, "verifyApiKey", (api_key,))
+            .await
+            .unwrap()
+    }
+
+    fn as_caller<T: Into<Principal>>(mut self, id: T) -> Self {
+        self.runtime.caller = id.into();
+        self
     }
 }

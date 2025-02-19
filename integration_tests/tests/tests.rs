@@ -1,4 +1,4 @@
-use sol_rpc_int_tests::{Setup, ADDITIONAL_TEST_ID};
+use sol_rpc_int_tests::{Setup, SolRpcTestClient, ADDITIONAL_TEST_ID};
 use sol_rpc_types::{
     InstallArgs, Provider, RpcAccess, RpcAuth, RpcService, SolMainnetService, SolanaCluster,
 };
@@ -35,11 +35,10 @@ async fn should_update_api_key() {
     let setup = Setup::with_args(InstallArgs {
         manage_api_keys: Some(vec![authorized_caller]),
     })
-    .await
-    .as_caller(authorized_caller);
+    .await;
     let provider_id = "alchemy-mainnet";
     let api_key = "test-api-key";
-    let client = setup.client();
+    let client = setup.client().as_caller(authorized_caller);
     client
         .update_api_keys(&[(provider_id.to_string(), Some(api_key.to_string()))])
         .await;
@@ -71,8 +70,8 @@ async fn should_prevent_unauthorized_update_api_keys() {
 async fn should_prevent_unauthenticated_update_api_keys() {
     let setup = Setup::new().await;
     setup
-        .as_controller()
         .client()
+        .as_caller(setup.controller())
         .update_api_keys(&[(
             "publicnode-mainnet".to_string(),
             Some("invalid-api-key".to_string()),
@@ -82,10 +81,10 @@ async fn should_prevent_unauthenticated_update_api_keys() {
 
 #[tokio::test]
 async fn upgrade_should_keep_api_keys() {
-    let setup = Setup::new().await.as_controller();
+    let setup = Setup::new().await;
     let provider_id = "alchemy-mainnet";
     let api_key = "test-api-key";
-    let client = setup.client();
+    let client = setup.client().as_caller(setup.controller());
     client
         .update_api_keys(&[(provider_id.to_string(), Some(api_key.to_string()))])
         .await;
@@ -113,8 +112,8 @@ async fn upgrade_should_keep_manage_api_key_principals() {
         })
         .await;
     setup
-        .as_caller(authorized_caller)
         .client()
+        .as_caller(authorized_caller)
         .update_api_keys(&[(
             "alchemy-mainnet".to_string(),
             Some("authorized-api-key".to_string()),
@@ -136,8 +135,8 @@ async fn upgrade_should_change_manage_api_key_principals() {
         })
         .await;
     setup
-        .as_caller(deauthorized_caller)
         .client()
+        .as_caller(deauthorized_caller)
         .update_api_keys(&[(
             "alchemy-mainnet".to_string(),
             Some("unauthorized-api-key".to_string()),

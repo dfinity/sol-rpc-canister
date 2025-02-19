@@ -43,8 +43,10 @@ pub trait Runtime {
 /// Client to interact with the SOL RPC canister.
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct SolRpcClient<R: Runtime> {
-    runtime: R,
-    sol_rpc_canister: Principal,
+    /// This setup's canister [`Runtime`].
+    pub runtime: R,
+    /// The [`Principal`] of the SOL RPC canister.
+    pub sol_rpc_canister: Principal,
 }
 
 impl SolRpcClient<IcRuntime> {
@@ -87,14 +89,6 @@ impl<R: Runtime> SolRpcClient<R> {
                 (api_keys.to_vec(),),
                 10_000,
             )
-            .await
-            .unwrap()
-    }
-
-    /// Call `verifyApiKey` on the SOL RPC canister.
-    pub async fn verify_api_key(&self, api_key: (ProviderId, Option<String>)) {
-        self.runtime
-            .query_call(self.sol_rpc_canister, "verifyApiKey", (api_key,))
             .await
             .unwrap()
     }

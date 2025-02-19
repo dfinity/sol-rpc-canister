@@ -52,5 +52,4 @@ type InstallArgs = record {
 service : (InstallArgs,) -> {
   getProviders : () -> (vec Provider) query;
   updateApiKeys : (vec record { ProviderId; opt text }) -> ();
-  verifyApiKey : (record { ProviderId; opt text }) -> () query;
 };
