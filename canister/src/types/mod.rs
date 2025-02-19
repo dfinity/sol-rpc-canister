@@ -66,7 +66,7 @@ impl Storable for ApiKey {
     }
 
     const BOUND: Bound = Bound::Bounded {
-        max_size: API_KEY_MAX_SIZE,
+        max_size: API_KEY_MAX_SIZE as u32,
         is_fixed_size: false,
     };
 }
