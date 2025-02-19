@@ -1,4 +1,5 @@
 mod ed25519;
+#[allow(deprecated)]
 mod solana_rpc_canister;
 mod solana_wallet;
 mod spl;
