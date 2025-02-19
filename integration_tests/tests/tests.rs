@@ -80,7 +80,7 @@ mod update_api_key_tests {
         let setup = Setup::new().await;
         setup
             .client()
-        .with_caller(setup.controller())
+            .with_caller(setup.controller())
             .update_api_keys(&[(
                 "publicnode-mainnet".to_string(),
                 Some("invalid-api-key".to_string()),
@@ -128,7 +128,7 @@ mod canister_upgrade_tests {
             .await;
         setup
             .client()
-        .with_caller(authorized_caller)
+            .with_caller(authorized_caller)
             .update_api_keys(&[(
                 "alchemy-mainnet".to_string(),
                 Some("authorized-api-key".to_string()),
@@ -153,7 +153,7 @@ mod canister_upgrade_tests {
             .await;
         setup
             .client()
-        .with_caller(deauthorized_caller)
+            .with_caller(deauthorized_caller)
             .update_api_keys(&[(
                 "alchemy-mainnet".to_string(),
                 Some("unauthorized-api-key".to_string()),
