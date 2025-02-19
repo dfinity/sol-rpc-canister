@@ -33,6 +33,33 @@ mod get_provider_tests {
     }
 }
 
+mod retrieve_logs_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn should_retrieve_logs() {
+        let setup = Setup::new().await;
+        let client = setup.client();
+        assert_eq!(client.retrieve_logs("DEBUG").await, vec![]);
+        assert_eq!(client.retrieve_logs("INFO").await, vec![]);
+
+        // Generate some logs
+        setup
+            .client()
+            .with_caller(setup.controller())
+            .update_api_keys(&[(
+                "alchemy-mainnet".to_string(),
+                Some("unauthorized-api-key".to_string()),
+            )])
+            .await;
+
+        assert_eq!(client.retrieve_logs("DEBUG").await, vec![]);
+        assert!(client.retrieve_logs("INFO").await[0]
+            .message
+            .contains("Updating API keys"));
+    }
+}
+
 mod update_api_key_tests {
     use super::*;
 

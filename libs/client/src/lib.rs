@@ -8,6 +8,10 @@ use candid::utils::ArgumentEncoder;
 use candid::{CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
+use sol_rpc_canister::{
+    http_types::{HttpRequest, HttpResponse},
+    logs::{Log, LogEntry},
+};
 use sol_rpc_types::ProviderId;
 
 /// Abstract the canister runtime so that the client code can be reused:
@@ -91,6 +95,24 @@ impl<R: Runtime> SolRpcClient<R> {
             )
             .await
             .unwrap()
+    }
+
+    /// Retrieve logs from the SOL RPC canister from the HTTP endpoint.
+    pub async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry> {
+        let request = HttpRequest {
+            method: "".to_string(),
+            url: format!("/logs?priority={priority}"),
+            headers: vec![],
+            body: serde_bytes::ByteBuf::new(),
+        };
+        let response: HttpResponse = self
+            .runtime
+            .query_call(self.sol_rpc_canister, "http_request", (request,))
+            .await
+            .unwrap();
+        serde_json::from_slice::<Log>(&response.body)
+            .expect("failed to parse SOL RPC canister logs")
+            .entries
     }
 }
 

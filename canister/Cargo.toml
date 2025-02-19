@@ -17,11 +17,13 @@ candid = { workspace = true }
 ciborium = { workspace = true }
 const_format = { workspace = true }
 hex = { workspace = true }
+ic-canister-log = { workspace = true }
 ic-cdk = { workspace = true }
 ic-stable-structures = { workspace = true }
 sol_rpc_types = { path = "../libs/types" }
 regex = { workspace = true }
 serde = { workspace = true }
+serde_bytes = {workspace = true}
 serde_json = { workspace = true }
 url = { workspace = true }
 zeroize = { workspace = true }

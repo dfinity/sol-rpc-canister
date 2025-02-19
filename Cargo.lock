@@ -1260,6 +1260,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-canister-log"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb82c4f617ecff6e452fe65af0489626ec7330ffe3eedd9ea14e6178eea48d1a"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "ic-cdk"
 version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2866,11 +2875,13 @@ dependencies = [
  "ciborium",
  "const_format",
  "hex",
+ "ic-canister-log",
  "ic-cdk",
  "ic-stable-structures",
  "proptest",
  "regex",
  "serde",
+ "serde_bytes",
  "serde_json",
  "sol_rpc_types",
  "url",
@@ -2885,6 +2896,9 @@ dependencies = [
  "candid",
  "ic-cdk",
  "serde",
+ "serde_bytes",
+ "serde_json",
+ "sol_rpc_canister",
  "sol_rpc_types",
 ]
 

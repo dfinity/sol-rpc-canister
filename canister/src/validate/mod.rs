@@ -10,7 +10,7 @@ const API_KEY_TOO_LONG_ERROR_MESSAGE: &str =
 pub fn validate_api_key(api_key: &str) -> Result<(), &'static str> {
     if api_key.is_empty() {
         Err("API key must not be an empty string")
-    } else if api_key.as_bytes().len() > API_KEY_MAX_SIZE {
+    } else if api_key.as_bytes().len() as u32 > API_KEY_MAX_SIZE {
         Err(API_KEY_TOO_LONG_ERROR_MESSAGE)
     } else if api_key
         .chars()

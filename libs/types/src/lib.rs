@@ -4,10 +4,12 @@
 #![forbid(missing_docs)]
 
 mod lifecycle;
+mod regex;
 mod rpc_client;
 
-pub use lifecycle::InstallArgs;
+pub use lifecycle::{InstallArgs, LogFilter};
+pub use regex::{RegexString, RegexSubstitution};
 pub use rpc_client::{
-    HttpHeader, OverrideProvider, Provider, ProviderId, RegexString, RegexSubstitution, RpcAccess,
-    RpcApi, RpcAuth, RpcService, SolDevnetService, SolMainnetService, SolanaCluster,
+    HttpHeader, OverrideProvider, Provider, ProviderId, RpcAccess, RpcApi, RpcAuth, RpcService,
+    SolDevnetService, SolMainnetService, SolanaCluster,
 };
