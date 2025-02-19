@@ -191,7 +191,7 @@ impl PocketIcRuntime<'_> {
 #[async_trait]
 pub trait SolRpcTestClient<R: Runtime> {
     async fn verify_api_key(&self, api_key: (ProviderId, Option<String>));
-    fn as_caller<T: Into<Principal>>(self, id: T) -> Self;
+    fn with_caller<T: Into<Principal>>(self, id: T) -> Self;
 }
 
 #[async_trait]
@@ -203,7 +203,7 @@ impl SolRpcTestClient<PocketIcRuntime<'_>> for SolRpcClient<PocketIcRuntime<'_>>
             .unwrap()
     }
 
-    fn as_caller<T: Into<Principal>>(mut self, id: T) -> Self {
+    fn with_caller<T: Into<Principal>>(mut self, id: T) -> Self {
         self.runtime.caller = id.into();
         self
     }

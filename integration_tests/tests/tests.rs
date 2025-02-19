@@ -38,7 +38,7 @@ async fn should_update_api_key() {
     .await;
     let provider_id = "alchemy-mainnet";
     let api_key = "test-api-key";
-    let client = setup.client().as_caller(authorized_caller);
+    let client = setup.client().with_caller(authorized_caller);
     client
         .update_api_keys(&[(provider_id.to_string(), Some(api_key.to_string()))])
         .await;
@@ -71,7 +71,7 @@ async fn should_prevent_unauthenticated_update_api_keys() {
     let setup = Setup::new().await;
     setup
         .client()
-        .as_caller(setup.controller())
+        .with_caller(setup.controller())
         .update_api_keys(&[(
             "publicnode-mainnet".to_string(),
             Some("invalid-api-key".to_string()),
@@ -84,7 +84,7 @@ async fn upgrade_should_keep_api_keys() {
     let setup = Setup::new().await;
     let provider_id = "alchemy-mainnet";
     let api_key = "test-api-key";
-    let client = setup.client().as_caller(setup.controller());
+    let client = setup.client().with_caller(setup.controller());
     client
         .update_api_keys(&[(provider_id.to_string(), Some(api_key.to_string()))])
         .await;
@@ -113,7 +113,7 @@ async fn upgrade_should_keep_manage_api_key_principals() {
         .await;
     setup
         .client()
-        .as_caller(authorized_caller)
+        .with_caller(authorized_caller)
         .update_api_keys(&[(
             "alchemy-mainnet".to_string(),
             Some("authorized-api-key".to_string()),
@@ -136,7 +136,7 @@ async fn upgrade_should_change_manage_api_key_principals() {
         .await;
     setup
         .client()
-        .as_caller(deauthorized_caller)
+        .with_caller(deauthorized_caller)
         .update_api_keys(&[(
             "alchemy-mainnet".to_string(),
             Some("unauthorized-api-key".to_string()),
