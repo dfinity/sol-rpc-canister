@@ -1,9 +1,37 @@
+#[cfg(test)]
+mod tests;
+
 pub use ic_cdk::api::management_canister::http_request::HttpHeader;
 use std::fmt::Debug;
 
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use strum::VariantArray;
+
+/// An API defining how to make an RPC request.
+#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
+pub struct RpcApi {
+    /// The request URL to use when accessing the API.
+    pub url: String,
+    /// The HTTP headers to include in the requests to the API.
+    pub headers: Option<Vec<HttpHeader>>,
+}
+
+impl RpcApi {
+    /// Returns the [`RpcApi::url`]'s host.
+    pub fn host_str(&self) -> Option<String> {
+        url::Url::parse(&self.url)
+            .ok()
+            .and_then(|u| u.host_str().map(|host| host.to_string()))
+    }
+}
+
+impl Debug for RpcApi {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let host = self.host_str().unwrap_or("N/A".to_string());
+        write!(f, "RpcApi {{ host: {}, url/headers: *** }}", host) //URL or header value could contain API keys
+    }
+}
 
 /// [Solana clusters](https://solana.com/docs/references/clusters).
 #[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize, Serialize)]
@@ -81,7 +109,8 @@ impl SolDevnetService {
 pub enum RpcService {
     /// The RPC service of a specific [`Provider`], identified by its [`ProviderId`].
     Provider(ProviderId),
-    // TODO: Custom(RpcApi),
+    /// A custom RPC service defined by an [`RpcApi`].
+    Custom(RpcApi),
     /// RPC service for the [Solana Mainnet](https://solana.com/docs/references/clusters).
     SolMainnet(SolMainnetService),
     /// RPC service for the [Solana Devnet](https://solana.com/docs/references/clusters).
@@ -92,7 +121,7 @@ impl Debug for RpcService {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             RpcService::Provider(provider_id) => write!(f, "Provider({})", provider_id),
-            // TODO: RpcService::Custom(_) => write!(f, "Custom(..)"), // Redact credentials
+            RpcService::Custom(_) => write!(f, "Custom(..)"), // Redact credentials
             RpcService::SolMainnet(service) => write!(f, "{:?}", service),
             RpcService::SolDevnet(service) => write!(f, "{:?}", service),
         }

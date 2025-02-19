@@ -75,3 +75,7 @@ thread_local! {
             .collect()
     });
 }
+
+pub fn find_provider(f: impl Fn(&Provider) -> bool) -> Option<Provider> {
+    PROVIDERS.with(|providers| providers.iter().find(|&provider| f(provider)).cloned())
+}

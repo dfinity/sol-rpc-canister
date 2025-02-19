@@ -6,20 +6,27 @@ use pocket_ic::management_canister::{CanisterId, CanisterSettings};
 use pocket_ic::{nonblocking::PocketIc, PocketIcBuilder, UserError, WasmResult};
 use serde::de::DeserializeOwned;
 use sol_rpc_client::{Runtime, SolRpcClient};
+use sol_rpc_types::{InstallArgs, ProviderId};
 use std::path::PathBuf;
+use std::time::Duration;
+
+pub const DEFAULT_CALLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x01]);
+pub const DEFAULT_CONTROLLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x02]);
+pub const ADDITIONAL_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x03]);
 
 pub struct Setup {
     env: PocketIc,
     caller: Principal,
-    _controller: Principal,
+    controller: Principal,
     canister_id: CanisterId,
 }
 
 impl Setup {
     pub async fn new() -> Self {
-        const DEFAULT_CALLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x01]);
-        const DEFAULT_CONTROLLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x02]);
+        Self::with_args(InstallArgs::default()).await
+    }
 
+    pub async fn with_args(args: InstallArgs) -> Self {
         let env = PocketIcBuilder::new()
             .with_fiduciary_subnet()
             .build_async()
@@ -38,7 +45,7 @@ impl Setup {
         env.install_canister(
             canister_id,
             sol_rpc_wasm(),
-            Encode!().unwrap(),
+            Encode!(&args).unwrap(),
             Some(controller),
         )
         .await;
@@ -47,9 +54,25 @@ impl Setup {
         Self {
             env,
             caller,
-            _controller: controller,
+            controller,
             canister_id,
         }
+    }
+
+    pub async fn upgrade_canister(&self, args: InstallArgs) {
+        self.env.tick().await;
+        // Avoid `CanisterInstallCodeRateLimited` error
+        self.env.advance_time(Duration::from_secs(600)).await;
+        self.env.tick().await;
+        self.env
+            .upgrade_canister(
+                self.canister_id,
+                sol_rpc_wasm(),
+                Encode!(&args).unwrap(),
+                Some(self.controller),
+            )
+            .await
+            .unwrap_or_else(|err| panic!("Upgrade canister failed: {:?}", err));
     }
 
     pub fn client(&self) -> SolRpcClient<PocketIcRuntime> {
@@ -65,6 +88,10 @@ impl Setup {
 
     pub async fn drop(self) {
         self.env.drop().await
+    }
+
+    pub fn controller(&self) -> Principal {
+        self.controller
     }
 }
 
@@ -158,5 +185,26 @@ impl PocketIcRuntime<'_> {
                 Err((rejection_code, e.description))
             }
         }
+    }
+}
+
+#[async_trait]
+pub trait SolRpcTestClient<R: Runtime> {
+    async fn verify_api_key(&self, api_key: (ProviderId, Option<String>));
+    fn with_caller<T: Into<Principal>>(self, id: T) -> Self;
+}
+
+#[async_trait]
+impl SolRpcTestClient<PocketIcRuntime<'_>> for SolRpcClient<PocketIcRuntime<'_>> {
+    async fn verify_api_key(&self, api_key: (ProviderId, Option<String>)) {
+        self.runtime
+            .query_call(self.sol_rpc_canister, "verifyApiKey", (api_key,))
+            .await
+            .unwrap()
+    }
+
+    fn with_caller<T: Into<Principal>>(mut self, id: T) -> Self {
+        self.runtime.caller = id.into();
+        self
     }
 }
