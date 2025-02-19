@@ -22,5 +22,8 @@ pub fn post_upgrade(args: Option<InstallArgs>) {
         if let Some(api_key_principals) = args.manage_api_keys {
             mutate_state(|s| s.set_api_key_principals(api_key_principals));
         }
+        if let Some(override_provider) = args.override_provider {
+            mutate_state(|s| s.set_override_provider(override_provider.into()));
+        }
     }
 }

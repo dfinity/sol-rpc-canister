@@ -46,8 +46,17 @@ type SolDevnetService = variant {
   Alchemy;
   Ankr;
 };
+type Regex = text;
+type RegexSubstitution = record {
+  pattern : Regex;
+  replacement: text;
+};
+type OverrideProvider = record {
+  overrideUrl : opt RegexSubstitution
+};
 type InstallArgs = record {
   manageApiKeys: opt vec principal;
+  overrideProvider: opt OverrideProvider;
 };
 service : (InstallArgs,) -> {
   getProviders : () -> (vec Provider) query;
