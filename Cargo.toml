@@ -3,9 +3,9 @@ resolver = "2"
 members = [
     "canister", "integration_tests",
     "libs/client",
+    "libs/logs",
     "libs/types",
-    "examples/basic_solana"
-]
+    "examples/basic_solana"]
 
 [workspace.package]
 authors = ["DFINITY Stiftung"]

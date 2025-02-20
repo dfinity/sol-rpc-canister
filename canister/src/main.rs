@@ -6,11 +6,14 @@ use ic_cdk::{
 };
 use sol_rpc_canister::{
     http_types, lifecycle,
+    logs::Priority,
     logs::INFO,
     providers::{find_provider, PROVIDERS},
     state::{mutate_state, read_state},
 };
+use sol_rpc_logs::{Log, Sort};
 use sol_rpc_types::{ProviderId, RpcAccess};
+use std::str::FromStr;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
     let caller = ic_cdk::caller();
@@ -71,9 +74,6 @@ async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
 fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
     match request.path() {
         "/logs" => {
-            use sol_rpc_canister::logs::{Log, Priority, Sort};
-            use std::str::FromStr;
-
             let max_skip_timestamp = match request.raw_query_param("time") {
                 Some(arg) => match u64::from_str(arg) {
                     Ok(value) => value,
@@ -86,7 +86,7 @@ fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
                 None => 0,
             };
 
-            let mut log: Log = Default::default();
+            let mut log: Log<Priority> = Default::default();
 
             match request.raw_query_param("priority").map(Priority::from_str) {
                 Some(Ok(priority)) => match priority {
@@ -94,12 +94,7 @@ fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
                     Priority::Debug => log.push_logs(Priority::Debug),
                     Priority::TraceHttp => {}
                 },
-                Some(Err(_)) => {
-                    return http_types::HttpResponseBuilder::bad_request()
-                        .with_body_and_content_length("failed to parse the 'priority' parameter")
-                        .build()
-                }
-                None => {
+                Some(Err(_)) | None => {
                     log.push_logs(Priority::Info);
                     log.push_logs(Priority::Debug);
                 }
@@ -109,18 +104,9 @@ fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
                 .retain(|entry| entry.timestamp >= max_skip_timestamp);
 
             fn ordering_from_query_params(sort: Option<&str>, max_skip_timestamp: u64) -> Sort {
-                match sort {
-                    Some(ord_str) => match Sort::from_str(ord_str) {
-                        Ok(order) => order,
-                        Err(_) => {
-                            if max_skip_timestamp == 0 {
-                                Sort::Ascending
-                            } else {
-                                Sort::Descending
-                            }
-                        }
-                    },
-                    None => {
+                match sort.map(Sort::from_str) {
+                    Some(Ok(order)) => order,
+                    Some(Err(_)) | None => {
                         if max_skip_timestamp == 0 {
                             Sort::Ascending
                         } else {

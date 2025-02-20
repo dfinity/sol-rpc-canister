@@ -1,19 +1,51 @@
-use super::PrintProxySink;
-use crate::{
-    logs::{Log, LogEntry, Priority, Sort},
-    state::{init_state, mutate_state, State},
-    types::LogFilter,
-};
-use ic_canister_log::{declare_log_buffer, export, log};
+use super::{Log, LogEntry, LogPriority, PrintProxySink, Sort};
+use crate::types::LogFilter;
+use ic_canister_log::{declare_log_buffer, export, log, GlobalBuffer};
 use proptest::{prop_assert, proptest};
+use serde::{Deserialize, Serialize};
+use std::cell::RefCell;
+
+thread_local! {
+    static LOG_FILTER: RefCell<LogFilter> = RefCell::default();
+}
 
 declare_log_buffer!(name = INFO_TEST_BUF, capacity = 1000);
-const INFO_TEST: PrintProxySink = PrintProxySink(&Priority::Info, &INFO_TEST_BUF);
+const INFO_TEST: PrintProxySink<TestPriority> = PrintProxySink(&TestPriority::Info, &INFO_TEST_BUF);
 
-fn info_log_entry_with_timestamp(timestamp: u64) -> LogEntry {
+#[derive(Clone, Copy, Serialize, Deserialize)]
+enum TestPriority {
+    Info,
+}
+
+impl LogPriority for TestPriority {
+    fn get_buffer(&self) -> &'static GlobalBuffer {
+        &INFO_TEST_BUF
+    }
+
+    fn as_str_uppercase(&self) -> &'static str {
+        "INFO"
+    }
+
+    fn get_priorities() -> &'static [Self]
+    where
+        Self: Sized,
+    {
+        &[TestPriority::Info]
+    }
+
+    fn get_log_filter() -> LogFilter {
+        LOG_FILTER.with(|cell| cell.borrow().clone())
+    }
+}
+
+fn set_log_filter(filter: LogFilter) {
+    LOG_FILTER.set(filter);
+}
+
+fn info_log_entry_with_timestamp(timestamp: u64) -> LogEntry<TestPriority> {
     LogEntry {
         timestamp,
-        priority: Priority::Info,
+        priority: TestPriority::Info,
         file: String::default(),
         line: 0,
         message: String::default(),
@@ -21,7 +53,7 @@ fn info_log_entry_with_timestamp(timestamp: u64) -> LogEntry {
     }
 }
 
-fn is_ascending(log: &Log) -> bool {
+fn is_ascending(log: &Log<TestPriority>) -> bool {
     for i in 0..log.entries.len() - 1 {
         if log.entries[i].timestamp > log.entries[i + 1].timestamp {
             return false;
@@ -30,7 +62,7 @@ fn is_ascending(log: &Log) -> bool {
     true
 }
 
-fn is_descending(log: &Log) -> bool {
+fn is_descending(log: &Log<TestPriority>) -> bool {
     for i in 0..log.entries.len() - 1 {
         if log.entries[i].timestamp < log.entries[i + 1].timestamp {
             return false;
@@ -49,15 +81,15 @@ fn get_messages() -> Vec<String> {
 proptest! {
     #[test]
     fn logs_always_fit_in_message(
-        number_of_entries in (1..100_usize),
-        entry_size in (1..10000_usize),
-        max_body_size in (100..10000_usize)
+        number_of_entries in 1..100_usize,
+        entry_size in 1..10000_usize,
+        max_body_size in 100..10000_usize
     ) {
-        let mut entries: Vec<LogEntry> = vec![];
+        let mut entries: Vec<LogEntry<TestPriority>> = vec![];
         for _ in 0..number_of_entries {
             entries.push(LogEntry {
                 timestamp: 0,
-                priority: Priority::Info,
+                priority: TestPriority::Info,
                 file: String::default(),
                 line: 0,
                 message: "1".repeat(entry_size),
@@ -91,13 +123,13 @@ fn sorting_order() {
 
 #[test]
 fn simple_logs_truncation() {
-    let mut entries: Vec<LogEntry> = vec![];
+    let mut entries: Vec<LogEntry<TestPriority>> = vec![];
     const MAX_BODY_SIZE: usize = 3_000_000;
 
     for _ in 0..10 {
         entries.push(LogEntry {
             timestamp: 0,
-            priority: Priority::Info,
+            priority: TestPriority::Info,
             file: String::default(),
             line: 0,
             message: String::default(),
@@ -111,7 +143,7 @@ fn simple_logs_truncation() {
 
     entries.push(LogEntry {
         timestamp: 0,
-        priority: Priority::Info,
+        priority: TestPriority::Info,
         file: String::default(),
         line: 0,
         message: "1".repeat(MAX_BODY_SIZE),
@@ -128,12 +160,12 @@ fn simple_logs_truncation() {
 
 #[test]
 fn one_entry_too_big() {
-    let mut entries: Vec<LogEntry> = vec![];
+    let mut entries: Vec<LogEntry<TestPriority>> = vec![];
     const MAX_BODY_SIZE: usize = 3_000_000;
 
     entries.push(LogEntry {
         timestamp: 0,
-        priority: Priority::Info,
+        priority: TestPriority::Info,
         file: String::default(),
         line: 0,
         message: "1".repeat(MAX_BODY_SIZE),
@@ -172,8 +204,7 @@ fn should_truncate_last_entry() {
 
 #[test]
 fn should_show_all() {
-    init_state(State::default());
-    mutate_state(|state| state.set_log_filter(LogFilter::ShowAll));
+    set_log_filter(LogFilter::ShowAll);
     log!(INFO_TEST, "ABC");
     log!(INFO_TEST, "123");
     log!(INFO_TEST, "!@#");
@@ -182,8 +213,7 @@ fn should_show_all() {
 
 #[test]
 fn should_hide_all() {
-    init_state(State::default());
-    mutate_state(|state| state.set_log_filter(LogFilter::HideAll));
+    set_log_filter(LogFilter::HideAll);
     log!(INFO_TEST, "ABC");
     log!(INFO_TEST, "123");
     log!(INFO_TEST, "!@#");
@@ -192,8 +222,7 @@ fn should_hide_all() {
 
 #[test]
 fn should_show_pattern() {
-    init_state(State::default());
-    mutate_state(|state| state.set_log_filter(LogFilter::ShowPattern("end$".into())));
+    set_log_filter(LogFilter::ShowPattern("end$".into()));
     log!(INFO_TEST, "message");
     log!(INFO_TEST, "message end");
     log!(INFO_TEST, "end message");
@@ -202,8 +231,7 @@ fn should_show_pattern() {
 
 #[test]
 fn should_hide_pattern_including_message_type() {
-    init_state(State::default());
-    mutate_state(|state| state.set_log_filter(LogFilter::ShowPattern("^INFO [^ ]* 123".into())));
+    set_log_filter(LogFilter::ShowPattern("^INFO [^ ]* 123".into()));
     log!(INFO_TEST, "123");
     log!(INFO_TEST, "INFO 123");
     log!(INFO_TEST, "");
@@ -213,8 +241,7 @@ fn should_hide_pattern_including_message_type() {
 
 #[test]
 fn should_hide_pattern() {
-    init_state(State::default());
-    mutate_state(|state| state.set_log_filter(LogFilter::HidePattern("[ABC]".into())));
+    set_log_filter(LogFilter::HidePattern("[ABC]".into()));
     log!(INFO_TEST, "remove A");
     log!(INFO_TEST, "...B...");
     log!(INFO_TEST, "C");

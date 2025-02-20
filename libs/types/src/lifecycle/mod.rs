@@ -1,6 +1,7 @@
-use crate::{OverrideProvider, RegexString};
+use crate::OverrideProvider;
 use candid::{CandidType, Principal};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use sol_rpc_logs::LogFilter;
 
 /// The installation args for the Solana RPC canister
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
@@ -14,18 +15,4 @@ pub struct InstallArgs {
     /// Only log entries matching this filter will be recorded.
     #[serde(rename = "logFilter")]
     pub log_filter: Option<LogFilter>,
-}
-
-/// Only log entries matching this filter will be recorded.
-#[derive(Clone, Debug, Default, PartialEq, Eq, CandidType, Serialize, Deserialize)]
-pub enum LogFilter {
-    /// All log entries are recorded.
-    #[default]
-    ShowAll,
-    /// No log entries are recorded.
-    HideAll,
-    /// Only log entries matching this regular expression are recorded.
-    ShowPattern(RegexString),
-    /// Only log entries not matching this regular expression are recorded.
-    HidePattern(RegexString),
 }

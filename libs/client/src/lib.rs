@@ -10,8 +10,9 @@ use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_canister::{
     http_types::{HttpRequest, HttpResponse},
-    logs::{Log, LogEntry},
+    logs::Priority,
 };
+use sol_rpc_logs::{Log, LogEntry};
 use sol_rpc_types::ProviderId;
 
 /// Abstract the canister runtime so that the client code can be reused:
@@ -98,7 +99,7 @@ impl<R: Runtime> SolRpcClient<R> {
     }
 
     /// Retrieve logs from the SOL RPC canister from the HTTP endpoint.
-    pub async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry> {
+    pub async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry<Priority>> {
         let request = HttpRequest {
             method: "".to_string(),
             url: format!("/logs?priority={priority}"),
@@ -110,7 +111,7 @@ impl<R: Runtime> SolRpcClient<R> {
             .query_call(self.sol_rpc_canister, "http_request", (request,))
             .await
             .unwrap();
-        serde_json::from_slice::<Log>(&response.body)
+        serde_json::from_slice::<Log<Priority>>(&response.body)
             .expect("failed to parse SOL RPC canister logs")
             .entries
     }

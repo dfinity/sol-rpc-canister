@@ -1,15 +1,10 @@
 #[cfg(test)]
 mod tests;
 
-use crate::{
-    constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, MESSAGE_FILTER_MAX_SIZE},
-    rpc_client,
-    validate::validate_api_key,
-};
-use ic_stable_structures::{storable::Bound, Storable};
+use crate::{constants::API_KEY_REPLACE_STRING, rpc_client, validate::validate_api_key};
 use serde::{Deserialize, Serialize};
-use sol_rpc_types::{Provider, RegexString, RegexSubstitution, RpcApi};
-use std::{borrow::Cow, fmt};
+use sol_rpc_types::{Provider, RegexSubstitution, RpcApi};
+use std::fmt;
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 pub enum ResolvedRpcService {
@@ -56,21 +51,6 @@ impl TryFrom<String> for ApiKey {
     }
 }
 
-impl Storable for ApiKey {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        self.0.to_bytes()
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        Self(String::from_bytes(bytes))
-    }
-
-    const BOUND: Bound = Bound::Bounded {
-        max_size: API_KEY_MAX_SIZE,
-        is_fixed_size: false,
-    };
-}
-
 /// Copy of [`sol_rpc_types::OverrideProvider`] to keep the implementation details out of the
 /// [`sol_rpc_types`] crate.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -112,71 +92,4 @@ impl OverrideProvider {
             }
         }
     }
-}
-
-impl Storable for OverrideProvider {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        serde_json::to_vec(self)
-            .expect("Error while serializing `OverrideProvider`")
-            .into()
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        serde_json::from_slice(&bytes).expect("Error while deserializing `Storable`")
-    }
-
-    const BOUND: Bound = Bound::Unbounded;
-}
-
-/// Copy of [`sol_rpc_types::LogFilter`] to keep the implementation details out of the
-/// [`sol_rpc_types`] crate.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
-pub enum LogFilter {
-    #[default]
-    ShowAll,
-    HideAll,
-    ShowPattern(RegexString),
-    HidePattern(RegexString),
-}
-
-impl From<sol_rpc_types::LogFilter> for LogFilter {
-    fn from(value: sol_rpc_types::LogFilter) -> Self {
-        match value {
-            sol_rpc_types::LogFilter::ShowAll => LogFilter::ShowAll,
-            sol_rpc_types::LogFilter::HideAll => LogFilter::HideAll,
-            sol_rpc_types::LogFilter::ShowPattern(regex) => LogFilter::ShowPattern(regex),
-            sol_rpc_types::LogFilter::HidePattern(regex) => LogFilter::HidePattern(regex),
-        }
-    }
-}
-
-impl LogFilter {
-    pub fn is_match(&self, message: &str) -> bool {
-        match self {
-            Self::ShowAll => true,
-            Self::HideAll => false,
-            Self::ShowPattern(regex) => regex
-                .try_is_valid(message)
-                .expect("Invalid regex in ShowPattern log filter"),
-            Self::HidePattern(regex) => !regex
-                .try_is_valid(message)
-                .expect("Invalid regex in HidePattern log filter"),
-        }
-    }
-}
-
-impl Storable for LogFilter {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        serde_json::to_vec(self)
-            .expect("Error while serializing `LogFilter`")
-            .into()
-    }
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        serde_json::from_slice(&bytes).expect("Error while deserializing `LogFilter`")
-    }
-
-    const BOUND: Bound = Bound::Bounded {
-        max_size: MESSAGE_FILTER_MAX_SIZE,
-        is_fixed_size: true,
-    };
 }
