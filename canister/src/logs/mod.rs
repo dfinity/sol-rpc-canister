@@ -4,9 +4,9 @@ use std::str::FromStr;
 
 declare_log_priorities! {
     pub enum Priority {
-        Info(1000, INFO),
-        Debug(1000, DEBUG),
-        TraceHttp(1000, TRACE_HTTP)
+        Info(capacity = 1000, buffer = INFO),
+        Debug(capacity = 1000, buffer = DEBUG),
+        TraceHttp(capacity = 1000, buffer = TRACE_HTTP)
     }
 }
 

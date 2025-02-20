@@ -10,7 +10,7 @@ thread_local! {
 
 declare_log_priorities! {
     pub enum TestPriority {
-        Info(1000, INFO_TEST)
+        Info(capacity = 1000, buffer = INFO_TEST)
     }
 }
 
