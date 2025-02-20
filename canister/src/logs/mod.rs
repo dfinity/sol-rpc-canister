@@ -47,7 +47,7 @@ impl LogPriority for Priority {
     }
 
     fn get_priorities() -> &'static [Priority] {
-        &Self::VARIANTS
+        Self::VARIANTS
     }
 
     fn get_log_filter() -> LogFilter {

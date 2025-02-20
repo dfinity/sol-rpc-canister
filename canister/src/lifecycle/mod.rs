@@ -23,7 +23,7 @@ pub fn post_upgrade(args: Option<InstallArgs>) {
             mutate_state(|s| s.set_override_provider(override_provider.into()));
         }
         if let Some(log_filter) = args.log_filter {
-            mutate_state(|s| s.set_log_filter(log_filter.into()));
+            mutate_state(|s| s.set_log_filter(log_filter));
         }
     }
 }

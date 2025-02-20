@@ -139,7 +139,7 @@ impl From<InstallArgs> for State {
             api_keys: Default::default(),
             api_key_principals: value.manage_api_keys.unwrap_or_default(),
             override_provider: value.override_provider.unwrap_or_default().into(),
-            log_filter: value.log_filter.unwrap_or_default().into(),
+            log_filter: value.log_filter.unwrap_or_default(),
         }
     }
 }
