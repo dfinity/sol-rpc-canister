@@ -54,7 +54,7 @@ fn is_descending(log: &Log<TestPriority>) -> bool {
 }
 
 fn get_messages() -> Vec<String> {
-    export(&TestPriority::Info.get_buffer())
+    export(TestPriority::Info.get_buffer())
         .into_iter()
         .map(|entry| entry.message)
         .collect()
