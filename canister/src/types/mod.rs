@@ -1,15 +1,10 @@
 #[cfg(test)]
 mod tests;
 
-use crate::{
-    constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING},
-    rpc_client,
-    validate::validate_api_key,
-};
-use ic_stable_structures::{storable::Bound, Storable};
+use crate::{constants::API_KEY_REPLACE_STRING, rpc_client, validate::validate_api_key};
 use serde::{Deserialize, Serialize};
 use sol_rpc_types::{Provider, RegexSubstitution, RpcApi};
-use std::{borrow::Cow, fmt};
+use std::fmt;
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 pub enum ResolvedRpcService {
@@ -56,21 +51,6 @@ impl TryFrom<String> for ApiKey {
     }
 }
 
-impl Storable for ApiKey {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        self.0.to_bytes()
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        Self(String::from_bytes(bytes))
-    }
-
-    const BOUND: Bound = Bound::Bounded {
-        max_size: API_KEY_MAX_SIZE as u32,
-        is_fixed_size: false,
-    };
-}
-
 /// Copy of [`sol_rpc_types::OverrideProvider`] to keep the implementation details out of the
 /// [`sol_rpc_types`] crate.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -112,18 +92,4 @@ impl OverrideProvider {
             }
         }
     }
-}
-
-impl Storable for OverrideProvider {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        serde_json::to_vec(self)
-            .expect("Error while serializing `OverrideProvider`")
-            .into()
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        serde_json::from_slice(&bytes).expect("Error while deserializing `Storable`")
-    }
-
-    const BOUND: Bound = Bound::Unbounded;
 }

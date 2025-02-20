@@ -4,47 +4,11 @@ use crate::{
     state::{init_state, State},
     types::{ApiKey, OverrideProvider},
 };
-use ic_stable_structures::Storable;
 use proptest::{
-    option,
     prelude::{prop, Strategy},
     proptest,
 };
-use sol_rpc_types::{HttpHeader, Provider, RegexString, RegexSubstitution, RpcApi};
-use std::fmt::Debug;
-
-mod encode_decode_tests {
-    use super::*;
-
-    proptest! {
-        #[test]
-        fn should_encode_decode_override_provider(value in arb_override_provider()) {
-            test_encoding_decoding_roundtrip(&value);
-        }
-    }
-
-    fn test_encoding_decoding_roundtrip<T: Storable + PartialEq + Debug>(value: &T) {
-        let bytes = value.to_bytes();
-        let decoded_value = T::from_bytes(bytes);
-        assert_eq!(value, &decoded_value);
-    }
-
-    fn arb_regex() -> impl Strategy<Value = RegexString> {
-        ".*".prop_map(|r| RegexString::from(r.as_str()))
-    }
-
-    fn arb_regex_substitution() -> impl Strategy<Value = RegexSubstitution> {
-        (arb_regex(), ".*").prop_map(|(pattern, replacement)| RegexSubstitution {
-            pattern,
-            replacement,
-        })
-    }
-
-    fn arb_override_provider() -> impl Strategy<Value = OverrideProvider> {
-        option::of(arb_regex_substitution())
-            .prop_map(|override_url| OverrideProvider { override_url })
-    }
-}
+use sol_rpc_types::{HttpHeader, Provider, RegexSubstitution, RpcApi};
 
 mod override_provider_tests {
     use super::*;
