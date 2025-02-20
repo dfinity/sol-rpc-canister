@@ -1,5 +1,5 @@
-use super::{declare_log_priorities, GetLogFilter, Log, LogEntry, LogPriority, Sort};
-use crate::types::LogFilter;
+use super::{declare_log_priorities, GetLogFilter, Log, LogEntry, LogPriority};
+use crate::types::{LogFilter, Sort};
 use ic_canister_log::{export, log};
 use proptest::{prop_assert, proptest};
 use std::cell::RefCell;

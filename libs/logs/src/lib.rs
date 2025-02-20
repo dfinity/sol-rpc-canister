@@ -1,12 +1,16 @@
+//! Crate for managing canister logs
+
+#![forbid(unsafe_code)]
+#![forbid(missing_docs)]
+
 #[cfg(test)]
 mod tests;
 
 mod types;
 
-pub use crate::types::LogFilter;
+pub use crate::types::{LogFilter, Sort};
 use ic_canister_log::{export as export_logs, GlobalBuffer, Sink};
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 
 /// Use this macro to declare en enum containing priority levels and the corresponding
 /// buffers as defined in the [`ic_canister_log`]. The resulting log priority automatically
@@ -17,13 +21,19 @@ use std::str::FromStr;
 /// # Example
 /// ```rust
 /// use ic_canister_log::log;
-/// use sol_rpc_logs::declare_log_priorities;
+/// use sol_rpc_logs::{declare_log_priorities, GetLogFilter, LogFilter};
 ///
 /// // Each log priority is defined here with a capacity of 1000
 /// declare_log_priorities! {
 ///     pub enum Priority {
 ///         Info(capacity = 1000, buffer = INFO),
 ///         Debug(capacity = 1000, buffer = DEBUG)
+///     }
+/// }
+///
+/// impl GetLogFilter for Priority {
+///     fn get_log_filter() -> LogFilter {
+///         LogFilter::ShowAll
 ///     }
 /// }
 ///
@@ -101,6 +111,7 @@ pub trait GetLogFilter {
     fn get_log_filter() -> LogFilter;
 }
 
+/// Defines how log entries are displayed and appended to the corresponding [`GlobalBuffer`].
 #[derive(Debug)]
 pub struct PrintProxySink<Priority: 'static>(pub &'static Priority, pub &'static GlobalBuffer);
 
@@ -120,36 +131,27 @@ impl<Priority: LogPriority + GetLogFilter> Sink for PrintProxySink<Priority> {
     }
 }
 
-#[derive(Copy, Clone, Debug, Deserialize, serde::Serialize)]
-pub enum Sort {
-    Ascending,
-    Descending,
-}
-
-impl FromStr for Sort {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "asc" => Ok(Sort::Ascending),
-            "desc" => Ok(Sort::Descending),
-            _ => Err("could not recognize sort order".to_string()),
-        }
-    }
-}
-
+/// A single log entry.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, serde::Serialize)]
 pub struct LogEntry<Priority> {
+    /// The time at which the log entry is recorded.
     pub timestamp: u64,
+    /// The log entry priority level.
     pub priority: Priority,
+    /// The source file in which this log entry was generated.
     pub file: String,
+    /// The line in [`file`] in which this log entry was generated.
     pub line: u32,
+    /// The log message.
     pub message: String,
+    /// The index of this entry starting from the last canister upgrade.
     pub counter: u64,
 }
 
+/// A container for log entries at a given log priority level.
 #[derive(Clone, Debug, Deserialize, serde::Serialize)]
 pub struct Log<Priority> {
+    /// The log entries for this priority level.
     pub entries: Vec<LogEntry<Priority>>,
 }
 
@@ -163,9 +165,9 @@ impl<'de, Priority> Log<Priority>
 where
     Priority: LogPriority + Clone + Copy + Deserialize<'de> + Serialize + 'static,
 {
+    /// Append all the entries from the given [`Priority`] to [`entries`].
     pub fn push_logs(&mut self, priority: Priority) {
-        let logs = export_logs(priority.get_buffer());
-        for entry in logs {
+        for entry in export_logs(priority.get_buffer()) {
             self.entries.push(LogEntry {
                 timestamp: entry.timestamp,
                 counter: entry.counter,
@@ -177,12 +179,18 @@ where
         }
     }
 
+    /// Append all the entries from all priority levels to [`entries`].
     pub fn push_all(&mut self) {
         Priority::get_priorities()
             .iter()
             .for_each(|priority| self.push_logs(*priority));
     }
 
+    /// Serialize the logs contained in `entries` into a JSON string.
+    ///
+    /// If the resulting string is larger than `max_body_size` bytes,
+    /// truncate `entries` so the resulting serialized JSON string
+    /// contains no more than `max_body_size` bytes.
     pub fn serialize_logs(&self, max_body_size: usize) -> String {
         let mut entries_json: String = serde_json::to_string(&self).unwrap_or_default();
 
@@ -207,6 +215,7 @@ where
         entries_json
     }
 
+    /// Sort the log entries according `sort_order`.
     pub fn sort_logs(&mut self, sort_order: Sort) {
         match sort_order {
             Sort::Ascending => self.sort_asc(),
@@ -214,11 +223,11 @@ where
         }
     }
 
-    pub fn sort_asc(&mut self) {
+    fn sort_asc(&mut self) {
         self.entries.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
     }
 
-    pub fn sort_desc(&mut self) {
+    fn sort_desc(&mut self) {
         self.entries.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
     }
 }

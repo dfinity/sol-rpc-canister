@@ -1,6 +1,7 @@
 use candid::CandidType;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 /// A string used as a regex pattern.
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Serialize, Deserialize)]
@@ -52,6 +53,7 @@ pub enum LogFilter {
 }
 
 impl LogFilter {
+    /// Returns whether the given message matches the [`LogFilter`].
     pub fn is_match(&self, message: &str) -> bool {
         match self {
             Self::ShowAll => true,
@@ -62,6 +64,29 @@ impl LogFilter {
             Self::HidePattern(regex) => !regex
                 .try_is_valid(message)
                 .expect("Invalid regex in HidePattern log filter"),
+        }
+    }
+}
+
+/// Defines a sorting order for log entries
+#[derive(Copy, Clone, Debug, Deserialize, serde::Serialize)]
+pub enum Sort {
+    /// Log entries are sorted in ascending chronological order, i.e.
+    /// from oldest to newest.
+    Ascending,
+    /// Log entries are sorted in descending chronological order, i.e.
+    /// from newest to oldest.
+    Descending,
+}
+
+impl FromStr for Sort {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "asc" => Ok(Sort::Ascending),
+            "desc" => Ok(Sort::Descending),
+            _ => Err("could not recognize sort order".to_string()),
         }
     }
 }
