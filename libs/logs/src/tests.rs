@@ -1,38 +1,20 @@
-use super::{Log, LogEntry, LogPriority, PrintProxySink, Sort};
+use super::{declare_log_priorities, GetLogFilter, Log, LogEntry, LogPriority, Sort};
 use crate::types::LogFilter;
-use ic_canister_log::{declare_log_buffer, export, log, GlobalBuffer};
+use ic_canister_log::{export, log};
 use proptest::{prop_assert, proptest};
-use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 
 thread_local! {
     static LOG_FILTER: RefCell<LogFilter> = RefCell::default();
 }
 
-declare_log_buffer!(name = INFO_TEST_BUF, capacity = 1000);
-const INFO_TEST: PrintProxySink<TestPriority> = PrintProxySink(&TestPriority::Info, &INFO_TEST_BUF);
-
-#[derive(Clone, Copy, Serialize, Deserialize)]
-enum TestPriority {
-    Info,
+declare_log_priorities! {
+    pub enum TestPriority {
+        Info(1000, INFO_TEST)
+    }
 }
 
-impl LogPriority for TestPriority {
-    fn get_buffer(&self) -> &'static GlobalBuffer {
-        &INFO_TEST_BUF
-    }
-
-    fn as_str_uppercase(&self) -> &'static str {
-        "INFO"
-    }
-
-    fn get_priorities() -> &'static [Self]
-    where
-        Self: Sized,
-    {
-        &[TestPriority::Info]
-    }
-
+impl GetLogFilter for TestPriority {
     fn get_log_filter() -> LogFilter {
         LOG_FILTER.with(|cell| cell.borrow().clone())
     }
@@ -72,7 +54,7 @@ fn is_descending(log: &Log<TestPriority>) -> bool {
 }
 
 fn get_messages() -> Vec<String> {
-    export(&INFO_TEST_BUF)
+    export(&TestPriority::Info.get_buffer())
         .into_iter()
         .map(|entry| entry.message)
         .collect()
@@ -231,9 +213,9 @@ fn should_show_pattern() {
 
 #[test]
 fn should_hide_pattern_including_message_type() {
-    set_log_filter(LogFilter::ShowPattern("^INFO [^ ]* 123".into()));
+    set_log_filter(LogFilter::ShowPattern("^INFO_TEST [^ ]* 123".into()));
     log!(INFO_TEST, "123");
-    log!(INFO_TEST, "INFO 123");
+    log!(INFO_TEST, "INFO_TEST 123");
     log!(INFO_TEST, "");
     log!(INFO_TEST, "123456");
     assert_eq!(get_messages(), vec!["123", "123456"]);

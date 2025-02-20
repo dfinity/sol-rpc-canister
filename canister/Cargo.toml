@@ -25,10 +25,10 @@ sol_rpc_logs = { path = "../libs/logs" }
 regex = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-serde_json = { workspace = true }
 strum = { workspace = true }
 url = { workspace = true }
 zeroize = { workspace = true }
+paste = "1.0.15"
 
 [dev-dependencies]
 candid_parser = { workspace = true }

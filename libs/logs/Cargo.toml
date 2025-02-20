@@ -14,6 +14,7 @@ include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
 candid = { workspace = true }
 ic-canister-log = { workspace = true }
 ic-cdk = { workspace = true }
+paste = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

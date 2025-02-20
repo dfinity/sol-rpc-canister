@@ -8,19 +8,70 @@ use ic_canister_log::{export as export_logs, GlobalBuffer, Sink};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
+#[derive(Debug)]
+pub struct PrintProxySink<Priority: 'static>(pub &'static Priority, pub &'static GlobalBuffer);
+
 pub trait LogPriority {
     fn get_buffer(&self) -> &'static GlobalBuffer;
     fn as_str_uppercase(&self) -> &'static str;
     fn get_priorities() -> &'static [Self]
     where
         Self: Sized;
+}
+
+#[macro_export]
+macro_rules! declare_log_priorities {
+    (
+        pub enum $enum_name:ident {
+            $($variant:ident($capacity:expr, $uppercase:expr)),*
+        }
+    ) => {
+        // Declare the log priority enum
+        #[derive(Copy, Clone, Debug, Eq, PartialEq, candid::CandidType, serde::Deserialize, serde::Serialize)]
+        pub enum $enum_name {
+            $($variant),*
+        }
+
+        // Declare the buffers for each log priority level
+        $(paste::paste! {
+            ic_canister_log::declare_log_buffer!(name = [<$uppercase _BUF>], capacity = $capacity);
+            pub const $uppercase: $crate::PrintProxySink<$enum_name> = $crate::PrintProxySink(&$enum_name::$variant, &[<$uppercase _BUF>]);
+        })*
+
+        // Array containing all enum variants
+        impl $enum_name {
+            const VARIANTS: &'static [Self] = &[
+                $(Self::$variant),*
+            ];
+        }
+
+        // Implement some methods for the priority enum
+        impl $crate::LogPriority for $enum_name {
+
+            fn get_buffer(&self) -> &'static ic_canister_log::GlobalBuffer {
+                match self {
+                    $(Self::$variant => &paste::paste!([<$uppercase _BUF>]),)*
+                }
+            }
+
+            fn as_str_uppercase(&self) -> &'static str {
+                match self {
+                    $(Self::$variant => stringify!($uppercase),)*
+                }
+            }
+
+            fn get_priorities() -> &'static [Self] {
+                Self::VARIANTS
+            }
+        }
+    };
+}
+
+pub trait GetLogFilter {
     fn get_log_filter() -> LogFilter;
 }
 
-#[derive(Debug)]
-pub struct PrintProxySink<Priority: 'static>(pub &'static Priority, pub &'static GlobalBuffer);
-
-impl<Priority: LogPriority> Sink for PrintProxySink<Priority> {
+impl<Priority: LogPriority + GetLogFilter> Sink for PrintProxySink<Priority> {
     fn append(&self, entry: ic_canister_log::LogEntry) {
         let message = format!(
             "{} {}:{} {}",
