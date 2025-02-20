@@ -5,7 +5,7 @@ mod types;
 
 pub use crate::types::LogFilter;
 use ic_canister_log::{export as export_logs, GlobalBuffer, Sink};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 pub trait LogPriority {
@@ -77,7 +77,7 @@ impl<Priority> Default for Log<Priority> {
 
 impl<'de, Priority> Log<Priority>
 where
-    Priority: LogPriority + Clone + Copy + Deserialize<'de> + serde::Serialize + 'static,
+    Priority: LogPriority + Clone + Copy + Deserialize<'de> + Serialize + 'static,
 {
     pub fn push_logs(&mut self, priority: Priority) {
         let logs = export_logs(priority.get_buffer());
@@ -85,7 +85,7 @@ where
             self.entries.push(LogEntry {
                 timestamp: entry.timestamp,
                 counter: entry.counter,
-                priority: priority.clone(),
+                priority,
                 file: entry.file.to_string(),
                 line: entry.line,
                 message: entry.message,
