@@ -64,14 +64,14 @@ pub enum SolMainnetService {
     Alchemy,
     /// [Ankr](https://www.ankr.com/) Solana Mainnet RPC provider.
     Ankr,
-    /// [PublicNode](https://www.publicnode.com/) Solana Mainnet RPC provider.
-    PublicNode,
-    /// [Lava Network](https://www.lavanet.xyz/) Solana Mainnet RPC provider.
-    LavaNetwork,
-    /// [Helius](https://www.helius.dev/) Solana Mainnet RPC provider.
-    Helius,
     /// [dRPC](https://drpc.org/) Solana Mainnet RPC provider.
     DRPC,
+    /// [Helius](https://www.helius.dev/) Solana Mainnet RPC provider.
+    Helius,
+    /// [Lava Network](https://www.lavanet.xyz/) Solana Mainnet RPC provider.
+    LavaNetwork,
+    /// [PublicNode](https://www.publicnode.com/) Solana Mainnet RPC provider.
+    PublicNode,
 }
 
 impl SolMainnetService {
@@ -101,10 +101,10 @@ pub enum SolDevnetService {
     Alchemy,
     /// [Ankr](https://www.ankr.com/) Solana Devnet RPC provider.
     Ankr,
-    /// [Helius](https://www.helius.dev/) Solana Mainnet RPC provider.
-    Helius,
-    /// [dRPC](https://drpc.org/) Solana Mainnet RPC provider.
+    /// [dRPC](https://drpc.org/) Solana Devnet RPC provider.
     DRPC,
+    /// [Helius](https://www.helius.dev/) Solana Devnet RPC provider.
+    Helius,
 }
 
 impl SolDevnetService {

@@ -65,14 +65,14 @@ thread_local! {
             access: RpcAccess::Unauthenticated {
                 public_url: "https://solana-devnet.drpc.org".to_string(),
             },
-            alias: Some(RpcService::SolMainnet(SolMainnetService::DRPC)),
+            alias: Some(RpcService::SolDevnet(SolDevnetService::DRPC)),
         },
         Provider {
             provider_id: "helius-mainnet".to_string(),
             cluster: SolanaCluster::Mainnet,
             access: RpcAccess::Authenticated {
                 auth: RpcAuth::UrlParameter {
-                    url_pattern: " https://devnet.helius-rpc.com/?api-key={API_KEY}".to_string(),
+                    url_pattern: "https://devnet.helius-rpc.com/?api-key={API_KEY}".to_string(),
                 },
                 public_url: None,
             },
@@ -83,11 +83,11 @@ thread_local! {
             cluster: SolanaCluster::Mainnet,
             access: RpcAccess::Authenticated {
                 auth: RpcAuth::UrlParameter {
-                    url_pattern: " https://mainnet.helius-rpc.com/?api-key={API_KEY}".to_string(),
+                    url_pattern: "https://mainnet.helius-rpc.com/?api-key={API_KEY}".to_string(),
                 },
                 public_url: None,
             },
-            alias: Some(RpcService::SolMainnet(SolMainnetService::Helius)),
+            alias: Some(RpcService::SolDevnet(SolDevnetService::Helius)),
         },
         Provider {
             provider_id: "publicnode-mainnet".to_string(),
@@ -106,7 +106,7 @@ thread_local! {
                 },
                 public_url: None,
             },
-            alias: Some(RpcService::SolMainnet(SolMainnetService::PublicNode)),
+            alias: Some(RpcService::SolMainnet(SolMainnetService::LavaNetwork)),
         },
     ];
 

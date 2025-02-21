@@ -40,11 +40,16 @@ type HttpHeader = record {
 type SolMainnetService = variant {
   Alchemy;
   Ankr;
+  DRPC;
+  Helius;
+  LavaNetwork;
   PublicNode;
 };
 type SolDevnetService = variant {
   Alchemy;
   Ankr;
+  DRPC;
+  Helius;
 };
 type Regex = text;
 type RegexSubstitution = record {
