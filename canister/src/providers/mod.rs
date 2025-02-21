@@ -6,7 +6,7 @@ use sol_rpc_types::{RpcService, SolDevnetService, SolMainnetService, SolanaClust
 use std::collections::HashMap;
 
 thread_local! {
-    pub static PROVIDERS: [Provider; 5] = [
+    pub static PROVIDERS: [Provider; 10] = [
         Provider {
             provider_id: "alchemy-mainnet".to_string(),
             cluster: SolanaCluster::Mainnet,
@@ -52,10 +52,59 @@ thread_local! {
             alias: Some(RpcService::SolDevnet(SolDevnetService::Ankr)),
         },
         Provider {
+            provider_id: "drpc-mainnet".to_string(),
+            cluster: SolanaCluster::Mainnet,
+            access: RpcAccess::Unauthenticated {
+                public_url: "https://solana.drpc.org".to_string(),
+            },
+            alias: Some(RpcService::SolMainnet(SolMainnetService::DRPC)),
+        },
+        Provider {
+            provider_id: "drpc-devnet".to_string(),
+            cluster: SolanaCluster::Mainnet,
+            access: RpcAccess::Unauthenticated {
+                public_url: "https://solana-devnet.drpc.org".to_string(),
+            },
+            alias: Some(RpcService::SolMainnet(SolMainnetService::DRPC)),
+        },
+        Provider {
+            provider_id: "helius-mainnet".to_string(),
+            cluster: SolanaCluster::Mainnet,
+            access: RpcAccess::Authenticated {
+                auth: RpcAuth::UrlParameter {
+                    url_pattern: " https://devnet.helius-rpc.com/?api-key={API_KEY}".to_string(),
+                },
+                public_url: None,
+            },
+            alias: Some(RpcService::SolMainnet(SolMainnetService::Helius)),
+        },
+        Provider {
+            provider_id: "helius-devnet".to_string(),
+            cluster: SolanaCluster::Mainnet,
+            access: RpcAccess::Authenticated {
+                auth: RpcAuth::UrlParameter {
+                    url_pattern: " https://mainnet.helius-rpc.com/?api-key={API_KEY}".to_string(),
+                },
+                public_url: None,
+            },
+            alias: Some(RpcService::SolMainnet(SolMainnetService::Helius)),
+        },
+        Provider {
             provider_id: "publicnode-mainnet".to_string(),
             cluster: SolanaCluster::Mainnet,
             access: RpcAccess::Unauthenticated {
                 public_url: "https://solana-rpc.publicnode.com".to_string(),
+            },
+            alias: Some(RpcService::SolMainnet(SolMainnetService::PublicNode)),
+        },
+        Provider {
+            provider_id: "lava-network-mainnet".to_string(),
+            cluster: SolanaCluster::Mainnet,
+            access: RpcAccess::Authenticated {
+                auth: RpcAuth::UrlParameter {
+                    url_pattern: "https://g.w.lavanet.xyz:443/gateway/solana/rpc-http/{API_KEY}".to_string(),
+                },
+                public_url: None,
             },
             alias: Some(RpcService::SolMainnet(SolMainnetService::PublicNode)),
         },
