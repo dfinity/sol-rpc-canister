@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests;
 
-use sol_rpc_types::{Provider, ProviderId, RpcAccess, RpcAuth};
+use crate::types::ResolvedRpcService;
+use sol_rpc_types::{Provider, ProviderError, ProviderId, RpcAccess, RpcApi, RpcAuth};
 use sol_rpc_types::{RpcService, SolDevnetService, SolMainnetService, SolanaCluster};
 use std::collections::HashMap;
 
@@ -78,4 +79,37 @@ thread_local! {
 
 pub fn find_provider(f: impl Fn(&Provider) -> bool) -> Option<Provider> {
     PROVIDERS.with(|providers| providers.iter().find(|&provider| f(provider)).cloned())
+}
+
+pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, ProviderError> {
+    Ok(match service {
+        RpcService::Provider(id) => ResolvedRpcService::Provider({
+            PROVIDER_MAP.with(|provider_map| {
+                provider_map
+                    .get(&id)
+                    .cloned()
+                    .ok_or(ProviderError::ProviderNotFound)
+            })?
+        }),
+        RpcService::Custom(RpcApi { url, headers }) => {
+            ResolvedRpcService::Api(RpcApi { url, headers })
+        }
+        RpcService::SolMainnet(_) => {
+            ResolvedRpcService::Provider(lookup_provider_for_service(&service)?)
+        }
+        RpcService::SolDevnet(_) => {
+            ResolvedRpcService::Provider(lookup_provider_for_service(&service)?)
+        }
+    })
+}
+
+fn lookup_provider_for_service(service: &RpcService) -> Result<Provider, ProviderError> {
+    let provider_id = SERVICE_PROVIDER_MAP.with(|map| {
+        map.get(service)
+            .cloned()
+            .ok_or(ProviderError::MissingRequiredProvider)
+    })?;
+    PROVIDER_MAP
+        .with(|map| map.get(&provider_id).cloned())
+        .ok_or(ProviderError::ProviderNotFound)
 }

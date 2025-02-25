@@ -3,7 +3,7 @@ mod tests;
 
 use crate::{constants::API_KEY_REPLACE_STRING, rpc_client, validate::validate_api_key};
 use serde::{Deserialize, Serialize};
-use sol_rpc_types::{Provider, RegexSubstitution, RpcApi};
+use sol_rpc_types::{Provider, RegexSubstitution, RpcApi, RpcError, ValidationError};
 use std::fmt;
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
@@ -13,15 +13,15 @@ pub enum ResolvedRpcService {
 }
 
 impl ResolvedRpcService {
-    pub fn api(&self, override_provider: &OverrideProvider) -> Result<RpcApi, String> {
+    pub fn api(&self, override_provider: &OverrideProvider) -> Result<RpcApi, RpcError> {
         let initial_api = match self {
             Self::Api(api) => api.clone(),
             Self::Provider(provider) => rpc_client::get_api(provider),
         };
         override_provider.apply(initial_api).map_err(|regex_error| {
-            format!(
+            RpcError::ValidationError(ValidationError::Custom(format!(
                 "BUG: regex should have been validated when initially set. Error: {regex_error}"
-            )
+            )))
         })
     }
 }

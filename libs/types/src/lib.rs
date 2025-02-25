@@ -11,3 +11,6 @@ pub use rpc_client::{
     HttpHeader, OverrideProvider, Provider, ProviderId, RegexString, RegexSubstitution, RpcAccess,
     RpcApi, RpcAuth, RpcService, SolDevnetService, SolMainnetService, SolanaCluster,
 };
+pub use evm_rpc_types::{
+    HttpOutcallError, JsonRpcError, MultiRpcResult, RpcError, RpcResult, ValidationError, ProviderError,
+};

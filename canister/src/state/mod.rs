@@ -95,8 +95,8 @@ impl State {
         self.api_keys.insert(provider_id, api_key);
     }
 
-    pub fn remove_api_key(&mut self, provider_id: ProviderId) {
-        self.api_keys.remove(&provider_id);
+    pub fn remove_api_key(&mut self, provider_id: &ProviderId) {
+        self.api_keys.remove(provider_id);
     }
 
     pub fn is_api_key_principal(&self, principal: &Principal) -> bool {

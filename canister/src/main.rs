@@ -2,11 +2,12 @@ use candid::candid_method;
 use ic_cdk::api::is_controller;
 use ic_cdk::{query, update};
 use sol_rpc_canister::{
+    http::{get_http_response_body, json_rpc_request},
     lifecycle,
-    providers::{find_provider, PROVIDERS},
+    providers::{find_provider, resolve_rpc_service, PROVIDERS},
     state::{mutate_state, read_state},
 };
-use sol_rpc_types::{ProviderId, RpcAccess};
+use sol_rpc_types::{ProviderId, RpcAccess, RpcResult};
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
     let caller = ic_cdk::caller();
@@ -59,7 +60,7 @@ async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
             Some(key) => mutate_state(|state| {
                 state.insert_api_key(provider_id, key.try_into().expect("Invalid API key"))
             }),
-            None => mutate_state(|state| state.remove_api_key(provider_id)),
+            None => mutate_state(|state| state.remove_api_key(&provider_id)),
         }
     }
 }
@@ -75,6 +76,23 @@ async fn verify_api_key(api_key: (ProviderId, Option<String>)) {
     if read_state(|state| state.get_api_key(&provider_id)) != api_key {
         panic!("API key does not match input")
     }
+}
+
+#[update]
+#[candid_method]
+async fn request(
+    service: sol_rpc_types::RpcService,
+    json_rpc_payload: String,
+    max_response_bytes: u64,
+) -> RpcResult<String> {
+    let response = json_rpc_request(
+        resolve_rpc_service(service)?,
+        "request",
+        &json_rpc_payload,
+        max_response_bytes,
+    )
+    .await?;
+    get_http_response_body(response)
 }
 
 #[ic_cdk::init]
