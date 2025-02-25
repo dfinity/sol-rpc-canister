@@ -33,6 +33,41 @@ type RpcApi = record {
   url : text;
   headers : opt vec HttpHeader
 };
+type RpcError = variant {
+  JsonRpcError : JsonRpcError;
+  ProviderError : ProviderError;
+  ValidationError : ValidationError;
+  HttpOutcallError : HttpOutcallError;
+};
+type HttpOutcallError = variant {
+  IcError : record { code : RejectionCode; message : text };
+  InvalidHttpJsonRpcResponse : record {
+    status : nat16;
+    body : text;
+    parsingError : opt text;
+  };
+};
+type JsonRpcError = record { code : int64; message : text };
+type ProviderError = variant {
+  TooFewCycles : record { expected : nat; received : nat };
+  MissingRequiredProvider;
+  ProviderNotFound;
+  NoPermission;
+  InvalidRpcConfig : text ;
+};
+type RejectionCode = variant {
+  NoError;
+  CanisterError;
+  SysTransient;
+  DestinationInvalid;
+  Unknown;
+  SysFatal;
+  CanisterReject;
+};
+type ValidationError = variant {
+  Custom : text;
+  InvalidHex : text;
+};
 type HttpHeader = record {
   value : text;
   name : text
@@ -54,11 +89,16 @@ type RegexSubstitution = record {
 type OverrideProvider = record {
   overrideUrl : opt RegexSubstitution
 };
+type Mode = variant { Normal; Demo; };
+type RequestResult = variant { Ok : text; Err : RpcError };
 type InstallArgs = record {
   manageApiKeys: opt vec principal;
   overrideProvider: opt OverrideProvider;
+  numSubnetNodes: opt nat32;
+  mode: opt Mode;
 };
 service : (InstallArgs,) -> {
   getProviders : () -> (vec Provider) query;
   updateApiKeys : (vec record { ProviderId; opt text }) -> ();
+  request : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestResult);
 };
