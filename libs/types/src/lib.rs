@@ -6,11 +6,12 @@
 mod lifecycle;
 mod rpc_client;
 
-pub use lifecycle::InstallArgs;
+pub use evm_rpc_types::{
+    HttpOutcallError, JsonRpcError, MultiRpcResult, ProviderError, RpcError, RpcResult,
+    ValidationError,
+};
+pub use lifecycle::{InstallArgs, Mode, NumSubnetNodes};
 pub use rpc_client::{
     HttpHeader, OverrideProvider, Provider, ProviderId, RegexString, RegexSubstitution, RpcAccess,
     RpcApi, RpcAuth, RpcService, SolDevnetService, SolMainnetService, SolanaCluster,
-};
-pub use evm_rpc_types::{
-    HttpOutcallError, JsonRpcError, MultiRpcResult, RpcError, RpcResult, ValidationError, ProviderError,
 };

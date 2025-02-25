@@ -25,5 +25,11 @@ pub fn post_upgrade(args: Option<InstallArgs>) {
         if let Some(override_provider) = args.override_provider {
             mutate_state(|s| s.set_override_provider(override_provider.into()));
         }
+        if let Some(num_subnet_nodes) = args.num_subnet_nodes {
+            mutate_state(|s| s.set_num_subnet_nodes(num_subnet_nodes.into()));
+        }
+        if let Some(mode) = args.mode {
+            mutate_state(|s| s.set_mode(mode))
+        }
     }
 }

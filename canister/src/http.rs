@@ -1,10 +1,6 @@
-/*
-use crate::constants::COLLATERAL_CYCLES_PER_NODE;
-use crate::memory::{get_num_subnet_nodes, is_demo_active};
-*/
 use crate::{
     constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
-    state::read_state,
+    state::{read_state, State},
     types::ResolvedRpcService,
 };
 use canhttp::{CyclesAccounting, CyclesAccountingError, CyclesChargingPolicy};
@@ -13,7 +9,7 @@ use ic_cdk::api::management_canister::http_request::{
     TransformContext,
 };
 use num_traits::ToPrimitive;
-use sol_rpc_types::{HttpOutcallError, ProviderError, RpcError, RpcResult, ValidationError};
+use sol_rpc_types::{HttpOutcallError, Mode, ProviderError, RpcError, RpcResult, ValidationError};
 use tower::{BoxError, Service, ServiceBuilder};
 
 pub fn json_rpc_request_arg(
@@ -82,21 +78,16 @@ pub async fn http_request(
 pub fn http_client(
     _rpc_method: &str,
 ) -> impl Service<CanisterHttpRequestArgument, Response = HttpResponse, Error = RpcError> {
+    let cycles_accounting = read_state(|s| {
+        CyclesAccounting::new(
+            s.get_num_subnet_nodes(),
+            ChargingPolicyWithCollateral::new_from_state(s),
+        )
+    });
     ServiceBuilder::new()
         .map_err(map_error)
-        .filter(CyclesAccounting::new(
-            get_num_subnet_nodes(),
-            ChargingPolicyWithCollateral::default(),
-        ))
+        .filter(cycles_accounting)
         .service(canhttp::Client)
-}
-
-fn get_num_subnet_nodes() -> u32 {
-    34
-}
-
-fn is_demo_active() -> bool {
-    false
 }
 
 fn map_error(e: BoxError) -> RpcError {
@@ -143,11 +134,13 @@ impl ChargingPolicyWithCollateral {
             collateral_cycles,
         }
     }
-}
 
-impl Default for ChargingPolicyWithCollateral {
-    fn default() -> Self {
-        Self::new(get_num_subnet_nodes(), !is_demo_active(), 0)
+    fn new_from_state(s: &State) -> Self {
+        Self::new(
+            s.get_num_subnet_nodes(),
+            !matches!(s.get_mode(), Mode::Demo),
+            0,
+        )
     }
 }
 
