@@ -10,10 +10,14 @@ license.workspace = true
 [dependencies]
 async-trait = { workspace = true }
 candid = { workspace = true }
+canlog = { path = "../canlog" }
+canlog_derive = { path = "../canlog_derive" }
 ic-cdk = { workspace = true }
 ic-test-utilities-load-wasm = { workspace = true }
 pocket-ic = { workspace = true }
+proptest = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
 sol_rpc_client = { path = "../libs/client" }
 sol_rpc_types = { path = "../libs/types" }
 

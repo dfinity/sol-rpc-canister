@@ -1,101 +1,94 @@
-//! Crate for managing canister logs
+//! Crate for managing canister canlog
 
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 
-#[cfg(test)]
-mod tests;
-
 mod types;
 
 pub use crate::types::{LogFilter, Sort};
-use ic_canister_log::{export as export_logs, GlobalBuffer, Sink};
+pub use ic_canister_log::{declare_log_buffer, export as export_logs, GlobalBuffer, Sink, log as raw_log};
 use serde::{Deserialize, Serialize};
 
-/// Use this macro to declare en enum containing priority levels and the corresponding
-/// buffers as defined in the [`ic_canister_log`]. The resulting log priority automatically
-/// implements the [`LogPriority`] trait.
+/// Wrapper for the [`ic_canister_log::log`] macro that allows logging
+/// for a given variant of an enum implementing the [`LogPriorityLevels`]
+/// trait.
 ///
-/// The [`GetLogFilter`] trait should be implemented manually for the resulting enum.
-///
-/// # Example
+/// **Usage Example:**
 /// ```rust
-/// use ic_canister_log::log;
-/// use sol_rpc_logs::{declare_log_priorities, GetLogFilter, LogFilter};
+/// use canlog::{GetLogFilter, LogFilter, LogPriorityLevels, log, declare_log_buffer, PrintProxySink};
 ///
-/// // Each log priority is defined here with a capacity of 1000
-/// declare_log_priorities! {
-///     pub enum Priority {
-///         Info(capacity = 1000, buffer = INFO),
-///         Debug(capacity = 1000, buffer = DEBUG)
+/// enum LogPriority {
+///     Info,
+///     Debug,
+/// }
+///
+/// declare_log_buffer!(name = INFO_BUF, capacity = 100);
+/// declare_log_buffer!(name = DEBUG_BUF, capacity = 500);
+///
+/// const INFO: PrintProxySink<LogPriority> = PrintProxySink(&LogPriority::Info, &INFO_BUF);
+/// const DEBUG: PrintProxySink<LogPriority> = PrintProxySink(&LogPriority::Info, &DEBUG_BUF);
+///
+/// impl LogPriorityLevels for LogPriority {
+///     fn get_buffer(&self) -> &'static canlog::GlobalBuffer {
+///         match self {
+///             Self::Info => &INFO_BUF,
+///             Self::Debug => &DEBUG_BUF,
+///         }
+///     }
+///
+///     fn get_sink(&self) -> &impl canlog::Sink {
+///         match self {
+///             Self::Info => &INFO,
+///             Self::Debug => &DEBUG,
+///         }
+///     }
+///
+///     fn display_name(&self) -> &'static str {
+///         match self {
+///             Self::Info => "INFO",
+///             Self::Debug => "DEBUG",
+///         }
+///     }
+///
+///     fn get_priorities() -> &'static [Self] {
+///         &[Self::Info, Self::Debug]
 ///     }
 /// }
 ///
-/// impl GetLogFilter for Priority {
+/// impl GetLogFilter for LogPriority {
 ///     fn get_log_filter() -> LogFilter {
 ///         LogFilter::ShowAll
 ///     }
 /// }
 ///
-/// log!(INFO, "Some noteworthy event");
-/// log!(DEBUG, "A less noteworthy event");
+/// fn main() {
+///     log!(LogPriority::Info, "Some rather important message.");
+///     log!(LogPriority::Debug, "Some less important message.");
+/// }
+/// ```
+///
+/// **Expected Output:**
+/// ```text
+/// 2025-02-26 08:27:10 UTC: [Canister lxzze-o7777-77777-aaaaa-cai] INFO main.rs:13 Some rather important message.
+/// 2025-02-26 08:27:10 UTC: [Canister lxzze-o7777-77777-aaaaa-cai] DEBUG main.rs:14 Some less important message.
 /// ```
 #[macro_export]
-macro_rules! declare_log_priorities {
-    (
-        pub enum $enum_name:ident {
-            $($variant:ident(capacity = $capacity:expr, buffer = $uppercase:expr)),*
-        }
-    ) => {
-        // Declare the log priority enum
-        #[derive(Copy, Clone, Debug, Eq, PartialEq, candid::CandidType, serde::Deserialize, serde::Serialize)]
-        pub enum $enum_name {
-            $($variant),*
-        }
-
-        // Declare the buffers for each log priority level
-        $(paste::paste! {
-            ic_canister_log::declare_log_buffer!(name = [<$uppercase _BUF>], capacity = $capacity);
-            pub const $uppercase: $crate::PrintProxySink<$enum_name> = $crate::PrintProxySink(&$enum_name::$variant, &[<$uppercase _BUF>]);
-        })*
-
-        // Array containing all enum variants
-        impl $enum_name {
-            const VARIANTS: &'static [Self] = &[
-                $(Self::$variant),*
-            ];
-        }
-
-        // Implement some methods for the priority enum
-        impl $crate::LogPriority for $enum_name {
-
-            fn get_buffer(&self) -> &'static ic_canister_log::GlobalBuffer {
-                match self {
-                    $(Self::$variant => &paste::paste!([<$uppercase _BUF>]),)*
-                }
-            }
-
-            fn as_str_uppercase(&self) -> &'static str {
-                match self {
-                    $(Self::$variant => stringify!($uppercase),)*
-                }
-            }
-
-            fn get_priorities() -> &'static [Self] {
-                Self::VARIANTS
-            }
-        }
+macro_rules! log {
+    ($enum_variant:expr, $($args:tt)*) => {
+        canlog::raw_log!($enum_variant.get_sink(), $($args)*);
     };
 }
 
 /// Represents a log priority level. This trait is meant to be implemented
 /// automatically by the [`declare_log_priorities!`] macro.
-pub trait LogPriority {
-    /// Returns a reference to the [`GlobalBuffer`] where the log entries are stored.
+pub trait LogPriorityLevels {
+    #[doc(hidden)]
     fn get_buffer(&self) -> &'static GlobalBuffer;
+    #[doc(hidden)]
+    fn get_sink(&self) -> &impl Sink;
 
-    /// Returns an uppercase `&str` representing a log priority level.
-    fn as_str_uppercase(&self) -> &'static str;
+    /// Returns a display representation for a log priority level.
+    fn display_name(&self) -> &'static str;
 
     /// Returns an array containing all the log priority levels.
     fn get_priorities() -> &'static [Self]
@@ -109,26 +102,6 @@ pub trait LogPriority {
 pub trait GetLogFilter {
     /// Returns a [`LogFilter`]. Only log entries matching this filter will be recorded.
     fn get_log_filter() -> LogFilter;
-}
-
-/// Defines how log entries are displayed and appended to the corresponding [`GlobalBuffer`].
-#[derive(Debug)]
-pub struct PrintProxySink<Priority: 'static>(pub &'static Priority, pub &'static GlobalBuffer);
-
-impl<Priority: LogPriority + GetLogFilter> Sink for PrintProxySink<Priority> {
-    fn append(&self, entry: ic_canister_log::LogEntry) {
-        let message = format!(
-            "{} {}:{} {}",
-            self.0.as_str_uppercase(),
-            entry.file,
-            entry.line,
-            entry.message,
-        );
-        if Priority::get_log_filter().is_match(&message) {
-            ic_cdk::println!("{}", message);
-            self.1.append(entry)
-        }
-    }
 }
 
 /// A single log entry.
@@ -163,7 +136,7 @@ impl<Priority> Default for Log<Priority> {
 
 impl<'de, Priority> Log<Priority>
 where
-    Priority: LogPriority + Clone + Copy + Deserialize<'de> + Serialize + 'static,
+    Priority: LogPriorityLevels + Clone + Copy + Deserialize<'de> + Serialize + 'static,
 {
     /// Append all the entries from the given [`Priority`] to [`entries`].
     pub fn push_logs(&mut self, priority: Priority) {
@@ -186,7 +159,7 @@ where
             .for_each(|priority| self.push_logs(*priority));
     }
 
-    /// Serialize the logs contained in `entries` into a JSON string.
+    /// Serialize the canlog contained in `entries` into a JSON string.
     ///
     /// If the resulting string is larger than `max_body_size` bytes,
     /// truncate `entries` so the resulting serialized JSON string
@@ -229,5 +202,25 @@ where
 
     fn sort_desc(&mut self) {
         self.entries.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
+    }
+}
+
+#[doc(hidden)]
+#[derive(Debug)]
+pub struct PrintProxySink<Priority: 'static>(pub &'static Priority, pub &'static GlobalBuffer);
+
+impl<Priority: LogPriorityLevels + GetLogFilter> Sink for PrintProxySink<Priority> {
+    fn append(&self, entry: ic_canister_log::LogEntry) {
+        let message = format!(
+            "{} {}:{} {}",
+            self.0.display_name(),
+            entry.file,
+            entry.line,
+            entry.message,
+        );
+        if Priority::get_log_filter().is_match(&message) {
+            ic_cdk::println!("{}", message);
+            self.1.append(entry)
+        }
     }
 }

@@ -9,7 +9,7 @@ use ic_stable_structures::{
     Cell, DefaultMemoryImpl, Storable,
 };
 use serde::Serialize;
-use sol_rpc_logs::LogFilter;
+use canlog::LogFilter;
 use sol_rpc_types::{InstallArgs, ProviderId};
 use std::{borrow::Cow, cell::RefCell, collections::BTreeMap};
 

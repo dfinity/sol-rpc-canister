@@ -17,6 +17,6 @@ ic-cdk = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }
-sol_rpc_logs = { path = "../logs" }
+canlog = { path = "../../canlog" }
 sol_rpc_types = { path = "../types" }
 sol_rpc_canister = { path = "../../canister" }

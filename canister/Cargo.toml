@@ -14,14 +14,14 @@ path = "src/main.rs"
 
 [dependencies]
 candid = { workspace = true }
+canlog = { path = "../canlog" }
+canlog_derive = { path = "../canlog_derive" }
 ciborium = { workspace = true }
 const_format = { workspace = true }
 hex = { workspace = true }
-ic-canister-log = { workspace = true }
 ic-cdk = { workspace = true }
 ic-stable-structures = { workspace = true }
 sol_rpc_types = { path = "../libs/types" }
-sol_rpc_logs = { path = "../libs/logs" }
 regex = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

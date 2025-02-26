@@ -1,0 +1,24 @@
+[package]
+name = "canlog_derive"
+version = "0.1.0"
+description = "Crate with macro definitions for the canlog crate"
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme = "README.md"
+include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
+
+[dependencies]
+canlog = { path = "../canlog" }
+ic-canister-log = { workspace = true }
+paste = { workspace = true }
+
+syn = { version = "2.0.98", features = ["derive"] }
+quote = "1.0.38"
+proc-macro2 = "1.0.93"
+darling = "0.20.10"
+
+[lib]
+proc-macro = true

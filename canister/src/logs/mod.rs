@@ -1,13 +1,16 @@
 use crate::state::read_state;
-use sol_rpc_logs::{declare_log_priorities, GetLogFilter, LogFilter};
+use canlog::{GetLogFilter, LogFilter};
 use std::str::FromStr;
+use serde::{Deserialize, Serialize};
 
-declare_log_priorities! {
-    pub enum Priority {
-        Info(capacity = 1000, buffer = INFO),
-        Debug(capacity = 1000, buffer = DEBUG),
-        TraceHttp(capacity = 1000, buffer = TRACE_HTTP)
-    }
+#[derive(canlog_derive::LogPriorityLevels, Serialize, Deserialize, PartialEq, Debug, Copy, Clone)]
+pub enum Priority {
+    #[log_level(capacity = 1000, name = "INFO")]
+    Info,
+    #[log_level(capacity = 1000, name = "DEBUG")]
+    Debug,
+    #[log_level(capacity = 1000, name = "TRACE_HTTP")]
+    TraceHttp,
 }
 
 impl GetLogFilter for Priority {

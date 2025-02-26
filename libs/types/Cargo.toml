@@ -15,6 +15,6 @@ candid = { workspace = true }
 ic-cdk = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true }
-sol_rpc_logs = { path = "../logs" }
+canlog = { path = "../../canlog" }
 strum = { workspace = true }
 url = { workspace = true }

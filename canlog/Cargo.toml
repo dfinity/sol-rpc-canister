@@ -1,5 +1,5 @@
 [package]
-name = "sol_rpc_logs"
+name = "canlog"
 version = "0.1.0"
 description = "Crate for managing canister logs"
 authors.workspace = true

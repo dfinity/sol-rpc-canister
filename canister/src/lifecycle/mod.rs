@@ -1,8 +1,8 @@
 use crate::{
-    logs::INFO,
+    logs::Priority,
     state::{init_state, mutate_state, State},
 };
-use ic_canister_log::log;
+use canlog::{log, LogPriorityLevels};
 use sol_rpc_types::InstallArgs;
 
 pub fn init(args: InstallArgs) {
@@ -12,7 +12,7 @@ pub fn init(args: InstallArgs) {
 pub fn post_upgrade(args: Option<InstallArgs>) {
     if let Some(args) = args {
         log!(
-            INFO,
+            Priority::Info,
             "[init]: upgraded SOL RPC canister with arg: {:?}",
             args
         );

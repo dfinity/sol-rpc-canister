@@ -1,7 +1,7 @@
 use crate::OverrideProvider;
 use candid::{CandidType, Principal};
 use serde::Deserialize;
-use sol_rpc_logs::LogFilter;
+use canlog::LogFilter;
 
 /// The installation args for the Solana RPC canister
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]

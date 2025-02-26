@@ -3,8 +3,9 @@ resolver = "2"
 members = [
     "canister", "integration_tests",
     "libs/client",
-    "libs/logs",
     "libs/types",
+    "canlog",
+    "canlog_derive",
     "examples/basic_solana"]
 
 [workspace.package]

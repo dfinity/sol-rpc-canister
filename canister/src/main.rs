@@ -1,5 +1,5 @@
 use candid::candid_method;
-use ic_canister_log::log;
+use canlog::{log, Log, LogPriorityLevels, Sort};
 use ic_cdk::{
     api::is_controller,
     {query, update},
@@ -7,11 +7,9 @@ use ic_cdk::{
 use sol_rpc_canister::{
     http_types, lifecycle,
     logs::Priority,
-    logs::INFO,
     providers::{find_provider, PROVIDERS},
     state::{mutate_state, read_state},
 };
-use sol_rpc_logs::{Log, Sort};
 use sol_rpc_types::{ProviderId, RpcAccess};
 use std::str::FromStr;
 
@@ -43,7 +41,7 @@ fn get_providers() -> Vec<sol_rpc_types::Provider> {
 /// Panics if the list of provider IDs includes a nonexistent or "unauthenticated" (fully public) provider.
 async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
     log!(
-        INFO,
+        Priority::Info,
         "[{}] Updating API keys for providers: {}",
         ic_cdk::caller(),
         api_keys
@@ -73,7 +71,7 @@ async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
 #[query(hidden = true)]
 fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
     match request.path() {
-        "/logs" => {
+        "/canlog" => {
             let max_skip_timestamp = match request.raw_query_param("time") {
                 Some(arg) => match u64::from_str(arg) {
                     Ok(value) => value,
