@@ -14,8 +14,7 @@ path = "src/main.rs"
 
 [dependencies]
 candid = { workspace = true }
-canlog = { path = "../canlog" }
-canlog_derive = { path = "../canlog_derive" }
+canlog = { path = "../canlog", features = ["derive"] }
 ciborium = { workspace = true }
 const_format = { workspace = true }
 hex = { workspace = true }
@@ -25,10 +24,8 @@ sol_rpc_types = { path = "../libs/types" }
 regex = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-strum = { workspace = true }
 url = { workspace = true }
 zeroize = { workspace = true }
-paste = "1.0.15"
 
 [dev-dependencies]
 candid_parser = { workspace = true }

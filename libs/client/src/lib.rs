@@ -101,8 +101,8 @@ impl<R: Runtime> SolRpcClient<R> {
     /// Retrieve canlog from the SOL RPC canister from the HTTP endpoint.
     pub async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry<Priority>> {
         let request = HttpRequest {
-            method: "".to_string(),
-            url: format!("/canlog?priority={priority}"),
+            method: "POST".to_string(),
+            url: format!("/log?priority={priority}"),
             headers: vec![],
             body: serde_bytes::ByteBuf::new(),
         };
@@ -112,7 +112,7 @@ impl<R: Runtime> SolRpcClient<R> {
             .await
             .unwrap();
         serde_json::from_slice::<Log<Priority>>(&response.body)
-            .expect("failed to parse SOL RPC canister canlog")
+            .expect("failed to parse SOL RPC canister log")
             .entries
     }
 }

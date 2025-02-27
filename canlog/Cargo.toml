@@ -12,12 +12,16 @@ include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
 
 [dependencies]
 candid = { workspace = true }
+canlog_derive = { path = "../canlog_derive", optional = true }
 ic-canister-log = { workspace = true }
 ic-cdk = { workspace = true }
-paste = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
 [dev-dependencies]
 proptest = { workspace = true }
+canlog_derive = { path = "../canlog_derive" }
+
+[features]
+derive = ["dep:canlog_derive"]

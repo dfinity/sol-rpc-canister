@@ -1,4 +1,4 @@
-//! Crate for managing canister canlog
+//! Procedural macros for the canlog crate
 
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
@@ -12,48 +12,12 @@ use syn::{parse_macro_input, Data, DataEnum, DeriveInput};
 /// A procedural macro to implement [`LogPriorityLevels`](canlog::LogPriorityLevels) for an enum.
 ///
 /// This macro expects the variants to be annotated with `#[log_level(capacity = N, name = "NAME")]`
-/// where `N` is an integer representing buffer capacity and `"NAME"` is a string display 
+/// where `N` is an integer representing buffer capacity and `"NAME"` is a string display
 /// representation for the corresponding log level.
-/// 
-/// The enum annotated with `#[derive(LogPriorityLevels)]` must also implement the 
-/// [`Serialize`](serde::Serialize), [`Deserialize`](serde::Deserialize), 
+///
+/// The enum annotated with `#[derive(LogPriorityLevels)]` must also implement the
+/// [`Serialize`](serde::Serialize), [`Deserialize`](serde::Deserialize),
 /// [`Clone`](core::clone::Clone) and [`Copy`](core::marker::Copy) traits
-///
-/// **Generated Code:**
-/// 1. Declares a [`GlobalBuffer`](ic_canister_log::GlobalBuffer) and 
-///     [`Sink`](ic_canister_log::Sink) constant for each variant.
-/// 2. Implements the [LogPriorityLevels](canlog::LogPriorityLevels) trait for the enum.
-///
-/// **Usage Example:**
-/// ```rust
-/// use canlog::{GetLogFilter, LogFilter, LogPriorityLevels, log};
-/// use canlog_derive::LogPriorityLevels;
-/// 
-/// #[derive(LogPriorityLevels)]
-/// enum LogPriority {
-///     #[log_level(capacity = 100, name = "INFO")]
-///     Info,
-///     #[log_level(capacity = 500, name = "DEBUG")]
-///     Debug,
-/// }
-///
-/// impl GetLogFilter for LogPriority {
-///     fn get_log_filter() -> LogFilter {
-///         LogFilter::ShowAll
-///     }
-/// }
-///
-/// fn main() {
-///     log!(LogPriority::Info, "Some rather important message.");
-///     log!(LogPriority::Debug, "Some less important message.");
-/// }
-/// ```
-///
-/// **Expected Output:**
-/// ```text
-/// 2025-02-26 08:27:10 UTC: [Canister lxzze-o7777-77777-aaaaa-cai] INFO main.rs:13 Some rather important message.
-/// 2025-02-26 08:27:10 UTC: [Canister lxzze-o7777-77777-aaaaa-cai] DEBUG main.rs:14 Some less important message.
-/// ```
 #[proc_macro_derive(LogPriorityLevels, attributes(log_level))]
 pub fn derive_log_priority(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -74,8 +38,8 @@ pub fn derive_log_priority(input: TokenStream) -> TokenStream {
         let capacity = info.capacity;
 
         quote! {
-            canlog::declare_log_buffer!(name = #buffer_ident, capacity = #capacity);
-            pub const #sink_ident: canlog::PrintProxySink<#enum_ident> = canlog::PrintProxySink(&#enum_ident::#variant_ident, &#buffer_ident);
+            ::canlog::declare_log_buffer!(name = #buffer_ident, capacity = #capacity);
+            pub const #sink_ident: ::canlog::PrintProxySink<#enum_ident> = ::canlog::PrintProxySink(&#enum_ident::#variant_ident, &#buffer_ident);
         }
     });
 
@@ -110,14 +74,14 @@ pub fn derive_log_priority(input: TokenStream) -> TokenStream {
     let trait_impl = quote! {
         #(#buffer_declarations)*
 
-        impl canlog::LogPriorityLevels for #enum_ident {
-            fn get_buffer(&self) -> &'static canlog::GlobalBuffer {
+        impl ::canlog::LogPriorityLevels for #enum_ident {
+            fn get_buffer(&self) -> &'static ::canlog::GlobalBuffer {
                 match self {
                     #(#buffer_match_arms)*
                 }
             }
 
-            fn get_sink(&self) -> &impl canlog::Sink {
+            fn get_sink(&self) -> &impl ::canlog::Sink {
                 match self {
                     #(#sink_match_arms)*
                 }

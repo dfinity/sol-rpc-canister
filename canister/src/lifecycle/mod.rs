@@ -2,7 +2,7 @@ use crate::{
     logs::Priority,
     state::{init_state, mutate_state, State},
 };
-use canlog::{log, LogPriorityLevels};
+use canlog::log;
 use sol_rpc_types::InstallArgs;
 
 pub fn init(args: InstallArgs) {

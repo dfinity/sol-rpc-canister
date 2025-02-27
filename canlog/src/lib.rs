@@ -1,81 +1,76 @@
-//! Crate for managing canister canlog
+//! This crate extends [`ic_canister_log`] to provide native support for log priority levels,
+//! filtering and sorting.
+//!
+//! The main functionality is provided by the [`LogPriorityLevels`] and [`GetLogFilter`] traits
+//! as well as the [`log`] macro.
+//!
+//! Custom log priority levels may be defined by declaring an enum and implementing the
+//! [`LogPriorityLevels`] trait for it, usually through the [`derive`] annotation available with
+//! the `derive` feature of [`canlog`].
+//!
+//! Additionally, log filtering may be achieved by implementing the [`GetLogFilter`] trait on
+//! the enum defining the log priorities.
+//!
+//! * Example:
+//! ```rust
+//! # #[cfg(feature="derive")]
+//! # mod wrapper_module {
+//! use canlog::{GetLogFilter, LogFilter, LogPriorityLevels, log};
+//!
+//! #[derive(LogPriorityLevels)]
+//! enum LogPriority {
+//!     #[log_level(capacity = 100, name = "INFO")]
+//!     Info,
+//!     #[log_level(capacity = 500, name = "DEBUG")]
+//!     Debug,
+//! }
+//!
+//! impl GetLogFilter for LogPriority {
+//!     fn get_log_filter() -> LogFilter {
+//!         LogFilter::ShowAll
+//!     }
+//! }
+//!
+//! fn main() {
+//!     log!(LogPriority::Info, "Some rather important message.");
+//!     log!(LogPriority::Debug, "Some less important message.");
+//! }
+//! # }
+//! ```
+//!
+//! **Expected Output:**
+//! ```text
+//! 2025-02-26 08:27:10 UTC: [Canister lxzze-o7777-77777-aaaaa-cai] INFO main.rs:13 Some rather important message.
+//! 2025-02-26 08:27:10 UTC: [Canister lxzze-o7777-77777-aaaaa-cai] DEBUG main.rs:14 Some less important message.
+//! ```
 
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 
+#[cfg(test)]
+mod tests;
 mod types;
 
+extern crate self as canlog;
+
 pub use crate::types::{LogFilter, Sort};
-pub use ic_canister_log::{declare_log_buffer, export as export_logs, GlobalBuffer, Sink, log as raw_log};
+#[cfg(any(feature = "derive", test))]
+pub use canlog_derive::*;
+pub use ic_canister_log::{
+    declare_log_buffer, export as export_logs, log as raw_log, GlobalBuffer, Sink,
+};
 use serde::{Deserialize, Serialize};
 
 /// Wrapper for the [`ic_canister_log::log`] macro that allows logging
 /// for a given variant of an enum implementing the [`LogPriorityLevels`]
-/// trait.
-///
-/// **Usage Example:**
-/// ```rust
-/// use canlog::{GetLogFilter, LogFilter, LogPriorityLevels, log, declare_log_buffer, PrintProxySink};
-///
-/// enum LogPriority {
-///     Info,
-///     Debug,
-/// }
-///
-/// declare_log_buffer!(name = INFO_BUF, capacity = 100);
-/// declare_log_buffer!(name = DEBUG_BUF, capacity = 500);
-///
-/// const INFO: PrintProxySink<LogPriority> = PrintProxySink(&LogPriority::Info, &INFO_BUF);
-/// const DEBUG: PrintProxySink<LogPriority> = PrintProxySink(&LogPriority::Info, &DEBUG_BUF);
-///
-/// impl LogPriorityLevels for LogPriority {
-///     fn get_buffer(&self) -> &'static canlog::GlobalBuffer {
-///         match self {
-///             Self::Info => &INFO_BUF,
-///             Self::Debug => &DEBUG_BUF,
-///         }
-///     }
-///
-///     fn get_sink(&self) -> &impl canlog::Sink {
-///         match self {
-///             Self::Info => &INFO,
-///             Self::Debug => &DEBUG,
-///         }
-///     }
-///
-///     fn display_name(&self) -> &'static str {
-///         match self {
-///             Self::Info => "INFO",
-///             Self::Debug => "DEBUG",
-///         }
-///     }
-///
-///     fn get_priorities() -> &'static [Self] {
-///         &[Self::Info, Self::Debug]
-///     }
-/// }
-///
-/// impl GetLogFilter for LogPriority {
-///     fn get_log_filter() -> LogFilter {
-///         LogFilter::ShowAll
-///     }
-/// }
-///
-/// fn main() {
-///     log!(LogPriority::Info, "Some rather important message.");
-///     log!(LogPriority::Debug, "Some less important message.");
-/// }
-/// ```
-///
-/// **Expected Output:**
-/// ```text
-/// 2025-02-26 08:27:10 UTC: [Canister lxzze-o7777-77777-aaaaa-cai] INFO main.rs:13 Some rather important message.
-/// 2025-02-26 08:27:10 UTC: [Canister lxzze-o7777-77777-aaaaa-cai] DEBUG main.rs:14 Some less important message.
-/// ```
+/// trait. See the example in the crate documentation.
 #[macro_export]
 macro_rules! log {
     ($enum_variant:expr, $($args:tt)*) => {
-        canlog::raw_log!($enum_variant.get_sink(), $($args)*);
+        {
+            use ::canlog::LogPriorityLevels;
+            ::canlog::raw_log!($enum_variant.get_sink(), $($args)*);
+        }
     };
 }
 
@@ -159,7 +154,7 @@ where
             .for_each(|priority| self.push_logs(*priority));
     }
 
-    /// Serialize the canlog contained in `entries` into a JSON string.
+    /// Serialize the logs contained in `entries` into a JSON string.
     ///
     /// If the resulting string is larger than `max_body_size` bytes,
     /// truncate `entries` so the resulting serialized JSON string

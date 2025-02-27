@@ -1,9 +1,9 @@
 use crate::state::read_state;
-use canlog::{GetLogFilter, LogFilter};
-use std::str::FromStr;
+use canlog::{GetLogFilter, LogFilter, LogPriorityLevels};
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
-#[derive(canlog_derive::LogPriorityLevels, Serialize, Deserialize, PartialEq, Debug, Copy, Clone)]
+#[derive(LogPriorityLevels, Serialize, Deserialize, PartialEq, Debug, Copy, Clone)]
 pub enum Priority {
     #[log_level(capacity = 1000, name = "INFO")]
     Info,

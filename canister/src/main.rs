@@ -1,5 +1,5 @@
 use candid::candid_method;
-use canlog::{log, Log, LogPriorityLevels, Sort};
+use canlog::{log, Log, Sort};
 use ic_cdk::{
     api::is_controller,
     {query, update},
@@ -71,7 +71,7 @@ async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
 #[query(hidden = true)]
 fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
     match request.path() {
-        "/canlog" => {
+        "/log" => {
             let max_skip_timestamp = match request.raw_query_param("time") {
                 Some(arg) => match u64::from_str(arg) {
                     Ok(value) => value,
