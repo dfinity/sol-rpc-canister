@@ -25,6 +25,17 @@ jobs:
           cargo clippy --locked --verbose --tests --benches --workspace -- -D clippy::all
           cargo clippy --locked --verbose --target wasm32-unknown-unknown -p sol_rpc_canister -- -D clippy::all
 
+  cargo-doc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Cargo doc
+        run: |
+          cargo doc --workspace --no-deps
+        env:
+          RUSTDOCFLAGS: "--deny warnings"
+
   reproducible-build:
     runs-on: ubuntu-22.04
     steps:
