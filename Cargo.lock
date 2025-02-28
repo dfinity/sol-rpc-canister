@@ -473,10 +473,11 @@ dependencies = [
 name = "canlog_derive"
 version = "0.1.0"
 dependencies = [
+ "canlog",
  "darling",
- "ic-canister-log",
  "proc-macro2",
  "quote",
+ "serde",
  "syn 2.0.98",
 ]
 

@@ -1,7 +1,6 @@
-//! Procedural macros for the canlog crate
+//! Procedural macros for the canlog crate. Refer to the canlog crate documentation.
 
 #![forbid(unsafe_code)]
-#![forbid(missing_docs)]
 
 use darling::FromVariant;
 use proc_macro::TokenStream;
@@ -9,15 +8,6 @@ use proc_macro2::Ident;
 use quote::quote;
 use syn::{parse_macro_input, Data, DataEnum, DeriveInput};
 
-/// A procedural macro to implement [`LogPriorityLevels`](canlog::LogPriorityLevels) for an enum.
-///
-/// This macro expects the variants to be annotated with `#[log_level(capacity = N, name = "NAME")]`
-/// where `N` is an integer representing buffer capacity and `"NAME"` is a string display
-/// representation for the corresponding log level.
-///
-/// The enum annotated with `#[derive(LogPriorityLevels)]` must also implement the
-/// [`Serialize`](serde::Serialize), [`Deserialize`](serde::Deserialize),
-/// [`Clone`](core::clone::Clone) and [`Copy`](core::marker::Copy) traits
 #[proc_macro_derive(LogPriorityLevels, attributes(log_level))]
 pub fn derive_log_priority(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
