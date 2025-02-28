@@ -71,7 +71,7 @@ async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
 #[query(hidden = true)]
 fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
     match request.path() {
-        "/log" => {
+        "/logs" => {
             let max_skip_timestamp = match request.raw_query_param("time") {
                 Some(arg) => match u64::from_str(arg) {
                     Ok(value) => value,
