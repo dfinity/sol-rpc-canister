@@ -1,8 +1,9 @@
 use candid::candid_method;
 use ic_cdk::api::is_controller;
+use ic_cdk::api::management_canister::http_request::{HttpResponse, TransformArgs};
 use ic_cdk::{query, update};
 use sol_rpc_canister::{
-    http::{get_http_response_body, json_rpc_request},
+    http::{get_http_response_body, json_rpc_request, transform_http_request},
     lifecycle,
     providers::{find_provider, resolve_rpc_service, PROVIDERS},
     state::{mutate_state, read_state},
@@ -22,6 +23,11 @@ pub fn require_api_key_principal_or_controller() -> Result<(), String> {
 #[candid_method(query, rename = "getProviders")]
 fn get_providers() -> Vec<sol_rpc_types::Provider> {
     PROVIDERS.with(|providers| providers.clone().into_iter().collect())
+}
+
+#[query(name = "__transform_json_rpc", hidden = true)]
+fn transform(args: TransformArgs) -> HttpResponse {
+    transform_http_request(args)
 }
 
 #[update(

@@ -26,6 +26,7 @@ opt-level = 's'
 inherits = "release"
 
 [workspace.dependencies]
+assert_matches = "1.5"
 async-trait = "0.1.86"
 candid = "0.10.13"
 candid_parser = "0.1.4"

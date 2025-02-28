@@ -1,7 +1,101 @@
+use sol_rpc_canister::constants::*;
 use sol_rpc_int_tests::{Setup, SolRpcTestClient, ADDITIONAL_TEST_ID};
 use sol_rpc_types::{
-    InstallArgs, Provider, RpcAccess, RpcAuth, RpcService, SolMainnetService, SolanaCluster,
+    InstallArgs, Provider, RpcAccess, RpcApi, RpcAuth, RpcService, SolMainnetService, SolanaCluster,
 };
+
+mod mock_request_tests {
+    use super::*;
+    use assert_matches::*;
+    use ic_cdk::api::management_canister::http_request::HttpHeader;
+    use pocket_ic::common::rest::CanisterHttpMethod;
+    use sol_rpc_int_tests::mock::*;
+
+    const MOCK_REQUEST_URL: &str = "https://api.devnet.solana.com";
+    const MOCK_REQUEST_PAYLOAD: &str = r#"{"jsonrpc":"2.0","id":1,"method":"getVersion"}"#;
+    const MOCK_REQUEST_RESPONSE: &str =
+        r#"{"jsonrpc":"2.0","result":{"feature-set":2891131721,"solana-core":"1.16.7"},"id":1}"#;
+    const MOCK_MAX_REQUEST_RESPONSE_BYTES: u64 = 1000;
+
+    async fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
+        let setup = Setup::new().await;
+        let client = setup.client();
+        assert_matches!(
+            client
+                .request(
+                    RpcService::Custom(RpcApi {
+                        url: MOCK_REQUEST_URL.to_string(),
+                        headers: Some(vec![HttpHeader {
+                            name: "Custom".to_string(),
+                            value: "Value".to_string(),
+                        }]),
+                    }),
+                    MOCK_REQUEST_PAYLOAD,
+                    MOCK_MAX_REQUEST_RESPONSE_BYTES,
+                )
+                .await
+                .mock_http(builder_fn(MockOutcallBuilder::new(
+                    200,
+                    MOCK_REQUEST_RESPONSE
+                )))
+                .await
+                .wait()
+                .await,
+            Ok(_)
+        );
+    }
+
+    #[tokio::test]
+    async fn mock_request_should_succeed() {
+        mock_request(|builder| builder).await
+    }
+
+    #[tokio::test]
+    async fn mock_request_should_succeed_with_url() {
+        mock_request(|builder| builder.with_url(MOCK_REQUEST_URL)).await
+    }
+
+    #[tokio::test]
+    async fn mock_request_should_succeed_with_method() {
+        mock_request(|builder| builder.with_method(CanisterHttpMethod::POST)).await
+    }
+
+    #[tokio::test]
+    async fn mock_request_should_succeed_with_request_headers() {
+        mock_request(|builder| {
+            builder.with_request_headers(vec![
+                (CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE),
+                ("Custom", "Value"),
+            ])
+        })
+        .await
+    }
+
+    #[tokio::test]
+    async fn mock_request_should_succeed_with_request_body() {
+        mock_request(|builder| builder.with_raw_request_body(MOCK_REQUEST_PAYLOAD)).await
+    }
+
+    #[tokio::test]
+    async fn mock_request_should_succeed_with_max_response_bytes() {
+        mock_request(|builder| builder.with_max_response_bytes(MOCK_MAX_REQUEST_RESPONSE_BYTES)).await
+    }
+
+    #[tokio::test]
+    async fn mock_request_should_succeed_with_all() {
+        mock_request(|builder| {
+            builder
+                .with_url(MOCK_REQUEST_URL)
+                .with_method(CanisterHttpMethod::POST)
+                .with_request_headers(vec![
+                    (CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE),
+                    ("Custom", "Value"),
+                ])
+                .with_raw_request_body(MOCK_REQUEST_PAYLOAD)
+        })
+        .await
+    }
+}
 
 mod get_provider_tests {
     use super::*;
@@ -30,6 +124,38 @@ mod get_provider_tests {
         );
 
         setup.drop().await;
+    }
+}
+
+mod generic_request_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn request_should_require_cycles() {
+        /*
+        let setup = Setup::new().await;
+        let client = setup.client();
+        let providers = client.request().await;
+
+        assert_eq!(providers.len(), 5);
+
+        assert_eq!(
+            providers[0],
+            Provider {
+                provider_id: "alchemy-mainnet".to_string(),
+                cluster: SolanaCluster::Mainnet,
+                access: RpcAccess::Authenticated {
+                    auth: RpcAuth::BearerToken {
+                        url: "https://solana-mainnet.g.alchemy.com/v2".to_string(),
+                    },
+                    public_url: Some("https://solana-mainnet.g.alchemy.com/v2/demo".to_string()),
+                },
+                alias: Some(RpcService::SolMainnet(SolMainnetService::Alchemy)),
+            }
+        );
+
+        setup.drop().await;
+        */
     }
 }
 
