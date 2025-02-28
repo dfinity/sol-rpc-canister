@@ -91,9 +91,16 @@ type OverrideProvider = record {
 };
 type Mode = variant { Normal; Demo; };
 type RequestResult = variant { Ok : text; Err : RpcError };
+type LogFilter = variant {
+  ShowAll;
+  HideAll;
+  ShowPattern : Regex;
+  HidePattern : Regex;
+};
 type InstallArgs = record {
   manageApiKeys: opt vec principal;
   overrideProvider: opt OverrideProvider;
+  logFilter: opt LogFilter;
   numSubnetNodes: opt nat32;
   mode: opt Mode;
 };

@@ -213,7 +213,7 @@ impl RegexString {
 pub struct RegexSubstitution {
     /// The pattern to be matched.
     pub pattern: RegexString,
-    /// The string to replace occurences [`pattern`] with.
+    /// The string to replace occurrences [`pattern`](`RegexSubstitution::pattern`) with.
     pub replacement: String,
 }
 
@@ -223,7 +223,7 @@ pub struct RegexSubstitution {
 /// expression and HTTP headers are reset.
 #[derive(Clone, Debug, Default, PartialEq, Eq, CandidType, Serialize, Deserialize)]
 pub struct OverrideProvider {
-    /// The regular expression used to override the [`RpcApi`] in [`OverrideProvider::apply`].
+    /// The regular expression used to override the [`RpcApi`] in when the [`OverrideProvider`] is applied.
     #[serde(rename = "overrideUrl")]
     pub override_url: Option<RegexSubstitution>,
 }

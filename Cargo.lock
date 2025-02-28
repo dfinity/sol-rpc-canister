@@ -472,6 +472,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "canlog"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canlog_derive",
+ "ic-canister-log",
+ "ic-cdk",
+ "proptest",
+ "regex",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "canlog_derive"
+version = "0.1.0"
+dependencies = [
+ "canlog",
+ "darling",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "syn 2.0.98",
+]
+
+[[package]]
 name = "cargo-platform"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -715,6 +741,41 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f46882e17999c6cc590af592290432be3bce0428cb0d5f8b6715e4dc7b383eb3"
 dependencies = [
  "proc-macro2",
+ "quote",
+ "syn 2.0.98",
+]
+
+[[package]]
+name = "darling"
+version = "0.20.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f63b86c8a8826a49b8c21f08a2d07338eec8d900540f8630dc76284be802989"
+dependencies = [
+ "darling_core",
+ "darling_macro",
+]
+
+[[package]]
+name = "darling_core"
+version = "0.20.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95133861a8032aaea082871032f5815eb9e98cef03fa916ab4500513994df9e5"
+dependencies = [
+ "fnv",
+ "ident_case",
+ "proc-macro2",
+ "quote",
+ "strsim",
+ "syn 2.0.98",
+]
+
+[[package]]
+name = "darling_macro"
+version = "0.20.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d336a2a514f6ccccaa3e09b02d41d35330c07ddf03a62165fcec10bb561c7806"
+dependencies = [
+ "darling_core",
  "quote",
  "syn 2.0.98",
 ]
@@ -1292,6 +1353,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-canister-log"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb82c4f617ecff6e452fe65af0489626ec7330ffe3eedd9ea14e6178eea48d1a"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "ic-cdk"
 version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1517,6 +1587,12 @@ dependencies = [
  "quote",
  "syn 2.0.98",
 ]
+
+[[package]]
+name = "ident_case"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9e0384b61958566e926dc50660321d12159025e767c18e043daf26b70104c39"
 
 [[package]]
 name = "idna"
@@ -2908,6 +2984,7 @@ dependencies = [
  "candid",
  "candid_parser",
  "canhttp",
+ "canlog",
  "ciborium",
  "const_format",
  "hex",
@@ -2917,6 +2994,7 @@ dependencies = [
  "proptest",
  "regex",
  "serde",
+ "serde_bytes",
  "serde_json",
  "sol_rpc_types",
  "tower",
@@ -2942,10 +3020,12 @@ dependencies = [
  "assert_matches",
  "async-trait",
  "candid",
+ "canlog",
  "ic-cdk",
  "ic-test-utilities-load-wasm",
  "pocket-ic",
  "serde",
+ "serde_bytes",
  "serde_json",
  "sol_rpc_canister",
  "sol_rpc_client",
@@ -2958,6 +3038,7 @@ name = "sol_rpc_types"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canlog",
  "evm_rpc_types",
  "ic-cdk",
  "regex",
@@ -3797,6 +3878,12 @@ dependencies = [
  "phf_shared",
  "precomputed-hash",
 ]
+
+[[package]]
+name = "strsim"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
 name = "strum"

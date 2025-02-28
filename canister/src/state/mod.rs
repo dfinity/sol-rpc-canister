@@ -3,6 +3,7 @@ mod tests;
 
 use crate::types::{ApiKey, OverrideProvider};
 use candid::{Deserialize, Principal};
+use canlog::LogFilter;
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
     storable::Bound,
@@ -84,6 +85,7 @@ pub struct State {
     api_keys: BTreeMap<ProviderId, ApiKey>,
     api_key_principals: Vec<Principal>,
     override_provider: OverrideProvider,
+    log_filter: LogFilter,
     num_subnet_nodes: u32,
     mode: Mode,
 }
@@ -124,6 +126,14 @@ impl State {
         self.override_provider = override_provider
     }
 
+    pub fn get_log_filter(&self) -> LogFilter {
+        self.log_filter.clone()
+    }
+
+    pub fn set_log_filter(&mut self, filter: LogFilter) {
+        self.log_filter = filter;
+    }
+
     pub fn get_num_subnet_nodes(&self) -> u32 {
         self.num_subnet_nodes
     }
@@ -147,6 +157,7 @@ impl From<InstallArgs> for State {
             api_keys: Default::default(),
             api_key_principals: value.manage_api_keys.unwrap_or_default(),
             override_provider: value.override_provider.unwrap_or_default().into(),
+            log_filter: value.log_filter.unwrap_or_default(),
             num_subnet_nodes: value.num_subnet_nodes.unwrap_or_default().into(),
             mode: value.mode.unwrap_or_default(),
         }
