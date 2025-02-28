@@ -10,7 +10,7 @@ use pocket_ic::management_canister::{CanisterId, CanisterSettings};
 use pocket_ic::{nonblocking::PocketIc, PocketIcBuilder, UserError, WasmResult};
 use serde::de::DeserializeOwned;
 use sol_rpc_client::{Runtime, SolRpcClient};
-use sol_rpc_types::{InstallArgs, Mode, ProviderId, RpcResult, RpcService};
+use sol_rpc_types::{InstallArgs, ProviderId, RpcResult, RpcService};
 use std::marker::PhantomData;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -33,13 +33,8 @@ pub struct Setup {
 }
 
 impl Setup {
-    // Default setup is with Demo mode on.
     pub async fn new() -> Self {
-        let args = InstallArgs {
-            mode: Some(Mode::Demo),
-            ..Default::default()
-        };
-        Self::with_args(args).await
+        Self::with_args(InstallArgs::default()).await
     }
 
     pub async fn with_args(args: InstallArgs) -> Self {

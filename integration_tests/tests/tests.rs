@@ -1,8 +1,15 @@
 use sol_rpc_canister::constants::*;
 use sol_rpc_int_tests::{Setup, SolRpcTestClient, ADDITIONAL_TEST_ID};
 use sol_rpc_types::{
-    InstallArgs, Provider, RpcAccess, RpcApi, RpcAuth, RpcService, SolMainnetService, SolanaCluster,
+    InstallArgs, Mode, Provider, ProviderError, RpcAccess, RpcApi, RpcAuth, RpcError, RpcService,
+    SolMainnetService, SolanaCluster,
 };
+
+const MOCK_REQUEST_URL: &str = "https://api.devnet.solana.com";
+const MOCK_REQUEST_PAYLOAD: &str = r#"{"jsonrpc":"2.0","id":1,"method":"getVersion"}"#;
+const MOCK_REQUEST_RESPONSE: &str =
+    r#"{"id":1,"jsonrpc":"2.0","result":{"feature-set":2891131721,"solana-core":"1.16.7"}}"#;
+const MOCK_REQUEST_MAX_RESPONSE_BYTES: u64 = 1000;
 
 mod mock_request_tests {
     use super::*;
@@ -10,12 +17,6 @@ mod mock_request_tests {
     use ic_cdk::api::management_canister::http_request::HttpHeader;
     use pocket_ic::common::rest::CanisterHttpMethod;
     use sol_rpc_int_tests::mock::*;
-
-    const MOCK_REQUEST_URL: &str = "https://api.devnet.solana.com";
-    const MOCK_REQUEST_PAYLOAD: &str = r#"{"jsonrpc":"2.0","id":1,"method":"getVersion"}"#;
-    const MOCK_REQUEST_RESPONSE: &str =
-        r#"{"jsonrpc":"2.0","result":{"feature-set":2891131721,"solana-core":"1.16.7"},"id":1}"#;
-    const MOCK_MAX_REQUEST_RESPONSE_BYTES: u64 = 1000;
 
     async fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
         let setup = Setup::new().await;
@@ -31,7 +32,7 @@ mod mock_request_tests {
                         }]),
                     }),
                     MOCK_REQUEST_PAYLOAD,
-                    MOCK_MAX_REQUEST_RESPONSE_BYTES,
+                    MOCK_REQUEST_MAX_RESPONSE_BYTES,
                 )
                 .await
                 .mock_http(builder_fn(MockOutcallBuilder::new(
@@ -78,7 +79,8 @@ mod mock_request_tests {
 
     #[tokio::test]
     async fn mock_request_should_succeed_with_max_response_bytes() {
-        mock_request(|builder| builder.with_max_response_bytes(MOCK_MAX_REQUEST_RESPONSE_BYTES)).await
+        mock_request(|builder| builder.with_max_response_bytes(MOCK_REQUEST_MAX_RESPONSE_BYTES))
+            .await
     }
 
     #[tokio::test]
@@ -129,33 +131,59 @@ mod get_provider_tests {
 
 mod generic_request_tests {
     use super::*;
+    use assert_matches::*;
+    use sol_rpc_int_tests::mock::MockOutcallBuilder;
 
     #[tokio::test]
     async fn request_should_require_cycles() {
-        /*
         let setup = Setup::new().await;
         let client = setup.client();
-        let providers = client.request().await;
 
-        assert_eq!(providers.len(), 5);
+        let result = client
+            .request(
+                RpcService::SolMainnet(SolMainnetService::Alchemy),
+                MOCK_REQUEST_PAYLOAD,
+                MOCK_REQUEST_MAX_RESPONSE_BYTES,
+            )
+            .await
+            .wait()
+            .await;
 
-        assert_eq!(
-            providers[0],
-            Provider {
-                provider_id: "alchemy-mainnet".to_string(),
-                cluster: SolanaCluster::Mainnet,
-                access: RpcAccess::Authenticated {
-                    auth: RpcAuth::BearerToken {
-                        url: "https://solana-mainnet.g.alchemy.com/v2".to_string(),
-                    },
-                    public_url: Some("https://solana-mainnet.g.alchemy.com/v2/demo".to_string()),
-                },
-                alias: Some(RpcService::SolMainnet(SolMainnetService::Alchemy)),
-            }
+        assert_matches!(
+            result,
+            Err(RpcError::ProviderError(ProviderError::TooFewCycles {
+                expected: _,
+                received: 0
+            }))
         );
 
         setup.drop().await;
-        */
+    }
+
+    #[tokio::test]
+    async fn request_should_succeed_in_demo_mode() {
+        let setup = Setup::with_args(InstallArgs {
+            mode: Some(Mode::Demo),
+            ..Default::default()
+        })
+        .await;
+        let client = setup.client();
+
+        let result = client
+            .request(
+                RpcService::SolMainnet(SolMainnetService::Alchemy),
+                MOCK_REQUEST_PAYLOAD,
+                MOCK_REQUEST_MAX_RESPONSE_BYTES,
+            )
+            .await
+            .mock_http(MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE))
+            .await
+            .wait()
+            .await;
+
+        assert_matches!(result, Ok(msg) if msg == MOCK_REQUEST_RESPONSE);
+
+        setup.drop().await;
     }
 }
 
