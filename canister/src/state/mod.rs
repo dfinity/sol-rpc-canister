@@ -3,13 +3,13 @@ mod tests;
 
 use crate::types::{ApiKey, OverrideProvider};
 use candid::{Deserialize, Principal};
+use canlog::LogFilter;
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
     storable::Bound,
     Cell, DefaultMemoryImpl, Storable,
 };
 use serde::Serialize;
-use canlog::LogFilter;
 use sol_rpc_types::{InstallArgs, ProviderId};
 use std::{borrow::Cow, cell::RefCell, collections::BTreeMap};
 
