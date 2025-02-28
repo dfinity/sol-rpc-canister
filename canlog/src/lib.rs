@@ -55,7 +55,6 @@ extern crate self as canlog;
 
 pub use crate::types::{LogFilter, Sort};
 
-use ic_canister_log;
 pub use ic_canister_log::{
     declare_log_buffer, export as export_logs, log as raw_log, GlobalBuffer, Sink,
 };
