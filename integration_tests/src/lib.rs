@@ -1,10 +1,15 @@
 use async_trait::async_trait;
 use candid::utils::ArgumentEncoder;
 use candid::{decode_args, encode_args, CandidType, Encode, Principal};
+use canlog::{Log, LogEntry};
 use ic_cdk::api::call::RejectionCode;
 use pocket_ic::management_canister::{CanisterId, CanisterSettings};
 use pocket_ic::{nonblocking::PocketIc, PocketIcBuilder, UserError, WasmResult};
 use serde::de::DeserializeOwned;
+use sol_rpc_canister::{
+    http_types::{HttpRequest, HttpResponse},
+    logs::Priority,
+};
 use sol_rpc_client::{Runtime, SolRpcClient};
 use sol_rpc_types::{InstallArgs, ProviderId};
 use std::path::PathBuf;
@@ -191,6 +196,7 @@ impl PocketIcRuntime<'_> {
 #[async_trait]
 pub trait SolRpcTestClient<R: Runtime> {
     async fn verify_api_key(&self, api_key: (ProviderId, Option<String>));
+    async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry<Priority>>;
     fn with_caller<T: Into<Principal>>(self, id: T) -> Self;
 }
 
@@ -201,6 +207,23 @@ impl SolRpcTestClient<PocketIcRuntime<'_>> for SolRpcClient<PocketIcRuntime<'_>>
             .query_call(self.sol_rpc_canister, "verifyApiKey", (api_key,))
             .await
             .unwrap()
+    }
+
+    async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry<Priority>> {
+        let request = HttpRequest {
+            method: "POST".to_string(),
+            url: format!("/logs?priority={priority}"),
+            headers: vec![],
+            body: serde_bytes::ByteBuf::new(),
+        };
+        let response: HttpResponse = self
+            .runtime
+            .query_call(self.sol_rpc_canister, "http_request", (request,))
+            .await
+            .unwrap();
+        serde_json::from_slice::<Log<Priority>>(&response.body)
+            .expect("failed to parse SOL RPC canister log")
+            .entries
     }
 
     fn with_caller<T: Into<Principal>>(mut self, id: T) -> Self {

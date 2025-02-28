@@ -213,7 +213,7 @@ impl RegexString {
 pub struct RegexSubstitution {
     /// The pattern to be matched.
     pub pattern: RegexString,
-    /// The string to replace occurences [`pattern`](`RegexSubstitution::pattern`) with.
+    /// The string to replace occurrences [`pattern`](`RegexSubstitution::pattern`) with.
     pub replacement: String,
 }
 

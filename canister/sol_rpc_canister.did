@@ -54,9 +54,16 @@ type RegexSubstitution = record {
 type OverrideProvider = record {
   overrideUrl : opt RegexSubstitution
 };
+type LogFilter = variant {
+  ShowAll;
+  HideAll;
+  ShowPattern : Regex;
+  HidePattern : Regex;
+};
 type InstallArgs = record {
   manageApiKeys: opt vec principal;
   overrideProvider: opt OverrideProvider;
+  logFilter: opt LogFilter;
 };
 service : (InstallArgs,) -> {
   getProviders : () -> (vec Provider) query;
