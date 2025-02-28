@@ -71,6 +71,7 @@ use serde::{Deserialize, Serialize};
 /// [`Serialize`], [`Deserialize`], [`Clone`] and [`Copy`] traits.
 ///
 /// See the top-level crate documentation for example usage.
+#[doc(inline)]
 pub use canlog_derive::LogPriorityLevels;
 
 /// Wrapper for the [`ic_canister_log::log`](ic_canister_log::log!) macro that allows
