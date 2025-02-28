@@ -19,7 +19,11 @@ mod mock_request_tests {
     use sol_rpc_int_tests::mock::*;
 
     async fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
-        let setup = Setup::new().await;
+        let setup = Setup::with_args(InstallArgs {
+            mode: Some(Mode::Demo),
+            ..Default::default()
+        })
+        .await;
         let client = setup.client();
         assert_matches!(
             client
