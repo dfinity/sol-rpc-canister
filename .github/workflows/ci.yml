@@ -91,9 +91,11 @@ jobs:
       - name: 'Install Solana CLI'
         run: |
           sh -c "$(curl -sSfL https://release.anza.xyz/v${SOLANA_CLI_VERSION}/install)"
-          echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-          solana --version
         shell: bash
+
+      - name: 'Ensure Solana CLI installed'
+        run: |
+          solana --version
 
       - name: Cargo test
         run: cargo test --package sol_rpc_int_tests -- --test-threads 2 --nocapture
