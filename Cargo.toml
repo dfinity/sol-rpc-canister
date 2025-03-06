@@ -47,15 +47,14 @@ regex = "1.11.1"
 serde = { version = "1.0.218", features = ["derive"] }
 serde_bytes = "0.11.15"
 serde_json = "1.0.139"
-solana-client = "2.2.0"
-solana-hash = "2.2.1"
-solana-instruction = "2.2.1"
-solana-message = "2.2.1"
-solana-nonce = "2.2.1"
+solana-hash = "2.2.0"
+solana-instruction = "2.2.0"
+solana-message = "2.2.0"
+solana-nonce = "2.2.0"
 solana-program = "2.2.0"
-solana-pubkey = "2.2.1"
-solana-signature = "2.2.1"
-solana-transaction = { version = "2.2.1", features = ["bincode"] }
+solana-pubkey = "2.2.0"
+solana-signature = "2.2.0"
+solana-transaction = { version = "2.2.0", features = ["bincode"] }
 strum = { version = "0.27.0", features = ["derive"] }
 tokio = "1.43.0"
 url = "2.5"
