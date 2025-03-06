@@ -8,7 +8,7 @@ use candid::utils::ArgumentEncoder;
 use candid::{CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
-use sol_rpc_types::ProviderId;
+use sol_rpc_types::{ProviderId, RpcResult, RpcService};
 
 /// Abstract the canister runtime so that the client code can be reused:
 /// * in production using `ic_cdk`,
@@ -25,8 +25,8 @@ pub trait Runtime {
         cycles: u128,
     ) -> Result<Out, (RejectionCode, String)>
     where
-        In: ArgumentEncoder + Send + 'static,
-        Out: CandidType + DeserializeOwned + 'static;
+        In: ArgumentEncoder + Send,
+        Out: CandidType + DeserializeOwned;
 
     /// Defines how asynchronous inter-canister query calls are made.
     async fn query_call<In, Out>(
@@ -36,8 +36,8 @@ pub trait Runtime {
         args: In,
     ) -> Result<Out, (RejectionCode, String)>
     where
-        In: ArgumentEncoder + Send + 'static,
-        Out: CandidType + DeserializeOwned + 'static;
+        In: ArgumentEncoder + Send,
+        Out: CandidType + DeserializeOwned;
 }
 
 /// Client to interact with the SOL RPC canister.
@@ -92,6 +92,25 @@ impl<R: Runtime> SolRpcClient<R> {
             .await
             .unwrap()
     }
+
+    /// Call `request` on the SOL RPC canister.
+    pub async fn request(
+        &self,
+        service: RpcService,
+        json_rpc_payload: &str,
+        max_response_bytes: u64,
+        cycles: u128,
+    ) -> RpcResult<String> {
+        self.runtime
+            .update_call(
+                self.sol_rpc_canister,
+                "request",
+                (service, json_rpc_payload, max_response_bytes),
+                cycles,
+            )
+            .await
+            .unwrap()
+    }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -107,8 +126,8 @@ impl Runtime for IcRuntime {
         cycles: u128,
     ) -> Result<Out, (RejectionCode, String)>
     where
-        In: ArgumentEncoder + Send + 'static,
-        Out: CandidType + DeserializeOwned + 'static,
+        In: ArgumentEncoder + Send,
+        Out: CandidType + DeserializeOwned,
     {
         ic_cdk::api::call::call_with_payment128(id, method, args, cycles)
             .await
@@ -122,8 +141,8 @@ impl Runtime for IcRuntime {
         args: In,
     ) -> Result<Out, (RejectionCode, String)>
     where
-        In: ArgumentEncoder + Send + 'static,
-        Out: CandidType + DeserializeOwned + 'static,
+        In: ArgumentEncoder + Send,
+        Out: CandidType + DeserializeOwned,
     {
         ic_cdk::api::call::call(id, method, args)
             .await

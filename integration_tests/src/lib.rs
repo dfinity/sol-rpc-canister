@@ -1,11 +1,10 @@
 use async_trait::async_trait;
 use candid::utils::ArgumentEncoder;
-use candid::{decode_args, encode_args, CandidType, Decode, Encode, Principal};
+use candid::{decode_args, encode_args, CandidType, Encode, Principal};
 use canlog::{Log, LogEntry};
 use ic_cdk::api::call::RejectionCode;
 use pocket_ic::common::rest::{
     CanisterHttpReject, CanisterHttpRequest, CanisterHttpResponse, MockCanisterHttpResponse,
-    RawMessageId,
 };
 use pocket_ic::management_canister::{CanisterId, CanisterSettings};
 use pocket_ic::{nonblocking::PocketIc, PocketIcBuilder, UserError, WasmResult};
@@ -15,8 +14,7 @@ use sol_rpc_canister::{
     logs::Priority,
 };
 use sol_rpc_client::{Runtime, SolRpcClient};
-use sol_rpc_types::{InstallArgs, ProviderId, RpcResult, RpcService};
-use std::marker::PhantomData;
+use sol_rpc_types::{InstallArgs, ProviderId};
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -32,7 +30,6 @@ pub const ADDITIONAL_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x
 
 pub struct Setup {
     env: PocketIc,
-    caller: Principal,
     controller: Principal,
     canister_id: CanisterId,
 }
@@ -65,11 +62,9 @@ impl Setup {
             Some(controller),
         )
         .await;
-        let caller = DEFAULT_CALLER_TEST_ID;
 
         Self {
             env,
-            caller,
             controller,
             canister_id,
         }
@@ -92,14 +87,14 @@ impl Setup {
     }
 
     pub fn client(&self) -> SolRpcClient<PocketIcRuntime> {
-        SolRpcClient::new(self.new_pocket_ic(), self.canister_id)
-    }
-
-    fn new_pocket_ic(&self) -> PocketIcRuntime {
-        PocketIcRuntime {
-            env: &self.env,
-            caller: self.caller,
-        }
+        SolRpcClient::new(
+            PocketIcRuntime {
+                env: &self.env,
+                caller: DEFAULT_CALLER_TEST_ID,
+                mock_strategy: None,
+            },
+            self.canister_id,
+        )
     }
 
     pub async fn drop(self) {
@@ -132,10 +127,10 @@ fn sol_rpc_wasm() -> Vec<u8> {
     )
 }
 
-#[derive(Clone)]
 pub struct PocketIcRuntime<'a> {
     env: &'a PocketIc,
     caller: Principal,
+    mock_strategy: Option<MockStrategy>,
 }
 
 #[async_trait]
@@ -148,14 +143,17 @@ impl<'a> Runtime for PocketIcRuntime<'a> {
         _cycles: u128,
     ) -> Result<Out, (RejectionCode, String)>
     where
-        In: ArgumentEncoder + Send + 'static,
-        Out: CandidType + DeserializeOwned + 'static,
+        In: ArgumentEncoder + Send,
+        Out: CandidType + DeserializeOwned,
     {
-        PocketIcRuntime::decode_call_result(
-            self.env
-                .update_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
-                .await,
-        )
+        let message_id = self
+            .env
+            .submit_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
+            .await
+            .expect("failed to submit call");
+        self.execute_mock().await;
+        let result: Result<WasmResult, UserError> = self.env.await_call(message_id).await;
+        PocketIcRuntime::decode_call_result(result)
     }
 
     async fn query_call<In, Out>(
@@ -165,8 +163,8 @@ impl<'a> Runtime for PocketIcRuntime<'a> {
         args: In,
     ) -> Result<Out, (RejectionCode, String)>
     where
-        In: ArgumentEncoder + Send + 'static,
-        Out: CandidType + DeserializeOwned + 'static,
+        In: ArgumentEncoder + Send,
+        Out: CandidType + DeserializeOwned,
     {
         PocketIcRuntime::decode_call_result(
             self.env
@@ -188,7 +186,7 @@ impl PocketIcRuntime<'_> {
         result: Result<WasmResult, UserError>,
     ) -> Result<Out, (RejectionCode, String)>
     where
-        Out: CandidType + DeserializeOwned + 'static,
+        Out: CandidType + DeserializeOwned,
     {
         match result {
             Ok(WasmResult::Reply(bytes)) => decode_args(&bytes).map(|(res,)| res).map_err(|e| {
@@ -215,122 +213,30 @@ impl PocketIcRuntime<'_> {
             }
         }
     }
-}
 
-#[async_trait]
-pub trait SolRpcTestClient<R: Runtime> {
-    async fn request(
-        &self,
-        service: RpcService,
-        json_rpc_payload: &str,
-        max_response_bytes: u64,
-    ) -> CallFlow<'_, RpcResult<String>>;
-    async fn verify_api_key(&self, api_key: (ProviderId, Option<String>));
-    async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry<Priority>>;
-    fn with_caller<T: Into<Principal>>(self, id: T) -> Self;
-}
-
-#[async_trait]
-impl SolRpcTestClient<PocketIcRuntime<'_>> for SolRpcClient<PocketIcRuntime<'_>> {
-    async fn request(
-        &self,
-        service: RpcService,
-        json_rpc_payload: &str,
-        max_response_bytes: u64,
-    ) -> CallFlow<'_, RpcResult<String>> {
-        CallFlow::from_update(
-            self.runtime.clone(),
-            self.sol_rpc_canister,
-            "request",
-            Encode!(&service, &json_rpc_payload, &max_response_bytes).unwrap(),
-        )
-        .await
-    }
-
-    async fn verify_api_key(&self, api_key: (ProviderId, Option<String>)) {
-        self.runtime
-            .query_call(self.sol_rpc_canister, "verifyApiKey", (api_key,))
-            .await
-            .unwrap()
-    }
-
-    async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry<Priority>> {
-        let request = HttpRequest {
-            method: "POST".to_string(),
-            url: format!("/logs?priority={priority}"),
-            headers: vec![],
-            body: serde_bytes::ByteBuf::new(),
-        };
-        let response: HttpResponse = self
-            .runtime
-            .query_call(self.sol_rpc_canister, "http_request", (request,))
-            .await
-            .unwrap();
-        serde_json::from_slice::<Log<Priority>>(&response.body)
-            .expect("failed to parse SOL RPC canister log")
-            .entries
-    }
-
-    fn with_caller<T: Into<Principal>>(mut self, id: T) -> Self {
-        self.runtime.caller = id.into();
-        self
-    }
-}
-
-pub struct CallFlow<'a, R> {
-    runtime: PocketIcRuntime<'a>,
-    method: String,
-    message_id: RawMessageId,
-    phantom: PhantomData<R>,
-}
-
-impl<'a, R: CandidType + DeserializeOwned> CallFlow<'a, R> {
-    pub async fn from_update(
-        runtime: PocketIcRuntime<'a>,
-        canister_id: CanisterId,
-        method: &str,
-        input: Vec<u8>,
-    ) -> Self {
-        let message_id = runtime
-            .env
-            .submit_call(canister_id, runtime.caller, method, input)
-            .await
-            .expect("failed to submit call");
-        CallFlow::new(runtime, method, message_id)
-    }
-
-    pub fn new(
-        runtime: PocketIcRuntime<'a>,
-        method: impl ToString,
-        message_id: RawMessageId,
-    ) -> Self {
+    fn with_strategy(self, strategy: MockStrategy) -> Self {
         Self {
-            runtime,
-            method: method.to_string(),
-            message_id,
-            phantom: Default::default(),
+            mock_strategy: Some(strategy),
+            ..self
         }
     }
 
-    pub async fn mock_http(self, mock: impl Into<MockOutcall>) -> Self {
-        let mock = mock.into();
-        self.mock_http_once_inner(&mock).await;
-        while self.try_mock_http_inner(&mock).await {}
-        self
-    }
-
-    pub async fn mock_http_n_times(self, mock: impl Into<MockOutcall>, count: u32) -> Self {
-        let mock = mock.into();
-        for _ in 0..count {
-            self.mock_http_once_inner(&mock).await;
+    async fn execute_mock(&self) {
+        match &self.mock_strategy {
+            None => (),
+            Some(MockStrategy::Mock(mock)) => {
+                self.mock_http_once_inner(mock).await;
+                while self.try_mock_http_inner(mock).await {}
+            }
+            Some(MockStrategy::MockOnce(mock)) => {
+                self.mock_http_once_inner(mock).await;
+            }
+            Some(MockStrategy::MockNTimes(mock, count)) => {
+                for _ in 0..*count {
+                    self.mock_http_once_inner(mock).await;
+                }
+            }
         }
-        self
-    }
-
-    pub async fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self {
-        let mock = mock.into();
-        self.mock_http_once_inner(&mock).await;
-        self
     }
 
     async fn mock_http_once_inner(&self, mock: &MockOutcall) {
@@ -340,7 +246,7 @@ impl<'a, R: CandidType + DeserializeOwned> CallFlow<'a, R> {
     }
 
     async fn try_mock_http_inner(&self, mock: &MockOutcall) -> bool {
-        let http_requests = tick_until_http_request(self.runtime.env).await;
+        let http_requests = tick_until_http_request(self.env).await;
         let request = match http_requests.first() {
             Some(request) => request,
             None => return false,
@@ -375,28 +281,80 @@ impl<'a, R: CandidType + DeserializeOwned> CallFlow<'a, R> {
             response,
             additional_responses: vec![],
         };
-        self.runtime
-            .env
-            .mock_canister_http_response(mock_response)
-            .await;
+        self.env.mock_canister_http_response(mock_response).await;
         true
     }
+}
 
-    pub async fn wait(self) -> R {
-        match self
-            .runtime
-            .env
-            .await_call(self.message_id)
+#[async_trait]
+pub trait SolRpcTestClient {
+    async fn verify_api_key(&self, api_key: (ProviderId, Option<String>));
+    async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry<Priority>>;
+    fn with_caller<T: Into<Principal>>(self, id: T) -> Self;
+    fn mock_http(self, mock: impl Into<MockOutcall>) -> Self;
+    fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self;
+    fn mock_http_n_times(self, mock: impl Into<MockOutcall>, count: u32) -> Self;
+}
+
+#[async_trait]
+impl SolRpcTestClient for SolRpcClient<PocketIcRuntime<'_>> {
+    async fn verify_api_key(&self, api_key: (ProviderId, Option<String>)) {
+        self.runtime
+            .query_call(self.sol_rpc_canister, "verifyApiKey", (api_key,))
             .await
-            .unwrap_or_else(|err| {
-                panic!("error during update call to `{}()`: {}", self.method, err)
-            }) {
-            WasmResult::Reply(bytes) => {
-                Decode!(&bytes, R).expect("error while decoding Candid response from update call")
-            }
-            result => {
-                panic!("Expected a successful reply, got {:?}", result)
-            }
+            .unwrap()
+    }
+
+    async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry<Priority>> {
+        let request = HttpRequest {
+            method: "POST".to_string(),
+            url: format!("/logs?priority={priority}"),
+            headers: vec![],
+            body: serde_bytes::ByteBuf::new(),
+        };
+        let response: HttpResponse = self
+            .runtime
+            .query_call(self.sol_rpc_canister, "http_request", (request,))
+            .await
+            .unwrap();
+        serde_json::from_slice::<Log<Priority>>(&response.body)
+            .expect("failed to parse SOL RPC canister log")
+            .entries
+    }
+
+    fn with_caller<T: Into<Principal>>(mut self, id: T) -> Self {
+        self.runtime.caller = id.into();
+        self
+    }
+
+    fn mock_http(self, mock: impl Into<MockOutcall>) -> Self {
+        Self {
+            runtime: self.runtime.with_strategy(MockStrategy::Mock(mock.into())),
+            ..self
         }
     }
+
+    fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self {
+        Self {
+            runtime: self
+                .runtime
+                .with_strategy(MockStrategy::MockOnce(mock.into())),
+            ..self
+        }
+    }
+
+    fn mock_http_n_times(self, mock: impl Into<MockOutcall>, count: u32) -> Self {
+        Self {
+            runtime: self
+                .runtime
+                .with_strategy(MockStrategy::MockNTimes(mock.into(), count)),
+            ..self
+        }
+    }
+}
+
+enum MockStrategy {
+    Mock(MockOutcall),
+    MockOnce(MockOutcall),
+    MockNTimes(MockOutcall, u32),
 }

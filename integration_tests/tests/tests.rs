@@ -27,6 +27,10 @@ mod mock_request_tests {
         let client = setup.client();
         assert_matches!(
             client
+                .mock_http(builder_fn(MockOutcallBuilder::new(
+                    200,
+                    MOCK_REQUEST_RESPONSE
+                )))
                 .request(
                     RpcService::Custom(RpcApi {
                         url: MOCK_REQUEST_URL.to_string(),
@@ -37,14 +41,8 @@ mod mock_request_tests {
                     }),
                     MOCK_REQUEST_PAYLOAD,
                     MOCK_REQUEST_MAX_RESPONSE_BYTES,
+                    0,
                 )
-                .await
-                .mock_http(builder_fn(MockOutcallBuilder::new(
-                    200,
-                    MOCK_REQUEST_RESPONSE
-                )))
-                .await
-                .wait()
                 .await,
             Ok(_)
         );
@@ -148,9 +146,8 @@ mod generic_request_tests {
                 RpcService::SolMainnet(SolMainnetService::Alchemy),
                 MOCK_REQUEST_PAYLOAD,
                 MOCK_REQUEST_MAX_RESPONSE_BYTES,
+                0,
             )
-            .await
-            .wait()
             .await;
 
         assert_matches!(
@@ -174,15 +171,13 @@ mod generic_request_tests {
         let client = setup.client();
 
         let result = client
+            .mock_http(MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE))
             .request(
                 RpcService::SolMainnet(SolMainnetService::Alchemy),
                 MOCK_REQUEST_PAYLOAD,
                 MOCK_REQUEST_MAX_RESPONSE_BYTES,
+                0,
             )
-            .await
-            .mock_http(MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE))
-            .await
-            .wait()
             .await;
 
         assert_matches!(result, Ok(msg) if msg == MOCK_REQUEST_RESPONSE);
