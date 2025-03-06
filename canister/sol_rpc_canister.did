@@ -105,7 +105,13 @@ type InstallArgs = record {
   mode: opt Mode;
 };
 service : (InstallArgs,) -> {
+  // Get the list of RPC providers.
   getProviders : () -> (vec Provider) query;
+
+  // Update API key of the given provider. Used by Admin only.
   updateApiKeys : (vec record { ProviderId; opt text }) -> ();
+
+  // Make a generic RPC request with the given JSON text as input, and
+  // limit the response output to `maxResponseBytes`.
   request : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestResult);
 };

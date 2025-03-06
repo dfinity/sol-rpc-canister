@@ -8,7 +8,7 @@ use ic_cdk::{
     {query, update},
 };
 use sol_rpc_canister::{
-    http::{get_http_response_body, json_rpc_request, transform_http_request},
+    http::{canonicalize_json_rpc_response, get_http_response_body, json_rpc_request},
     http_types, lifecycle,
     logs::Priority,
     providers::{find_provider, resolve_rpc_service, PROVIDERS},
@@ -32,9 +32,9 @@ fn get_providers() -> Vec<sol_rpc_types::Provider> {
     PROVIDERS.with(|providers| providers.clone().into_iter().collect())
 }
 
-#[query(name = "__transform_json_rpc", hidden = true)]
+#[query(name = "__canonicalize_json_rpc_response", hidden = true)]
 fn transform(args: TransformArgs) -> HttpResponse {
-    transform_http_request(args)
+    canonicalize_json_rpc_response(args)
 }
 
 #[update(

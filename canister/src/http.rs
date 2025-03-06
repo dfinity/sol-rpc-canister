@@ -157,7 +157,7 @@ impl CyclesChargingPolicy for ChargingPolicyWithCollateral {
     }
 }
 
-pub fn transform_http_request(args: TransformArgs) -> HttpResponse {
+pub fn canonicalize_json_rpc_response(args: TransformArgs) -> HttpResponse {
     HttpResponse {
         status: args.response.status,
         body: canonicalize_json(&args.response.body).unwrap_or(args.response.body),
@@ -181,7 +181,7 @@ pub fn get_http_response_body(response: HttpResponse) -> Result<String, RpcError
     })
 }
 
-fn canonicalize_json(text: &[u8]) -> Option<Vec<u8>> {
-    let json = serde_json::from_slice::<serde_json::Value>(text).ok()?;
+fn canonicalize_json(json_rpc_response: &[u8]) -> Option<Vec<u8>> {
+    let json = serde_json::from_slice::<serde_json::Value>(json_rpc_response).ok()?;
     serde_json::to_vec(&json).ok()
 }
