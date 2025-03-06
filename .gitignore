@@ -72,3 +72,5 @@ wasms/*.wasm.gz
 .nx/cache
 .nx/workspace-data
 /artifacts
+# Generate by solana-test-validator
+test-ledger/
