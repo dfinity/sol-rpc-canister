@@ -3896,6 +3896,7 @@ dependencies = [
  "ic-cdk",
  "serde",
  "sol_rpc_types",
+ "solana-clock",
 ]
 
 [[package]]
@@ -3905,6 +3906,7 @@ dependencies = [
  "async-trait",
  "candid",
  "canlog",
+ "futures",
  "ic-cdk",
  "ic-test-utilities-load-wasm",
  "pocket-ic",

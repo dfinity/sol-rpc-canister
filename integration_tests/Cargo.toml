@@ -22,5 +22,6 @@ sol_rpc_client = { path = "../libs/client" }
 sol_rpc_types = { path = "../libs/types" }
 
 [dev-dependencies]
-solana-client = {workspace = true}
+futures = { workspace = true }
+solana-client = { workspace = true }
 tokio = { workspace = true }

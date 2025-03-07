@@ -1,6 +1,71 @@
-#[test]
-fn should_get_slot() {
-    let solana_rpc_client = solana_client::rpc_client::RpcClient::new("http://localhost:8899");
-    let slot = solana_rpc_client.get_slot().expect("Failed to get_slot");
-    assert!(slot > 0);
+//! Tests to compare behavior between the official Solana RPC client directly interacting with a local validator
+//! and the SOL RPC client that uses the SOL RPC canister that uses the local validator as JSON RPC provider.
+//! Excepted for timing differences, the same behavior should be observed.
+
+use futures::future;
+use sol_rpc_client::SolRpcClient;
+use sol_rpc_int_tests::PocketIcRuntime;
+use sol_rpc_types::{InstallArgs, OverrideProvider, RegexSubstitution};
+use solana_client::rpc_client::RpcClient as SolanaRpcClient;
+use std::future::Future;
+
+#[tokio::test(flavor = "multi_thread")]
+async fn should_get_slot() {
+    let setup = Setup::new().await;
+
+    let (sol_res, ic_res) = setup
+        .compare_client(
+            |sol| sol.get_slot().expect("Failed to get slot"),
+            |ic| async move { ic.get_slot().await },
+        )
+        .await;
+
+    assert!(
+        sol_res.abs_diff(ic_res) < 100,
+        "Difference is too large between slot {sol_res} from Solana client and slot {ic_res} from the SOL RPC canister"
+    );
+}
+
+pub struct Setup {
+    solana_client: SolanaRpcClient,
+    setup: sol_rpc_int_tests::Setup,
+}
+
+impl Setup {
+    const SOLANA_VALIDATOR_URL: &str = "http://localhost:8899";
+
+    pub async fn new() -> Self {
+        Setup {
+            solana_client: solana_client::rpc_client::RpcClient::new(Self::SOLANA_VALIDATOR_URL),
+            setup: sol_rpc_int_tests::Setup::with_args(InstallArgs {
+                override_provider: Some(OverrideProvider {
+                    override_url: Some(RegexSubstitution {
+                        pattern: ".*".into(),
+                        replacement: Self::SOLANA_VALIDATOR_URL.to_string(),
+                    }),
+                }),
+                ..Default::default()
+            })
+            .await,
+        }
+    }
+
+    fn icp_client(&self) -> SolRpcClient<PocketIcRuntime> {
+        self.setup.client()
+    }
+
+    async fn compare_client<'a, Sol, SolOutput, Icp, IcpOutput, Fut>(
+        &'a self,
+        solana_call: Sol,
+        icp_call: Icp,
+    ) -> (SolOutput, IcpOutput)
+    where
+        Sol: FnOnce(&SolanaRpcClient) -> SolOutput,
+        Icp: FnOnce(SolRpcClient<PocketIcRuntime<'a>>) -> Fut,
+        Fut: Future<Output = IcpOutput>,
+    {
+        let a = async { solana_call(&self.solana_client) };
+        let b = async { icp_call(self.icp_client()).await };
+        future::join(a, b).await
+    }
 }
