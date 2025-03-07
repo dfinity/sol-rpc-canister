@@ -35,7 +35,7 @@ pub fn json_rpc_request_arg(
         headers: request_headers,
         body: Some(json_rpc_payload.as_bytes().to_vec()),
         transform: Some(TransformContext::from_name(
-            "__transform_json_rpc".to_string(),
+            "__canonicalize_json_rpc_response".to_string(),
             vec![],
         )),
     })
