@@ -91,8 +91,19 @@ impl Setup {
         SolRpcClient::new(self.new_pocket_ic(), self.canister_id)
     }
 
+    pub fn client_live_mode(&self) -> SolRpcClient<PocketIcLiveModeRuntime> {
+        SolRpcClient::new(self.new_live_pocket_ic(), self.canister_id)
+    }
+
     fn new_pocket_ic(&self) -> PocketIcRuntime {
         PocketIcRuntime {
+            env: &self.env,
+            caller: self.caller,
+        }
+    }
+
+    fn new_live_pocket_ic(&self) -> PocketIcLiveModeRuntime {
+        PocketIcLiveModeRuntime {
             env: &self.env,
             caller: self.caller,
         }
@@ -134,12 +145,11 @@ impl Runtime for PocketIcRuntime<'_> {
         In: ArgumentEncoder + Send + 'static,
         Out: CandidType + DeserializeOwned + 'static,
     {
-        let id = self
-            .env
-            .submit_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
-            .await
-            .unwrap();
-        PocketIcRuntime::decode_call_result(self.env.await_call_no_ticks(id).await)
+        PocketIcRuntime::decode_call_result(
+            self.env
+                .update_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
+                .await,
+        )
     }
 
     async fn query_call<In, Out>(
@@ -197,6 +207,52 @@ impl PocketIcRuntime<'_> {
                 Err((rejection_code, e.reject_message))
             }
         }
+    }
+}
+
+/// Runtime for when Pocket IC is used in live mode.
+#[derive(Clone)]
+pub struct PocketIcLiveModeRuntime<'a> {
+    env: &'a PocketIc,
+    caller: Principal,
+}
+
+#[async_trait]
+impl Runtime for PocketIcLiveModeRuntime<'_> {
+    async fn update_call<In, Out>(
+        &self,
+        id: Principal,
+        method: &str,
+        args: In,
+        _cycles: u128,
+    ) -> Result<Out, (RejectionCode, String)>
+    where
+        In: ArgumentEncoder + Send + 'static,
+        Out: CandidType + DeserializeOwned + 'static,
+    {
+        let id = self
+            .env
+            .submit_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
+            .await
+            .unwrap();
+        PocketIcRuntime::decode_call_result(self.env.await_call_no_ticks(id).await)
+    }
+
+    async fn query_call<In, Out>(
+        &self,
+        id: Principal,
+        method: &str,
+        args: In,
+    ) -> Result<Out, (RejectionCode, String)>
+    where
+        In: ArgumentEncoder + Send + 'static,
+        Out: CandidType + DeserializeOwned + 'static,
+    {
+        PocketIcRuntime::decode_call_result(
+            self.env
+                .query_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
+                .await,
+        )
     }
 }
 

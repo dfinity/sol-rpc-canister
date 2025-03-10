@@ -5,7 +5,7 @@
 use futures::future;
 use pocket_ic::PocketIcBuilder;
 use sol_rpc_client::SolRpcClient;
-use sol_rpc_int_tests::PocketIcRuntime;
+use sol_rpc_int_tests::PocketIcLiveModeRuntime;
 use sol_rpc_types::{InstallArgs, OverrideProvider, RegexSubstitution};
 use solana_client::rpc_client::RpcClient as SolanaRpcClient;
 use std::future::Future;
@@ -62,8 +62,8 @@ impl Setup {
         }
     }
 
-    fn icp_client(&self) -> SolRpcClient<PocketIcRuntime> {
-        self.setup.client()
+    fn icp_client(&self) -> SolRpcClient<PocketIcLiveModeRuntime> {
+        self.setup.client_live_mode()
     }
 
     async fn compare_client<'a, Sol, SolOutput, Icp, IcpOutput, Fut>(
@@ -73,7 +73,7 @@ impl Setup {
     ) -> (SolOutput, IcpOutput)
     where
         Sol: FnOnce(&SolanaRpcClient) -> SolOutput,
-        Icp: FnOnce(SolRpcClient<PocketIcRuntime<'a>>) -> Fut,
+        Icp: FnOnce(SolRpcClient<PocketIcLiveModeRuntime<'a>>) -> Fut,
         Fut: Future<Output = IcpOutput>,
     {
         let a = async { solana_call(&self.solana_client) };
