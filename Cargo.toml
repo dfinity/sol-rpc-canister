@@ -27,7 +27,7 @@ opt-level = 's'
 inherits = "release"
 
 [workspace.dependencies]
-async-trait = "0.1.86"
+async-trait = "0.1.87"
 candid = "0.10.13"
 candid_parser = "0.1.4"
 ciborium = "0.2.2"
@@ -45,9 +45,9 @@ ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", tag = "re
 pocket-ic = "6.0.0"
 proptest = "1.6.0"
 regex = "1.11.1"
-serde = { version = "1.0.218", features = ["derive"] }
-serde_bytes = "0.11.15"
-serde_json = "1.0.139"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_bytes = "0.11.17"
+serde_json = "1.0.140"
 solana-clock = "2.2.0"
 solana-client = "2.2.0"
 solana-hash = "2.2.0"
@@ -59,7 +59,7 @@ solana-pubkey = "2.2.0"
 solana-signature = "2.2.0"
 solana-transaction = { version = "2.2.0", features = ["bincode"] }
 strum = { version = "0.27.0", features = ["derive"] }
-tokio = "1.43.0"
+tokio = "1.44.0"
 url = "2.5"
 zeroize = { version = "1.8", features = ["zeroize_derive"] }
 
