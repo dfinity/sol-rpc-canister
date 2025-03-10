@@ -73,7 +73,7 @@ async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
 }
 
 #[update(name = "getSlot")]
-#[candid_method(query, rename = "getSlot")]
+#[candid_method(rename = "getSlot")]
 async fn get_slot() -> u64 {
     let body = json!({ "jsonrpc": "2.0", "id": 1, "method": "getSlot" });
     let request = CanisterHttpRequestArgument {

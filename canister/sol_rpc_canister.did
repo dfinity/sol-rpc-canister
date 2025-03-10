@@ -69,5 +69,5 @@ service : (InstallArgs,) -> {
   getProviders : () -> (vec Provider) query;
   updateApiKeys : (vec record { ProviderId; opt text }) -> ();
   // TODO XC-320: change signature
-  getSlot : () -> nat64;
+  getSlot : () -> (nat64);
 };
