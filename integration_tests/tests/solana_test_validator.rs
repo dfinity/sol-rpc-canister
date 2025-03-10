@@ -36,7 +36,7 @@ impl Setup {
     const SOLANA_VALIDATOR_URL: &str = "http://localhost:8899";
 
     pub async fn new() -> Self {
-        Setup {
+        let mut setup = Setup {
             solana_client: solana_client::rpc_client::RpcClient::new(Self::SOLANA_VALIDATOR_URL),
             setup: sol_rpc_int_tests::Setup::with_args(InstallArgs {
                 override_provider: Some(OverrideProvider {
@@ -48,7 +48,9 @@ impl Setup {
                 ..Default::default()
             })
             .await,
-        }
+        };
+        setup.setup.make_live().await;
+        setup
     }
 
     fn icp_client(&self) -> SolRpcClient<PocketIcRuntime> {

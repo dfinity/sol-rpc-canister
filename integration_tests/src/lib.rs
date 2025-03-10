@@ -33,6 +33,7 @@ impl Setup {
 
     pub async fn with_args(args: InstallArgs) -> Self {
         let env = PocketIcBuilder::new()
+            .with_nns_subnet()
             .with_fiduciary_subnet()
             .build_async()
             .await;
@@ -89,6 +90,10 @@ impl Setup {
             env: &self.env,
             caller: self.caller,
         }
+    }
+
+    pub async fn make_live(&mut self) {
+        let _endpoint = self.env.make_live(None).await;
     }
 
     pub async fn drop(self) {

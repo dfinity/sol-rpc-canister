@@ -94,13 +94,13 @@ impl<R: Runtime> SolRpcClient<R> {
             .unwrap()
     }
 
-    /// Call `getSlot` on the SOl RPC canister.
+    /// Call `getSlot` on the SOL RPC canister.
     //TODO XC-292: change me!
     pub async fn get_slot(&self) -> Slot {
         self.runtime
-            .update_call(self.sol_rpc_canister, "getSlot", (), 10_000)
+            .update_call(self.sol_rpc_canister, "getSlot", (), 1_000_000_000)
             .await
-            .unwrap()
+            .expect("Client error: failed to call getSlot")
     }
 }
 

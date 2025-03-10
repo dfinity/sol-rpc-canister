@@ -1,9 +1,13 @@
-use candid::candid_method;
+use candid::{candid_method, Nat};
 use canlog::{log, Log, Sort};
+use ic_cdk::api::management_canister::http_request::{
+    CanisterHttpRequestArgument, HttpHeader, HttpMethod,
+};
 use ic_cdk::{
     api::is_controller,
     {query, update},
 };
+use serde_json::json;
 use sol_rpc_canister::{
     http_types, lifecycle,
     logs::Priority,
@@ -71,7 +75,33 @@ async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
 #[update(name = "getSlot")]
 #[candid_method(query, rename = "getSlot")]
 async fn get_slot() -> u64 {
-   42
+    let body = json!({ "jsonrpc": "2.0", "id": 1, "method": "getSlot" });
+    let request = CanisterHttpRequestArgument {
+        url: "http://localhost:8899".to_string(),
+        max_response_bytes: Some(1_000),
+        method: HttpMethod::POST,
+        headers: vec![HttpHeader {
+            name: "content-type".to_string(),
+            value: "application/json".to_string(),
+        }],
+        body: Some(serde_json::to_vec(&body).unwrap()),
+        transform: None,
+    };
+    let response =
+        match ic_cdk::api::management_canister::http_request::http_request(request, 1_000_000_000)
+            .await
+        {
+            Ok((response,)) => response,
+            Err((code, message)) => panic!("Error {code:?}: {message}"),
+        };
+    assert_eq!(
+        response.status,
+        Nat::from(200_u8),
+        "Non successful HTTP response"
+    );
+    let response_body: serde_json::Value =
+        serde_json::from_slice(response.body.as_slice()).expect("Invalid JSON response");
+    response_body["result"].as_u64().unwrap()
 }
 
 #[query(hidden = true)]
