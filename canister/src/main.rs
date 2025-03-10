@@ -72,6 +72,7 @@ async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
     }
 }
 
+//TODO XC-292: change implementation
 #[update(name = "getSlot")]
 #[candid_method(rename = "getSlot")]
 async fn get_slot() -> u64 {
