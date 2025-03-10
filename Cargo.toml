@@ -45,7 +45,7 @@ pocket-ic = "6.0.0"
 proptest = "1.6.0"
 regex = "1.11.1"
 serde = { version = "1.0.219", features = ["derive"] }
-serde_bytes = "0.11.15"
+serde_bytes = "0.11.17"
 serde_json = "1.0.140"
 solana-hash = "2.2.0"
 solana-instruction = "2.2.0"
