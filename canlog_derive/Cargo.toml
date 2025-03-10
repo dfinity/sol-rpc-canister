@@ -12,7 +12,7 @@ include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
 
 [dependencies]
 syn = { version = "2.0.98", features = ["derive"] }
-quote = "1.0.38"
+quote = "1.0.39"
 proc-macro2 = "1.0.94"
 darling = "0.20.10"
 
