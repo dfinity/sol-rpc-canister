@@ -4,7 +4,7 @@ use candid::{decode_args, encode_args, CandidType, Encode, Principal};
 use canlog::{Log, LogEntry};
 use ic_cdk::api::call::RejectionCode;
 use pocket_ic::management_canister::{CanisterId, CanisterSettings};
-use pocket_ic::{nonblocking::PocketIc, PocketIcBuilder, UserError, WasmResult};
+use pocket_ic::{nonblocking::PocketIc, PocketIcBuilder, RejectCode, RejectResponse};
 use serde::de::DeserializeOwned;
 use sol_rpc_canister::{
     http_types::{HttpRequest, HttpResponse},
@@ -169,13 +169,13 @@ impl PocketIcRuntime<'_> {
     }
 
     fn decode_call_result<Out>(
-        result: Result<WasmResult, UserError>,
+        result: Result<Vec<u8>, RejectResponse>,
     ) -> Result<Out, (RejectionCode, String)>
     where
         Out: CandidType + DeserializeOwned + 'static,
     {
         match result {
-            Ok(WasmResult::Reply(bytes)) => decode_args(&bytes).map(|(res,)| res).map_err(|e| {
+            Ok(bytes) => decode_args(&bytes).map(|(res,)| res).map_err(|e| {
                 (
                     RejectionCode::CanisterError,
                     format!(
@@ -185,17 +185,16 @@ impl PocketIcRuntime<'_> {
                     ),
                 )
             }),
-            Ok(WasmResult::Reject(s)) => Err((RejectionCode::CanisterReject, s)),
             Err(e) => {
-                let rejection_code = match e.code as u64 {
-                    100..=199 => RejectionCode::SysFatal,
-                    200..=299 => RejectionCode::SysTransient,
-                    300..=399 => RejectionCode::DestinationInvalid,
-                    400..=499 => RejectionCode::CanisterReject,
-                    500..=599 => RejectionCode::CanisterError,
-                    _ => RejectionCode::Unknown,
+                let rejection_code = match e.reject_code {
+                    RejectCode::SysFatal => RejectionCode::SysFatal,
+                    RejectCode::SysTransient => RejectionCode::SysTransient,
+                    RejectCode::DestinationInvalid => RejectionCode::DestinationInvalid,
+                    RejectCode::CanisterReject => RejectionCode::CanisterReject,
+                    RejectCode::CanisterError => RejectionCode::CanisterError,
+                    RejectCode::SysUnknown => RejectionCode::Unknown,
                 };
-                Err((rejection_code, e.description))
+                Err((rejection_code, e.reject_message))
             }
         }
     }
