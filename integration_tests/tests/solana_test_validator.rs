@@ -21,9 +21,8 @@ async fn should_get_slot() {
         )
         .await;
 
-    // TODO XC-292: change the threshold to a tighter value when we have the real implementation.
     assert!(
-        sol_res.abs_diff(ic_res) < 10_000,
+        sol_res.abs_diff(ic_res) < 5,
         "Difference is too large between slot {sol_res} from Solana client and slot {ic_res} from the SOL RPC canister"
     );
 

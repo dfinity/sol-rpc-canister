@@ -139,7 +139,7 @@ impl Runtime for PocketIcRuntime<'_> {
             .submit_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
             .await
             .unwrap();
-        PocketIcRuntime::decode_call_result(self.env.await_call(id).await)
+        PocketIcRuntime::decode_call_result(self.env.await_call_no_ticks(id).await)
     }
 
     async fn query_call<In, Out>(
