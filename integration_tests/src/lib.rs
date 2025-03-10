@@ -32,11 +32,17 @@ impl Setup {
     }
 
     pub async fn with_args(args: InstallArgs) -> Self {
-        let env = PocketIcBuilder::new()
-            .with_nns_subnet()
-            .with_fiduciary_subnet()
-            .build_async()
-            .await;
+        Self::with_pocket_ic_and_args(
+            PocketIcBuilder::new()
+                .with_fiduciary_subnet()
+                .build_async()
+                .await,
+            args,
+        )
+        .await
+    }
+
+    pub async fn with_pocket_ic_and_args(env: PocketIc, args: InstallArgs) -> Self {
         let controller = DEFAULT_CONTROLLER_TEST_ID;
         let canister_id = env
             .create_canister_with_settings(
@@ -90,10 +96,6 @@ impl Setup {
             env: &self.env,
             caller: self.caller,
         }
-    }
-
-    pub async fn make_live(&mut self) {
-        let _endpoint = self.env.make_live(None).await;
     }
 
     pub async fn drop(self) {

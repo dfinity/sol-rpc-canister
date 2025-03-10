@@ -87,6 +87,7 @@ async fn get_slot() -> u64 {
         body: Some(serde_json::to_vec(&body).unwrap()),
         transform: None,
     };
+    ic_cdk::println!("getSlot request: {body}");
     let response =
         match ic_cdk::api::management_canister::http_request::http_request(request, 1_000_000_000)
             .await
@@ -101,7 +102,9 @@ async fn get_slot() -> u64 {
     );
     let response_body: serde_json::Value =
         serde_json::from_slice(response.body.as_slice()).expect("Invalid JSON response");
-    response_body["result"].as_u64().unwrap()
+    let slot = response_body["result"].as_u64().unwrap();
+    ic_cdk::println!("getSlot response:  {slot}");
+    slot
 }
 
 #[query(hidden = true)]

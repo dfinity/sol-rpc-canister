@@ -3,6 +3,7 @@
 //! Excepted for timing differences, the same behavior should be observed.
 
 use futures::future;
+use pocket_ic::PocketIcBuilder;
 use sol_rpc_client::SolRpcClient;
 use sol_rpc_int_tests::PocketIcRuntime;
 use sol_rpc_types::{InstallArgs, OverrideProvider, RegexSubstitution};
@@ -36,21 +37,28 @@ impl Setup {
     const SOLANA_VALIDATOR_URL: &str = "http://localhost:8899";
 
     pub async fn new() -> Self {
-        let mut setup = Setup {
+        let mut pic = PocketIcBuilder::new()
+            .with_nns_subnet()
+            .with_fiduciary_subnet()
+            .build_async()
+            .await;
+        let _endpoint = pic.make_live(None).await;
+        Setup {
             solana_client: solana_client::rpc_client::RpcClient::new(Self::SOLANA_VALIDATOR_URL),
-            setup: sol_rpc_int_tests::Setup::with_args(InstallArgs {
-                override_provider: Some(OverrideProvider {
-                    override_url: Some(RegexSubstitution {
-                        pattern: ".*".into(),
-                        replacement: Self::SOLANA_VALIDATOR_URL.to_string(),
+            setup: sol_rpc_int_tests::Setup::with_pocket_ic_and_args(
+                pic,
+                InstallArgs {
+                    override_provider: Some(OverrideProvider {
+                        override_url: Some(RegexSubstitution {
+                            pattern: ".*".into(),
+                            replacement: Self::SOLANA_VALIDATOR_URL.to_string(),
+                        }),
                     }),
-                }),
-                ..Default::default()
-            })
+                    ..Default::default()
+                },
+            )
             .await,
-        };
-        setup.setup.make_live().await;
-        setup
+        }
     }
 
     fn icp_client(&self) -> SolRpcClient<PocketIcRuntime> {
