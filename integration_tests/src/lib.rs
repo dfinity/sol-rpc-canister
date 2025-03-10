@@ -134,11 +134,12 @@ impl Runtime for PocketIcRuntime<'_> {
         In: ArgumentEncoder + Send + 'static,
         Out: CandidType + DeserializeOwned + 'static,
     {
-        PocketIcRuntime::decode_call_result(
-            self.env
-                .update_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
-                .await,
-        )
+        let id = self
+            .env
+            .submit_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
+            .await
+            .unwrap();
+        PocketIcRuntime::decode_call_result(self.env.await_call(id).await)
     }
 
     async fn query_call<In, Out>(
