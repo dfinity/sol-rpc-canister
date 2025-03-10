@@ -68,6 +68,12 @@ async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
     }
 }
 
+#[update(name = "getSlot")]
+#[candid_method(query, rename = "getSlot")]
+async fn get_slot() -> u64 {
+   42
+}
+
 #[query(hidden = true)]
 fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
     match request.path() {
