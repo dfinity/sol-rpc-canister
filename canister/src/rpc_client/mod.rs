@@ -1,15 +1,15 @@
 use crate::providers::PROVIDERS;
 use crate::{constants::API_KEY_REPLACE_STRING, state::read_state};
 use ic_cdk::api::management_canister::http_request::HttpHeader;
-use sol_rpc_types::{ProviderId, RpcAccess, RpcApi, RpcAuth, RpcService, SolanaCluster};
+use sol_rpc_types::{ProviderId, RpcAccess, RpcApi, RpcAuth, RpcSource, SolanaCluster};
 
-pub(crate) fn from_rpc_provider(service: RpcService) -> RpcApi {
+pub fn from_rpc_provider(service: RpcSource) -> RpcApi {
     match service {
-        RpcService::Registered(provider, cluster) => PROVIDERS
+        RpcSource::Registered((provider, cluster)) => PROVIDERS
             .with(|map| map.get(&(provider, cluster)).cloned())
             .map(|access| from_rpc_access(access, (provider, cluster)))
             .expect("Unknown provider"),
-        RpcService::Custom(api) => api,
+        RpcSource::Custom(api) => api,
     }
 }
 

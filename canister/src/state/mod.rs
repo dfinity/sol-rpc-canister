@@ -10,7 +10,7 @@ use ic_stable_structures::{
     Cell, DefaultMemoryImpl, Storable,
 };
 use serde::Serialize;
-use sol_rpc_types::{InstallArgs, ProviderId, SolanaCluster};
+use sol_rpc_types::{InstallArgs, RpcProvider, ProviderId, SolanaCluster};
 use std::{borrow::Cow, cell::RefCell, collections::BTreeMap};
 
 const STATE_MEMORY_ID: MemoryId = MemoryId::new(0);
@@ -93,12 +93,12 @@ impl State {
         self.api_keys.get(&(provider, cluster)).cloned()
     }
 
-    pub fn insert_api_key(&mut self, (provider, cluster): (ProviderId, SolanaCluster), api_key: ApiKey) {
-        self.api_keys.insert((provider, cluster), api_key);
+    pub fn insert_api_key(&mut self, provider: RpcProvider, api_key: ApiKey) {
+        self.api_keys.insert(provider, api_key);
     }
 
-    pub fn remove_api_key(&mut self, (provider, cluster): (ProviderId, SolanaCluster)) {
-        self.api_keys.remove(&(provider, cluster));
+    pub fn remove_api_key(&mut self, provider: &RpcProvider) {
+        self.api_keys.remove(provider);
     }
 
     pub fn is_api_key_principal(&self, principal: &Principal) -> bool {

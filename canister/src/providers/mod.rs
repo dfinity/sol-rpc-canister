@@ -2,11 +2,11 @@
 mod tests;
 
 use maplit::btreemap;
-use sol_rpc_types::{ProviderId, RpcAccess, RpcAuth, SolanaCluster};
+use sol_rpc_types::{RpcProvider, ProviderId, RpcAccess, RpcAuth, SolanaCluster};
 use std::collections::BTreeMap;
 
 thread_local! {
-    pub static PROVIDERS: BTreeMap<(ProviderId, SolanaCluster), RpcAccess> = btreemap! {
+    pub static PROVIDERS: BTreeMap<RpcProvider, RpcAccess> = btreemap! {
         (ProviderId::Alchemy, SolanaCluster::Mainnet) => RpcAccess::Authenticated {
             auth: RpcAuth::BearerToken {
                 url: "https://solana-mainnet.g.alchemy.com/v2".to_string(),
@@ -37,6 +37,6 @@ thread_local! {
     };
 }
 
-pub fn get_provider(provider: ProviderId, cluster: SolanaCluster) -> Option<RpcAccess> {
-    PROVIDERS.with(|providers| providers.get(&(provider, cluster)).cloned())
+pub fn get_provider(provider: &RpcProvider) -> Option<RpcAccess> {
+    PROVIDERS.with(|providers| providers.get(provider).cloned())
 }

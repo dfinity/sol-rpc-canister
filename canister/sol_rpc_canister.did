@@ -1,15 +1,14 @@
-type Provider = record {
-  providerId : ProviderId;
-  cluster : SolanaCluster;
-  access : RpcAccess;
-  alias : opt RpcService;
+type ProviderId = variant {
+  Alchemy;
+  Ankr;
+  PublicNode;
 };
-type ProviderId = text;
 type SolanaCluster = variant {
   Mainnet;
   Devnet;
   Testnet;
 };
+type RpcProvider = record { ProviderId; SolanaCluster };
 type RpcAccess = variant {
   Authenticated : record {
     auth : RpcAuth;
@@ -22,12 +21,6 @@ type RpcAccess = variant {
 type RpcAuth = variant {
   BearerToken : record { url : text };
   UrlParameter : record { urlPattern : text };
-};
-type RpcService = variant {
-  Provider : ProviderId;
-  Custom : RpcApi;
-  SolMainnet : SolMainnetService;
-  SolDevnet : SolDevnetService;
 };
 type RpcApi = record {
   url : text;
@@ -66,6 +59,6 @@ type InstallArgs = record {
   logFilter: opt LogFilter;
 };
 service : (InstallArgs,) -> {
-  getProviders : () -> (vec Provider) query;
-  updateApiKeys : (vec record { ProviderId; opt text }) -> ();
+  getProviders : () -> (vec record { RpcProvider; RpcAccess }) query;
+  updateApiKeys : (vec record { RpcProvider; opt text }) -> ();
 };

@@ -11,7 +11,7 @@ use sol_rpc_canister::{
     logs::Priority,
 };
 use sol_rpc_client::{Runtime, SolRpcClient};
-use sol_rpc_types::{InstallArgs, ProviderId};
+use sol_rpc_types::{InstallArgs, RpcProvider};
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -195,14 +195,14 @@ impl PocketIcRuntime<'_> {
 
 #[async_trait]
 pub trait SolRpcTestClient<R: Runtime> {
-    async fn verify_api_key(&self, api_key: (ProviderId, Option<String>));
+    async fn verify_api_key(&self, api_key: (RpcProvider, Option<String>));
     async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry<Priority>>;
     fn with_caller<T: Into<Principal>>(self, id: T) -> Self;
 }
 
 #[async_trait]
 impl SolRpcTestClient<PocketIcRuntime<'_>> for SolRpcClient<PocketIcRuntime<'_>> {
-    async fn verify_api_key(&self, api_key: (ProviderId, Option<String>)) {
+    async fn verify_api_key(&self, api_key: (RpcProvider, Option<String>)) {
         self.runtime
             .query_call(self.sol_rpc_canister, "verifyApiKey", (api_key,))
             .await

@@ -6,7 +6,6 @@ pub use ic_cdk::api::management_canister::http_request::HttpHeader;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use strum::VariantArray;
 
 /// An API defining how to make an HTTP RPC request.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
@@ -48,18 +47,7 @@ pub enum SolanaCluster {
 
 /// Unique identifier for a Solana RPC provider
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    PartialEq,
-    Eq,
-    Ord,
-    PartialOrd,
-    Hash,
-    Serialize,
-    Deserialize,
-    CandidType,
-    VariantArray,
+    Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, CandidType, Deserialize, Serialize,
 )]
 pub enum ProviderId {
     /// [Alchemy](https://www.alchemy.com/)
@@ -70,27 +58,30 @@ pub enum ProviderId {
     PublicNode,
 }
 
+/// A Solana RPC provider for a specific Solana cluster.
+pub type RpcProvider = (ProviderId, SolanaCluster);
+
 /// Defines an RPC service for one of the Solana clusters.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
-pub enum RpcService {
-    /// A registered RPC service for the given [Solana cluster](SolanaCluster).
-    Registered(ProviderId, SolanaCluster),
+pub enum RpcSource {
+    /// A registered RPC service.
+    Registered(RpcProvider),
     /// A custom RPC service defined by an [`RpcApi`].
     Custom(RpcApi),
 }
 
-impl Debug for RpcService {
+impl Debug for RpcSource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            RpcService::Registered(provider_id, cluster) => {
+            RpcSource::Registered((provider_id, cluster)) => {
                 write!(f, "Registered({:?}, {:?})", provider_id, cluster)
             }
-            RpcService::Custom(_) => write!(f, "Custom(..)"), // Redact credentials
+            RpcSource::Custom(_) => write!(f, "Custom(..)"), // Redact credentials
         }
     }
 }
 
-/// Defines the access method for a registered [`RpcService`].
+/// Defines the access method for a registered [`RpcSource`].
 #[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize, Serialize)]
 pub enum RpcAccess {
     /// Access to the RPC provider requires authentication.
