@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use strum::VariantArray;
 
-/// An API defining how to make an RPC request.
+/// An API defining how to make an HTTP RPC request.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
 pub struct RpcApi {
     /// The request URL to use when accessing the API.
@@ -34,7 +34,9 @@ impl Debug for RpcApi {
 }
 
 /// [Solana clusters](https://solana.com/docs/references/clusters).
-#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize, Serialize)]
+#[derive(
+    Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, CandidType, Deserialize, Serialize,
+)]
 pub enum SolanaCluster {
     /// Mainnet: live production environment for deployed applications.
     Mainnet,
@@ -44,7 +46,7 @@ pub enum SolanaCluster {
     Testnet,
 }
 
-/// Service providers to access the [Solana Mainnet](https://solana.com/docs/references/clusters).
+/// Unique identifier for a Solana RPC provider
 #[derive(
     Clone,
     Copy,
@@ -59,93 +61,36 @@ pub enum SolanaCluster {
     CandidType,
     VariantArray,
 )]
-pub enum SolMainnetService {
-    /// [Alchemy](https://www.alchemy.com/) Solana Mainnet RPC provider.
+pub enum ProviderId {
+    /// [Alchemy](https://www.alchemy.com/)
     Alchemy,
-    /// [Ankr](https://www.ankr.com/) Solana Mainnet RPC provider.
+    /// [Ankr](https://www.ankr.com/)
     Ankr,
-    /// [PublicNode](https://www.publicnode.com/) Solana Mainnet RPC provider.
+    /// [PublicNode](https://www.publicnode.com/)
     PublicNode,
 }
 
-impl SolMainnetService {
-    /// Returns an array containing all [`SolMainnetService`] variants.
-    pub const fn all() -> &'static [Self] {
-        SolMainnetService::VARIANTS
-    }
-}
-
-/// Service providers to access the [Solana Devnet](https://solana.com/docs/references/clusters).
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    PartialEq,
-    Eq,
-    Ord,
-    PartialOrd,
-    Hash,
-    Serialize,
-    Deserialize,
-    CandidType,
-    VariantArray,
-)]
-pub enum SolDevnetService {
-    /// [Alchemy](https://www.alchemy.com/) Solana Devnet RPC provider.
-    Alchemy,
-    /// [Ankr](https://www.ankr.com/) Solana Devnet RPC provider.
-    Ankr,
-}
-
-impl SolDevnetService {
-    /// Returns an array containing all [`SolDevnetService`] variants.
-    pub const fn all() -> &'static [Self] {
-        SolDevnetService::VARIANTS
-    }
-}
-
-/// Defines a type of RPC service, e.g. for the Solana Mainnet or Devnet.
+/// Defines an RPC service for one of the Solana clusters.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
 pub enum RpcService {
-    /// The RPC service of a specific [`Provider`], identified by its [`ProviderId`].
-    Provider(ProviderId),
+    /// A registered RPC service for the given [Solana cluster](SolanaCluster).
+    Registered(ProviderId, SolanaCluster),
     /// A custom RPC service defined by an [`RpcApi`].
     Custom(RpcApi),
-    /// RPC service for the [Solana Mainnet](https://solana.com/docs/references/clusters).
-    SolMainnet(SolMainnetService),
-    /// RPC service for the [Solana Devnet](https://solana.com/docs/references/clusters).
-    SolDevnet(SolDevnetService),
 }
 
 impl Debug for RpcService {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            RpcService::Provider(provider_id) => write!(f, "Provider({})", provider_id),
+            RpcService::Registered(provider_id, cluster) => {
+                write!(f, "Registered({:?}, {:?})", provider_id, cluster)
+            }
             RpcService::Custom(_) => write!(f, "Custom(..)"), // Redact credentials
-            RpcService::SolMainnet(service) => write!(f, "{:?}", service),
-            RpcService::SolDevnet(service) => write!(f, "{:?}", service),
         }
     }
 }
 
-/// Unique identifier for a [`Provider`] provider.
-pub type ProviderId = String;
-
-/// Defines an RPC provider.
-#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize, Serialize)]
-pub struct Provider {
-    /// Unique identifier for this provider.
-    #[serde(rename = "providerId")]
-    pub provider_id: ProviderId,
-    /// The Solana cluster this provider gives access to.
-    pub cluster: SolanaCluster,
-    /// The access method for this provider.
-    pub access: RpcAccess,
-    /// The service this provider offers.
-    pub alias: Option<RpcService>,
-}
-
-/// Defines the access method for a [`Provider`].
+/// Defines the access method for a registered [`RpcService`].
 #[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize, Serialize)]
 pub enum RpcAccess {
     /// Access to the RPC provider requires authentication.
@@ -164,7 +109,7 @@ pub enum RpcAccess {
     },
 }
 
-/// Defines the authentication method for access to a [`Provider`].
+/// Defines the authentication method for access to a [`ProviderId`].
 #[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize, Serialize)]
 pub enum RpcAuth {
     /// API key will be used in an Authorization header as Bearer token, e.g.,

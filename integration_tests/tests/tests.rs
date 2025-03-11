@@ -1,6 +1,6 @@
 use sol_rpc_int_tests::{Setup, SolRpcTestClient, ADDITIONAL_TEST_ID};
 use sol_rpc_types::{
-    InstallArgs, Provider, RpcAccess, RpcAuth, RpcService, SolMainnetService, SolanaCluster,
+    InstallArgs, ProviderId, RpcAccess, RpcAuth, RpcService, SolMainnetService, SolanaCluster,
 };
 
 mod get_provider_tests {
@@ -16,7 +16,7 @@ mod get_provider_tests {
 
         assert_eq!(
             providers[0],
-            Provider {
+            ProviderId {
                 provider_id: "alchemy-mainnet".to_string(),
                 cluster: SolanaCluster::Mainnet,
                 access: RpcAccess::Authenticated {

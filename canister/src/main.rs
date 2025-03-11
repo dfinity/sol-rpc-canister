@@ -4,13 +4,15 @@ use ic_cdk::{
     api::is_controller,
     {query, update},
 };
+use providers::get_provider;
 use sol_rpc_canister::{
     http_types, lifecycle,
     logs::Priority,
-    providers::{find_provider, PROVIDERS},
+    providers,
+    providers::PROVIDERS,
     state::{mutate_state, read_state},
 };
-use sol_rpc_types::{ProviderId, RpcAccess};
+use sol_rpc_types::{ProviderId, RpcAccess, SolanaCluster};
 use std::str::FromStr;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
@@ -24,8 +26,8 @@ pub fn require_api_key_principal_or_controller() -> Result<(), String> {
 
 #[query(name = "getProviders")]
 #[candid_method(query, rename = "getProviders")]
-fn get_providers() -> Vec<sol_rpc_types::Provider> {
-    PROVIDERS.with(|providers| providers.clone().into_iter().collect())
+fn get_providers() -> Vec<(ProviderId, SolanaCluster)> {
+    PROVIDERS.with(|providers| providers.clone().into_keys().into_iter().collect())
 }
 
 #[update(
@@ -39,31 +41,34 @@ fn get_providers() -> Vec<sol_rpc_types::Provider> {
 /// an API key, while passing `(id, None)` indicates that the key should be removed from the canister.
 ///
 /// Panics if the list of provider IDs includes a nonexistent or "unauthenticated" (fully public) provider.
-async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
+async fn update_api_keys(api_keys: Vec<(ProviderId, SolanaCluster, Option<String>)>) {
     log!(
         Priority::Info,
         "[{}] Updating API keys for providers: {}",
         ic_cdk::caller(),
         api_keys
             .iter()
-            .map(|(id, _)| id.to_string())
+            .map(|(provider, cluster, _)| format!("{:?} ({:?})", provider, cluster))
             .collect::<Vec<_>>()
             .join(", ")
     );
-    for (provider_id, api_key) in api_keys {
-        let provider = find_provider(|provider| provider.provider_id == provider_id)
-            .unwrap_or_else(|| panic!("Provider not found: {}", provider_id));
-        if let RpcAccess::Unauthenticated { .. } = provider.access {
+    for (provider, cluster, api_key) in api_keys {
+        let access = get_provider(provider, cluster)
+            .unwrap_or_else(|| panic!("Provider not found: {:?} ({:?})", provider, cluster));
+        if let RpcAccess::Unauthenticated { .. } = access {
             panic!(
-                "Trying to set API key for unauthenticated provider: {}",
-                provider_id
+                "Trying to set API key for unauthenticated provider: {:?} ({:?})",
+                provider, cluster
             )
         }
         match api_key {
             Some(key) => mutate_state(|state| {
-                state.insert_api_key(provider_id, key.try_into().expect("Invalid API key"))
+                state.insert_api_key(
+                    (provider, cluster),
+                    key.try_into().expect("Invalid API key"),
+                )
             }),
-            None => mutate_state(|state| state.remove_api_key(provider_id)),
+            None => mutate_state(|state| state.remove_api_key((provider, cluster))),
         }
     }
 }
@@ -134,10 +139,10 @@ fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
     name = "verifyApiKey",
     hidden = true
 )]
-async fn verify_api_key(api_key: (ProviderId, Option<String>)) {
-    let (provider_id, api_key) = api_key;
+async fn verify_api_key(api_key: (ProviderId, SolanaCluster, Option<String>)) {
+    let (provider, cluster, api_key) = api_key;
     let api_key = api_key.map(|key| TryFrom::try_from(key).expect("Invalid API key"));
-    if read_state(|state| state.get_api_key(&provider_id)) != api_key {
+    if read_state(|state| state.get_api_key((provider, cluster))) != api_key {
         panic!("API key does not match input")
     }
 }

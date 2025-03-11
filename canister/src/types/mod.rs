@@ -1,30 +1,11 @@
 #[cfg(test)]
 mod tests;
 
-use crate::{constants::API_KEY_REPLACE_STRING, rpc_client, validate::validate_api_key};
+use crate::{constants::API_KEY_REPLACE_STRING, validate::validate_api_key};
 use serde::{Deserialize, Serialize};
-use sol_rpc_types::{Provider, RegexSubstitution, RpcApi};
+use sol_rpc_types::{RegexSubstitution, RpcApi};
 use std::fmt;
 use zeroize::{Zeroize, ZeroizeOnDrop};
-
-pub enum ResolvedRpcService {
-    Api(RpcApi),
-    Provider(Provider),
-}
-
-impl ResolvedRpcService {
-    pub fn api(&self, override_provider: &OverrideProvider) -> Result<RpcApi, String> {
-        let initial_api = match self {
-            Self::Api(api) => api.clone(),
-            Self::Provider(provider) => rpc_client::get_api(provider),
-        };
-        override_provider.apply(initial_api).map_err(|regex_error| {
-            format!(
-                "BUG: regex should have been validated when initially set. Error: {regex_error}"
-            )
-        })
-    }
-}
 
 #[derive(Clone, PartialEq, Zeroize, ZeroizeOnDrop, Deserialize, Serialize)]
 pub struct ApiKey(String);

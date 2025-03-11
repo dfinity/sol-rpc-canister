@@ -73,7 +73,7 @@ impl<R: Runtime> SolRpcClient<R> {
     }
 
     /// Call `getProviders` on the SOL RPC canister.
-    pub async fn get_providers(&self) -> Vec<sol_rpc_types::Provider> {
+    pub async fn get_providers(&self) -> Vec<sol_rpc_types::ProviderId> {
         self.runtime
             .query_call(self.sol_rpc_canister, "getProviders", ())
             .await

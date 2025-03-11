@@ -1,74 +1,45 @@
-use super::{PROVIDERS, SERVICE_PROVIDER_MAP};
+use super::PROVIDERS;
 use crate::constants::API_KEY_REPLACE_STRING;
-use sol_rpc_types::{Provider, RpcAccess, RpcAuth};
-use std::collections::{HashMap, HashSet};
+use sol_rpc_types::{ProviderId, RpcAccess, RpcAuth, SolanaCluster};
 
 #[test]
 fn test_rpc_provider_url_patterns() {
     PROVIDERS.with(|providers| {
-        for provider in providers {
-            fn assert_not_url_pattern(url: &str, provider: &Provider) {
+        for ((provider, cluster), access) in providers {
+            fn assert_not_url_pattern(url: &str, provider: &ProviderId, cluster: &SolanaCluster) {
                 assert!(
                     !url.contains(API_KEY_REPLACE_STRING),
-                    "Unexpected API key in URL for provider: {}",
-                    provider.provider_id
+                    "Unexpected API key in URL for provider: {:?} ({:?})",
+                    provider,
+                    cluster
                 )
             }
-            fn assert_url_pattern(url: &str, provider: &Provider) {
+            fn assert_url_pattern(url: &str, provider: &ProviderId, cluster: &SolanaCluster) {
                 assert!(
                     url.contains(API_KEY_REPLACE_STRING),
-                    "Missing API key in URL pattern for provider: {}",
-                    provider.provider_id
+                    "Missing API key in URL pattern for provider: {:?} ({:?})",
+                    provider,
+                    cluster
                 )
             }
-            match &provider.access {
+            match access {
                 RpcAccess::Authenticated { auth, public_url } => {
                     match auth {
-                        RpcAuth::BearerToken { url } => assert_not_url_pattern(url, provider),
+                        RpcAuth::BearerToken { url } => {
+                            assert_not_url_pattern(url, provider, cluster)
+                        }
                         RpcAuth::UrlParameter { url_pattern } => {
-                            assert_url_pattern(url_pattern, provider)
+                            assert_url_pattern(url_pattern, provider, cluster)
                         }
                     }
                     if let Some(public_url) = public_url {
-                        assert_not_url_pattern(public_url, provider);
+                        assert_not_url_pattern(public_url, provider, cluster);
                     }
                 }
                 RpcAccess::Unauthenticated { public_url } => {
-                    assert_not_url_pattern(public_url, provider);
+                    assert_not_url_pattern(public_url, provider, cluster);
                 }
             }
         }
-    })
-}
-
-#[test]
-fn test_no_duplicate_service_providers() {
-    SERVICE_PROVIDER_MAP.with(|map| {
-        assert_eq!(
-            map.len(),
-            map.keys().collect::<HashSet<_>>().len(),
-            "Duplicate service in mapping"
-        );
-        assert_eq!(
-            map.len(),
-            map.values().collect::<HashSet<_>>().len(),
-            "Duplicate provider in mapping"
-        );
-    })
-}
-
-#[test]
-fn test_service_provider_coverage() {
-    SERVICE_PROVIDER_MAP.with(|map| {
-        let inverse_map: HashMap<_, _> = map.iter().map(|(k, v)| (v, k)).collect();
-        PROVIDERS.with(|providers| {
-            for provider in providers {
-                assert!(
-                    inverse_map.contains_key(&provider.provider_id),
-                    "Missing service mapping for provider with ID: {}",
-                    provider.provider_id,
-                );
-            }
-        })
     })
 }

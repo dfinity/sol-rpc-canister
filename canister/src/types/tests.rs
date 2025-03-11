@@ -1,24 +1,23 @@
 use crate::{
     providers::PROVIDERS,
-    rpc_client::get_api,
-    state::{init_state, State},
+    rpc_client::from_rpc_provider,
+    state::{init_state, reset_state, State},
     types::{ApiKey, OverrideProvider},
 };
 use proptest::{
     prelude::{prop, Strategy},
     proptest,
 };
-use sol_rpc_types::{HttpHeader, Provider, RegexSubstitution, RpcApi};
+use sol_rpc_types::{HttpHeader, ProviderId, RegexSubstitution, RpcApi};
 
 mod override_provider_tests {
     use super::*;
-    use crate::state::reset_state;
 
     proptest! {
         #[test]
         fn should_override_provider_with_localhost(provider in arb_provider()) {
             with_api_key_for_provider(&provider);
-            let api = get_api(&provider);
+            let api = from_rpc_provider(&provider);
             let overriden_provider  = override_to_localhost().apply(api);
             assert_eq!(
                 overriden_provider,
@@ -90,7 +89,7 @@ mod override_provider_tests {
         }
     }
 
-    fn with_api_key_for_provider(provider: &Provider) {
+    fn with_api_key_for_provider(provider: &ProviderId) {
         reset_state();
         let mut state = State::default();
         state.insert_api_key(
@@ -109,7 +108,7 @@ mod override_provider_tests {
         }
     }
 
-    fn arb_provider() -> impl Strategy<Value = Provider> {
+    fn arb_provider() -> impl Strategy<Value = ProviderId> {
         prop::sample::select(PROVIDERS.with(|providers| providers.to_vec()))
     }
 }

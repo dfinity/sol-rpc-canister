@@ -10,7 +10,7 @@ use ic_stable_structures::{
     Cell, DefaultMemoryImpl, Storable,
 };
 use serde::Serialize;
-use sol_rpc_types::{InstallArgs, ProviderId};
+use sol_rpc_types::{InstallArgs, ProviderId, SolanaCluster};
 use std::{borrow::Cow, cell::RefCell, collections::BTreeMap};
 
 const STATE_MEMORY_ID: MemoryId = MemoryId::new(0);
@@ -82,23 +82,23 @@ fn decode<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> T {
 
 #[derive(Default, Clone, PartialEq, Debug, Deserialize, Serialize)]
 pub struct State {
-    api_keys: BTreeMap<ProviderId, ApiKey>,
+    api_keys: BTreeMap<(ProviderId, SolanaCluster), ApiKey>,
     api_key_principals: Vec<Principal>,
     override_provider: OverrideProvider,
     log_filter: LogFilter,
 }
 
 impl State {
-    pub fn get_api_key(&self, provider_id: &ProviderId) -> Option<ApiKey> {
-        self.api_keys.get(provider_id).cloned()
+    pub fn get_api_key(&self, (provider, cluster): (ProviderId, SolanaCluster)) -> Option<ApiKey> {
+        self.api_keys.get(&(provider, cluster)).cloned()
     }
 
-    pub fn insert_api_key(&mut self, provider_id: ProviderId, api_key: ApiKey) {
-        self.api_keys.insert(provider_id, api_key);
+    pub fn insert_api_key(&mut self, (provider, cluster): (ProviderId, SolanaCluster), api_key: ApiKey) {
+        self.api_keys.insert((provider, cluster), api_key);
     }
 
-    pub fn remove_api_key(&mut self, provider_id: ProviderId) {
-        self.api_keys.remove(&provider_id);
+    pub fn remove_api_key(&mut self, (provider, cluster): (ProviderId, SolanaCluster)) {
+        self.api_keys.remove(&(provider, cluster));
     }
 
     pub fn is_api_key_principal(&self, principal: &Principal) -> bool {
