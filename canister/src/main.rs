@@ -12,7 +12,7 @@ use sol_rpc_canister::{
     providers::PROVIDERS,
     state::{mutate_state, read_state},
 };
-use sol_rpc_types::{ProviderId, RpcAccess, RpcProvider, SolanaCluster};
+use sol_rpc_types::{RpcAccess, RpcProvider};
 use std::str::FromStr;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
