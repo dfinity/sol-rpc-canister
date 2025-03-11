@@ -33,10 +33,7 @@ fn from_rpc_access(access: RpcAccess, (provider, cluster): (ProviderId, SolanaCl
                 },
                 None => RpcApi {
                     url: public_url.clone().unwrap_or_else(|| {
-                        panic!(
-                            "API key not yet initialized for provider: {:?}",
-                            provider
-                        )
+                        panic!("API key not yet initialized for provider: {:?}", provider)
                     }),
                     headers: None,
                 },

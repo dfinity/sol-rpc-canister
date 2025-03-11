@@ -78,9 +78,7 @@ mod update_api_key_tests {
             .verify_api_key((provider, Some(api_key.to_string())))
             .await;
 
-        client
-            .update_api_keys(&[(provider, None)])
-            .await;
+        client.update_api_keys(&[(provider, None)]).await;
         client.verify_api_key((provider, None)).await;
     }
 

@@ -10,7 +10,7 @@ use ic_stable_structures::{
     Cell, DefaultMemoryImpl, Storable,
 };
 use serde::Serialize;
-use sol_rpc_types::{InstallArgs, RpcProvider, ProviderId, SolanaCluster};
+use sol_rpc_types::{InstallArgs, ProviderId, RpcProvider, SolanaCluster};
 use std::{borrow::Cow, cell::RefCell, collections::BTreeMap};
 
 const STATE_MEMORY_ID: MemoryId = MemoryId::new(0);
