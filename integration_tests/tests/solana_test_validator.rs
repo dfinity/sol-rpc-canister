@@ -39,7 +39,7 @@ impl Setup {
 
     pub async fn new() -> Self {
         let mut pic = PocketIcBuilder::new()
-            .with_nns_subnet()
+            .with_nns_subnet() //make_live requires NNS subnet.
             .with_fiduciary_subnet()
             .build_async()
             .await;
