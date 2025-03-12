@@ -80,10 +80,7 @@ async fn update_api_keys(api_keys: Vec<(RpcProvider, Option<String>)>) {
 //TODO XC-292: change implementation
 #[update(name = "getSlot")]
 #[candid_method(rename = "getSlot")]
-async fn get_slot(
-    _source: RpcSources,
-    _config: Option<RpcConfig>,
-) -> u64 {
+async fn get_slot(_source: RpcSources, _config: Option<RpcConfig>) -> u64 {
     let body = json!({ "jsonrpc": "2.0", "id": 1, "method": "getSlot" });
     let request = CanisterHttpRequestArgument {
         url: "http://localhost:8899".to_string(),
