@@ -210,7 +210,11 @@ impl PocketIcRuntime<'_> {
     }
 }
 
-/// Runtime for when Pocket IC is used in live mode.
+/// Runtime for when Pocket IC is used in [live mode](https://github.com/dfinity/ic/blob/f0c82237ae16745ac54dd3838b3f91ce32a6bc52/packages/pocket-ic/HOWTO.md?plain=1#L43).
+///
+/// The pocket IC instance will automatically progress and execute HTTPs outcalls (without mocking).
+/// This setting renders the tests non-deterministic, which is unavoidable since
+/// the solana-test-validator also progresses automatically (and also acceptable for end-to-end tests).
 #[derive(Clone)]
 pub struct PocketIcLiveModeRuntime<'a> {
     env: &'a PocketIc,
