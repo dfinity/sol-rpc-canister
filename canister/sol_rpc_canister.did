@@ -9,6 +9,25 @@ type SolanaCluster = variant {
   Testnet;
 };
 type RpcProvider = record { ProviderId; SolanaCluster };
+type RpcConfig = record {
+  responseSizeEstimate : opt nat64;
+  responseConsensus : opt ConsensusStrategy;
+};
+type ConsensusStrategy = variant {
+  Equality;
+  Threshold : record {
+    total : opt nat8;
+    min : nat8;
+  };
+};
+type RpcSource = variant {
+  Registered : RpcProvider;
+  Custom : RpcApi;
+};
+type RpcSources = variant {
+  Custom : vec RpcSource;
+  Automatic : SolanaCluster;
+};
 type RpcAccess = variant {
   Authenticated : record {
     auth : RpcAuth;
@@ -62,5 +81,5 @@ service : (InstallArgs,) -> {
   getProviders : () -> (vec record { RpcProvider; RpcAccess }) query;
   updateApiKeys : (vec record { RpcProvider; opt text }) -> ();
   // TODO XC-292: change signature
-  getSlot : () -> (nat64);
+  getSlot : (RpcSources, opt RpcConfig) -> (nat64);
 };
