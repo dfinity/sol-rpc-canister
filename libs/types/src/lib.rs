@@ -9,6 +9,5 @@ mod rpc_client;
 pub use lifecycle::InstallArgs;
 pub use rpc_client::{
     ConsensusStrategy, HttpHeader, OverrideProvider, ProviderId, RegexString, RegexSubstitution,
-    RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcProvider, RpcSource, RpcSources,
-    SolanaCluster,
+    RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcProvider, RpcSource, RpcSources, SolanaCluster,
 };
