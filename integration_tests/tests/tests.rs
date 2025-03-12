@@ -3,6 +3,7 @@ use sol_rpc_types::{InstallArgs, ProviderId, RpcAccess, RpcAuth, SolanaCluster};
 
 mod get_provider_tests {
     use super::*;
+    use sol_rpc_types::RpcProvider;
 
     #[tokio::test]
     async fn should_get_providers() {
@@ -15,12 +16,17 @@ mod get_provider_tests {
         assert_eq!(
             providers[0],
             (
-                (ProviderId::Alchemy, SolanaCluster::Mainnet),
-                RpcAccess::Authenticated {
-                    auth: RpcAuth::BearerToken {
-                        url: "https://solana-mainnet.g.alchemy.com/v2".to_string(),
-                    },
-                    public_url: Some("https://solana-mainnet.g.alchemy.com/v2/demo".to_string()),
+                ProviderId::AlchemyMainnet,
+                RpcProvider {
+                    cluster: SolanaCluster::Mainnet,
+                    access: RpcAccess::Authenticated {
+                        auth: RpcAuth::BearerToken {
+                            url: "https://solana-mainnet.g.alchemy.com/v2".to_string(),
+                        },
+                        public_url: Some(
+                            "https://solana-mainnet.g.alchemy.com/v2/demo".to_string()
+                        ),
+                    }
                 },
             )
         );
@@ -44,7 +50,7 @@ mod retrieve_logs_tests {
             .client()
             .with_caller(setup.controller())
             .update_api_keys(&[(
-                (ProviderId::Alchemy, SolanaCluster::Mainnet),
+                ProviderId::AlchemyMainnet,
                 Some("unauthorized-api-key".to_string()),
             )])
             .await;
@@ -68,7 +74,7 @@ mod update_api_key_tests {
         })
         .await;
 
-        let provider = (ProviderId::Alchemy, SolanaCluster::Mainnet);
+        let provider = ProviderId::AlchemyMainnet;
         let api_key = "test-api-key";
         let client = setup.client().with_caller(authorized_caller);
         client
@@ -89,7 +95,7 @@ mod update_api_key_tests {
         setup
             .client()
             .update_api_keys(&[(
-                (ProviderId::Alchemy, SolanaCluster::Mainnet),
+                ProviderId::AlchemyMainnet,
                 Some("unauthorized-api-key".to_string()),
             )])
             .await;
@@ -103,7 +109,7 @@ mod update_api_key_tests {
             .client()
             .with_caller(setup.controller())
             .update_api_keys(&[(
-                (ProviderId::PublicNode, SolanaCluster::Mainnet),
+                ProviderId::PublicNodeMainnet,
                 Some("invalid-api-key".to_string()),
             )])
             .await;
@@ -116,7 +122,7 @@ mod canister_upgrade_tests {
     #[tokio::test]
     async fn upgrade_should_keep_api_keys() {
         let setup = Setup::new().await;
-        let provider = (ProviderId::Alchemy, SolanaCluster::Mainnet);
+        let provider = ProviderId::AlchemyMainnet;
         let api_key = "test-api-key";
         let client = setup.client().with_caller(setup.controller());
         client
@@ -151,7 +157,7 @@ mod canister_upgrade_tests {
             .client()
             .with_caller(authorized_caller)
             .update_api_keys(&[(
-                (ProviderId::Alchemy, SolanaCluster::Mainnet),
+                ProviderId::AlchemyMainnet,
                 Some("authorized-api-key".to_string()),
             )])
             .await;
@@ -176,7 +182,7 @@ mod canister_upgrade_tests {
             .client()
             .with_caller(deauthorized_caller)
             .update_api_keys(&[(
-                (ProviderId::Alchemy, SolanaCluster::Mainnet),
+                ProviderId::AlchemyMainnet,
                 Some("unauthorized-api-key".to_string()),
             )])
             .await;

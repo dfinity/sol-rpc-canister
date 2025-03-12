@@ -8,7 +8,7 @@ use candid::utils::ArgumentEncoder;
 use candid::{CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
-use sol_rpc_types::{RpcAccess, RpcConfig, RpcProvider, RpcSources, SolanaCluster};
+use sol_rpc_types::{ProviderId, RpcConfig, RpcProvider, RpcSources, SolanaCluster};
 use solana_clock::Slot;
 
 /// Abstract the canister runtime so that the client code can be reused:
@@ -74,7 +74,7 @@ impl<R: Runtime> SolRpcClient<R> {
     }
 
     /// Call `getProviders` on the SOL RPC canister.
-    pub async fn get_providers(&self) -> Vec<(RpcProvider, RpcAccess)> {
+    pub async fn get_providers(&self) -> Vec<(ProviderId, RpcProvider)> {
         self.runtime
             .query_call(self.sol_rpc_canister, "getProviders", ())
             .await
@@ -82,7 +82,7 @@ impl<R: Runtime> SolRpcClient<R> {
     }
 
     /// Call `updateApiKeys` on the SOL RPC canister.
-    pub async fn update_api_keys(&self, api_keys: &[(RpcProvider, Option<String>)]) {
+    pub async fn update_api_keys(&self, api_keys: &[(ProviderId, Option<String>)]) {
         self.runtime
             .update_call(
                 self.sol_rpc_canister,
@@ -102,7 +102,7 @@ impl<R: Runtime> SolRpcClient<R> {
                 self.sol_rpc_canister,
                 "getSlot",
                 (
-                    RpcSources::Automatic(SolanaCluster::Devnet),
+                    RpcSources::Default(SolanaCluster::Devnet),
                     None::<RpcConfig>,
                 ),
                 1_000_000_000,

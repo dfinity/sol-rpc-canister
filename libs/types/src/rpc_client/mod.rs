@@ -43,15 +43,15 @@ pub enum ConsensusStrategy {
 
 /// An API defining how to make an HTTP RPC request.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
-pub struct RpcApi {
+pub struct RpcEndpoint {
     /// The request URL to use when accessing the API.
     pub url: String,
     /// The HTTP headers to include in the requests to the API.
     pub headers: Option<Vec<HttpHeader>>,
 }
 
-impl RpcApi {
-    /// Returns the [`RpcApi::url`]'s host.
+impl RpcEndpoint {
+    /// Returns the [`RpcEndpoint::url`]'s host.
     pub fn host_str(&self) -> Option<String> {
         url::Url::parse(&self.url)
             .ok()
@@ -59,10 +59,10 @@ impl RpcApi {
     }
 }
 
-impl Debug for RpcApi {
+impl Debug for RpcEndpoint {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let host = self.host_str().unwrap_or("N/A".to_string());
-        write!(f, "RpcApi {{ host: {}, url/headers: *** }}", host) //URL or header value could contain API keys
+        write!(f, "RpcApi {{ host: {}, url/headers: *** }}", host) // URL or header value could contain API keys
     }
 }
 
@@ -79,45 +79,55 @@ pub enum SolanaCluster {
     Testnet,
 }
 
-/// Unique identifier for a Solana RPC provider
+/// Unique identifier for an RPC provider for a particular Solana cluster.
 #[derive(
     Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, CandidType, Deserialize, Serialize,
 )]
 pub enum ProviderId {
-    /// [Alchemy](https://www.alchemy.com/)
-    Alchemy,
-    /// [Ankr](https://www.ankr.com/)
-    Ankr,
-    /// [PublicNode](https://www.publicnode.com/)
-    PublicNode,
+    /// [Alchemy](https://www.alchemy.com/) provider for [Solana Mainnet](https://solana.com/docs/references/clusters)
+    AlchemyMainnet,
+    /// [Alchemy](https://www.alchemy.com/) provider on [Solana Devnet](https://solana.com/docs/references/clusters)
+    AlchemyDevnet,
+    /// [Ankr](https://www.ankr.com/) provider on [Solana Mainnet](https://solana.com/docs/references/clusters)
+    AnkrMainnet,
+    /// [Ankr](https://www.ankr.com/) provider on [Solana Devnet](https://solana.com/docs/references/clusters)
+    AnkrDevnet,
+    /// [PublicNode](https://www.publicnode.com/) provider on [Solana Mainnet](https://solana.com/docs/references/clusters)
+    PublicNodeMainnet,
 }
 
-/// A Solana RPC provider for a specific Solana cluster.
-pub type RpcProvider = (ProviderId, SolanaCluster);
+/// Defines a provider for a particular Solana cluster.
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, CandidType)]
+pub struct RpcProvider {
+    /// The Solana cluster that is accessed by this provider.
+    pub cluster: SolanaCluster,
+    /// The access method for this RPC provider.
+    pub access: RpcAccess,
+}
 
-/// Defines a Solana RPC source.
+/// Defines a Solana RPC service.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
 pub enum RpcSource {
-    /// A registered RPC service.
-    Registered(RpcProvider),
-    /// A custom RPC service defined by an [`RpcApi`].
-    Custom(RpcApi),
+    /// A supported RPC provider
+    Provider(ProviderId),
+    /// A custom RPC service defined by an explicit [`RpcEndpoint`].
+    Custom(RpcEndpoint),
 }
 
-/// Defines a collection of Solana RPC sources.
+/// Defines a collection of Solana RPC services.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
 pub enum RpcSources {
-    /// A collection of [`RpcSource`] (either [`RpcSource::Registered`] or [`RpcSource::Custom`]).
+    /// A collection of [`RpcSource`] (either [`RpcSource::Provider`] or [`RpcSource::Custom`]).
     Custom(Vec<RpcSource>),
-    /// An implied choice of providers as determined by the given [`SolanaCluster`].
-    Automatic(SolanaCluster),
+    /// Use the default supported providers for the given [`SolanaCluster`].
+    Default(SolanaCluster),
 }
 
 impl Debug for RpcSource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            RpcSource::Registered((provider_id, cluster)) => {
-                write!(f, "Registered({:?}, {:?})", provider_id, cluster)
+            RpcSource::Provider(provider) => {
+                write!(f, "Supported({:?})", provider)
             }
             RpcSource::Custom(_) => write!(f, "Custom(..)"), // Redact credentials
         }
@@ -196,13 +206,13 @@ pub struct RegexSubstitution {
     pub replacement: String,
 }
 
-/// Allows modifying an [`RpcApi`]'s request URL and HTTP headers.
+/// Allows modifying an [`RpcEndpoint`]'s request URL and HTTP headers.
 ///
 /// Currently, the request URL is modified using the [`OverrideProvider::override_url`] regular
 /// expression and HTTP headers are reset.
 #[derive(Clone, Debug, Default, PartialEq, Eq, CandidType, Serialize, Deserialize)]
 pub struct OverrideProvider {
-    /// The regular expression used to override the [`RpcApi`] in when the [`OverrideProvider`] is applied.
+    /// The regular expression used to override the [`RpcEndpoint`] in when the [`OverrideProvider`] is applied.
     #[serde(rename = "overrideUrl")]
     pub override_url: Option<RegexSubstitution>,
 }

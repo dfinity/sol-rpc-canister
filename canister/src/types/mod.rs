@@ -3,7 +3,7 @@ mod tests;
 
 use crate::{constants::API_KEY_REPLACE_STRING, validate::validate_api_key};
 use serde::{Deserialize, Serialize};
-use sol_rpc_types::{RegexSubstitution, RpcApi};
+use sol_rpc_types::{RegexSubstitution, RpcEndpoint};
 use std::fmt;
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
@@ -60,13 +60,13 @@ impl OverrideProvider {
     /// by using the override mechanism. Since only the controller of the canister can set the override parameters,
     /// upon canister initialization or upgrade, it's the controller's responsibility to ensure that this is not a problem
     /// (e.g., if only used for local development).
-    pub fn apply(&self, api: RpcApi) -> Result<RpcApi, regex::Error> {
+    pub fn apply(&self, api: RpcEndpoint) -> Result<RpcEndpoint, regex::Error> {
         match &self.override_url {
             None => Ok(api),
             Some(substitution) => {
                 let regex = substitution.pattern.compile()?;
                 let new_url = regex.replace_all(&api.url, &substitution.replacement);
-                Ok(RpcApi {
+                Ok(RpcEndpoint {
                     url: new_url.to_string(),
                     headers: None,
                 })

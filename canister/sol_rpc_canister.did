@@ -1,14 +1,19 @@
-type ProviderId = variant {
-  Alchemy;
-  Ankr;
-  PublicNode;
-};
 type SolanaCluster = variant {
   Mainnet;
   Devnet;
   Testnet;
 };
-type RpcProvider = record { ProviderId; SolanaCluster };
+type ProviderId = variant {
+  AnkrMainnet;
+  AlchemyDevnet;
+  AlchemyMainnet;
+  AnkrDevnet;
+  PublicNodeMainnet;
+};
+type RpcProvider = record {
+  cluster : SolanaCluster;
+  access : RpcAccess;
+};
 type RpcConfig = record {
   responseSizeEstimate : opt nat64;
   responseConsensus : opt ConsensusStrategy;
@@ -21,12 +26,12 @@ type ConsensusStrategy = variant {
   };
 };
 type RpcSource = variant {
-  Registered : RpcProvider;
+  Provider : ProviderId;
   Custom : RpcApi;
 };
 type RpcSources = variant {
   Custom : vec RpcSource;
-  Automatic : SolanaCluster;
+  Default : SolanaCluster;
 };
 type RpcAccess = variant {
   Authenticated : record {
@@ -78,8 +83,8 @@ type InstallArgs = record {
   logFilter: opt LogFilter;
 };
 service : (InstallArgs,) -> {
-  getProviders : () -> (vec record { RpcProvider; RpcAccess }) query;
-  updateApiKeys : (vec record { RpcProvider; opt text }) -> ();
+  getProviders : () -> (vec record { ProviderId; RpcProvider }) query;
+  updateApiKeys : (vec record { ProviderId; opt text }) -> ();
   // TODO XC-292: change signature
   getSlot : (RpcSources, opt RpcConfig) -> (nat64);
 };
