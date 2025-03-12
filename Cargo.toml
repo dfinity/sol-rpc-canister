@@ -34,6 +34,7 @@ ciborium = "0.2.2"
 # Transitive dependency of ic-ed25519
 # See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
 const_format = "0.2.34"
+futures = "0.3.31"
 getrandom = { version = "*", default-features = false, features = ["custom"] }
 hex = "0.4.3"
 ic-canister-log = "0.2.0"
@@ -48,6 +49,8 @@ regex = "1.11.1"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_bytes = "0.11.17"
 serde_json = "1.0.140"
+solana-clock = "2.2.0"
+solana-client = "2.2.0"
 solana-hash = "2.2.0"
 solana-instruction = "2.2.0"
 solana-message = "2.2.0"
@@ -65,6 +68,8 @@ zeroize = { version = "1.8", features = ["zeroize_derive"] }
 #   when they are built for wasm32-unknown-unknown target. For this reason, we
 #   are using forked version of the relevant repositories.
 [patch.crates-io]
+solana-client = { git = "https://github.com/lpahlavi/agave.git" }
+solana-clock = { git = "https://github.com/lpahlavi/agave.git" }
 solana-hash = { git = "https://github.com/lpahlavi/agave.git" }
 solana-instruction = { git = "https://github.com/lpahlavi/agave.git" }
 solana-keypair = { git = "https://github.com/lpahlavi/agave.git" }

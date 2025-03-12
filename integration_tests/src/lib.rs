@@ -32,10 +32,17 @@ impl Setup {
     }
 
     pub async fn with_args(args: InstallArgs) -> Self {
-        let env = PocketIcBuilder::new()
-            .with_fiduciary_subnet()
-            .build_async()
-            .await;
+        Self::with_pocket_ic_and_args(
+            PocketIcBuilder::new()
+                .with_fiduciary_subnet()
+                .build_async()
+                .await,
+            args,
+        )
+        .await
+    }
+
+    pub async fn with_pocket_ic_and_args(env: PocketIc, args: InstallArgs) -> Self {
         let controller = DEFAULT_CONTROLLER_TEST_ID;
         let canister_id = env
             .create_canister_with_settings(
@@ -84,8 +91,19 @@ impl Setup {
         SolRpcClient::new(self.new_pocket_ic(), self.canister_id)
     }
 
+    pub fn client_live_mode(&self) -> SolRpcClient<PocketIcLiveModeRuntime> {
+        SolRpcClient::new(self.new_live_pocket_ic(), self.canister_id)
+    }
+
     fn new_pocket_ic(&self) -> PocketIcRuntime {
         PocketIcRuntime {
+            env: &self.env,
+            caller: self.caller,
+        }
+    }
+
+    fn new_live_pocket_ic(&self) -> PocketIcLiveModeRuntime {
+        PocketIcLiveModeRuntime {
             env: &self.env,
             caller: self.caller,
         }
@@ -189,6 +207,56 @@ impl PocketIcRuntime<'_> {
                 Err((rejection_code, e.reject_message))
             }
         }
+    }
+}
+
+/// Runtime for when Pocket IC is used in [live mode](https://github.com/dfinity/ic/blob/f0c82237ae16745ac54dd3838b3f91ce32a6bc52/packages/pocket-ic/HOWTO.md?plain=1#L43).
+///
+/// The pocket IC instance will automatically progress and execute HTTPs outcalls (without mocking).
+/// This setting renders the tests non-deterministic, which is unavoidable since
+/// the solana-test-validator also progresses automatically (and also acceptable for end-to-end tests).
+#[derive(Clone)]
+pub struct PocketIcLiveModeRuntime<'a> {
+    env: &'a PocketIc,
+    caller: Principal,
+}
+
+#[async_trait]
+impl Runtime for PocketIcLiveModeRuntime<'_> {
+    async fn update_call<In, Out>(
+        &self,
+        id: Principal,
+        method: &str,
+        args: In,
+        _cycles: u128,
+    ) -> Result<Out, (RejectionCode, String)>
+    where
+        In: ArgumentEncoder + Send + 'static,
+        Out: CandidType + DeserializeOwned + 'static,
+    {
+        let id = self
+            .env
+            .submit_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
+            .await
+            .unwrap();
+        PocketIcRuntime::decode_call_result(self.env.await_call_no_ticks(id).await)
+    }
+
+    async fn query_call<In, Out>(
+        &self,
+        id: Principal,
+        method: &str,
+        args: In,
+    ) -> Result<Out, (RejectionCode, String)>
+    where
+        In: ArgumentEncoder + Send + 'static,
+        Out: CandidType + DeserializeOwned + 'static,
+    {
+        PocketIcRuntime::decode_call_result(
+            self.env
+                .query_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
+                .await,
+        )
     }
 }
 

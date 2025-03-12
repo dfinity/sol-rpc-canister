@@ -24,6 +24,7 @@ maplit = { workspace = true }
 sol_rpc_types = { path = "../libs/types" }
 regex = { workspace = true }
 serde = { workspace = true }
+serde_json = {workspace = true}
 serde_bytes = { workspace = true }
 url = { workspace = true }
 zeroize = { workspace = true }

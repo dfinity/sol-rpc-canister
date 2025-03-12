@@ -61,4 +61,6 @@ type InstallArgs = record {
 service : (InstallArgs,) -> {
   getProviders : () -> (vec record { RpcProvider; RpcAccess }) query;
   updateApiKeys : (vec record { RpcProvider; opt text }) -> ();
+  // TODO XC-292: change signature
+  getSlot : () -> (nat64);
 };
