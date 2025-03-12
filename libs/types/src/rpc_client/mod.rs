@@ -7,6 +7,40 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
+/// Specifies how to perform RPC HTTP calls.
+#[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]
+pub struct RpcConfig {
+    /// Describes the expected (90th percentile) number of bytes in the HTTP response body.
+    /// This number should be less than `MAX_PAYLOAD_SIZE`.
+    #[serde(rename = "responseSizeEstimate")]
+    pub response_size_estimate: Option<u64>,
+
+    /// Specifies how the responses of the different RPC providers should be aggregated into
+    /// a single response.
+    #[serde(rename = "responseConsensus")]
+    pub response_consensus: Option<ConsensusStrategy>,
+}
+
+/// Defines a consensus strategy for combining responses from different providers.
+#[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]
+pub enum ConsensusStrategy {
+    /// All providers must return the same non-error result.
+    #[default]
+    Equality,
+
+    /// A subset of providers must return the same non-error result.
+    Threshold {
+        /// Total number of providers to be queried:
+        /// * If `None`, will be set to the number of providers manually specified in `RpcServices`.
+        /// * If `Some`, must correspond to the number of manually specified providers in `RpcServices`;
+        ///   or if they are none indicating that default providers should be used, select the corresponding number of providers.
+        total: Option<u8>,
+
+        /// Minimum number of providers that must return the same (non-error) result.
+        min: u8,
+    },
+}
+
 /// An API defining how to make an HTTP RPC request.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
 pub struct RpcApi {
@@ -61,13 +95,22 @@ pub enum ProviderId {
 /// A Solana RPC provider for a specific Solana cluster.
 pub type RpcProvider = (ProviderId, SolanaCluster);
 
-/// Defines an RPC service for one of the Solana clusters.
+/// Defines a Solana RPC source.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
 pub enum RpcSource {
     /// A registered RPC service.
     Registered(RpcProvider),
     /// A custom RPC service defined by an [`RpcApi`].
     Custom(RpcApi),
+}
+
+/// Defines a collection of Solana RPC sources.
+#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
+pub enum RpcSources {
+    /// A collection of [`RpcSource`] (either [`RpcSource::Registered`] or [`RpcSource::Custom`]).
+    Custom(Vec<RpcSource>),
+    /// An implied choice of providers as determined by the given [`SolanaCluster`].
+    Automatic(SolanaCluster),
 }
 
 impl Debug for RpcSource {

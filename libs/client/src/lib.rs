@@ -8,7 +8,7 @@ use candid::utils::ArgumentEncoder;
 use candid::{CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
-use sol_rpc_types::{RpcAccess, RpcProvider};
+use sol_rpc_types::{RpcAccess, RpcConfig, RpcProvider, RpcSources, SolanaCluster};
 use solana_clock::Slot;
 
 /// Abstract the canister runtime so that the client code can be reused:
@@ -98,7 +98,15 @@ impl<R: Runtime> SolRpcClient<R> {
     //TODO XC-292: change me!
     pub async fn get_slot(&self) -> Slot {
         self.runtime
-            .update_call(self.sol_rpc_canister, "getSlot", (), 1_000_000_000)
+            .update_call(
+                self.sol_rpc_canister,
+                "getSlot",
+                (
+                    RpcSources::Automatic(SolanaCluster::Devnet),
+                    None::<RpcConfig>,
+                ),
+                1_000_000_000,
+            )
             .await
             .expect("Client error: failed to call getSlot")
     }
