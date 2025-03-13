@@ -93,9 +93,9 @@ pub enum SupportedRpcProviderId {
     /// [Ankr](https://www.ankr.com/) provider on [Solana Devnet](https://solana.com/docs/references/clusters)
     AnkrDevnet,
     /// [dRPC](https://drpc.org/) provider on [Solana Mainnet](https://solana.com/docs/references/clusters)
-    DRPCMainnet,
+    DrpcMainnet,
     /// [dRPC](https://drpc.org/) provider on [Solana Devnet](https://solana.com/docs/references/clusters)
-    DRPCDevnet,
+    DrpcDevnet,
     /// [Helius](https://www.helius.dev/) provider on [Solana Mainnet](https://solana.com/docs/references/clusters)
     HeliusMainnet,
     /// [Helius](https://www.helius.dev/) provider on [Solana Devnet](https://solana.com/docs/references/clusters)

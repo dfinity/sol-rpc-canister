@@ -14,8 +14,8 @@ type SupportedProvider = variant {
   AlchemyDevnet;
   AnkrMainnet;
   AnkrDevnet;
-  DRPCMainnet;
-  DRPCDevnet;
+  DrpcMainnet;
+  DrpcDevnet;
   HeliusMainnet;
   HeliusDevnet;
   PublicNodeMainnet;

@@ -45,13 +45,13 @@ thread_local! {
                 public_url: Some("https://rpc.ankr.com/solana_devnet/".to_string()),
             }
         },
-        SupportedRpcProviderId::DRPCMainnet => SupportedRpcProvider {
+        SupportedRpcProviderId::DrpcMainnet => SupportedRpcProvider {
             cluster: SolanaCluster::Mainnet,
             access: RpcAccess::Unauthenticated {
                 public_url: "https://solana.drpc.org".to_string(),
             },
         },
-        SupportedRpcProviderId::DRPCDevnet => SupportedRpcProvider {
+        SupportedRpcProviderId::DrpcDevnet => SupportedRpcProvider {
             cluster: SolanaCluster::Mainnet,
             access: RpcAccess::Unauthenticated {
                 public_url: "https://solana-devnet.drpc.org".to_string(),
