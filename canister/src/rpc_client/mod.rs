@@ -1,7 +1,7 @@
 use crate::providers::PROVIDERS;
 use crate::{constants::API_KEY_REPLACE_STRING, state::read_state};
 use ic_cdk::api::management_canister::http_request::HttpHeader;
-use sol_rpc_types::{SupportedProvider, RpcAccess, RpcAuth, RpcEndpoint, RpcSource};
+use sol_rpc_types::{RpcAccess, RpcAuth, RpcEndpoint, RpcSource, SupportedProvider};
 
 pub fn from_rpc_provider(service: RpcSource) -> RpcEndpoint {
     match service {

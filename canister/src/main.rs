@@ -14,7 +14,7 @@ use sol_rpc_canister::{
     providers::{get_access, PROVIDERS},
     state::{mutate_state, read_state},
 };
-use sol_rpc_types::{SupportedProvider, RpcAccess, RpcConfig, RpcProvider, RpcSources};
+use sol_rpc_types::{RpcAccess, RpcConfig, RpcProvider, RpcSources, SupportedProvider};
 use std::str::FromStr;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {

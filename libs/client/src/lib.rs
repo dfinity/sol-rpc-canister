@@ -8,7 +8,7 @@ use candid::utils::ArgumentEncoder;
 use candid::{CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
-use sol_rpc_types::{SupportedProvider, RpcConfig, RpcProvider, RpcSources, SolanaCluster};
+use sol_rpc_types::{RpcConfig, RpcProvider, RpcSources, SolanaCluster, SupportedProvider};
 use solana_clock::Slot;
 
 /// Abstract the canister runtime so that the client code can be reused:

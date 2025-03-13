@@ -1,5 +1,5 @@
 use sol_rpc_int_tests::{Setup, SolRpcTestClient, ADDITIONAL_TEST_ID};
-use sol_rpc_types::{InstallArgs, SupportedProvider, RpcAccess, RpcAuth, SolanaCluster};
+use sol_rpc_types::{InstallArgs, RpcAccess, RpcAuth, SolanaCluster, SupportedProvider};
 
 mod get_provider_tests {
     use super::*;

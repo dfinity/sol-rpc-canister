@@ -89,8 +89,8 @@ pub struct State {
 }
 
 impl State {
-    pub fn get_ap   i_key(&self, provider: &SupportedProvider) -> Option<ApiKey> {
-        self.api_keys.get(&provider).cloned()
+    pub fn get_api_key(&self, provider: &SupportedProvider) -> Option<ApiKey> {
+        self.api_keys.get(provider).cloned()
     }
 
     pub fn insert_api_key(&mut self, provider: SupportedProvider, api_key: ApiKey) {

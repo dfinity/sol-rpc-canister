@@ -1,6 +1,6 @@
 use super::PROVIDERS;
 use crate::constants::API_KEY_REPLACE_STRING;
-use sol_rpc_types::{SupportedProvider, RpcAccess, RpcAuth, RpcProvider};
+use sol_rpc_types::{RpcAccess, RpcAuth, RpcProvider, SupportedProvider};
 
 #[test]
 fn test_rpc_provider_url_patterns() {
