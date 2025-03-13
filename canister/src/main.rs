@@ -11,10 +11,10 @@ use serde_json::json;
 use sol_rpc_canister::{
     http_types, lifecycle,
     logs::Priority,
-    providers::{get_access, PROVIDERS},
+    providers::PROVIDERS,
     state::{mutate_state, read_state},
 };
-use sol_rpc_types::{RpcAccess, RpcConfig, RpcProvider, RpcSources, SupportedProvider};
+use sol_rpc_types::{RpcAccess, RpcConfig, SupportedRpcProvider, RpcSources, SupportedRpcProviderId};
 use std::str::FromStr;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
@@ -28,7 +28,7 @@ pub fn require_api_key_principal_or_controller() -> Result<(), String> {
 
 #[query(name = "getProviders")]
 #[candid_method(query, rename = "getProviders")]
-fn get_providers() -> Vec<(SupportedProvider, RpcProvider)> {
+fn get_providers() -> Vec<(SupportedRpcProviderId, SupportedRpcProvider)> {
     PROVIDERS.with(|providers| providers.clone().into_iter().collect())
 }
 
@@ -43,7 +43,7 @@ fn get_providers() -> Vec<(SupportedProvider, RpcProvider)> {
 /// an API key, while passing `(id, None)` indicates that the key should be removed from the canister.
 ///
 /// Panics if the list of provider IDs includes a nonexistent or "unauthenticated" (fully public) provider.
-async fn update_api_keys(api_keys: Vec<(SupportedProvider, Option<String>)>) {
+async fn update_api_keys(api_keys: Vec<(SupportedRpcProviderId, Option<String>)>) {
     log!(
         Priority::Info,
         "[{}] Updating API keys for providers: {}",
@@ -56,7 +56,7 @@ async fn update_api_keys(api_keys: Vec<(SupportedProvider, Option<String>)>) {
     );
     for (provider, api_key) in api_keys {
         let access =
-            get_access(&provider).unwrap_or_else(|| panic!("Provider not found: {:?}", provider));
+            get_provider(&provider).map(|provider| provider.access).unwrap_or_else(|| panic!("Provider not found: {:?}", provider));
         if let RpcAccess::Unauthenticated { .. } = access {
             panic!(
                 "Trying to set API key for unauthenticated provider: {:?}",
@@ -174,7 +174,7 @@ fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
     name = "verifyApiKey",
     hidden = true
 )]
-async fn verify_api_key(api_key: (SupportedProvider, Option<String>)) {
+async fn verify_api_key(api_key: (SupportedRpcProviderId, Option<String>)) {
     let (provider, api_key) = api_key;
     let api_key = api_key.map(|key| TryFrom::try_from(key).expect("Invalid API key"));
     if read_state(|state| state.get_api_key(&provider)) != api_key {

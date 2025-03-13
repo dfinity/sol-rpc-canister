@@ -79,11 +79,11 @@ pub enum SolanaCluster {
     Testnet,
 }
 
-/// Identifies an RPC provider for a particular Solana cluster.
+/// Uniquely identifies a supported RPC provider for a particular Solana cluster.
 #[derive(
     Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, CandidType, Deserialize, Serialize,
 )]
-pub enum SupportedProvider {
+pub enum SupportedRpcProviderId {
     /// [Alchemy](https://www.alchemy.com/) provider for [Solana Mainnet](https://solana.com/docs/references/clusters)
     AlchemyMainnet,
     /// [Alchemy](https://www.alchemy.com/) provider on [Solana Devnet](https://solana.com/docs/references/clusters)
@@ -96,9 +96,9 @@ pub enum SupportedProvider {
     PublicNodeMainnet,
 }
 
-/// Defines an RPC provider for a particular Solana cluster and how to access it.
+/// Defines a supported RPC provider for a particular Solana cluster.
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, CandidType)]
-pub struct RpcProvider {
+pub struct SupportedRpcProvider {
     /// The Solana cluster that is accessed by this provider.
     pub cluster: SolanaCluster,
     /// The access method for this RPC provider.
@@ -109,7 +109,7 @@ pub struct RpcProvider {
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
 pub enum RpcSource {
     /// A supported RPC provider.
-    Supported(SupportedProvider),
+    Supported(SupportedRpcProviderId),
     /// A custom RPC service defined by an explicit [`RpcEndpoint`].
     Custom(RpcEndpoint),
 }
@@ -153,7 +153,7 @@ pub enum RpcAccess {
     },
 }
 
-/// Defines the authentication method for access to a [`SupportedProvider`].
+/// Defines the authentication method for access to a [`SupportedRpcProviderId`].
 #[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize, Serialize)]
 pub enum RpcAuth {
     /// API key will be used in an Authorization header as Bearer token, e.g.,

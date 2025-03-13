@@ -1,19 +1,19 @@
 use crate::providers::PROVIDERS;
 use crate::{constants::API_KEY_REPLACE_STRING, state::read_state};
 use ic_cdk::api::management_canister::http_request::HttpHeader;
-use sol_rpc_types::{RpcAccess, RpcAuth, RpcEndpoint, RpcSource, SupportedProvider};
+use sol_rpc_types::{RpcAccess, RpcAuth, RpcEndpoint, RpcSource, SupportedRpcProviderId};
 
-pub fn from_rpc_provider(service: RpcSource) -> RpcEndpoint {
+pub fn resolve_rpc_provider(service: RpcSource) -> RpcEndpoint {
     match service {
         RpcSource::Supported(provider_id) => PROVIDERS
             .with(|providers| providers.get(&provider_id).cloned())
-            .map(|provider| from_rpc_access(provider.access, provider_id))
+            .map(|provider| resolve_api_key(provider.access, provider_id))
             .expect("Unknown provider"),
         RpcSource::Custom(api) => api,
     }
 }
 
-fn from_rpc_access(access: RpcAccess, provider: SupportedProvider) -> RpcEndpoint {
+fn resolve_api_key(access: RpcAccess, provider: SupportedRpcProviderId) -> RpcEndpoint {
     match &access {
         RpcAccess::Authenticated { auth, public_url } => {
             let api_key = read_state(|s| s.get_api_key(&provider));
