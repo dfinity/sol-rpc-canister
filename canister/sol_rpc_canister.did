@@ -76,7 +76,7 @@ type RpcEndpoint = record {
   headers : opt vec HttpHeader
 };
 
-// An HTTP text header.
+// An HTTP header.
 type HttpHeader = record {
   value : text;
   name : text
