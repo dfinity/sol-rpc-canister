@@ -70,7 +70,7 @@ type RpcAuth = variant {
   UrlParameter : record { urlPattern : text };
 };
 
-// An API defining how to make an HTTP RPC request.
+// Specifies how to reach a Solana RPC provider
 type RpcEndpoint = record {
   url : text;
   headers : opt vec HttpHeader
