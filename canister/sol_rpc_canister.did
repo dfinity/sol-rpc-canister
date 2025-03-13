@@ -53,7 +53,7 @@ type RpcSources = variant {
   Default : SolanaCluster;
 };
 
-// Defines the access method for a registered RpcSource.
+// Defines how to reach the supported RPC provider.
 type RpcAccess = variant {
   Authenticated : record {
     auth : RpcAuth;
