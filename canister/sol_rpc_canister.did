@@ -1,7 +1,10 @@
 // Identifies a Solana cluster
 type SolanaCluster = variant {
+  // Live production environment 
   Mainnet;
+  // Public testing and development
   Devnet;
+  // Validator and stress testing
   Testnet;
 };
 
