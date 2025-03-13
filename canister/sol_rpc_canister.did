@@ -37,7 +37,7 @@ type ConsensusStrategy = variant {
 
 // Defines a Solana RPC source.
 type RpcSource = variant {
-  Provider : SupportedProvider;
+  Supported : SupportedProvider;
   Custom : RpcEndpoint;
 };
 

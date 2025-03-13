@@ -18,7 +18,7 @@ mod override_provider_tests {
         #[test]
         fn should_override_provider_with_localhost(provider in arb_provider()) {
             with_api_key_for_provider(provider);
-            let api = from_rpc_provider(RpcSource::Provider(provider));
+            let api = from_rpc_provider(RpcSource::Supported(provider));
             let overriden_provider  = override_to_localhost().apply(api);
             assert_eq!(
                 overriden_provider,
@@ -35,7 +35,7 @@ mod override_provider_tests {
         fn should_be_noop_when_empty(provider in arb_provider()) {
             with_api_key_for_provider(provider);
             let no_override = OverrideProvider::default();
-            let initial_api = from_rpc_provider(RpcSource::Provider(provider));
+            let initial_api = from_rpc_provider(RpcSource::Supported(provider));
             let overriden_api = no_override.apply(initial_api.clone());
             assert_eq!(Ok(initial_api), overriden_api);
         }
@@ -51,7 +51,7 @@ mod override_provider_tests {
                     replacement: ".ch".to_string(),
                 }),
             };
-            let initial_api = from_rpc_provider(RpcSource::Provider(provider));
+            let initial_api = from_rpc_provider(RpcSource::Supported(provider));
             let overriden_provider = identity_override.apply(initial_api.clone());
             assert_eq!(overriden_provider,
                 Ok(RpcEndpoint {
@@ -77,7 +77,7 @@ mod override_provider_tests {
                     name: "key".to_string(),
                     value: "123".to_string(),
                 }]),
-                ..from_rpc_provider(RpcSource::Provider(provider))
+                ..from_rpc_provider(RpcSource::Supported(provider))
             };
             let overriden_provider = identity_override.apply(api_with_headers.clone());
             assert_eq!(

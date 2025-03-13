@@ -108,8 +108,8 @@ pub struct RpcProvider {
 /// Defines a Solana RPC source.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
 pub enum RpcSource {
-    /// A supported RPC provider
-    Provider(SupportedProvider),
+    /// A supported RPC provider.
+    Supported(SupportedProvider),
     /// A custom RPC service defined by an explicit [`RpcEndpoint`].
     Custom(RpcEndpoint),
 }
@@ -117,7 +117,7 @@ pub enum RpcSource {
 /// Defines a collection of Solana RPC sources.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
 pub enum RpcSources {
-    /// A collection of [`RpcSource`] (either [`RpcSource::Provider`] or [`RpcSource::Custom`]).
+    /// A collection of [`RpcSource`] (either [`RpcSource::Supported`] or [`RpcSource::Custom`]).
     Custom(Vec<RpcSource>),
     /// Use the default supported providers for the given [`SolanaCluster`].
     Default(SolanaCluster),
@@ -126,7 +126,7 @@ pub enum RpcSources {
 impl Debug for RpcSource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            RpcSource::Provider(provider) => {
+            RpcSource::Supported(provider) => {
                 write!(f, "Supported({:?})", provider)
             }
             RpcSource::Custom(_) => write!(f, "Custom(..)"), // Redact credentials

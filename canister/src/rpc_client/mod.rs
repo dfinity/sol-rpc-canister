@@ -5,7 +5,7 @@ use sol_rpc_types::{RpcAccess, RpcAuth, RpcEndpoint, RpcSource, SupportedProvide
 
 pub fn from_rpc_provider(service: RpcSource) -> RpcEndpoint {
     match service {
-        RpcSource::Provider(provider_id) => PROVIDERS
+        RpcSource::Supported(provider_id) => PROVIDERS
             .with(|providers| providers.get(&provider_id).cloned())
             .map(|provider| from_rpc_access(provider.access, provider_id))
             .expect("Unknown provider"),
