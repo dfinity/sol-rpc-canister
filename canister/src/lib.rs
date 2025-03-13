@@ -1,5 +1,7 @@
 pub mod constants;
+pub mod http_types;
 pub mod lifecycle;
+pub mod logs;
 pub mod providers;
 pub mod rpc_client;
 pub mod state;

@@ -10,12 +10,18 @@ license.workspace = true
 [dependencies]
 async-trait = { workspace = true }
 candid = { workspace = true }
+canlog = { path = "../canlog" }
 ic-cdk = { workspace = true }
 ic-test-utilities-load-wasm = { workspace = true }
 pocket-ic = { workspace = true }
 serde = { workspace = true }
+serde_bytes = { workspace = true }
+serde_json = { workspace = true }
+sol_rpc_canister = { path = "../canister" }
 sol_rpc_client = { path = "../libs/client" }
 sol_rpc_types = { path = "../libs/types" }
 
 [dev-dependencies]
+futures = { workspace = true }
+solana-client = { workspace = true }
 tokio = { workspace = true }

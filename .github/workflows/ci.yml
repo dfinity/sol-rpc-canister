@@ -11,6 +11,7 @@ on:
       - "README.md"
 env:
   CARGO_TERM_COLOR: always
+  SOLANA_CLI_VERSION: "2.1.15"
   RUSTFLAGS: "-Dwarnings"
 
 jobs:
@@ -24,6 +25,17 @@ jobs:
           cargo fmt --all -- --check
           cargo clippy --locked --verbose --tests --benches --workspace -- -D clippy::all
           cargo clippy --locked --verbose --target wasm32-unknown-unknown -p sol_rpc_canister -- -D clippy::all
+
+  cargo-doc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Cargo doc
+        run: |
+          cargo doc --workspace --no-deps
+        env:
+          RUSTDOCFLAGS: "--deny warnings"
 
   reproducible-build:
     runs-on: ubuntu-22.04
@@ -74,7 +86,17 @@ jobs:
       - name: 'Install PocketIC server'
         uses: dfinity/pocketic@main
         with:
-          pocket-ic-server-version: "7.0.0"
+          pocket-ic-server-version: "8.0.0"
+
+      - name: 'Install Solana CLI'
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/v${SOLANA_CLI_VERSION}/install)"
+          echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+        shell: bash
+
+      - name: 'Start Solana test validator'
+        run: |
+          solana-test-validator &
 
       - name: Cargo test
         run: cargo test --package sol_rpc_int_tests -- --test-threads 2 --nocapture

@@ -2,10 +2,11 @@
 resolver = "2"
 members = [
     "canister", "integration_tests",
+    "canlog",
+    "canlog_derive",
     "libs/client",
     "libs/types",
-    "examples/basic_solana"
-]
+    "examples/basic_solana"]
 
 [workspace.package]
 authors = ["DFINITY Stiftung"]
@@ -26,24 +27,30 @@ opt-level = 's'
 inherits = "release"
 
 [workspace.dependencies]
-async-trait = "0.1.86"
+async-trait = "0.1.87"
 candid = "0.10.13"
 candid_parser = "0.1.4"
 ciborium = "0.2.2"
 # Transitive dependency of ic-ed25519
 # See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
 const_format = "0.2.34"
+futures = "0.3.31"
 getrandom = { version = "*", default-features = false, features = ["custom"] }
 hex = "0.4.3"
+ic-canister-log = "0.2.0"
 ic-cdk = "0.17.1"
 ic-ed25519 = "0.1.0"
 ic-stable-structures = "0.6.7"
 ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", tag = "release-2025-01-23_03-04-base" }
-pocket-ic = "6.0.0"
+maplit = "1.0.2"
+pocket-ic = "7.0.0"
 proptest = "1.6.0"
 regex = "1.11.1"
-serde = { version = "1.0.218", features = ["derive"] }
-serde_json = "1.0.138"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_bytes = "0.11.17"
+serde_json = "1.0.140"
+solana-clock = "2.2.0"
+solana-client = "2.2.0"
 solana-hash = "2.2.0"
 solana-instruction = "2.2.0"
 solana-message = "2.2.0"
@@ -53,8 +60,7 @@ solana-pubkey = "2.2.0"
 solana-signature = "2.2.0"
 solana-transaction = { version = "2.2.0", features = ["bincode"] }
 strum = { version = "0.27.0", features = ["derive"] }
-thiserror = "2.0.11"
-tokio = "1.43.0"
+tokio = "1.44.0"
 url = "2.5"
 zeroize = { version = "1.8", features = ["zeroize_derive"] }
 
@@ -62,6 +68,8 @@ zeroize = { version = "1.8", features = ["zeroize_derive"] }
 #   when they are built for wasm32-unknown-unknown target. For this reason, we
 #   are using forked version of the relevant repositories.
 [patch.crates-io]
+solana-client = { git = "https://github.com/lpahlavi/agave.git" }
+solana-clock = { git = "https://github.com/lpahlavi/agave.git" }
 solana-hash = { git = "https://github.com/lpahlavi/agave.git" }
 solana-instruction = { git = "https://github.com/lpahlavi/agave.git" }
 solana-keypair = { git = "https://github.com/lpahlavi/agave.git" }

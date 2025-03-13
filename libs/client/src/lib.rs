@@ -8,7 +8,10 @@ use candid::utils::ArgumentEncoder;
 use candid::{CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
-use sol_rpc_types::ProviderId;
+use sol_rpc_types::{
+    RpcConfig, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+};
+use solana_clock::Slot;
 
 /// Abstract the canister runtime so that the client code can be reused:
 /// * in production using `ic_cdk`,
@@ -73,7 +76,7 @@ impl<R: Runtime> SolRpcClient<R> {
     }
 
     /// Call `getProviders` on the SOL RPC canister.
-    pub async fn get_providers(&self) -> Vec<sol_rpc_types::Provider> {
+    pub async fn get_providers(&self) -> Vec<(SupportedRpcProviderId, SupportedRpcProvider)> {
         self.runtime
             .query_call(self.sol_rpc_canister, "getProviders", ())
             .await
@@ -81,7 +84,7 @@ impl<R: Runtime> SolRpcClient<R> {
     }
 
     /// Call `updateApiKeys` on the SOL RPC canister.
-    pub async fn update_api_keys(&self, api_keys: &[(ProviderId, Option<String>)]) {
+    pub async fn update_api_keys(&self, api_keys: &[(SupportedRpcProviderId, Option<String>)]) {
         self.runtime
             .update_call(
                 self.sol_rpc_canister,
@@ -91,6 +94,23 @@ impl<R: Runtime> SolRpcClient<R> {
             )
             .await
             .unwrap()
+    }
+
+    /// Call `getSlot` on the SOL RPC canister.
+    //TODO XC-292: change me!
+    pub async fn get_slot(&self) -> Slot {
+        self.runtime
+            .update_call(
+                self.sol_rpc_canister,
+                "getSlot",
+                (
+                    RpcSources::Default(SolanaCluster::Devnet),
+                    None::<RpcConfig>,
+                ),
+                1_000_000_000,
+            )
+            .await
+            .expect("Client error: failed to call getSlot")
     }
 }
 

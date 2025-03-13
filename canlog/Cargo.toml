@@ -1,7 +1,7 @@
 [package]
-name = "sol_rpc_types"
+name = "canlog"
 version = "0.1.0"
-description = "Candid types used by the SOL RPC canister"
+description = "Crate for managing canister logs"
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -12,9 +12,16 @@ include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
 
 [dependencies]
 candid = { workspace = true }
+canlog_derive = { path = "../canlog_derive", optional = true }
+ic-canister-log = { workspace = true }
 ic-cdk = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true }
-canlog = { path = "../../canlog" }
-strum = { workspace = true }
-url = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+canlog_derive = { path = "../canlog_derive" }
+
+[features]
+derive = ["dep:canlog_derive"]
