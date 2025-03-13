@@ -1,23 +1,32 @@
+// Identifies a Solana cluster
 type SolanaCluster = variant {
   Mainnet;
   Devnet;
   Testnet;
 };
-type ProviderId = variant {
+
+// Identifies an RPC provider for a particular Solana cluster.
+type SupportedProvider = variant {
   AnkrMainnet;
   AlchemyDevnet;
   AlchemyMainnet;
   AnkrDevnet;
   PublicNodeMainnet;
 };
+
+// Defines an RPC provider for a particular Solana cluster and how to access it.
 type RpcProvider = record {
   cluster : SolanaCluster;
   access : RpcAccess;
 };
+
+// Configures how to perform RPC HTTP calls.
 type RpcConfig = record {
   responseSizeEstimate : opt nat64;
   responseConsensus : opt ConsensusStrategy;
 };
+
+// Defines a consensus strategy for combining responses from different providers.
 type ConsensusStrategy = variant {
   Equality;
   Threshold : record {
@@ -25,14 +34,20 @@ type ConsensusStrategy = variant {
     min : nat8;
   };
 };
+
+// Defines a Solana RPC source.
 type RpcSource = variant {
-  Provider : ProviderId;
-  Custom : RpcApi;
+  Provider : SupportedProvider;
+  Custom : RpcEndpoint;
 };
+
+// Defines a collection of Solana RPC sources.
 type RpcSources = variant {
   Custom : vec RpcSource;
   Default : SolanaCluster;
 };
+
+// Defines the access method for a registered RpcSource.
 type RpcAccess = variant {
   Authenticated : record {
     auth : RpcAuth;
@@ -42,49 +57,61 @@ type RpcAccess = variant {
     publicUrl : text;
   };
 };
+
+// Defines the authentication method for access to a SupportedProvider.
 type RpcAuth = variant {
   BearerToken : record { url : text };
   UrlParameter : record { urlPattern : text };
 };
-type RpcApi = record {
+
+// An API defining how to make an HTTP RPC request.
+type RpcEndpoint = record {
   url : text;
   headers : opt vec HttpHeader
 };
+
+// An HTTP text header.
 type HttpHeader = record {
   value : text;
   name : text
 };
-type SolMainnetService = variant {
-  Alchemy;
-  Ankr;
-  PublicNode;
-};
-type SolDevnetService = variant {
-  Alchemy;
-  Ankr;
-};
+
+// A string used as a regex pattern.
 type Regex = text;
+
+// A regex-based substitution with a pattern and replacement string.
 type RegexSubstitution = record {
   pattern : Regex;
   replacement: text;
 };
+
+// Allows modifying an RpcEndpoint's request URL and HTTP headers.
 type OverrideProvider = record {
   overrideUrl : opt RegexSubstitution
 };
+
+// A filter for log entries.
 type LogFilter = variant {
   ShowAll;
   HideAll;
   ShowPattern : Regex;
   HidePattern : Regex;
 };
+
+/// The installation args for the Solana RPC canister.
 type InstallArgs = record {
   manageApiKeys: opt vec principal;
   overrideProvider: opt OverrideProvider;
   logFilter: opt LogFilter;
 };
+
 service : (InstallArgs,) -> {
-  getProviders : () -> (vec record { ProviderId; RpcProvider }) query;
-  updateApiKeys : (vec record { ProviderId; opt text }) -> ();
+  // Returns a list of all supported providers.
+  getProviders : () -> (vec record { SupportedProvider; RpcProvider }) query;
+
+  // Update the API keys for a list of supported providers.
+  updateApiKeys : (vec record { SupportedProvider; opt text }) -> ();
+  
   // TODO XC-292: change signature
   getSlot : (RpcSources, opt RpcConfig) -> (nat64);
 };

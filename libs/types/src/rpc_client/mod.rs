@@ -7,7 +7,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
-/// Specifies how to perform RPC HTTP calls.
+/// Configures how to perform RPC HTTP calls.
 #[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]
 pub struct RpcConfig {
     /// Describes the expected (90th percentile) number of bytes in the HTTP response body.
@@ -79,11 +79,11 @@ pub enum SolanaCluster {
     Testnet,
 }
 
-/// Unique identifier for an RPC provider for a particular Solana cluster.
+/// Identifies an RPC provider for a particular Solana cluster.
 #[derive(
     Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, CandidType, Deserialize, Serialize,
 )]
-pub enum ProviderId {
+pub enum SupportedProvider {
     /// [Alchemy](https://www.alchemy.com/) provider for [Solana Mainnet](https://solana.com/docs/references/clusters)
     AlchemyMainnet,
     /// [Alchemy](https://www.alchemy.com/) provider on [Solana Devnet](https://solana.com/docs/references/clusters)
@@ -96,7 +96,7 @@ pub enum ProviderId {
     PublicNodeMainnet,
 }
 
-/// Defines a provider for a particular Solana cluster.
+/// Defines an RPC provider for a particular Solana cluster and how to access it.
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, CandidType)]
 pub struct RpcProvider {
     /// The Solana cluster that is accessed by this provider.
@@ -105,16 +105,16 @@ pub struct RpcProvider {
     pub access: RpcAccess,
 }
 
-/// Defines a Solana RPC service.
+/// Defines a Solana RPC source.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
 pub enum RpcSource {
     /// A supported RPC provider
-    Provider(ProviderId),
+    Provider(SupportedProvider),
     /// A custom RPC service defined by an explicit [`RpcEndpoint`].
     Custom(RpcEndpoint),
 }
 
-/// Defines a collection of Solana RPC services.
+/// Defines a collection of Solana RPC sources.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
 pub enum RpcSources {
     /// A collection of [`RpcSource`] (either [`RpcSource::Provider`] or [`RpcSource::Custom`]).
@@ -153,7 +153,7 @@ pub enum RpcAccess {
     },
 }
 
-/// Defines the authentication method for access to a [`ProviderId`].
+/// Defines the authentication method for access to a [`SupportedProvider`].
 #[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize, Serialize)]
 pub enum RpcAuth {
     /// API key will be used in an Authorization header as Bearer token, e.g.,

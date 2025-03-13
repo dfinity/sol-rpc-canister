@@ -1,19 +1,19 @@
 use super::PROVIDERS;
 use crate::constants::API_KEY_REPLACE_STRING;
-use sol_rpc_types::{ProviderId, RpcAccess, RpcAuth, RpcProvider};
+use sol_rpc_types::{SupportedProvider, RpcAccess, RpcAuth, RpcProvider};
 
 #[test]
 fn test_rpc_provider_url_patterns() {
     PROVIDERS.with(|providers| {
         for (provider, RpcProvider { access, .. }) in providers {
-            fn assert_not_url_pattern(url: &str, provider: &ProviderId) {
+            fn assert_not_url_pattern(url: &str, provider: &SupportedProvider) {
                 assert!(
                     !url.contains(API_KEY_REPLACE_STRING),
                     "Unexpected API key in URL for provider: {:?}",
                     provider
                 )
             }
-            fn assert_url_pattern(url: &str, provider: &ProviderId) {
+            fn assert_url_pattern(url: &str, provider: &SupportedProvider) {
                 assert!(
                     url.contains(API_KEY_REPLACE_STRING),
                     "Missing API key in URL pattern for provider: {:?}",

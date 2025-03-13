@@ -12,7 +12,7 @@ use sol_rpc_types::{HttpHeader, RegexSubstitution, RpcEndpoint, RpcSource};
 
 mod override_provider_tests {
     use super::*;
-    use sol_rpc_types::ProviderId;
+    use sol_rpc_types::SupportedProvider;
 
     proptest! {
         #[test]
@@ -90,7 +90,7 @@ mod override_provider_tests {
         }
     }
 
-    fn with_api_key_for_provider(provider: ProviderId) {
+    fn with_api_key_for_provider(provider: SupportedProvider) {
         reset_state();
         let mut state = State::default();
         state.insert_api_key(
@@ -109,7 +109,7 @@ mod override_provider_tests {
         }
     }
 
-    fn arb_provider() -> impl Strategy<Value = ProviderId> {
+    fn arb_provider() -> impl Strategy<Value =SupportedProvider> {
         prop::sample::select(
             PROVIDERS.with(|providers| providers.clone().into_keys().collect::<Vec<_>>()),
         )

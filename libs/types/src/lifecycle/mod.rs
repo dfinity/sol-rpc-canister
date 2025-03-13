@@ -3,7 +3,7 @@ use candid::{CandidType, Principal};
 use canlog::LogFilter;
 use serde::Deserialize;
 
-/// The installation args for the Solana RPC canister
+/// The installation args for the Solana RPC canister.
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
 pub struct InstallArgs {
     /// Principals allowed to manage API keys.

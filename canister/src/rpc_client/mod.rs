@@ -1,7 +1,7 @@
 use crate::providers::PROVIDERS;
 use crate::{constants::API_KEY_REPLACE_STRING, state::read_state};
 use ic_cdk::api::management_canister::http_request::HttpHeader;
-use sol_rpc_types::{ProviderId, RpcAccess, RpcAuth, RpcEndpoint, RpcSource};
+use sol_rpc_types::{SupportedProvider, RpcAccess, RpcAuth, RpcEndpoint, RpcSource};
 
 pub fn from_rpc_provider(service: RpcSource) -> RpcEndpoint {
     match service {
@@ -13,10 +13,10 @@ pub fn from_rpc_provider(service: RpcSource) -> RpcEndpoint {
     }
 }
 
-fn from_rpc_access(access: RpcAccess, provider: ProviderId) -> RpcEndpoint {
+fn from_rpc_access(access: RpcAccess, provider: SupportedProvider) -> RpcEndpoint {
     match &access {
         RpcAccess::Authenticated { auth, public_url } => {
-            let api_key = read_state(|s| s.get_api_key(provider));
+            let api_key = read_state(|s| s.get_api_key(&provider));
             match api_key {
                 Some(api_key) => match auth {
                     RpcAuth::BearerToken { url } => RpcEndpoint {

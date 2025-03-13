@@ -14,7 +14,7 @@ use sol_rpc_canister::{
     providers::{get_access, PROVIDERS},
     state::{mutate_state, read_state},
 };
-use sol_rpc_types::{ProviderId, RpcAccess, RpcConfig, RpcProvider, RpcSources};
+use sol_rpc_types::{SupportedProvider, RpcAccess, RpcConfig, RpcProvider, RpcSources};
 use std::str::FromStr;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
@@ -28,7 +28,7 @@ pub fn require_api_key_principal_or_controller() -> Result<(), String> {
 
 #[query(name = "getProviders")]
 #[candid_method(query, rename = "getProviders")]
-fn get_providers() -> Vec<(ProviderId, RpcProvider)> {
+fn get_providers() -> Vec<(SupportedProvider, RpcProvider)> {
     PROVIDERS.with(|providers| providers.clone().into_iter().collect())
 }
 
@@ -43,7 +43,7 @@ fn get_providers() -> Vec<(ProviderId, RpcProvider)> {
 /// an API key, while passing `(id, None)` indicates that the key should be removed from the canister.
 ///
 /// Panics if the list of provider IDs includes a nonexistent or "unauthenticated" (fully public) provider.
-async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
+async fn update_api_keys(api_keys: Vec<(SupportedProvider, Option<String>)>) {
     log!(
         Priority::Info,
         "[{}] Updating API keys for providers: {}",
@@ -174,10 +174,10 @@ fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
     name = "verifyApiKey",
     hidden = true
 )]
-async fn verify_api_key(api_key: (ProviderId, Option<String>)) {
+async fn verify_api_key(api_key: (SupportedProvider, Option<String>)) {
     let (provider, api_key) = api_key;
     let api_key = api_key.map(|key| TryFrom::try_from(key).expect("Invalid API key"));
-    if read_state(|state| state.get_api_key(provider)) != api_key {
+    if read_state(|state| state.get_api_key(&provider)) != api_key {
         panic!("API key does not match input")
     }
 }
