@@ -11,7 +11,7 @@ use serde_json::json;
 use sol_rpc_canister::{
     http_types, lifecycle,
     logs::Priority,
-    providers::PROVIDERS,
+    providers::{get_provider, PROVIDERS},
     state::{mutate_state, read_state},
 };
 use sol_rpc_types::{
