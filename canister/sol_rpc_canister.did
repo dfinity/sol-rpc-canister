@@ -110,6 +110,10 @@ service : (InstallArgs,) -> {
   getProviders : () -> (vec record { SupportedProvider; RpcProvider }) query;
 
   // Update the API keys for a list of supported providers.
+  // 
+  // # Preconditions
+  //
+  // The caller is the controller or a principal specified in `Installargs::manage_api_keys`.
   updateApiKeys : (vec record { SupportedProvider; opt text }) -> ();
   
   // TODO XC-292: change signature
