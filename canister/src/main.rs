@@ -14,7 +14,9 @@ use sol_rpc_canister::{
     providers::PROVIDERS,
     state::{mutate_state, read_state},
 };
-use sol_rpc_types::{RpcAccess, RpcConfig, SupportedRpcProvider, RpcSources, SupportedRpcProviderId};
+use sol_rpc_types::{
+    RpcAccess, RpcConfig, RpcSources, SupportedRpcProvider, SupportedRpcProviderId,
+};
 use std::str::FromStr;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
@@ -55,8 +57,9 @@ async fn update_api_keys(api_keys: Vec<(SupportedRpcProviderId, Option<String>)>
             .join(", ")
     );
     for (provider, api_key) in api_keys {
-        let access =
-            get_provider(&provider).map(|provider| provider.access).unwrap_or_else(|| panic!("Provider not found: {:?}", provider));
+        let access = get_provider(&provider)
+            .map(|provider| provider.access)
+            .unwrap_or_else(|| panic!("Provider not found: {:?}", provider));
         if let RpcAccess::Unauthenticated { .. } = access {
             panic!(
                 "Trying to set API key for unauthenticated provider: {:?}",

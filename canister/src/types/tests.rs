@@ -109,7 +109,7 @@ mod override_provider_tests {
         }
     }
 
-    fn arb_provider() -> impl Strategy<Value =SupportedRpcProviderId> {
+    fn arb_provider() -> impl Strategy<Value = SupportedRpcProviderId> {
         prop::sample::select(
             PROVIDERS.with(|providers| providers.clone().into_keys().collect::<Vec<_>>()),
         )

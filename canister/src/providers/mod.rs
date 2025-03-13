@@ -2,7 +2,9 @@
 mod tests;
 
 use maplit::btreemap;
-use sol_rpc_types::{RpcAccess, RpcAuth, SupportedRpcProvider, SolanaCluster, SupportedRpcProviderId};
+use sol_rpc_types::{
+    RpcAccess, RpcAuth, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+};
 use std::collections::BTreeMap;
 
 thread_local! {
