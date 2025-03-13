@@ -45,11 +45,41 @@ thread_local! {
                 public_url: Some("https://rpc.ankr.com/solana_devnet/".to_string()),
             }
         },
+        SupportedRpcProviderId::DrpcMainnet => SupportedRpcProvider {
+            cluster: SolanaCluster::Mainnet,
+            access: RpcAccess::Unauthenticated {
+                public_url: "https://solana.drpc.org".to_string(),
+            },
+        },
+        SupportedRpcProviderId::DrpcDevnet => SupportedRpcProvider {
+            cluster: SolanaCluster::Mainnet,
+            access: RpcAccess::Unauthenticated {
+                public_url: "https://solana-devnet.drpc.org".to_string(),
+            },
+        },
+        SupportedRpcProviderId::HeliusMainnet => SupportedRpcProvider {
+            cluster: SolanaCluster::Mainnet,
+            access: RpcAccess::Authenticated {
+                auth: RpcAuth::UrlParameter {
+                    url_pattern: "https://devnet.helius-rpc.com/?api-key={API_KEY}".to_string(),
+                },
+                public_url: None,
+            },
+        },
+        SupportedRpcProviderId::HeliusDevnet => SupportedRpcProvider {
+            cluster: SolanaCluster::Mainnet,
+            access: RpcAccess::Authenticated {
+                auth: RpcAuth::UrlParameter {
+                    url_pattern: "https://mainnet.helius-rpc.com/?api-key={API_KEY}".to_string(),
+                },
+                public_url: None,
+            },
+        },
         SupportedRpcProviderId::PublicNodeMainnet => SupportedRpcProvider {
             cluster: SolanaCluster::Mainnet,
             access: RpcAccess::Unauthenticated {
                 public_url: "https://solana-rpc.publicnode.com".to_string(),
-            }
+            },
         },
     };
 }

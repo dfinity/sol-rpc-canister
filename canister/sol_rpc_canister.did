@@ -1,6 +1,6 @@
 // Identifies a Solana cluster
 type SolanaCluster = variant {
-  // Live production environment 
+  // Live production environment
   Mainnet;
   // Public testing and development
   Devnet;
@@ -10,10 +10,14 @@ type SolanaCluster = variant {
 
 // Identifies an RPC provider for a particular Solana cluster.
 type SupportedProvider = variant {
-  AnkrMainnet;
-  AlchemyDevnet;
   AlchemyMainnet;
+  AlchemyDevnet;
+  AnkrMainnet;
   AnkrDevnet;
+  DrpcMainnet;
+  DrpcDevnet;
+  HeliusMainnet;
+  HeliusDevnet;
   PublicNodeMainnet;
 };
 
@@ -116,12 +120,12 @@ service : (InstallArgs,) -> {
   getProviders : () -> (vec record { SupportedProvider; RpcProvider }) query;
 
   // Update the API keys for a list of supported providers.
-  // 
+  //
   // # Preconditions
   //
   // The caller is the controller or a principal specified in `Installargs::manage_api_keys`.
   updateApiKeys : (vec record { SupportedProvider; opt text }) -> ();
-  
+
   // TODO XC-292: change signature
   getSlot : (RpcSources, opt RpcConfig) -> (nat64);
 };

@@ -11,7 +11,7 @@ mod get_provider_tests {
         let client = setup.client();
         let providers = client.get_providers().await;
 
-        assert_eq!(providers.len(), 5);
+        assert_eq!(providers.len(), 9);
 
         assert_eq!(
             providers[0],
