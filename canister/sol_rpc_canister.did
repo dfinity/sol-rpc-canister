@@ -46,7 +46,10 @@ type RpcSource = variant {
 
 // Defines a collection of Solana RPC sources.
 type RpcSources = variant {
+  //  List explicitly which providers should be contacted.
   Custom : vec RpcSource;
+  // Let the SOL RPC canister decide how many and which providers should be contacted for that cluster.
+  // The exact number of contacted providers can be influenced by the chosen `ConsensusStrategy`.
   Default : SolanaCluster;
 };
 
