@@ -10,7 +10,6 @@ use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     RpcConfig, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
-use solana_clock::Slot;
 
 /// Abstract the canister runtime so that the client code can be reused:
 /// * in production using `ic_cdk`,
