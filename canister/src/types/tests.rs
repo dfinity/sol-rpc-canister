@@ -1,28 +1,28 @@
 use crate::{
     providers::PROVIDERS,
-    rpc_client::get_api,
-    state::{init_state, State},
+    rpc_client::resolve_rpc_provider,
+    state::{init_state, reset_state, State},
     types::{ApiKey, OverrideProvider},
 };
 use proptest::{
     prelude::{prop, Strategy},
     proptest,
 };
-use sol_rpc_types::{HttpHeader, Provider, RegexSubstitution, RpcApi};
+use sol_rpc_types::{HttpHeader, RegexSubstitution, RpcEndpoint, RpcSource};
 
 mod override_provider_tests {
     use super::*;
-    use crate::state::reset_state;
+    use sol_rpc_types::SupportedRpcProviderId;
 
     proptest! {
         #[test]
         fn should_override_provider_with_localhost(provider in arb_provider()) {
-            with_api_key_for_provider(&provider);
-            let api = get_api(&provider);
+            with_api_key_for_provider(provider);
+            let api = resolve_rpc_provider(RpcSource::Supported(provider));
             let overriden_provider  = override_to_localhost().apply(api);
             assert_eq!(
                 overriden_provider,
-                Ok(RpcApi {
+                Ok(RpcEndpoint {
                     url: "http://localhost:8545".to_string(),
                     headers: None
                 })
@@ -33,9 +33,9 @@ mod override_provider_tests {
     proptest! {
         #[test]
         fn should_be_noop_when_empty(provider in arb_provider()) {
-            with_api_key_for_provider(&provider);
+            with_api_key_for_provider(provider);
             let no_override = OverrideProvider::default();
-            let initial_api = get_api(&provider);
+            let initial_api = resolve_rpc_provider(RpcSource::Supported(provider));
             let overriden_api = no_override.apply(initial_api.clone());
             assert_eq!(Ok(initial_api), overriden_api);
         }
@@ -44,17 +44,17 @@ mod override_provider_tests {
     proptest! {
         #[test]
         fn should_use_replacement_pattern(provider in arb_provider()) {
-            with_api_key_for_provider(&provider);
+            with_api_key_for_provider(provider);
             let identity_override = OverrideProvider {
                 override_url: Some(RegexSubstitution {
                     pattern: "(\\.com)".into(),
                     replacement: ".ch".to_string(),
                 }),
             };
-            let initial_api = get_api(&provider);
+            let initial_api = resolve_rpc_provider(RpcSource::Supported(provider));
             let overriden_provider = identity_override.apply(initial_api.clone());
             assert_eq!(overriden_provider,
-                Ok(RpcApi {
+                Ok(RpcEndpoint {
                     url: initial_api.url.replace(".com", ".ch"),
                     headers: None,
                 })
@@ -65,24 +65,24 @@ mod override_provider_tests {
     proptest! {
         #[test]
         fn should_override_headers(provider in arb_provider()) {
-            with_api_key_for_provider(&provider);
+            with_api_key_for_provider(provider);
             let identity_override = OverrideProvider {
                 override_url: Some(RegexSubstitution {
                     pattern: "(.*)".into(),
                     replacement: "$1".to_string(),
                 }),
             };
-            let api_with_headers = RpcApi {
+            let api_with_headers = RpcEndpoint {
                 headers: Some(vec![HttpHeader {
                     name: "key".to_string(),
                     value: "123".to_string(),
                 }]),
-                ..get_api(&provider)
+                ..resolve_rpc_provider(RpcSource::Supported(provider))
             };
             let overriden_provider = identity_override.apply(api_with_headers.clone());
             assert_eq!(
                 overriden_provider,
-                Ok(RpcApi {
+                Ok(RpcEndpoint {
                     url: api_with_headers.url,
                     headers: None
                 })
@@ -90,11 +90,11 @@ mod override_provider_tests {
         }
     }
 
-    fn with_api_key_for_provider(provider: &Provider) {
+    fn with_api_key_for_provider(provider: SupportedRpcProviderId) {
         reset_state();
         let mut state = State::default();
         state.insert_api_key(
-            provider.provider_id.clone(),
+            provider,
             ApiKey::try_from("dummy_api_key".to_string()).unwrap(),
         );
         init_state(state);
@@ -109,7 +109,9 @@ mod override_provider_tests {
         }
     }
 
-    fn arb_provider() -> impl Strategy<Value = Provider> {
-        prop::sample::select(PROVIDERS.with(|providers| providers.to_vec()))
+    fn arb_provider() -> impl Strategy<Value = SupportedRpcProviderId> {
+        prop::sample::select(
+            PROVIDERS.with(|providers| providers.clone().into_keys().collect::<Vec<_>>()),
+        )
     }
 }

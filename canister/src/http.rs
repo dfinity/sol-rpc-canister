@@ -1,7 +1,7 @@
 use crate::{
     constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
+    rpc_client::resolve_rpc_provider,
     state::{read_state, State},
-    types::ResolvedRpcService,
 };
 use canhttp::{CyclesAccounting, CyclesAccountingError, CyclesChargingPolicy};
 use ic_cdk::api::management_canister::http_request::{
@@ -9,15 +9,17 @@ use ic_cdk::api::management_canister::http_request::{
     TransformContext,
 };
 use num_traits::ToPrimitive;
-use sol_rpc_types::{HttpOutcallError, Mode, ProviderError, RpcError, RpcResult, ValidationError};
+use sol_rpc_types::{
+    HttpOutcallError, Mode, ProviderError, RpcError, RpcResult, RpcSource, ValidationError,
+};
 use tower::{BoxError, Service, ServiceBuilder};
 
 pub fn json_rpc_request_arg(
-    service: ResolvedRpcService,
+    service: RpcSource,
     json_rpc_payload: &str,
     max_response_bytes: u64,
 ) -> RpcResult<CanisterHttpRequestArgument> {
-    let api = service.api(&read_state(|s| s.get_override_provider()))?;
+    let api = resolve_rpc_provider(service);
     let mut request_headers = api.headers.unwrap_or_default();
     if !request_headers
         .iter()
@@ -42,7 +44,7 @@ pub fn json_rpc_request_arg(
 }
 
 pub async fn json_rpc_request(
-    service: ResolvedRpcService,
+    service: RpcSource,
     rpc_method: &str,
     json_rpc_payload: &str,
     max_response_bytes: u64,

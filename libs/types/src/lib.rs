@@ -12,6 +12,7 @@ pub use evm_rpc_types::{
 };
 pub use lifecycle::{InstallArgs, Mode, NumSubnetNodes};
 pub use rpc_client::{
-    HttpHeader, OverrideProvider, Provider, ProviderId, RegexString, RegexSubstitution, RpcAccess,
-    RpcApi, RpcAuth, RpcService, SolDevnetService, SolMainnetService, SolanaCluster,
+    ConsensusStrategy, HttpHeader, OverrideProvider, RegexString, RegexSubstitution, RpcAccess,
+    RpcAuth, RpcConfig, RpcEndpoint, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider,
+    SupportedRpcProviderId,
 };

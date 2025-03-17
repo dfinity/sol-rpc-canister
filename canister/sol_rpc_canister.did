@@ -1,15 +1,63 @@
-type Provider = record {
-  providerId : ProviderId;
-  cluster : SolanaCluster;
-  access : RpcAccess;
-  alias : opt RpcService;
-};
-type ProviderId = text;
+// Identifies a Solana cluster
 type SolanaCluster = variant {
+  // Live production environment
   Mainnet;
+  // Public testing and development
   Devnet;
+  // Validator and stress testing
   Testnet;
 };
+
+// Identifies an RPC provider for a particular Solana cluster.
+type SupportedProvider = variant {
+  AlchemyMainnet;
+  AlchemyDevnet;
+  AnkrMainnet;
+  AnkrDevnet;
+  DrpcMainnet;
+  DrpcDevnet;
+  HeliusMainnet;
+  HeliusDevnet;
+  PublicNodeMainnet;
+};
+
+// Defines an RPC provider for a particular Solana cluster and how to access it.
+type RpcProvider = record {
+  cluster : SolanaCluster;
+  access : RpcAccess;
+};
+
+// Configures how to perform RPC HTTP calls.
+type RpcConfig = record {
+  responseSizeEstimate : opt nat64;
+  responseConsensus : opt ConsensusStrategy;
+};
+
+// Defines a consensus strategy for combining responses from different providers.
+type ConsensusStrategy = variant {
+  Equality;
+  Threshold : record {
+    total : opt nat8;
+    min : nat8;
+  };
+};
+
+// Defines a Solana RPC source.
+type RpcSource = variant {
+  Supported : SupportedProvider;
+  Custom : RpcEndpoint;
+};
+
+// Defines a collection of Solana RPC sources.
+type RpcSources = variant {
+  //  List explicitly which providers should be contacted.
+  Custom : vec RpcSource;
+  // Let the SOL RPC canister decide how many and which providers should be contacted for that cluster.
+  // The exact number of contacted providers can be influenced by the chosen `ConsensusStrategy`.
+  Default : SolanaCluster;
+};
+
+// Defines how to reach the supported RPC provider.
 type RpcAccess = variant {
   Authenticated : record {
     auth : RpcAuth;
@@ -19,17 +67,15 @@ type RpcAccess = variant {
     publicUrl : text;
   };
 };
+
+// Defines how a call to a supported provider is authenticated.
 type RpcAuth = variant {
   BearerToken : record { url : text };
   UrlParameter : record { urlPattern : text };
 };
-type RpcService = variant {
-  Provider : ProviderId;
-  Custom : RpcApi;
-  SolMainnet : SolMainnetService;
-  SolDevnet : SolDevnetService;
-};
-type RpcApi = record {
+
+// Specifies how to reach a Solana RPC provider
+type RpcEndpoint = record {
   url : text;
   headers : opt vec HttpHeader
 };
@@ -68,35 +114,36 @@ type ValidationError = variant {
   Custom : text;
   InvalidHex : text;
 };
+
+// An HTTP header.
 type HttpHeader = record {
   value : text;
   name : text
 };
-type SolMainnetService = variant {
-  Alchemy;
-  Ankr;
-  PublicNode;
-};
-type SolDevnetService = variant {
-  Alchemy;
-  Ankr;
-};
+
+// A string used as a regex pattern.
 type Regex = text;
+
+// A regex-based substitution with a pattern and replacement string.
 type RegexSubstitution = record {
   pattern : Regex;
   replacement: text;
 };
+
+// Allows modifying an RpcEndpoint's request URL and HTTP headers.
 type OverrideProvider = record {
   overrideUrl : opt RegexSubstitution
 };
-type Mode = variant { Normal; Demo; };
-type RequestResult = variant { Ok : text; Err : RpcError };
+
+// A filter for log entries.
 type LogFilter = variant {
   ShowAll;
   HideAll;
   ShowPattern : Regex;
   HidePattern : Regex;
 };
+
+/// The installation args for the Solana RPC canister.
 type InstallArgs = record {
   manageApiKeys: opt vec principal;
   overrideProvider: opt OverrideProvider;
@@ -104,12 +151,23 @@ type InstallArgs = record {
   numSubnetNodes: opt nat32;
   mode: opt Mode;
 };
-service : (InstallArgs,) -> {
-  // Get the list of RPC providers.
-  getProviders : () -> (vec Provider) query;
 
-  // Update API key of the given provider. Used by Admin only.
-  updateApiKeys : (vec record { ProviderId; opt text }) -> ();
+type Mode = variant { Normal; Demo; };
+type RequestResult = variant { Ok : text; Err : RpcError };
+
+service : (InstallArgs,) -> {
+  // Returns a list of all supported providers.
+  getProviders : () -> (vec record { SupportedProvider; RpcProvider }) query;
+
+  // Update the API keys for a list of supported providers.
+  //
+  // # Preconditions
+  //
+  // The caller is the controller or a principal specified in `Installargs::manage_api_keys`.
+  updateApiKeys : (vec record { SupportedProvider; opt text }) -> ();
+
+  // TODO XC-292: change signature
+  getSlot : (RpcSources, opt RpcConfig) -> (nat64);
 
   // Make a generic RPC request with the given JSON text as input, and
   // limit the response output to `maxResponseBytes`.
