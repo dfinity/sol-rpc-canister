@@ -9,7 +9,10 @@ use crate::{
 };
 use canlog::log;
 use serde::{de::DeserializeOwned, Serialize};
-use sol_rpc_types::{ConsensusStrategy, GetSlotParams, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource, RpcSources, Slot};
+use sol_rpc_types::{
+    ConsensusStrategy, GetSlotParams, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource,
+    RpcSources, Slot,
+};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Debug,
