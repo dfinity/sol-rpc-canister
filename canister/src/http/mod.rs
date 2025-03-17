@@ -136,7 +136,7 @@ impl ChargingPolicyWithCollateral {
 
 impl Default for ChargingPolicyWithCollateral {
     fn default() -> Self {
-        read_state(|state| Self::new_from_state(state))
+        read_state(Self::new_from_state)
     }
 }
 

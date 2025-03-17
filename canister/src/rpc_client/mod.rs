@@ -1,5 +1,7 @@
 mod json;
 mod sol_rpc;
+#[cfg(test)]
+mod tests;
 
 use crate::{
     logs::Priority,
@@ -9,8 +11,6 @@ use crate::{
 use canlog::log;
 pub use json::Slot;
 use serde::{de::DeserializeOwned, Serialize};
-#[cfg(test)]
-use sol_rpc_types::JsonRpcError;
 use sol_rpc_types::{
     ConsensusStrategy, GetSlotParams, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource,
     RpcSources,
@@ -151,27 +151,6 @@ impl<T> MultiCallResults<T> {
                 assert!(self.errors.insert(provider, error).is_none());
             }
         }
-    }
-
-    #[cfg(test)]
-    fn from_json_rpc_result<
-        I: IntoIterator<Item = (RpcSource, canhttp::http::json::JsonRpcResult<T>)>,
-    >(
-        iter: I,
-    ) -> Self {
-        Self::from_non_empty_iter(iter.into_iter().map(|(provider, result)| {
-            (
-                provider,
-                match result {
-                    Ok(value) => Ok(value),
-                    Err(canhttp::http::json::JsonRpcError {
-                        code,
-                        message,
-                        data: _,
-                    }) => Err(RpcError::JsonRpcError(JsonRpcError { code, message })),
-                },
-            )
-        }))
     }
 
     pub fn into_vec(self) -> Vec<(RpcSource, RpcResult<T>)> {

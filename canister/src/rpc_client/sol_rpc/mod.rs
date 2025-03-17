@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 use crate::{
     http::http_client,
     providers::{request_builder, resolve_rpc_provider},
