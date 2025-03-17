@@ -28,7 +28,7 @@ inherits = "release"
 
 [workspace.dependencies]
 assert_matches = "1.5"
-async-trait = "0.1.87"
+async-trait = "0.1.88"
 candid = "0.10.13"
 candid_parser = "0.1.4"
 canhttp = { git = "https://github.com/dfinity/evm-rpc-canister", rev = "bd02c54bba5d4df424909cbf809f5a1a07739467" }
@@ -43,7 +43,7 @@ hex = "0.4.3"
 ic-canister-log = "0.2.0"
 ic-cdk = "0.17.1"
 ic-ed25519 = "0.1.0"
-ic-stable-structures = "0.6.7"
+ic-stable-structures = "0.6.8"
 ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", tag = "release-2025-01-23_03-04-base" }
 maplit = "1.0.2"
 num-traits = "0.2"
@@ -64,7 +64,7 @@ solana-pubkey = "2.2.0"
 solana-signature = "2.2.0"
 solana-transaction = { version = "2.2.0", features = ["bincode"] }
 strum = { version = "0.27.0", features = ["derive"] }
-tokio = "1.44.0"
+tokio = "1.44.1"
 tower = "0.5.2"
 url = "2.5"
 zeroize = { version = "1.8", features = ["zeroize_derive"] }
