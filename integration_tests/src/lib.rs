@@ -1,10 +1,12 @@
 use async_trait::async_trait;
-use candid::utils::ArgumentEncoder;
-use candid::{decode_args, encode_args, CandidType, Encode, Principal};
+use candid::{decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encode, Principal};
 use canlog::{Log, LogEntry};
 use ic_cdk::api::call::RejectionCode;
-use pocket_ic::management_canister::{CanisterId, CanisterSettings};
-use pocket_ic::{nonblocking::PocketIc, PocketIcBuilder, RejectCode, RejectResponse};
+use pocket_ic::{
+    management_canister::{CanisterId, CanisterSettings},
+    nonblocking::PocketIc,
+    PocketIcBuilder, RejectCode, RejectResponse,
+};
 use serde::de::DeserializeOwned;
 use sol_rpc_canister::{
     http_types::{HttpRequest, HttpResponse},
@@ -12,8 +14,7 @@ use sol_rpc_canister::{
 };
 use sol_rpc_client::{Runtime, SolRpcClient};
 use sol_rpc_types::{InstallArgs, SupportedRpcProviderId};
-use std::path::PathBuf;
-use std::time::Duration;
+use std::{path::PathBuf, time::Duration};
 
 pub const DEFAULT_CALLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x01]);
 pub const DEFAULT_CONTROLLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x02]);

@@ -16,7 +16,8 @@ candid = { workspace = true }
 getrandom = { workspace = true, default-features = false, features = ["custom"] }
 ic-cdk = { workspace = true }
 ic-ed25519 = { workspace = true }
-num = "0.4.3"
+http = { workspace = true }
+num = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 solana-hash = { workspace = true }

@@ -2,10 +2,108 @@
 mod tests;
 
 use candid::CandidType;
+use ic_cdk::api::call::RejectionCode;
 pub use ic_cdk::api::management_canister::http_request::HttpHeader;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+use thiserror::Error;
+
+/// An RPC result type.
+pub type RpcResult<T> = Result<T, RpcError>;
+
+/// An RPC error.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Deserialize, Error)]
+pub enum RpcError {
+    /// An error occurred with the RPC provider.
+    #[error("Provider error: {0}")]
+    ProviderError(ProviderError),
+    /// An error occurred with the HTTP outcall.
+    #[error("HTTP outcall error: {0}")]
+    HttpOutcallError(HttpOutcallError),
+    /// A JSON-RPC error occurred.
+    #[error("JSON-RPC error: {0}")]
+    JsonRpcError(JsonRpcError),
+    /// A validation error occurred.
+    #[error("Validation error: {0}")]
+    ValidationError(String),
+}
+
+/// An error with an RPC provider.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Deserialize, Error)]
+pub enum ProviderError {
+    /// Attempted to make an HTTP outcall with an insufficient amount of cycles.
+    #[error("Not enough cycles, expected {expected}, received {received}")]
+    TooFewCycles {
+        /// Expected to receive this many cycles.
+        expected: u128,
+        /// Received this many cycles.
+        received: u128,
+    },
+    /// The [`RpcConfig`] was invalid.
+    #[error("Invalid RPC config: {0}")]
+    InvalidRpcConfig(String),
+    /// The [`SolanaCluster`] is not supported.
+    #[error("Unsupported Solana cluster: {0}")]
+    UnsupportedCluster(String),
+    /// The [`SolanaCluster`] is not supported.
+    #[error("Empty providers list")]
+    EmptyProviders,
+}
+
+impl From<ProviderError> for RpcError {
+    fn from(error: ProviderError) -> Self {
+        Self::ProviderError(error)
+    }
+}
+
+/// An HTTP outcall error.
+#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, CandidType, Deserialize, Error)]
+pub enum HttpOutcallError {
+    /// Error from the IC system API.
+    #[error("IC error (code: {code:?}): {message}")]
+    IcError {
+        /// The error code.
+        code: RejectionCode,
+        /// The error message.
+        message: String,
+    },
+    /// Response is not a valid JSON-RPC response,
+    /// which means that the response was not successful (status other than 2xx)
+    /// or that the response body could not be deserialized into a JSON-RPC response.
+    #[error("Invalid HTTP JSON-RPC response: status {status}, body: {body}, parsing error: {parsing_error:?}")]
+    InvalidHttpJsonRpcResponse {
+        /// The HTTP status code returned.
+        status: u16,
+        /// The serialized response body.
+        body: String,
+        /// The parsing error message.
+        #[serde(rename = "parsingError")]
+        parsing_error: Option<String>,
+    },
+}
+
+impl From<HttpOutcallError> for RpcError {
+    fn from(error: HttpOutcallError) -> Self {
+        Self::HttpOutcallError(error)
+    }
+}
+
+/// A JSON-RPC 2.0 error as per the [specifications](https://www.jsonrpc.org/specification#error_object).
+#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, CandidType, Deserialize, Error)]
+#[error("JSON-RPC error (code: {code}): {message}")]
+pub struct JsonRpcError {
+    /// The error code. See the specifications for a detailed list of error codes.
+    pub code: i64,
+    /// The error message.
+    pub message: String,
+}
+
+impl From<JsonRpcError> for RpcError {
+    fn from(error: JsonRpcError) -> Self {
+        Self::JsonRpcError(error)
+    }
+}
 
 /// Configures how to perform RPC HTTP calls.
 #[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]

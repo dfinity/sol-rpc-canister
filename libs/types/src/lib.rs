@@ -4,11 +4,15 @@
 #![forbid(missing_docs)]
 
 mod lifecycle;
+mod response;
 mod rpc_client;
+mod solana;
 
 pub use lifecycle::{InstallArgs, Mode, NumSubnetNodes};
+pub use response::MultiRpcResult;
 pub use rpc_client::{
-    ConsensusStrategy, HttpHeader, OverrideProvider, RegexString, RegexSubstitution, RpcAccess,
-    RpcAuth, RpcConfig, RpcEndpoint, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider,
-    SupportedRpcProviderId,
+    ConsensusStrategy, HttpHeader, HttpOutcallError, JsonRpcError, OverrideProvider, ProviderError,
+    RegexString, RegexSubstitution, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
+    RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
+pub use solana::GetSlotParams;

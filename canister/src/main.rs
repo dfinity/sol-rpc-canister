@@ -1,21 +1,15 @@
-use candid::{candid_method, Nat};
+use candid::candid_method;
 use canlog::{log, Log, Sort};
-use ic_cdk::api::management_canister::http_request::{
-    CanisterHttpRequestArgument, HttpHeader, HttpMethod,
-};
-use ic_cdk::{
-    api::is_controller,
-    {query, update},
-};
-use serde_json::json;
+use ic_cdk::{api::is_controller, query, update};
 use sol_rpc_canister::{
+    candid_rpc::CandidRpcClient,
     http_types, lifecycle,
     logs::Priority,
     providers::{get_provider, PROVIDERS},
     state::{mutate_state, read_state},
 };
 use sol_rpc_types::{
-    RpcAccess, RpcConfig, RpcSources, SupportedRpcProvider, SupportedRpcProviderId,
+    GetSlotParams, RpcAccess, RpcConfig, RpcSources, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use std::str::FromStr;
 
@@ -78,37 +72,14 @@ async fn update_api_keys(api_keys: Vec<(SupportedRpcProviderId, Option<String>)>
 //TODO XC-292: change implementation
 #[update(name = "getSlot")]
 #[candid_method(rename = "getSlot")]
-async fn get_slot(_source: RpcSources, _config: Option<RpcConfig>) -> u64 {
-    let body = json!({ "jsonrpc": "2.0", "id": 1, "method": "getSlot" });
-    let request = CanisterHttpRequestArgument {
-        url: "http://localhost:8899".to_string(),
-        max_response_bytes: Some(1_000),
-        method: HttpMethod::POST,
-        headers: vec![HttpHeader {
-            name: "content-type".to_string(),
-            value: "application/json".to_string(),
-        }],
-        body: Some(serde_json::to_vec(&body).unwrap()),
-        transform: None,
-    };
-    ic_cdk::println!("getSlot request: {body}");
-    let response =
-        match ic_cdk::api::management_canister::http_request::http_request(request, 1_000_000_000)
-            .await
-        {
-            Ok((response,)) => response,
-            Err((code, message)) => panic!("Error {code:?}: {message}"),
-        };
-    assert_eq!(
-        response.status,
-        Nat::from(200_u8),
-        "Non successful HTTP response"
-    );
-    let response_body: serde_json::Value =
-        serde_json::from_slice(response.body.as_slice()).expect("Invalid JSON response");
-    let slot = response_body["result"].as_u64().unwrap();
-    ic_cdk::println!("getSlot response:  {slot}");
-    slot
+async fn get_slot(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+) -> sol_rpc_types::MultiRpcResult<u64> {
+    match CandidRpcClient::new(source, config) {
+        Ok(client) => client.get_slot(GetSlotParams::default()).await.into(),
+        Err(err) => Err(err).into(),
+    }
 }
 
 #[query(hidden = true)]
