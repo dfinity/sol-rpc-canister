@@ -86,6 +86,55 @@ type HttpHeader = record {
   name : text
 };
 
+// Represents an error that occurred while trying to perform an RPC call.
+type RpcError = variant {
+  JsonRpcError : JsonRpcError;
+  ProviderError : ProviderError;
+  ValidationError : text;
+  HttpOutcallError : HttpOutcallError;
+};
+
+// Represents a JSON-RPC error.
+type JsonRpcError = record { code : int64; message : text };
+
+// Represents an error with an RPC provider.
+type ProviderError = variant {
+  TooFewCycles : record { expected : nat; received : nat };
+  InvalidRpcConfig : text;
+  UnsupportedCluster : text;
+  EmptyProviders;
+};
+
+// Represents an HTTP outcall error.
+type HttpOutcallError = variant {
+  IcError : record { code: RejectionCode; message: text };
+  InvalidHttpJsonRpcResponse : record {
+    status : nat16;
+    body : text;
+    parsingError : opt text;
+  };
+};
+
+// Represents an IC rejection code for an HTTP outcall.
+type RejectionCode = variant {
+  NoError;
+  CanisterError;
+  SysTransient;
+  DestinationInvalid;
+  Unknown;
+  SysFatal;
+  CanisterReject;
+};
+
+// Represents the result of a call to the `getSlot` Solana RPC method.
+type GetSlotResult = variant { Ok : nat64; Err : RpcError };
+
+// Represents an aggregated result from multiple RPC calls to the `getSlot` Solana RPC method.
+type MultiGetSlotResult = variant {
+    Consistent : GetSlotResult;
+    Inconsistent : vec record { RpcSource; GetSlotResult };
+};
+
 // A string used as a regex pattern.
 type Regex = text;
 
@@ -108,11 +157,24 @@ type LogFilter = variant {
   HidePattern : Regex;
 };
 
-/// The installation args for the Solana RPC canister.
+// The number of nodes in the subnet
+type NumSubnetNodes = nat32;
+
+// The canister operation mode. Default is 'Normal'.
+type Mode = variant {
+    // Normal mode, where cycle payment is required for certain operations.
+    Normal;
+    // Demo mode, where cycle payment is not required.
+    Demo;
+};
+
+// The installation args for the Solana RPC canister.
 type InstallArgs = record {
   manageApiKeys: opt vec principal;
   overrideProvider: opt OverrideProvider;
   logFilter: opt LogFilter;
+  numSubnetNodes : opt NumSubnetNodes;
+  mode : opt Mode;
 };
 
 service : (InstallArgs,) -> {
@@ -123,9 +185,9 @@ service : (InstallArgs,) -> {
   //
   // # Preconditions
   //
-  // The caller is the controller or a principal specified in `Installargs::manage_api_keys`.
+  // The caller is the controller or a principal specified in `InstallArgs::manage_api_keys`.
   updateApiKeys : (vec record { SupportedProvider; opt text }) -> ();
 
   // TODO XC-292: change signature
-  getSlot : (RpcSources, opt RpcConfig) -> (nat64);
+  getSlot : (RpcSources, opt RpcConfig) -> (MultiGetSlotResult);
 };
