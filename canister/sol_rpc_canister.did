@@ -171,5 +171,5 @@ service : (InstallArgs,) -> {
 
   // Make a generic RPC request with the given JSON text as input, and
   // limit the response output to `maxResponseBytes`.
-  request : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestResult);
+  request : (RpcSource, json : text, maxResponseBytes : nat64) -> (RequestResult);
 };
