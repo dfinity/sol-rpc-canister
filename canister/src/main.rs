@@ -9,7 +9,8 @@ use sol_rpc_canister::{
     state::{mutate_state, read_state},
 };
 use sol_rpc_types::{
-    GetSlotParams, RpcAccess, RpcConfig, RpcSources, SupportedRpcProvider, SupportedRpcProviderId,
+    GetSlotParams, MultiRpcResult, RpcAccess, RpcConfig, RpcSources, Slot, SupportedRpcProvider,
+    SupportedRpcProviderId,
 };
 use std::str::FromStr;
 
@@ -69,13 +70,9 @@ async fn update_api_keys(api_keys: Vec<(SupportedRpcProviderId, Option<String>)>
     }
 }
 
-//TODO XC-292: change implementation
 #[update(name = "getSlot")]
 #[candid_method(rename = "getSlot")]
-async fn get_slot(
-    source: RpcSources,
-    config: Option<RpcConfig>,
-) -> sol_rpc_types::MultiRpcResult<u64> {
+async fn get_slot(source: RpcSources, config: Option<RpcConfig>) -> MultiRpcResult<Slot> {
     match CandidRpcClient::new(source, config) {
         Ok(client) => client.get_slot(GetSlotParams::default()).await.into(),
         Err(err) => Err(err).into(),

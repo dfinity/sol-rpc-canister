@@ -1,8 +1,8 @@
 use crate::{
-    rpc_client::{MultiCallError, Slot, SolRpcClient},
+    rpc_client::{MultiCallError, SolRpcClient},
     types::MultiRpcResult,
 };
-use sol_rpc_types::{GetSlotParams, RpcConfig, RpcResult, RpcSources};
+use sol_rpc_types::{GetSlotParams, RpcConfig, RpcResult, RpcSources, Slot};
 
 fn process_result<T>(result: Result<T, MultiCallError<T>>) -> MultiRpcResult<T> {
     match result {
@@ -32,7 +32,7 @@ impl CandidRpcClient {
         })
     }
 
-    pub async fn get_slot(&self, args: GetSlotParams) -> MultiRpcResult<u64> {
-        process_result(self.client.get_slot(args).await).map(|Slot(slot)| slot)
+    pub async fn get_slot(&self, args: GetSlotParams) -> MultiRpcResult<Slot> {
+        process_result(self.client.get_slot(args).await)
     }
 }

@@ -126,8 +126,11 @@ type RejectionCode = variant {
   CanisterReject;
 };
 
+// Represents a Solana slot
+type Slot = nat64;
+
 // Represents the result of a call to the `getSlot` Solana RPC method.
-type GetSlotResult = variant { Ok : nat64; Err : RpcError };
+type GetSlotResult = variant { Ok : Slot; Err : RpcError };
 
 // Represents an aggregated result from multiple RPC calls to the `getSlot` Solana RPC method.
 type MultiGetSlotResult = variant {

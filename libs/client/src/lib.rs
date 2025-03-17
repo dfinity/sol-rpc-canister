@@ -97,7 +97,7 @@ impl<R: Runtime> SolRpcClient<R> {
 
     /// Call `getSlot` on the SOL RPC canister.
     //TODO XC-292: change me!
-    pub async fn get_slot(&self) -> Slot {
+    pub async fn get_slot(&self) -> sol_rpc_types::MultiRpcResult<u64> {
         self.runtime
             .update_call(
                 self.sol_rpc_canister,

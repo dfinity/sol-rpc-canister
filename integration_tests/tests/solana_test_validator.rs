@@ -6,7 +6,7 @@ use futures::future;
 use pocket_ic::PocketIcBuilder;
 use sol_rpc_client::SolRpcClient;
 use sol_rpc_int_tests::PocketIcLiveModeRuntime;
-use sol_rpc_types::{InstallArgs, OverrideProvider, RegexSubstitution};
+use sol_rpc_types::{InstallArgs, Mode, MultiRpcResult, OverrideProvider, RegexSubstitution};
 use solana_client::rpc_client::RpcClient as SolanaRpcClient;
 use std::future::Future;
 
@@ -17,7 +17,12 @@ async fn should_get_slot() {
     let (sol_res, ic_res) = setup
         .compare_client(
             |sol| sol.get_slot().expect("Failed to get slot"),
-            |ic| async move { ic.get_slot().await },
+            |ic| async move {
+                match ic.get_slot().await {
+                    MultiRpcResult::Consistent(Ok(slot)) => slot,
+                    result => panic!("Failed to get slot, received: {:?}", result),
+                }
+            },
         )
         .await;
 
@@ -49,6 +54,8 @@ impl Setup {
             setup: sol_rpc_int_tests::Setup::with_pocket_ic_and_args(
                 pic,
                 InstallArgs {
+                    // TODO XC-292: handle cycles properly
+                    mode: Some(Mode::Demo),
                     override_provider: Some(OverrideProvider {
                         override_url: Some(RegexSubstitution {
                             pattern: ".*".into(),

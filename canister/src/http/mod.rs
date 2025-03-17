@@ -55,15 +55,23 @@ where
         .option_layer(maybe_unique_id)
         // TODO XC-292: Flesh out observability layer
         .layer(
-            ObservabilityLayer::new().on_request(move |req: &HttpJsonRpcRequest<I>| {
-                log!(
-                    Priority::TraceHttp,
-                    "JSON-RPC request with id `{}` to {}: {:?}",
-                    req.body().id().clone(),
-                    req.uri().host().unwrap().to_string(),
-                    req.body()
-                );
-            }),
+            ObservabilityLayer::new()
+                .on_request(move |req: &HttpJsonRpcRequest<I>| {
+                    log!(
+                        Priority::TraceHttp,
+                        "JSON-RPC request with id `{}` to {}: {:?}",
+                        req.body().id().clone(),
+                        req.uri().host().unwrap().to_string(),
+                        req.body()
+                    );
+                })
+                .on_response(|_req_data: (), response: &HttpJsonRpcResponse<O>| {
+                    log!(
+                        Priority::TraceHttp,
+                        "JSON-RPC response: {:?}",
+                        response.body()
+                    );
+                }),
         )
         .layer(service_request_builder())
         .convert_response(JsonResponseConverter::new())

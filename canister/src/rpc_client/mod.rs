@@ -1,4 +1,3 @@
-mod json;
 mod sol_rpc;
 #[cfg(test)]
 mod tests;
@@ -9,12 +8,8 @@ use crate::{
     rpc_client::sol_rpc::{HttpResponsePayload, ResponseSizeEstimate, HEADER_SIZE_LIMIT},
 };
 use canlog::log;
-pub use json::Slot;
 use serde::{de::DeserializeOwned, Serialize};
-use sol_rpc_types::{
-    ConsensusStrategy, GetSlotParams, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource,
-    RpcSources,
-};
+use sol_rpc_types::{ConsensusStrategy, GetSlotParams, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource, RpcSources, Slot};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Debug,

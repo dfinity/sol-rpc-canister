@@ -4,7 +4,6 @@ mod tests;
 use crate::{
     http::http_client,
     providers::{request_builder, resolve_rpc_provider},
-    rpc_client::json::Slot,
     state::read_state,
 };
 use candid::candid_method;
@@ -18,7 +17,7 @@ use ic_cdk::{
 };
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
-use sol_rpc_types::{JsonRpcError, RpcError, RpcSource};
+use sol_rpc_types::{JsonRpcError, RpcError, RpcSource, Slot};
 use std::{fmt, fmt::Debug};
 
 // This constant is our approximation of the expected header size.
@@ -40,7 +39,7 @@ pub const MAX_PAYLOAD_SIZE: u64 = HTTP_MAX_SIZE - HEADER_SIZE_LIMIT;
 #[derive(Debug, Decode, Encode)]
 pub enum ResponseTransform {
     #[n(0)]
-    Slot,
+    GetSlot,
 }
 
 impl ResponseTransform {
@@ -59,7 +58,7 @@ impl ResponseTransform {
         }
 
         match self {
-            Self::Slot => redact_response::<Slot>(body_bytes),
+            Self::GetSlot => redact_response::<Slot>(body_bytes),
         }
     }
 }
@@ -104,6 +103,12 @@ impl fmt::Display for ResponseSizeEstimate {
 pub trait HttpResponsePayload {
     fn response_transform() -> Option<ResponseTransform> {
         None
+    }
+}
+
+impl HttpResponsePayload for Slot {
+    fn response_transform() -> Option<ResponseTransform> {
+        Some(ResponseTransform::GetSlot)
     }
 }
 
