@@ -149,7 +149,9 @@ impl Providers {
         };
 
         if providers.is_empty() {
-            return Err(ProviderError::EmptyProviders);
+            return Err(ProviderError::InvalidRpcConfig(
+                "No matching providers found".to_string(),
+            ));
         }
 
         Ok(Self { sources: providers })

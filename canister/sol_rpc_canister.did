@@ -102,7 +102,6 @@ type ProviderError = variant {
   TooFewCycles : record { expected : nat; received : nat };
   InvalidRpcConfig : text;
   UnsupportedCluster : text;
-  EmptyProviders;
 };
 
 // Represents an HTTP outcall error.
@@ -136,6 +135,19 @@ type GetSlotResult = variant { Ok : Slot; Err : RpcError };
 type MultiGetSlotResult = variant {
     Consistent : GetSlotResult;
     Inconsistent : vec record { RpcSource; GetSlotResult };
+};
+
+// Commitment levels in Solana, representing finality guarantees of transactions and state queries.
+type CommitmentLevel = variant {
+  processed;
+  confirmed;
+  finalized;
+};
+
+// The parameters for a call to the `getSlot` Solana RPC method.
+type GetSlotParams = record {
+  commitment: opt CommitmentLevel;
+  minContextSlot: opt nat64;
 };
 
 // A string used as a regex pattern.
@@ -191,6 +203,6 @@ service : (InstallArgs,) -> {
   // The caller is the controller or a principal specified in `InstallArgs::manage_api_keys`.
   updateApiKeys : (vec record { SupportedProvider; opt text }) -> ();
 
-  // TODO XC-292: change signature
-  getSlot : (RpcSources, opt RpcConfig) -> (MultiGetSlotResult);
+  // Call the Solana `getSlot` RPC method and return the resulting slot.
+  getSlot : (RpcSources, opt RpcConfig, opt GetSlotParams) -> (MultiGetSlotResult);
 };

@@ -53,7 +53,7 @@ where
         .map_err(|e: HttpClientError| RpcError::from(e))
         .option_layer(maybe_retry)
         .option_layer(maybe_unique_id)
-        // TODO XC-292: Flesh out observability layer
+        // TODO XC-296: Flesh out observability layer
         .layer(
             ObservabilityLayer::new()
                 .on_request(move |req: &HttpJsonRpcRequest<I>| {

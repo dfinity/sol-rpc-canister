@@ -9,9 +9,10 @@ use sol_rpc_canister::{
     state::{mutate_state, read_state},
 };
 use sol_rpc_types::{
-    GetSlotParams, MultiRpcResult, RpcAccess, RpcConfig, RpcSources, Slot, SupportedRpcProvider,
+    GetSlotParams, MultiRpcResult, RpcAccess, RpcConfig, RpcSources, SupportedRpcProvider,
     SupportedRpcProviderId,
 };
+use solana_clock::Slot;
 use std::str::FromStr;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
@@ -72,9 +73,13 @@ async fn update_api_keys(api_keys: Vec<(SupportedRpcProviderId, Option<String>)>
 
 #[update(name = "getSlot")]
 #[candid_method(rename = "getSlot")]
-async fn get_slot(source: RpcSources, config: Option<RpcConfig>) -> MultiRpcResult<Slot> {
+async fn get_slot(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: Option<GetSlotParams>,
+) -> MultiRpcResult<Slot> {
     match CandidRpcClient::new(source, config) {
-        Ok(client) => client.get_slot(GetSlotParams::default()).await.into(),
+        Ok(client) => client.get_slot(params.unwrap_or_default()).await.into(),
         Err(err) => Err(err).into(),
     }
 }

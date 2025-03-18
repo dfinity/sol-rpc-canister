@@ -17,7 +17,8 @@ use ic_cdk::{
 };
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
-use sol_rpc_types::{JsonRpcError, RpcError, RpcSource, Slot};
+use sol_rpc_types::{JsonRpcError, RpcError, RpcSource};
+use solana_clock::Slot;
 use std::{fmt, fmt::Debug};
 
 // This constant is our approximation of the expected header size.
@@ -52,9 +53,7 @@ impl ResponseTransform {
                 Ok(response) => response,
                 Err(_) => return,
             };
-            *body = serde_json::to_string(&response)
-                .expect("BUG: failed to serialize response")
-                .into_bytes();
+            *body = serde_json::to_vec(&response).expect("BUG: failed to serialize response");
         }
 
         match self {
@@ -100,32 +99,21 @@ impl fmt::Display for ResponseSizeEstimate {
     }
 }
 
-pub trait HttpResponsePayload {
-    fn response_transform() -> Option<ResponseTransform> {
-        None
-    }
-}
-
-impl HttpResponsePayload for Slot {
-    fn response_transform() -> Option<ResponseTransform> {
-        Some(ResponseTransform::GetSlot)
-    }
-}
-
 /// Calls a JSON-RPC method at the specified URL.
 pub async fn call<I, O>(
     provider: &RpcSource,
     method: impl Into<String>,
     params: I,
     response_size_estimate: ResponseSizeEstimate,
+    response_transform: &Option<ResponseTransform>,
 ) -> Result<O, RpcError>
 where
     I: Serialize + Clone + Debug,
-    O: Debug + DeserializeOwned + HttpResponsePayload,
+    O: Debug + DeserializeOwned,
 {
     use tower::Service;
 
-    let transform_op = O::response_transform()
+    let transform_op = response_transform
         .as_ref()
         .map(|t| {
             let mut buf = vec![];

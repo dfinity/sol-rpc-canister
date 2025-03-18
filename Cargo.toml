@@ -30,7 +30,7 @@ inherits = "release"
 async-trait = "0.1.88"
 candid = "0.10.13"
 candid_parser = "0.1.4"
-canhttp = { git = "https://github.com/dfinity/evm-rpc-canister", branch = "gdemay/XC-287-clean-up" }
+canhttp = { git = "https://github.com/dfinity/evm-rpc-canister", rev = "c1d9a12eb9d3af92671dc07963c8887ec178fcbc" }
 ciborium = "0.2.2"
 # Transitive dependency of ic-ed25519
 # See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8

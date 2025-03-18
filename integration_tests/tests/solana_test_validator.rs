@@ -54,7 +54,7 @@ impl Setup {
             setup: sol_rpc_int_tests::Setup::with_pocket_ic_and_args(
                 pic,
                 InstallArgs {
-                    // TODO XC-292: handle cycles properly
+                    // TODO XC-323: handle cycles properly
                     mode: Some(Mode::Demo),
                     override_provider: Some(OverrideProvider {
                         override_url: Some(RegexSubstitution {

@@ -46,9 +46,6 @@ pub enum ProviderError {
     /// The [`SolanaCluster`] is not supported.
     #[error("Unsupported Solana cluster: {0}")]
     UnsupportedCluster(String),
-    /// The [`SolanaCluster`] is not supported.
-    #[error("Empty providers list")]
-    EmptyProviders,
 }
 
 impl From<ProviderError> for RpcError {

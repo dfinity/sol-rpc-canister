@@ -596,7 +596,7 @@ dependencies = [
 [[package]]
 name = "canhttp"
 version = "0.1.0"
-source = "git+https://github.com/dfinity/evm-rpc-canister?branch=gdemay%2FXC-287-clean-up#f3fbecbbb09e7e0a40092a65477b601233639555"
+source = "git+https://github.com/dfinity/evm-rpc-canister?rev=c1d9a12eb9d3af92671dc07963c8887ec178fcbc#c1d9a12eb9d3af92671dc07963c8887ec178fcbc"
 dependencies = [
  "futures-util",
  "http 1.3.1",
@@ -3977,6 +3977,7 @@ dependencies = [
  "serde_bytes",
  "serde_json",
  "sol_rpc_types",
+ "solana-clock",
  "thiserror 1.0.69",
  "tower",
  "tower-http",
@@ -4027,8 +4028,6 @@ dependencies = [
  "regex",
  "serde",
  "thiserror 1.0.69",
- "tower-http",
- "tower-layer",
  "url",
 ]
 

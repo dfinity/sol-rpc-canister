@@ -2,21 +2,23 @@ mod sol_rpc;
 #[cfg(test)]
 mod tests;
 
+use crate::rpc_client::sol_rpc::ResponseTransform;
 use crate::{
     logs::Priority,
     providers::Providers,
-    rpc_client::sol_rpc::{HttpResponsePayload, ResponseSizeEstimate, HEADER_SIZE_LIMIT},
+    rpc_client::sol_rpc::{ResponseSizeEstimate, HEADER_SIZE_LIMIT},
 };
 use canlog::log;
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
     ConsensusStrategy, GetSlotParams, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource,
-    RpcSources, Slot,
+    RpcSources,
 };
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Debug,
 };
+use solana_clock::Slot;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SolRpcClient {
@@ -60,10 +62,11 @@ impl SolRpcClient {
         method: impl Into<String> + Clone,
         params: I,
         response_size_estimate: ResponseSizeEstimate,
+        response_transform: &Option<ResponseTransform>,
     ) -> MultiCallResults<O>
     where
         I: Serialize + Clone + Debug,
-        O: Debug + DeserializeOwned + HttpResponsePayload,
+        O: Debug + DeserializeOwned,
     {
         let providers = self.providers();
         let results = {
@@ -80,6 +83,7 @@ impl SolRpcClient {
                         method.clone(),
                         params.clone(),
                         response_size_estimate,
+                        response_transform,
                     )
                     .await
                 });
@@ -95,6 +99,7 @@ impl SolRpcClient {
             "getSlot",
             vec![params],
             self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
+            &Some(ResponseTransform::GetSlot),
         )
         .await
         .reduce(self.consensus_strategy())

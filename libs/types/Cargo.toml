@@ -17,6 +17,4 @@ ic-cdk = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
-tower-layer = "0.3.3"
-tower-http = "0.6.2"
 url = { workspace = true }

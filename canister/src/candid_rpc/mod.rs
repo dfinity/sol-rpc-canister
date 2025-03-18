@@ -2,7 +2,8 @@ use crate::{
     rpc_client::{MultiCallError, SolRpcClient},
     types::MultiRpcResult,
 };
-use sol_rpc_types::{GetSlotParams, RpcConfig, RpcResult, RpcSources, Slot};
+use sol_rpc_types::{GetSlotParams, RpcConfig, RpcResult, RpcSources};
+use solana_clock::Slot;
 
 fn process_result<T>(result: Result<T, MultiCallError<T>>) -> MultiRpcResult<T> {
     match result {
@@ -12,7 +13,7 @@ fn process_result<T>(result: Result<T, MultiCallError<T>>) -> MultiRpcResult<T> 
             MultiCallError::InconsistentResults(multi_call_results) => {
                 let results = multi_call_results.into_vec();
                 results.iter().for_each(|(_service, _service_result)| {
-                    // TODO XC-292: Add metrics for inconsistent providers
+                    // TODO XC-296: Add metrics for inconsistent providers
                 });
                 MultiRpcResult::Inconsistent(results)
             }
@@ -32,7 +33,7 @@ impl CandidRpcClient {
         })
     }
 
-    pub async fn get_slot(&self, args: GetSlotParams) -> MultiRpcResult<Slot> {
-        process_result(self.client.get_slot(args).await)
+    pub async fn get_slot(&self, params: GetSlotParams) -> MultiRpcResult<Slot> {
+        process_result(self.client.get_slot(params).await)
     }
 }

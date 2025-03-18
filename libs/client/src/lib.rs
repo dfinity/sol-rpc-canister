@@ -8,8 +8,10 @@ use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    RpcConfig, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    CommitmentLevel, GetSlotParams, RpcConfig, RpcSources, SolanaCluster, SupportedRpcProvider,
+    SupportedRpcProviderId,
 };
+use solana_clock::Slot;
 
 /// Abstract the canister runtime so that the client code can be reused:
 /// * in production using `ic_cdk`,
@@ -95,8 +97,7 @@ impl<R: Runtime> SolRpcClient<R> {
     }
 
     /// Call `getSlot` on the SOL RPC canister.
-    //TODO XC-292: change me!
-    pub async fn get_slot(&self) -> sol_rpc_types::MultiRpcResult<u64> {
+    pub async fn get_slot(&self) -> sol_rpc_types::MultiRpcResult<Slot> {
         self.runtime
             .update_call(
                 self.sol_rpc_canister,
@@ -104,6 +105,10 @@ impl<R: Runtime> SolRpcClient<R> {
                 (
                     RpcSources::Default(SolanaCluster::Devnet),
                     None::<RpcConfig>,
+                    Some(GetSlotParams {
+                        commitment: Option::from(CommitmentLevel::Finalized),
+                        min_context_slot: None,
+                    }),
                 ),
                 1_000_000_000,
             )
