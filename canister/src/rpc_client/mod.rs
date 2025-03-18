@@ -14,11 +14,11 @@ use sol_rpc_types::{
     ConsensusStrategy, GetSlotParams, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource,
     RpcSources,
 };
+use solana_clock::Slot;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Debug,
 };
-use solana_clock::Slot;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SolRpcClient {
