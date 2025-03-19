@@ -25,6 +25,8 @@ mod mock_request_tests {
         })
         .await;
         let client = setup.client();
+        let expected_result: serde_json::Value =
+            serde_json::from_str(MOCK_REQUEST_RESPONSE).unwrap();
         assert_matches!(
             client
                 .mock_http(builder_fn(MockOutcallBuilder::new(
@@ -44,7 +46,7 @@ mod mock_request_tests {
                     0,
                 )
                 .await,
-            Ok(_)
+            Ok(msg) if msg == serde_json::Value::to_string(&expected_result["result"])
         );
     }
 
