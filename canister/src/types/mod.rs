@@ -2,7 +2,6 @@
 mod tests;
 
 use crate::{constants::API_KEY_REPLACE_STRING, validate::validate_api_key};
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use sol_rpc_types::{RegexSubstitution, RpcEndpoint, RpcResult, RpcSource};
 use std::{fmt, fmt::Debug};
@@ -78,7 +77,6 @@ impl OverrideProvider {
 
 /// Copy of [`sol_rpc_types::MultiRpcResult`] to keep the implementation details out of the
 /// [`sol_rpc_types`] crate.
-#[derive(Clone, Debug, Eq, PartialEq, CandidType, Deserialize)]
 pub enum MultiRpcResult<T> {
     Consistent(RpcResult<T>),
     Inconsistent(Vec<(RpcSource, RpcResult<T>)>),
