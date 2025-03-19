@@ -19,6 +19,7 @@ canhttp = { workspace = true, features = ["json"] }
 canlog = { path = "../canlog", features = ["derive"] }
 ciborium = { workspace = true }
 const_format = { workspace = true }
+derive_more = { workspace = true }
 futures = { workspace = true }
 hex = { workspace = true }
 http = { workspace = true }

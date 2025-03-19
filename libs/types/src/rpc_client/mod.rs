@@ -2,6 +2,7 @@
 mod tests;
 
 use candid::CandidType;
+use derive_more::From;
 use ic_cdk::api::call::RejectionCode;
 pub use ic_cdk::api::management_canister::http_request::HttpHeader;
 use regex::Regex;
@@ -13,7 +14,7 @@ use thiserror::Error;
 pub type RpcResult<T> = Result<T, RpcError>;
 
 /// An RPC error.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Deserialize, Error)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Deserialize, Error, From)]
 pub enum RpcError {
     /// An error occurred with the RPC provider.
     #[error("Provider error: {0}")]
@@ -48,12 +49,6 @@ pub enum ProviderError {
     UnsupportedCluster(String),
 }
 
-impl From<ProviderError> for RpcError {
-    fn from(error: ProviderError) -> Self {
-        Self::ProviderError(error)
-    }
-}
-
 /// An HTTP outcall error.
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, CandidType, Deserialize, Error)]
 pub enum HttpOutcallError {
@@ -80,12 +75,6 @@ pub enum HttpOutcallError {
     },
 }
 
-impl From<HttpOutcallError> for RpcError {
-    fn from(error: HttpOutcallError) -> Self {
-        Self::HttpOutcallError(error)
-    }
-}
-
 /// A JSON-RPC 2.0 error as per the [specifications](https://www.jsonrpc.org/specification#error_object).
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, CandidType, Deserialize, Error)]
 #[error("JSON-RPC error (code: {code}): {message}")]
@@ -94,12 +83,6 @@ pub struct JsonRpcError {
     pub code: i64,
     /// The error message.
     pub message: String,
-}
-
-impl From<JsonRpcError> for RpcError {
-    fn from(error: JsonRpcError) -> Self {
-        Self::JsonRpcError(error)
-    }
 }
 
 /// Configures how to perform RPC HTTP calls.

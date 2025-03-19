@@ -1,15 +1,16 @@
 use canhttp::{
     http::{
-        json::{JsonRequestConversionError, JsonResponseConversionError},
-        FilterNonSuccessfulHttpResponseError, HttpRequestConversionError,
-        HttpResponseConversionError,
+        json::JsonResponseConversionError, FilterNonSuccessfulHttpResponseError,
+        HttpRequestConversionError, HttpResponseConversionError,
     },
     CyclesAccountingError, HttpsOutcallError, IcError,
 };
+use canhttp::http::json::JsonRequestConversionError;
+use derive_more::From;
 use sol_rpc_types::{HttpOutcallError, ProviderError, RpcError};
 use thiserror::Error;
 
-#[derive(Clone, Debug, Error)]
+#[derive(Clone, Debug, Error, From)]
 pub enum HttpClientError {
     #[error("IC error: {0}")]
     IcError(IcError),
@@ -23,39 +24,15 @@ pub enum HttpClientError {
     InvalidJsonResponse(JsonResponseConversionError),
 }
 
-impl From<IcError> for HttpClientError {
-    fn from(value: IcError) -> Self {
-        HttpClientError::IcError(value)
+impl From<HttpRequestConversionError> for HttpClientError {
+    fn from(value: HttpRequestConversionError) -> Self {
+        HttpClientError::NotHandledError(value.to_string())
     }
 }
 
 impl From<HttpResponseConversionError> for HttpClientError {
     fn from(value: HttpResponseConversionError) -> Self {
         // Replica should return valid http::Response
-        HttpClientError::NotHandledError(value.to_string())
-    }
-}
-
-impl From<FilterNonSuccessfulHttpResponseError<Vec<u8>>> for HttpClientError {
-    fn from(value: FilterNonSuccessfulHttpResponseError<Vec<u8>>) -> Self {
-        HttpClientError::UnsuccessfulHttpResponse(value)
-    }
-}
-
-impl From<JsonResponseConversionError> for HttpClientError {
-    fn from(value: JsonResponseConversionError) -> Self {
-        HttpClientError::InvalidJsonResponse(value)
-    }
-}
-
-impl From<CyclesAccountingError> for HttpClientError {
-    fn from(value: CyclesAccountingError) -> Self {
-        HttpClientError::CyclesAccountingError(value)
-    }
-}
-
-impl From<HttpRequestConversionError> for HttpClientError {
-    fn from(value: HttpRequestConversionError) -> Self {
         HttpClientError::NotHandledError(value.to_string())
     }
 }
