@@ -133,6 +133,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "assert_matches"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b34d609dfbaf33d6889b2b7106d3ca345eacad44200913df5ba02bfd31d2ba9"
+
+[[package]]
 name = "async-channel"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -596,8 +602,9 @@ dependencies = [
 [[package]]
 name = "canhttp"
 version = "0.1.0"
-source = "git+https://github.com/dfinity/evm-rpc-canister?rev=c1d9a12eb9d3af92671dc07963c8887ec178fcbc#c1d9a12eb9d3af92671dc07963c8887ec178fcbc"
+source = "git+https://github.com/dfinity/evm-rpc-canister?rev=11272015dd3bd25c67d91d20271ca62b98283fc9#11272015dd3bd25c67d91d20271ca62b98283fc9"
 dependencies = [
+ "assert_matches",
  "futures-util",
  "http 1.3.1",
  "ic-cdk",
@@ -4001,6 +4008,7 @@ dependencies = [
 name = "sol_rpc_int_tests"
 version = "0.1.0"
 dependencies = [
+ "assert_matches",
  "async-trait",
  "candid",
  "canlog",

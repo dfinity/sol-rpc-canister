@@ -1,4 +1,5 @@
 mod sol_rpc;
+
 #[cfg(test)]
 mod tests;
 
@@ -8,8 +9,9 @@ use crate::{
     providers::Providers,
     rpc_client::sol_rpc::{ResponseSizeEstimate, HEADER_SIZE_LIMIT},
 };
+use canhttp::http::json::JsonRpcRequest;
 use canlog::log;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use sol_rpc_types::{
     ConsensusStrategy, GetSlotParams, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource,
     RpcSources,
@@ -19,6 +21,25 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Debug,
 };
+
+pub async fn call<I, O>(
+    provider: &RpcSource,
+    request: JsonRpcRequest<I>,
+    max_response_size: u64,
+) -> Result<O, RpcError>
+where
+    I: Serialize + Clone + Debug,
+    O: Debug + DeserializeOwned,
+{
+    sol_rpc::call::<_, _>(
+        false,
+        provider,
+        request,
+        ResponseSizeEstimate::new(max_response_size),
+        &Some(ResponseTransform::Raw),
+    )
+    .await
+}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SolRpcClient {
@@ -69,6 +90,7 @@ impl SolRpcClient {
         O: Debug + DeserializeOwned,
     {
         let providers = self.providers();
+        let request = JsonRpcRequest::new(method, params);
         let results = {
             let mut fut = Vec::with_capacity(providers.len());
             for provider in providers {
@@ -79,9 +101,9 @@ impl SolRpcClient {
                 );
                 fut.push(async {
                     sol_rpc::call::<_, _>(
+                        true,
                         provider,
-                        method.clone(),
-                        params.clone(),
+                        request.clone(),
                         response_size_estimate,
                         response_transform,
                     )
@@ -339,3 +361,6 @@ impl<T: Debug + PartialEq + Serialize> ResponseDistribution<T> {
         }
     }
 }
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct JsonValue(pub serde_json::Value);

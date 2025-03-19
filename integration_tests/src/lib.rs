@@ -3,6 +3,9 @@ use candid::{decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encod
 use canlog::{Log, LogEntry};
 use ic_cdk::api::call::RejectionCode;
 use pocket_ic::{
+    common::rest::{
+        CanisterHttpReject, CanisterHttpRequest, CanisterHttpResponse, MockCanisterHttpResponse,
+    },
     management_canister::{CanisterId, CanisterSettings},
     nonblocking::PocketIc,
     PocketIcBuilder, RejectCode, RejectResponse,
@@ -16,6 +19,11 @@ use sol_rpc_client::{Runtime, SolRpcClient};
 use sol_rpc_types::{InstallArgs, SupportedRpcProviderId};
 use std::{path::PathBuf, time::Duration};
 
+pub mod mock;
+use mock::MockOutcall;
+
+const DEFAULT_MAX_RESPONSE_BYTES: u64 = 2_000_000;
+const MAX_TICKS: usize = 10;
 pub const DEFAULT_CALLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x01]);
 pub const DEFAULT_CONTROLLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x02]);
 pub const ADDITIONAL_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x03]);
@@ -100,6 +108,7 @@ impl Setup {
         PocketIcRuntime {
             env: &self.env,
             caller: self.caller,
+            mock_strategy: None,
         }
     }
 
@@ -119,6 +128,19 @@ impl Setup {
     }
 }
 
+async fn tick_until_http_request(env: &PocketIc) -> Vec<CanisterHttpRequest> {
+    let mut requests = Vec::new();
+    for _ in 0..MAX_TICKS {
+        requests = env.get_canister_http().await;
+        if !requests.is_empty() {
+            break;
+        }
+        env.tick().await;
+        env.advance_time(Duration::from_nanos(1)).await;
+    }
+    requests
+}
+
 fn sol_rpc_wasm() -> Vec<u8> {
     ic_test_utilities_load_wasm::load_wasm(
         PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("../canister"),
@@ -131,6 +153,7 @@ fn sol_rpc_wasm() -> Vec<u8> {
 pub struct PocketIcRuntime<'a> {
     env: &'a PocketIc,
     caller: Principal,
+    mock_strategy: Option<MockStrategy>,
 }
 
 #[async_trait]
@@ -143,14 +166,17 @@ impl Runtime for PocketIcRuntime<'_> {
         _cycles: u128,
     ) -> Result<Out, (RejectionCode, String)>
     where
-        In: ArgumentEncoder + Send + 'static,
-        Out: CandidType + DeserializeOwned + 'static,
+        In: ArgumentEncoder + Send,
+        Out: CandidType + DeserializeOwned,
     {
-        PocketIcRuntime::decode_call_result(
-            self.env
-                .update_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
-                .await,
-        )
+        let message_id = self
+            .env
+            .submit_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
+            .await
+            .expect("failed to submit call");
+        self.execute_mock().await;
+        let result = self.env.await_call(message_id).await;
+        PocketIcRuntime::decode_call_result(result)
     }
 
     async fn query_call<In, Out>(
@@ -160,8 +186,8 @@ impl Runtime for PocketIcRuntime<'_> {
         args: In,
     ) -> Result<Out, (RejectionCode, String)>
     where
-        In: ArgumentEncoder + Send + 'static,
-        Out: CandidType + DeserializeOwned + 'static,
+        In: ArgumentEncoder + Send,
+        Out: CandidType + DeserializeOwned,
     {
         PocketIcRuntime::decode_call_result(
             self.env
@@ -183,7 +209,7 @@ impl PocketIcRuntime<'_> {
         result: Result<Vec<u8>, RejectResponse>,
     ) -> Result<Out, (RejectionCode, String)>
     where
-        Out: CandidType + DeserializeOwned + 'static,
+        Out: CandidType + DeserializeOwned,
     {
         match result {
             Ok(bytes) => decode_args(&bytes).map(|(res,)| res).map_err(|e| {
@@ -209,6 +235,77 @@ impl PocketIcRuntime<'_> {
             }
         }
     }
+
+    fn with_strategy(self, strategy: MockStrategy) -> Self {
+        Self {
+            mock_strategy: Some(strategy),
+            ..self
+        }
+    }
+
+    async fn execute_mock(&self) {
+        match &self.mock_strategy {
+            None => (),
+            Some(MockStrategy::Mock(mock)) => {
+                self.mock_http_once_inner(mock).await;
+                while self.try_mock_http_inner(mock).await {}
+            }
+            Some(MockStrategy::MockOnce(mock)) => {
+                self.mock_http_once_inner(mock).await;
+            }
+            Some(MockStrategy::MockNTimes(mock, count)) => {
+                for _ in 0..*count {
+                    self.mock_http_once_inner(mock).await;
+                }
+            }
+        }
+    }
+
+    async fn mock_http_once_inner(&self, mock: &MockOutcall) {
+        if !self.try_mock_http_inner(mock).await {
+            panic!("no pending HTTP request")
+        }
+    }
+
+    async fn try_mock_http_inner(&self, mock: &MockOutcall) -> bool {
+        let http_requests = tick_until_http_request(self.env).await;
+        let request = match http_requests.first() {
+            Some(request) => request,
+            None => return false,
+        };
+        mock.assert_matches(request);
+
+        let response = match mock.response.clone() {
+            CanisterHttpResponse::CanisterHttpReply(reply) => {
+                let max_response_bytes = request
+                    .max_response_bytes
+                    .unwrap_or(DEFAULT_MAX_RESPONSE_BYTES);
+                if reply.body.len() as u64 > max_response_bytes {
+                    //approximate replica behaviour since headers are not accounted for.
+                    CanisterHttpResponse::CanisterHttpReject(CanisterHttpReject {
+                        reject_code: 1, //SYS_FATAL
+                        message: format!(
+                            "Http body exceeds size limit of {} bytes.",
+                            max_response_bytes
+                        ),
+                    })
+                } else {
+                    CanisterHttpResponse::CanisterHttpReply(reply)
+                }
+            }
+            CanisterHttpResponse::CanisterHttpReject(reject) => {
+                CanisterHttpResponse::CanisterHttpReject(reject)
+            }
+        };
+        let mock_response = MockCanisterHttpResponse {
+            subnet_id: request.subnet_id,
+            request_id: request.request_id,
+            response,
+            additional_responses: vec![],
+        };
+        self.env.mock_canister_http_response(mock_response).await;
+        true
+    }
 }
 
 /// Runtime for when Pocket IC is used in [live mode](https://github.com/dfinity/ic/blob/f0c82237ae16745ac54dd3838b3f91ce32a6bc52/packages/pocket-ic/HOWTO.md?plain=1#L43).
@@ -232,8 +329,8 @@ impl Runtime for PocketIcLiveModeRuntime<'_> {
         _cycles: u128,
     ) -> Result<Out, (RejectionCode, String)>
     where
-        In: ArgumentEncoder + Send + 'static,
-        Out: CandidType + DeserializeOwned + 'static,
+        In: ArgumentEncoder + Send,
+        Out: CandidType + DeserializeOwned,
     {
         let id = self
             .env
@@ -250,8 +347,8 @@ impl Runtime for PocketIcLiveModeRuntime<'_> {
         args: In,
     ) -> Result<Out, (RejectionCode, String)>
     where
-        In: ArgumentEncoder + Send + 'static,
-        Out: CandidType + DeserializeOwned + 'static,
+        In: ArgumentEncoder + Send,
+        Out: CandidType + DeserializeOwned,
     {
         PocketIcRuntime::decode_call_result(
             self.env
@@ -266,6 +363,9 @@ pub trait SolRpcTestClient<R: Runtime> {
     async fn verify_api_key(&self, api_key: (SupportedRpcProviderId, Option<String>));
     async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry<Priority>>;
     fn with_caller<T: Into<Principal>>(self, id: T) -> Self;
+    fn mock_http(self, mock: impl Into<MockOutcall>) -> Self;
+    fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self;
+    fn mock_http_n_times(self, mock: impl Into<MockOutcall>, count: u32) -> Self;
 }
 
 #[async_trait]
@@ -298,4 +398,36 @@ impl SolRpcTestClient<PocketIcRuntime<'_>> for SolRpcClient<PocketIcRuntime<'_>>
         self.runtime.caller = id.into();
         self
     }
+
+    fn mock_http(self, mock: impl Into<MockOutcall>) -> Self {
+        Self {
+            runtime: self.runtime.with_strategy(MockStrategy::Mock(mock.into())),
+            ..self
+        }
+    }
+
+    fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self {
+        Self {
+            runtime: self
+                .runtime
+                .with_strategy(MockStrategy::MockOnce(mock.into())),
+            ..self
+        }
+    }
+
+    fn mock_http_n_times(self, mock: impl Into<MockOutcall>, count: u32) -> Self {
+        Self {
+            runtime: self
+                .runtime
+                .with_strategy(MockStrategy::MockNTimes(mock.into(), count)),
+            ..self
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+enum MockStrategy {
+    Mock(MockOutcall),
+    MockOnce(MockOutcall),
+    MockNTimes(MockOutcall, u32),
 }

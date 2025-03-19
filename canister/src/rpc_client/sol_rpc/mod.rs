@@ -41,6 +41,8 @@ pub const MAX_PAYLOAD_SIZE: u64 = HTTP_MAX_SIZE - HEADER_SIZE_LIMIT;
 pub enum ResponseTransform {
     #[n(0)]
     GetSlot,
+    #[n(1)]
+    Raw,
 }
 
 impl ResponseTransform {
@@ -58,6 +60,7 @@ impl ResponseTransform {
 
         match self {
             Self::GetSlot => redact_response::<Slot>(body_bytes),
+            Self::Raw => (),
         }
     }
 }
@@ -101,9 +104,9 @@ impl fmt::Display for ResponseSizeEstimate {
 
 /// Calls a JSON-RPC method at the specified URL.
 pub async fn call<I, O>(
+    retry: bool,
     provider: &RpcSource,
-    method: impl Into<String>,
-    params: I,
+    request_body: JsonRpcRequest<I>,
     response_size_estimate: ResponseSizeEstimate,
     response_transform: &Option<ResponseTransform>,
 ) -> Result<O, RpcError>
@@ -132,10 +135,10 @@ where
         "cleanup_response".to_owned(),
         transform_op.clone(),
     ))
-    .body(JsonRpcRequest::new(method, params))
+    .body(request_body)
     .expect("BUG: invalid request");
 
-    let mut client = http_client(true);
+    let mut client = http_client(retry);
     let response = client.call(request).await?;
     match response.into_body().into_result() {
         Ok(r) => Ok(r),
