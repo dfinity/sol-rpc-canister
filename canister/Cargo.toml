@@ -13,21 +13,33 @@ name = "sol_rpc_canister"
 path = "src/main.rs"
 
 [dependencies]
+assert_matches = { workspace = true }
 candid = { workspace = true }
+canhttp = { workspace = true, features = ["json"] }
 canlog = { path = "../canlog", features = ["derive"] }
 ciborium = { workspace = true }
 const_format = { workspace = true }
+derive_more = { workspace = true }
+futures = { workspace = true }
 hex = { workspace = true }
+http = { workspace = true }
 ic-cdk = { workspace = true }
+ic-sha3 = { workspace = true }
 ic-stable-structures = { workspace = true }
 maplit = { workspace = true }
+minicbor = { workspace = true }
+num-traits = { workspace = true }
+solana-clock = { workspace = true }
 sol_rpc_types = { path = "../libs/types" }
 regex = { workspace = true }
 serde = { workspace = true }
-serde_json = {workspace = true}
+serde_json = { workspace = true }
 serde_bytes = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true, features = ["set-header", "util"] }
 url = { workspace = true }
 zeroize = { workspace = true }
+thiserror = { workspace = true }
 
 [dev-dependencies]
 candid_parser = { workspace = true }

@@ -1,6 +1,5 @@
 use crate::{
-    providers::PROVIDERS,
-    rpc_client::resolve_rpc_provider,
+    providers::{resolve_rpc_provider, PROVIDERS},
     state::{init_state, reset_state, State},
     types::{ApiKey, OverrideProvider},
 };

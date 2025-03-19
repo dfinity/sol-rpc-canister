@@ -3,6 +3,7 @@ mod tests;
 
 use crate::types::{ApiKey, OverrideProvider};
 use candid::{Deserialize, Principal};
+use canhttp::http::json::Id;
 use canlog::LogFilter;
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
@@ -10,7 +11,7 @@ use ic_stable_structures::{
     Cell, DefaultMemoryImpl, Storable,
 };
 use serde::Serialize;
-use sol_rpc_types::{InstallArgs, SupportedRpcProviderId};
+use sol_rpc_types::{InstallArgs, Mode, SupportedRpcProviderId};
 use std::{borrow::Cow, cell::RefCell, collections::BTreeMap};
 
 const STATE_MEMORY_ID: MemoryId = MemoryId::new(0);
@@ -19,7 +20,7 @@ type StableMemory = VirtualMemory<DefaultMemoryImpl>;
 
 thread_local! {
     // Unstable static data: these are reset when the canister is upgraded.
-    // TODO: Add metrics
+    static UNSTABLE_HTTP_REQUEST_COUNTER: RefCell<u64> = const {RefCell::new(0)};
 
     // Stable static data: these are preserved when the canister is upgraded.
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
@@ -86,6 +87,8 @@ pub struct State {
     api_key_principals: Vec<Principal>,
     override_provider: OverrideProvider,
     log_filter: LogFilter,
+    mode: Mode,
+    num_subnet_nodes: u32,
 }
 
 impl State {
@@ -131,6 +134,22 @@ impl State {
     pub fn set_log_filter(&mut self, filter: LogFilter) {
         self.log_filter = filter;
     }
+
+    pub fn get_num_subnet_nodes(&self) -> u32 {
+        self.num_subnet_nodes
+    }
+
+    pub fn set_num_subnet_nodes(&mut self, num_subnet_nodes: u32) {
+        self.num_subnet_nodes = num_subnet_nodes
+    }
+
+    pub fn get_mode(&self) -> Mode {
+        self.mode
+    }
+
+    pub fn set_mode(&mut self, mode: Mode) {
+        self.mode = mode
+    }
 }
 
 impl From<InstallArgs> for State {
@@ -140,6 +159,8 @@ impl From<InstallArgs> for State {
             api_key_principals: value.manage_api_keys.unwrap_or_default(),
             override_provider: value.override_provider.unwrap_or_default().into(),
             log_filter: value.log_filter.unwrap_or_default(),
+            mode: value.mode.unwrap_or_default(),
+            num_subnet_nodes: value.num_subnet_nodes.unwrap_or_default().into(),
         }
     }
 }
@@ -188,5 +209,15 @@ pub fn reset_state() {
         cell.borrow_mut()
             .set(ConfigState::Uninitialized)
             .unwrap_or_else(|err| panic!("Could not reset state: {:?}", err));
+    })
+}
+
+pub fn next_request_id() -> Id {
+    UNSTABLE_HTTP_REQUEST_COUNTER.with_borrow_mut(|counter| {
+        let current_request_id = *counter;
+        // overflow is not an issue here because we only use `next_request_id` to correlate
+        // requests and responses in logs.
+        *counter = counter.wrapping_add(1);
+        Id::from(current_request_id)
     })
 }
