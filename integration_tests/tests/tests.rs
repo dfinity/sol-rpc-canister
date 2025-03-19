@@ -186,7 +186,7 @@ mod generic_request_tests {
 
         let expected_result: serde_json::Value =
             serde_json::from_str(MOCK_REQUEST_RESPONSE).unwrap();
-        assert_matches!(result, Ok(msg) if msg == serde_json::to_string(&expected_result["result"]).unwrap());
+        assert_matches!(result, Ok(msg) if msg == serde_json::Value::to_string(&expected_result["result"]));
 
         setup.drop().await;
     }

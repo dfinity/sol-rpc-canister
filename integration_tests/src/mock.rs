@@ -7,6 +7,11 @@ use std::collections::BTreeSet;
 
 pub struct MockOutcallBody(pub Vec<u8>);
 
+impl From<&serde_json::Value> for MockOutcallBody {
+    fn from(value: &serde_json::Value) -> Self {
+        value.to_string().into()
+    }
+}
 impl From<String> for MockOutcallBody {
     fn from(string: String) -> Self {
         string.as_bytes().to_vec().into()
