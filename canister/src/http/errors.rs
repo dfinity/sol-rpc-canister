@@ -1,11 +1,11 @@
 use canhttp::{
     http::{
-        json::JsonResponseConversionError, FilterNonSuccessfulHttpResponseError,
-        HttpRequestConversionError, HttpResponseConversionError,
+        json::{JsonRequestConversionError, JsonResponseConversionError},
+        FilterNonSuccessfulHttpResponseError, HttpRequestConversionError,
+        HttpResponseConversionError,
     },
     CyclesAccountingError, HttpsOutcallError, IcError,
 };
-use canhttp::http::json::JsonRequestConversionError;
 use derive_more::From;
 use sol_rpc_types::{HttpOutcallError, ProviderError, RpcError};
 use thiserror::Error;
