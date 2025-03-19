@@ -105,11 +105,12 @@ impl Providers {
     const DEFAULT_MAINNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] = &[
         SupportedRpcProviderId::AlchemyMainnet,
         SupportedRpcProviderId::AnkrMainnet,
-        SupportedRpcProviderId::PublicNodeMainnet,
         SupportedRpcProviderId::DrpcMainnet,
     ];
-    const NON_DEFAULT_MAINNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] =
-        &[SupportedRpcProviderId::HeliusMainnet];
+    const NON_DEFAULT_MAINNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] = &[
+        SupportedRpcProviderId::HeliusMainnet,
+        SupportedRpcProviderId::PublicNodeMainnet,
+    ];
 
     const DEFAULT_DEVNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] = &[
         SupportedRpcProviderId::AlchemyDevnet,

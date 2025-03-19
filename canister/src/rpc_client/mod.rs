@@ -2,11 +2,10 @@ mod sol_rpc;
 #[cfg(test)]
 mod tests;
 
-use crate::rpc_client::sol_rpc::ResponseTransform;
 use crate::{
     logs::Priority,
     providers::Providers,
-    rpc_client::sol_rpc::{ResponseSizeEstimate, HEADER_SIZE_LIMIT},
+    rpc_client::sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
 };
 use canlog::log;
 use serde::{de::DeserializeOwned, Serialize};

@@ -57,6 +57,9 @@ impl ResponseTransform {
         }
 
         match self {
+            // TODO XC-292: Add rounding to the response transform and
+            //  add a unit test simulating consensus when the providers
+            //  return slightly differing results.
             Self::GetSlot => redact_response::<Slot>(body_bytes),
         }
     }
