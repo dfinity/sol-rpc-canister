@@ -1,5 +1,7 @@
 use async_trait::async_trait;
-use candid::{decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encode, Principal};
+use candid::{
+    decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encode, Principal,
+};
 use canlog::{Log, LogEntry};
 use ic_cdk::api::call::RejectionCode;
 use pocket_ic::{
@@ -8,12 +10,15 @@ use pocket_ic::{
     PocketIcBuilder, RejectCode, RejectResponse,
 };
 use serde::de::DeserializeOwned;
+use serde::Deserialize;
 use sol_rpc_canister::{
     http_types::{HttpRequest, HttpResponse},
     logs::Priority,
 };
 use sol_rpc_client::{Runtime, SolRpcClient};
 use sol_rpc_types::{InstallArgs, SupportedRpcProviderId};
+use std::env::{remove_var, set_var};
+use std::path::Path;
 use std::{path::PathBuf, time::Duration};
 
 pub const DEFAULT_CALLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x01]);
@@ -24,7 +29,8 @@ pub struct Setup {
     env: PocketIc,
     caller: Principal,
     controller: Principal,
-    canister_id: CanisterId,
+    sol_rpc_canister_id: CanisterId,
+    wallet_canister_id: CanisterId,
 }
 
 impl Setup {
@@ -45,30 +51,24 @@ impl Setup {
 
     pub async fn with_pocket_ic_and_args(env: PocketIc, args: InstallArgs) -> Self {
         let controller = DEFAULT_CONTROLLER_TEST_ID;
-        let canister_id = env
-            .create_canister_with_settings(
-                None,
-                Some(CanisterSettings {
-                    controllers: Some(vec![controller]),
-                    ..CanisterSettings::default()
-                }),
-            )
-            .await;
-        env.add_cycles(canister_id, u128::MAX).await;
-        env.install_canister(
-            canister_id,
-            sol_rpc_wasm(),
-            Encode!(&args).unwrap(),
-            Some(controller),
-        )
-        .await;
         let caller = DEFAULT_CALLER_TEST_ID;
-
+        let sol_rpc_canister_id =
+            Self::create_canister(&env, controller, args, sol_rpc_wasm()).await;
+        let wallet_canister_id = Self::create_canister(&env, controller, (), wallet_wasm()).await;
+        env.update_call(
+            wallet_canister_id,
+            controller,
+            "authorize",
+            Encode!(&caller).unwrap(),
+        )
+        .await
+        .expect("Failed to add caller as custodian for wallet canister");
         Self {
             env,
             caller,
             controller,
-            canister_id,
+            sol_rpc_canister_id,
+            wallet_canister_id,
         }
     }
 
@@ -79,7 +79,7 @@ impl Setup {
         self.env.tick().await;
         self.env
             .upgrade_canister(
-                self.canister_id,
+                self.sol_rpc_canister_id,
                 sol_rpc_wasm(),
                 Encode!(&args).unwrap(),
                 Some(self.controller),
@@ -89,11 +89,11 @@ impl Setup {
     }
 
     pub fn client(&self) -> SolRpcClient<PocketIcRuntime> {
-        SolRpcClient::new(self.new_pocket_ic(), self.canister_id)
+        SolRpcClient::new(self.new_pocket_ic(), self.sol_rpc_canister_id)
     }
 
     pub fn client_live_mode(&self) -> SolRpcClient<PocketIcLiveModeRuntime> {
-        SolRpcClient::new(self.new_live_pocket_ic(), self.canister_id)
+        SolRpcClient::new(self.new_live_pocket_ic(), self.sol_rpc_canister_id)
     }
 
     fn new_pocket_ic(&self) -> PocketIcRuntime {
@@ -107,6 +107,7 @@ impl Setup {
         PocketIcLiveModeRuntime {
             env: &self.env,
             caller: self.caller,
+            wallet: self.wallet_canister_id,
         }
     }
 
@@ -117,6 +118,33 @@ impl Setup {
     pub fn controller(&self) -> Principal {
         self.controller
     }
+
+    async fn create_canister<T: candid::CandidType>(
+        env: &PocketIc,
+        controller: Principal,
+        install_args: T,
+        wasm: Vec<u8>,
+    ) -> CanisterId {
+        let canister_id = env
+            .create_canister_with_settings(
+                None,
+                Some(CanisterSettings {
+                    controllers: Some(vec![controller]),
+                    ..CanisterSettings::default()
+                }),
+            )
+            .await;
+        // TODO XC-323: Change me!
+        env.add_cycles(canister_id, 5_000_000_000_000).await;
+        env.install_canister(
+            canister_id,
+            wasm,
+            Encode!(&install_args).unwrap(),
+            Some(controller),
+        )
+        .await;
+        canister_id
+    }
 }
 
 fn sol_rpc_wasm() -> Vec<u8> {
@@ -125,6 +153,24 @@ fn sol_rpc_wasm() -> Vec<u8> {
         "sol_rpc_canister",
         &[],
     )
+}
+
+fn wallet_wasm() -> Vec<u8> {
+    struct DummyPath;
+
+    impl AsRef<Path> for DummyPath {
+        fn as_ref(&self) -> &Path {
+            panic!("Should not be called!");
+        }
+    }
+
+    set_var(
+        "WALLET_WASM_PATH",
+        PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("wallet.wasm.gz"),
+    );
+    let wasm = ic_test_utilities_load_wasm::load_wasm(DummyPath, "wallet", &[]);
+    remove_var("WALLET_WASM_PATH");
+    wasm
 }
 
 #[derive(Clone)]
@@ -220,6 +266,7 @@ impl PocketIcRuntime<'_> {
 pub struct PocketIcLiveModeRuntime<'a> {
     env: &'a PocketIc,
     caller: Principal,
+    wallet: Principal,
 }
 
 #[async_trait]
@@ -229,18 +276,56 @@ impl Runtime for PocketIcLiveModeRuntime<'_> {
         id: Principal,
         method: &str,
         args: In,
-        _cycles: u128,
+        cycles: u128,
     ) -> Result<Out, (RejectionCode, String)>
     where
         In: ArgumentEncoder + Send + 'static,
         Out: CandidType + DeserializeOwned + 'static,
     {
+        #[derive(CandidType, Deserialize)]
+        struct CallCanisterArgs<TCycles> {
+            canister: Principal,
+            method_name: String,
+            #[serde(with = "serde_bytes")]
+            args: Vec<u8>,
+            cycles: TCycles,
+        }
+
+        #[derive(CandidType, Deserialize)]
+        struct CallResult {
+            #[serde(with = "serde_bytes")]
+            r#return: Vec<u8>,
+        }
+
+        let args = CallCanisterArgs {
+            canister: id,
+            method_name: method.to_string(),
+            args: PocketIcRuntime::encode_args(args),
+            cycles,
+        };
+
         let id = self
             .env
-            .submit_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
+            .submit_call(
+                self.wallet,
+                self.caller,
+                "wallet_call128",
+                Encode!(&args).unwrap(),
+            )
             .await
             .unwrap();
-        PocketIcRuntime::decode_call_result(self.env.await_call_no_ticks(id).await)
+
+        PocketIcRuntime::decode_call_result(self.env.await_call_no_ticks(id).await).map(
+            |result: Result<CallResult, String>| match result {
+                Ok(call_result) => {
+                    PocketIcRuntime::decode_call_result(Ok(call_result.r#return)).unwrap()
+                }
+                Err(message) => panic!(
+                    "An error occurred while forwarding call through the wallet canister: {}",
+                    message
+                ),
+            },
+        )
     }
 
     async fn query_call<In, Out>(
