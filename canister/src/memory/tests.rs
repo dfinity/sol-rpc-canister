@@ -1,7 +1,6 @@
 mod request_counter_tests {
     use crate::memory::next_request_id;
     use std::collections::BTreeSet;
-    use assert_matches::assert_matches;
 
     #[test]
     fn should_increment_request_id() {
@@ -9,7 +8,6 @@ mod request_counter_tests {
             .into_iter()
             .map(|_| next_request_id().to_string())
             .collect::<BTreeSet<_>>();
-
-        assert_matches!(request_ids.len(), 10);
+        assert_eq!(request_ids.len(), 10);
     }
 }
