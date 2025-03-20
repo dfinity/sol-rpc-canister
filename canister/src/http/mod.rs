@@ -4,7 +4,8 @@ use crate::{
     constants::{COLLATERAL_CYCLES_PER_NODE, CONTENT_TYPE_VALUE},
     http::errors::HttpClientError,
     logs::Priority,
-    state::{next_request_id, read_state, State},
+    memory::next_request_id,
+    state::{read_state, State},
 };
 use canhttp::{
     convert::ConvertRequestLayer,

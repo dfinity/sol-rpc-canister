@@ -1,10 +1,12 @@
 use candid::candid_method;
 use canlog::{log, Log, Sort};
 use ic_cdk::{api::is_controller, query, update};
+use ic_metrics_encoder::MetricsEncoder;
 use sol_rpc_canister::{
     candid_rpc::CandidRpcClient,
     http_types, lifecycle,
     logs::Priority,
+    metrics::encode_metrics,
     providers::{get_provider, PROVIDERS},
     state::{mutate_state, read_state},
 };
@@ -87,6 +89,21 @@ async fn get_slot(
 #[query(hidden = true)]
 fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
     match request.path() {
+        "/metrics" => {
+            let mut writer = MetricsEncoder::new(vec![], ic_cdk::api::time() as i64 / 1_000_000);
+
+            match encode_metrics(&mut writer) {
+                Ok(()) => http_types::HttpResponseBuilder::ok()
+                    .header("Content-Type", "text/plain; version=0.0.4")
+                    .with_body_and_content_length(writer.into_inner())
+                    .build(),
+                Err(err) => http_types::HttpResponseBuilder::server_error(format!(
+                    "Failed to encode metrics: {}",
+                    err
+                ))
+                .build(),
+            }
+        }
         "/logs" => {
             let max_skip_timestamp = match request.raw_query_param("time") {
                 Some(arg) => match u64::from_str(arg) {
