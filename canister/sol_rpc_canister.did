@@ -150,12 +150,9 @@ type GetSlotParams = record {
   minContextSlot: opt nat64;
 };
 
-<<<<<<< HEAD
 // Represents the result of a generic RPC request.
 type RequestResult = variant { Ok : text; Err : RpcError };
 
-=======
->>>>>>> origin/main
 // A string used as a regex pattern.
 type Regex = text;
 
