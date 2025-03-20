@@ -8,17 +8,18 @@ use pocket_ic::{
     PocketIcBuilder, RejectCode, RejectResponse,
 };
 use regex::Regex;
-use serde::de::DeserializeOwned;
-use serde::Deserialize;
+use serde::{de::DeserializeOwned, Deserialize};
 use sol_rpc_canister::{
     http_types::{HttpRequest, HttpResponse},
     logs::Priority,
 };
 use sol_rpc_client::{Runtime, SolRpcClient};
 use sol_rpc_types::{InstallArgs, SupportedRpcProviderId};
-use std::env::{remove_var, set_var};
-use std::path::Path;
-use std::{path::PathBuf, time::Duration};
+use std::{
+    env::{remove_var, set_var},
+    path::{Path, PathBuf},
+    time::Duration,
+};
 
 pub const DEFAULT_CALLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x01]);
 pub const DEFAULT_CONTROLLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x02]);
