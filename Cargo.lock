@@ -602,7 +602,7 @@ dependencies = [
 [[package]]
 name = "canhttp"
 version = "0.1.0"
-source = "git+https://github.com/dfinity/evm-rpc-canister?rev=11272015dd3bd25c67d91d20271ca62b98283fc9#11272015dd3bd25c67d91d20271ca62b98283fc9"
+source = "git+https://github.com/dfinity/evm-rpc-canister?branch=paulliu%2Fjson_rpc_request_params#d07d17dce29a604364c5d707e4407cb2be1020b7"
 dependencies = [
  "assert_matches",
  "futures-util",
