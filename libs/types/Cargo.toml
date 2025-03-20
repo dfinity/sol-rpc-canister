@@ -18,3 +18,4 @@ regex = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
 url = { workspace = true }
+derive_more = { workspace = true }

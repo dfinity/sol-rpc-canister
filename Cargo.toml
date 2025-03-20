@@ -27,7 +27,7 @@ opt-level = 's'
 inherits = "release"
 
 [workspace.dependencies]
-assert_matches = "1.5"
+assert_matches = "1.5.0"
 async-trait = "0.1.88"
 candid = "0.10.13"
 candid_parser = "0.1.4"
@@ -36,6 +36,7 @@ ciborium = "0.2.2"
 # Transitive dependency of ic-ed25519
 # See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
 const_format = "0.2.34"
+derive_more = { version = "2.0.1", features = ["from"] }
 futures = "0.3.31"
 getrandom = { version = "*", default-features = false, features = ["custom"] }
 hex = "0.4.3"

@@ -85,8 +85,8 @@ async fn get_slot(
     }
 }
 
-#[update(name = "request")]
-#[candid_method(rename = "request")]
+#[update]
+#[candid_method]
 async fn request(
     provider: RpcSource,
     json_rpc_payload: String,
@@ -97,7 +97,7 @@ async fn request(
             .map_err(|e| RpcError::ValidationError(format!("Invalid JSON RPC request: {e}")))?;
     rpc_client::call(&provider, request, max_response_bytes)
         .await
-        .map(|value: rpc_client::JsonValue| value.0.to_string())
+        .map(|value: serde_json::Value| value.to_string())
 }
 
 #[query(hidden = true)]

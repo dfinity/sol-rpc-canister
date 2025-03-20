@@ -1,17 +1,15 @@
 mod sol_rpc;
-
 #[cfg(test)]
 mod tests;
 
-use crate::rpc_client::sol_rpc::ResponseTransform;
 use crate::{
     logs::Priority,
     providers::Providers,
-    rpc_client::sol_rpc::{ResponseSizeEstimate, HEADER_SIZE_LIMIT},
+    rpc_client::sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
 };
 use canhttp::http::json::JsonRpcRequest;
 use canlog::log;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
     ConsensusStrategy, GetSlotParams, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource,
     RpcSources,
@@ -80,7 +78,7 @@ impl SolRpcClient {
     /// there is no single point of failure.
     async fn parallel_call<I, O>(
         &self,
-        method: impl Into<String> + Clone,
+        method: impl Into<String>,
         params: I,
         response_size_estimate: ResponseSizeEstimate,
         response_transform: &Option<ResponseTransform>,
@@ -361,6 +359,3 @@ impl<T: Debug + PartialEq + Serialize> ResponseDistribution<T> {
         }
     }
 }
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct JsonValue(pub serde_json::Value);
