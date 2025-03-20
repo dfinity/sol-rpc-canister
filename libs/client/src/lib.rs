@@ -110,7 +110,7 @@ impl<R: Runtime> SolRpcClient<R> {
                     None::<RpcConfig>,
                     params,
                 ),
-                1_000_000_000,
+                10_000_000_000,
             )
             .await
             .expect("Client error: failed to call getSlot")

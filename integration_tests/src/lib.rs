@@ -1,7 +1,5 @@
 use async_trait::async_trait;
-use candid::{
-    decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encode, Principal,
-};
+use candid::{decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encode, Principal};
 use canlog::{Log, LogEntry};
 use ic_cdk::api::call::RejectionCode;
 use pocket_ic::{
@@ -9,6 +7,7 @@ use pocket_ic::{
     nonblocking::PocketIc,
     PocketIcBuilder, RejectCode, RejectResponse,
 };
+use regex::Regex;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use sol_rpc_canister::{
@@ -134,8 +133,8 @@ impl Setup {
                 }),
             )
             .await;
-        // TODO XC-323: Change me!
-        env.add_cycles(canister_id, 5_000_000_000_000).await;
+        // TODO XC-323: Change me! u128::MAX causes a "cycles amount exceeds 64-bit representation" error
+        env.add_cycles(canister_id, u64::MAX as u128).await;
         env.install_canister(
             canister_id,
             wasm,
@@ -232,16 +231,7 @@ impl PocketIcRuntime<'_> {
         Out: CandidType + DeserializeOwned + 'static,
     {
         match result {
-            Ok(bytes) => decode_args(&bytes).map(|(res,)| res).map_err(|e| {
-                (
-                    RejectionCode::CanisterError,
-                    format!(
-                        "failed to decode canister response as {}: {}",
-                        std::any::type_name::<Out>(),
-                        e
-                    ),
-                )
-            }),
+            Ok(bytes) => Self::decode_call_response(bytes),
             Err(e) => {
                 let rejection_code = match e.reject_code {
                     RejectCode::SysFatal => RejectionCode::SysFatal,
@@ -254,6 +244,22 @@ impl PocketIcRuntime<'_> {
                 Err((rejection_code, e.reject_message))
             }
         }
+    }
+
+    fn decode_call_response<Out>(bytes: Vec<u8>) -> Result<Out, (RejectionCode, String)>
+    where
+        Out: CandidType + DeserializeOwned + 'static,
+    {
+        decode_args(&bytes).map(|(res,)| res).map_err(|e| {
+            (
+                RejectionCode::CanisterError,
+                format!(
+                    "failed to decode canister response as {}: {}",
+                    std::any::type_name::<Out>(),
+                    e
+                ),
+            )
+        })
     }
 }
 
@@ -282,21 +288,6 @@ impl Runtime for PocketIcLiveModeRuntime<'_> {
         In: ArgumentEncoder + Send + 'static,
         Out: CandidType + DeserializeOwned + 'static,
     {
-        #[derive(CandidType, Deserialize)]
-        struct CallCanisterArgs<TCycles> {
-            canister: Principal,
-            method_name: String,
-            #[serde(with = "serde_bytes")]
-            args: Vec<u8>,
-            cycles: TCycles,
-        }
-
-        #[derive(CandidType, Deserialize)]
-        struct CallResult {
-            #[serde(with = "serde_bytes")]
-            r#return: Vec<u8>,
-        }
-
         let args = CallCanisterArgs {
             canister: id,
             method_name: method.to_string(),
@@ -304,6 +295,7 @@ impl Runtime for PocketIcLiveModeRuntime<'_> {
             cycles,
         };
 
+        // Forward the call through the wallet canister to attach cycles
         let id = self
             .env
             .submit_call(
@@ -314,18 +306,22 @@ impl Runtime for PocketIcLiveModeRuntime<'_> {
             )
             .await
             .unwrap();
+        let call_result = self.env.await_call_no_ticks(id).await;
 
-        PocketIcRuntime::decode_call_result(self.env.await_call_no_ticks(id).await).map(
-            |result: Result<CallResult, String>| match result {
-                Ok(call_result) => {
-                    PocketIcRuntime::decode_call_result(Ok(call_result.r#return)).unwrap()
-                }
-                Err(message) => panic!(
-                    "An error occurred while forwarding call through the wallet canister: {}",
-                    message
-                ),
-            },
-        )
+        match PocketIcRuntime::decode_call_result::<Result<CallResult, String>>(call_result)? {
+            Ok(CallResult { r#return }) => PocketIcRuntime::decode_call_response(r#return),
+            Err(message) => {
+                let (_, [code, message]) =
+                    Regex::new(r"^An error happened during the call: (\d+): (.*)$")
+                        .unwrap()
+                        .captures(&message)
+                        .unwrap_or_else(|| {
+                            panic!("Failed to parse error from wallet canister: {}", message)
+                        })
+                        .extract();
+                Err((code.parse::<u32>().unwrap().into(), message.to_string()))
+            }
+        }
     }
 
     async fn query_call<In, Out>(
@@ -383,4 +379,21 @@ impl SolRpcTestClient<PocketIcRuntime<'_>> for SolRpcClient<PocketIcRuntime<'_>>
         self.runtime.caller = id.into();
         self
     }
+}
+
+/// From the [cycles wallet repository](https://github.com/dfinity/cycles-wallet)
+#[derive(CandidType, Deserialize)]
+struct CallCanisterArgs<TCycles> {
+    canister: Principal,
+    method_name: String,
+    #[serde(with = "serde_bytes")]
+    args: Vec<u8>,
+    cycles: TCycles,
+}
+
+/// From the [cycles wallet repository](https://github.com/dfinity/cycles-wallet)
+#[derive(CandidType, Deserialize)]
+struct CallResult {
+    #[serde(with = "serde_bytes")]
+    r#return: Vec<u8>,
 }
