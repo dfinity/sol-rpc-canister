@@ -3,6 +3,7 @@ mod tests;
 
 use crate::{
     http::http_client,
+    metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider},
     state::read_state,
 };
@@ -138,7 +139,8 @@ where
     .body(JsonRpcRequest::new(method, params))
     .expect("BUG: invalid request");
 
-    let mut client = http_client(true);
+    let rpc_method = request.body().method().to_string();
+    let mut client = http_client(MetricRpcMethod(rpc_method.clone()), true);
     let response = client.call(request).await?;
     match response.into_body().into_result() {
         Ok(r) => Ok(r),

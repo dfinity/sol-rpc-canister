@@ -235,8 +235,7 @@ fn choose_providers(
 
 pub fn resolve_rpc_provider(service: RpcSource) -> RpcEndpoint {
     match service {
-        RpcSource::Supported(provider_id) => PROVIDERS
-            .with(|providers| providers.get(&provider_id).cloned())
+        RpcSource::Supported(provider_id) => get_provider(&provider_id)
             .map(|provider| resolve_api_key(provider.access, provider_id))
             .expect("Unknown provider"),
         RpcSource::Custom(api) => api,

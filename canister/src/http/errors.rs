@@ -1,6 +1,9 @@
 use canhttp::{
     http::{
-        json::{JsonRequestConversionError, JsonResponseConversionError},
+        json::{
+            ConsistentResponseIdFilterError, JsonRequestConversionError,
+            JsonResponseConversionError,
+        },
         FilterNonSuccessfulHttpResponseError, HttpRequestConversionError,
         HttpResponseConversionError,
     },
@@ -22,6 +25,8 @@ pub enum HttpClientError {
     UnsuccessfulHttpResponse(FilterNonSuccessfulHttpResponseError<Vec<u8>>),
     #[error("Error converting response to JSON: {0}")]
     InvalidJsonResponse(JsonResponseConversionError),
+    #[error("Invalid JSON-RPC response ID: {0}")]
+    InvalidJsonResponseId(ConsistentResponseIdFilterError),
 }
 
 impl From<HttpRequestConversionError> for HttpClientError {
@@ -71,6 +76,7 @@ impl From<HttpClientError> for RpcError {
                 body: String::from_utf8_lossy(response.body()).to_string(),
                 parsing_error: None,
             }),
+            HttpClientError::InvalidJsonResponseId(e) => RpcError::ValidationError(e.to_string()),
         }
     }
 }
@@ -82,7 +88,8 @@ impl HttpsOutcallError for HttpClientError {
             HttpClientError::NotHandledError(_)
             | HttpClientError::CyclesAccountingError(_)
             | HttpClientError::UnsuccessfulHttpResponse(_)
-            | HttpClientError::InvalidJsonResponse(_) => false,
+            | HttpClientError::InvalidJsonResponse(_)
+            | HttpClientError::InvalidJsonResponseId(_) => false,
         }
     }
 }

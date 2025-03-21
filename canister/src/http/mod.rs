@@ -1,23 +1,28 @@
 mod errors;
 
 use crate::{
+    add_metric_entry,
     constants::{COLLATERAL_CYCLES_PER_NODE, CONTENT_TYPE_VALUE},
     http::errors::HttpClientError,
     logs::Priority,
     memory::next_request_id,
+    metrics::{MetricRpcHost, MetricRpcMethod},
     state::{read_state, State},
 };
 use canhttp::{
     convert::ConvertRequestLayer,
     http::{
         json::{
-            HttpJsonRpcRequest, HttpJsonRpcResponse, JsonRequestConverter, JsonResponseConverter,
+            ConsistentResponseIdFilterError, CreateJsonRpcIdFilter, HttpJsonRpcRequest,
+            HttpJsonRpcResponse, Id, JsonRequestConverter, JsonResponseConversionError,
+            JsonResponseConverter,
         },
-        FilterNonSuccessfulHttpResponse, HttpRequestConverter, HttpResponseConverter,
+        FilterNonSuccessfulHttpResponse, FilterNonSuccessfulHttpResponseError,
+        HttpRequestConverter, HttpResponseConverter,
     },
     observability::ObservabilityLayer,
     retry::DoubleMaxResponseBytes,
-    ConvertServiceBuilder, CyclesAccounting, CyclesChargingPolicy,
+    ConvertServiceBuilder, CyclesAccounting, CyclesChargingPolicy, IcError,
 };
 use canlog::log;
 use http::{header::CONTENT_TYPE, HeaderValue};
@@ -34,6 +39,7 @@ use tower::{
 use tower_http::{set_header::SetRequestHeaderLayer, ServiceBuilderExt};
 
 pub fn http_client<I, O>(
+    rpc_method: MetricRpcMethod,
     retry: bool,
 ) -> impl Service<HttpJsonRpcRequest<I>, Response = HttpJsonRpcResponse<O>, Error = RpcError>
 where
@@ -54,26 +60,93 @@ where
         .map_err(|e: HttpClientError| RpcError::from(e))
         .option_layer(maybe_retry)
         .option_layer(maybe_unique_id)
-        // TODO XC-296: Flesh out observability layer
         .layer(
             ObservabilityLayer::new()
                 .on_request(move |req: &HttpJsonRpcRequest<I>| {
-                    log!(
-                        Priority::TraceHttp,
-                        "JSON-RPC request with id `{}` to {}: {:?}",
-                        req.body().id().clone(),
-                        req.uri().host().unwrap().to_string(),
+                    let req_data = MetricData {
+                        method: rpc_method.clone(),
+                        host: MetricRpcHost(req.uri().host().unwrap().to_string()),
+                        request_id: req.body().id().clone(),
+                    };
+                    add_metric_entry!(
+                        requests,
+                        (req_data.method.clone(), req_data.host.clone()),
+                        1
+                    );
+                    log!(Priority::TraceHttp, "JSON-RPC request with id `{}` to {}: {:?}",
+                        req_data.request_id,
+                        req_data.host.0,
                         req.body()
                     );
+                    req_data
                 })
-                .on_response(|_req_data: (), response: &HttpJsonRpcResponse<O>| {
+                .on_response(|req_data: MetricData, response: &HttpJsonRpcResponse<O>| {
+                    observe_response(req_data.method, req_data.host, response.status().as_u16());
                     log!(
                         Priority::TraceHttp,
-                        "JSON-RPC response: {:?}",
+                        "Got response for request with id `{}`. Response with status {}: {:?}",
+                        req_data.request_id,
+                        response.status(),
                         response.body()
                     );
-                }),
+                })
+                .on_error(
+                    |req_data: MetricData, error: &HttpClientError| match error {
+                        HttpClientError::IcError(IcError { code, message: _ }) => {
+                            add_metric_entry!(
+                                err_http_outcall,
+                                (req_data.method, req_data.host, *code),
+                                1
+                            );
+                        }
+                        HttpClientError::UnsuccessfulHttpResponse(
+                            FilterNonSuccessfulHttpResponseError::UnsuccessfulResponse(response),
+                        ) => {
+                            observe_response(
+                                req_data.method,
+                                req_data.host,
+                                response.status().as_u16(),
+                            );
+                            log!(
+                                Priority::TraceHttp,
+                                "Unsuccessful HTTP response for request with id `{}`. Response with status {}: {}",
+                                req_data.request_id,
+                                response.status(),
+                                String::from_utf8_lossy(response.body())
+                            );
+                        }
+                        HttpClientError::InvalidJsonResponse(
+                            JsonResponseConversionError::InvalidJsonResponse {
+                                status,
+                                body: _,
+                                parsing_error: _,
+                            },
+                        ) => {
+                            observe_response(req_data.method, req_data.host, *status);
+                            log!(
+                                Priority::TraceHttp,
+                                "Invalid JSON RPC response for request with id `{}`: {}",
+                                req_data.request_id,
+                                error
+                            );
+                        }
+                        HttpClientError::InvalidJsonResponseId(ConsistentResponseIdFilterError::InconsistentId { status, request_id: _, response_id: _ }) => {
+                            observe_response(req_data.method, req_data.host, *status);
+                            log!(
+                                Priority::TraceHttp,
+                                "Invalid JSON RPC response for request with id `{}`: {}",
+                                req_data.request_id,
+                                error
+                            );
+                        }
+                        HttpClientError::NotHandledError(e) => {
+                            log!(Priority::Info, "BUG: Unexpected error: {}", e);
+                        }
+                        HttpClientError::CyclesAccountingError(_) => {}
+                    },
+                ),
         )
+        .filter_response(CreateJsonRpcIdFilter::new())
         .layer(service_request_builder())
         .convert_response(JsonResponseConverter::new())
         .convert_response(FilterNonSuccessfulHttpResponse)
@@ -89,6 +162,17 @@ fn generate_request_id<I>(request: HttpJsonRpcRequest<I>) -> HttpJsonRpcRequest<
     let (parts, mut body) = request.into_parts();
     body.set_id(next_request_id());
     http::Request::from_parts(parts, body)
+}
+
+fn observe_response(method: MetricRpcMethod, host: MetricRpcHost, status: u16) {
+    let status: u32 = status as u32;
+    add_metric_entry!(responses, (method, host, status.into()), 1);
+}
+
+struct MetricData {
+    method: MetricRpcMethod,
+    host: MetricRpcHost,
+    request_id: Id,
 }
 
 type JsonRpcServiceBuilder<I> = ServiceBuilder<
