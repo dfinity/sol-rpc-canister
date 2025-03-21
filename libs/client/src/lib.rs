@@ -113,7 +113,7 @@ impl<R: Runtime> SolRpcClient<R> {
                 10_000_000_000,
             )
             .await
-            .expect("Client error: failed to call getSlot")
+            .expect("Client error: failed to call `getSlot`")
     }
 }
 
