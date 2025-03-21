@@ -90,7 +90,7 @@ impl<R: Runtime> SolRpcClient<R> {
                 self.sol_rpc_canister,
                 "updateApiKeys",
                 (api_keys.to_vec(),),
-                10_000,
+                0,
             )
             .await
             .unwrap()
