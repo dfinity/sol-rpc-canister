@@ -269,7 +269,7 @@ impl PocketIcRuntime<'_> {
         Out: CandidType + DeserializeOwned + 'static,
     {
         match PocketIcRuntime::decode_call_result::<Result<CallResult, String>>(call_result)? {
-            Ok(CallResult { r#return }) => PocketIcRuntime::decode_call_response(r#return),
+            Ok(CallResult { bytes }) => PocketIcRuntime::decode_call_response(bytes),
             Err(message) => {
                 // The wallet canister formats the rejection code and error message from the target
                 // canister into a single string. Extract them back from the formatted string.
@@ -401,6 +401,6 @@ struct CallCanisterArgs {
 /// See the [cycles wallet repository](https://github.com/dfinity/cycles-wallet)
 #[derive(CandidType, Deserialize)]
 struct CallResult {
-    #[serde(with = "serde_bytes")]
-    r#return: Vec<u8>,
+    #[serde(with = "serde_bytes", rename = "return")]
+    bytes: Vec<u8>,
 }
