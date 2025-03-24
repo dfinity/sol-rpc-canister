@@ -4012,7 +4012,7 @@ dependencies = [
  "serde_json",
  "sol_rpc_types",
  "solana-clock",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
  "tower",
  "tower-http",
  "url",
@@ -4062,7 +4062,7 @@ dependencies = [
  "ic-cdk",
  "regex",
  "serde",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
  "url",
 ]
 
