@@ -16,9 +16,20 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
+
       - name: 'Install dfx'
         uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365
         with:
           dfx-version: "0.25.0"
-      - name: 'Confirm successful installation'
+
+      - name: 'Confirm dfx successful installation'
         run: dfx --version
+
+      - name: "Install dfx deploy key"
+        env:
+          DFX_DEPLOY_KEY: ${{ secrets.DFX_DEPLOY_KEY }}
+        run: |
+            key_pem=$(mktemp)
+            printenv "DFX_DEPLOY_KEY" > "$key_pem"
+            dfx identity import --disable-encryption --force default "$key_pem"
+            rm "$key_pem"
