@@ -1,6 +1,14 @@
-name: 'Deploy_Release_Candidate'
+name: 'Deploy Release Candidate'
 
-on: workflow_dispatch
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - v*
+    paths-ignore:
+      - "README.md"
 
 jobs:
   deploy-rc:
