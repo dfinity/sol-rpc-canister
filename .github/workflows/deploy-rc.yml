@@ -31,5 +31,7 @@ jobs:
         run: |
             key_pem=$(mktemp)
             printenv "DFX_DEPLOY_KEY" > "$key_pem"
-            dfx identity import --disable-encryption --force default "$key_pem"
+            dfx identity import --storage-mode plaintext ci "$key_pem"
             rm "$key_pem"
+            dfx identity use ci
+            dfx identity get-principal
