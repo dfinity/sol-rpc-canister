@@ -47,15 +47,22 @@ pub enum ResponseTransform {
 
 impl ResponseTransform {
     fn apply(&self, body_bytes: &mut Vec<u8>) {
+        use serde_json::{from_slice, to_vec, Value};
+
         fn redact_response<T>(body: &mut Vec<u8>)
         where
             T: Serialize + DeserializeOwned,
         {
-            let response: JsonRpcResponse<T> = match serde_json::from_slice(body) {
+            let response: JsonRpcResponse<T> = match from_slice(body) {
                 Ok(response) => response,
                 Err(_) => return,
             };
-            *body = serde_json::to_vec(&response).expect("BUG: failed to serialize response");
+            *body = to_vec(&response).expect("BUG: failed to serialize response");
+        }
+
+        fn canonicalize(text: &[u8]) -> Option<Vec<u8>> {
+            let json = from_slice::<Value>(text).ok()?;
+            to_vec(&json).ok()
         }
 
         match self {
@@ -63,7 +70,11 @@ impl ResponseTransform {
             //  add a unit test simulating consensus when the providers
             //  return slightly differing results.
             Self::GetSlot => redact_response::<Slot>(body_bytes),
-            Self::Raw => (),
+            Self::Raw => {
+                if let Some(bytes) = canonicalize(body_bytes) {
+                    *body_bytes = bytes
+                }
+            }
         }
     }
 }
