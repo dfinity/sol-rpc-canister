@@ -253,11 +253,6 @@ impl PocketIcRuntime<'_> {
             Some(MockStrategy::MockOnce(mock)) => {
                 self.mock_http_once_inner(mock).await;
             }
-            Some(MockStrategy::MockNTimes(mock, count)) => {
-                for _ in 0..*count {
-                    self.mock_http_once_inner(mock).await;
-                }
-            }
         }
     }
 
@@ -365,7 +360,6 @@ pub trait SolRpcTestClient<R: Runtime> {
     fn with_caller<T: Into<Principal>>(self, id: T) -> Self;
     fn mock_http(self, mock: impl Into<MockOutcall>) -> Self;
     fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self;
-    fn mock_http_n_times(self, mock: impl Into<MockOutcall>, count: u32) -> Self;
 }
 
 #[async_trait]
@@ -414,20 +408,10 @@ impl SolRpcTestClient<PocketIcRuntime<'_>> for SolRpcClient<PocketIcRuntime<'_>>
             ..self
         }
     }
-
-    fn mock_http_n_times(self, mock: impl Into<MockOutcall>, count: u32) -> Self {
-        Self {
-            runtime: self
-                .runtime
-                .with_strategy(MockStrategy::MockNTimes(mock.into(), count)),
-            ..self
-        }
-    }
 }
 
 #[derive(Clone, Debug)]
 enum MockStrategy {
     Mock(MockOutcall),
     MockOnce(MockOutcall),
-    MockNTimes(MockOutcall, u32),
 }
