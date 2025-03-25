@@ -602,8 +602,9 @@ dependencies = [
 [[package]]
 name = "canhttp"
 version = "0.1.0"
-source = "git+https://github.com/dfinity/evm-rpc-canister?rev=c1d9a12eb9d3af92671dc07963c8887ec178fcbc#c1d9a12eb9d3af92671dc07963c8887ec178fcbc"
+source = "git+https://github.com/dfinity/evm-rpc-canister?rev=1aeeca3bdcb86ce4493b71e4117f65ab78475396#1aeeca3bdcb86ce4493b71e4117f65ab78475396"
 dependencies = [
+ "assert_matches",
  "futures-util",
  "http 1.3.1",
  "ic-cdk",
@@ -4035,6 +4036,7 @@ dependencies = [
 name = "sol_rpc_int_tests"
 version = "0.1.0"
 dependencies = [
+ "assert_matches",
  "async-trait",
  "candid",
  "canlog",

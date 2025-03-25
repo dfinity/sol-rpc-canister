@@ -31,7 +31,7 @@ assert_matches = "1.5.0"
 async-trait = "0.1.88"
 candid = "0.10.13"
 candid_parser = "0.1.4"
-canhttp = { git = "https://github.com/dfinity/evm-rpc-canister", rev = "c1d9a12eb9d3af92671dc07963c8887ec178fcbc" }
+canhttp = { git = "https://github.com/dfinity/evm-rpc-canister", rev = "1aeeca3bdcb86ce4493b71e4117f65ab78475396" }
 ciborium = "0.2.2"
 # Transitive dependency of ic-ed25519
 # See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8

@@ -10,7 +10,8 @@ use canhttp::{
     convert::ConvertRequestLayer,
     http::{
         json::{
-            HttpJsonRpcRequest, HttpJsonRpcResponse, JsonRequestConverter, JsonResponseConverter,
+            CreateJsonRpcIdFilter, HttpJsonRpcRequest, HttpJsonRpcResponse, JsonRequestConverter,
+            JsonResponseConverter,
         },
         FilterNonSuccessfulHttpResponse, HttpRequestConverter, HttpResponseConverter,
     },
@@ -73,6 +74,7 @@ where
                     );
                 }),
         )
+        .filter_response(CreateJsonRpcIdFilter::new())
         .layer(service_request_builder())
         .convert_response(JsonResponseConverter::new())
         .convert_response(FilterNonSuccessfulHttpResponse)
