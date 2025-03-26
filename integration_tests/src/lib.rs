@@ -18,6 +18,7 @@ use sol_rpc_canister::{
 };
 use sol_rpc_client::{Runtime, SolRpcClient};
 use sol_rpc_types::{InstallArgs, SupportedRpcProviderId};
+use std::env::var;
 use std::{env::set_var, path::PathBuf, time::Duration};
 
 pub mod mock;
@@ -167,17 +168,19 @@ async fn tick_until_http_request(env: &PocketIc) -> Vec<CanisterHttpRequest> {
 
 fn sol_rpc_wasm() -> Vec<u8> {
     ic_test_utilities_load_wasm::load_wasm(
-        PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("../canister"),
+        PathBuf::from(var("CARGO_MANIFEST_DIR").unwrap()).join("../canister"),
         "sol_rpc_canister",
         &[],
     )
 }
 
 fn wallet_wasm() -> Vec<u8> {
-    set_var(
-        "WALLET_WASM_PATH",
-        PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("wallet.wasm.gz"),
-    );
+    if var("WALLET_WASM_PATH").is_err() {
+        set_var(
+            "WALLET_WASM_PATH",
+            PathBuf::from(var("CARGO_MANIFEST_DIR").unwrap()).join("wallet.wasm.gz"),
+        )
+    };
     ic_test_utilities_load_wasm::load_wasm(PathBuf::new(), "wallet", &[])
 }
 
