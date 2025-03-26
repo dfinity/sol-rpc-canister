@@ -6,7 +6,7 @@ use sol_rpc_types::{
 };
 
 const MOCK_REQUEST_URL: &str = "https://api.devnet.solana.com/";
-const MOCK_REQUEST_PAYLOAD: &str = r#"{"jsonrpc":"2.0","id":1,"method":"getVersion"}"#;
+const MOCK_REQUEST_PAYLOAD: &str = r#"{"jsonrpc":"2.0","id":0,"method":"getVersion"}"#;
 const MOCK_REQUEST_RESPONSE: &str =
     r#"{"jsonrpc":"2.0","id":0,"result":{"feature-set":2891131721,"solana-core":"1.16.7"}}"#;
 const MOCK_REQUEST_MAX_RESPONSE_BYTES: u64 = 1000;
@@ -25,15 +25,15 @@ mod mock_request_tests {
             ..Default::default()
         })
         .await;
-        let client = setup.client_with_rpc_sources(RpcSources::Custom(vec![RpcSource::Custom(
-            RpcEndpoint {
+        let client = setup
+            .client()
+            .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Custom(RpcEndpoint {
                 url: MOCK_REQUEST_URL.to_string(),
                 headers: Some(vec![HttpHeader {
                     name: "custom".to_string(),
                     value: "Value".to_string(),
                 }]),
-            },
-        )]));
+            })]));
         let expected_result: serde_json::Value =
             serde_json::from_str(MOCK_REQUEST_RESPONSE).unwrap();
         assert_matches!(
@@ -139,6 +139,8 @@ mod generic_request_tests {
     use super::*;
     use assert_matches::*;
     use sol_rpc_int_tests::mock::MockOutcallBuilder;
+    use sol_rpc_types::RpcSources;
+    use sol_rpc_types::SupportedRpcProviderId::AnkrDevnet;
 
     #[tokio::test]
     async fn request_should_require_cycles() {
@@ -151,10 +153,12 @@ mod generic_request_tests {
 
         assert_matches!(
             result,
-            sol_rpc_types::MultiRpcResult::Consistent(Err(RpcError::ProviderError(ProviderError::TooFewCycles {
-                expected: _,
-                received: 0
-            })))
+            sol_rpc_types::MultiRpcResult::Consistent(Err(RpcError::ProviderError(
+                ProviderError::TooFewCycles {
+                    expected: _,
+                    received: 0
+                }
+            )))
         );
 
         setup.drop().await;

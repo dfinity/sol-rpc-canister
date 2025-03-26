@@ -8,7 +8,7 @@ use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    GetSlotParams, RpcConfig, RpcResult, RpcSource, RpcSources, SolanaCluster,
+    GetSlotParams, RpcConfig, RpcSources,
     SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_clock::Slot;
@@ -83,7 +83,7 @@ impl<R: Runtime> SolRpcClient<R> {
         }
     }
 
-    ///
+    /// TODO
     pub fn with_rpc_sources(self, rpc_sources: RpcSources) -> Self {
         SolRpcClient {
             rpc_sources,
@@ -91,7 +91,7 @@ impl<R: Runtime> SolRpcClient<R> {
         }
     }
 
-    ///
+    /// TODO
     pub fn with_rpc_config(self, rpc_config: RpcConfig) -> Self {
         SolRpcClient {
             rpc_config: Some(rpc_config),

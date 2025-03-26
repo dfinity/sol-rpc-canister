@@ -16,7 +16,7 @@ use sol_rpc_canister::{
     logs::Priority,
 };
 use sol_rpc_client::{Runtime, SolRpcClient};
-use sol_rpc_types::{InstallArgs, RpcConfig, RpcSources, SolanaCluster, SupportedRpcProviderId};
+use sol_rpc_types::{InstallArgs, RpcSources, SolanaCluster, SupportedRpcProviderId};
 use std::{path::PathBuf, time::Duration};
 
 pub mod mock;
@@ -101,14 +101,6 @@ impl Setup {
             self.new_pocket_ic(),
             self.canister_id,
             RpcSources::Default(SolanaCluster::Devnet),
-        )
-    }
-
-    pub fn client_with_rpc_sources(&self, rpc_sources: RpcSources) -> SolRpcClient<PocketIcRuntime> {
-        SolRpcClient::new(
-            self.new_pocket_ic(),
-            self.canister_id,
-            rpc_sources,
         )
     }
 
