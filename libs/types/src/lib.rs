@@ -9,7 +9,7 @@ mod rpc_client;
 mod solana;
 
 pub use lifecycle::{InstallArgs, Mode, NumSubnetNodes};
-pub use response::{MultiRpcResult, GenericRequestResult};
+pub use response::{GenericRequestResult, MultiRpcResult};
 pub use rpc_client::{
     ConsensusStrategy, HttpHeader, HttpOutcallError, JsonRpcError, OverrideProvider, ProviderError,
     RegexString, RegexSubstitution, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
