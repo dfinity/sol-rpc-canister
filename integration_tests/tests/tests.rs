@@ -142,9 +142,6 @@ mod generic_request_tests {
 
     #[tokio::test]
     async fn request_should_require_cycles() {
-        let [response_0, response_1, response_2] = json_rpc_sequential_id(
-            json!({"id":0,"jsonrpc":"2.0","result":{"feature-set":2891131721u32,"solana-core":"1.16.7"}}),
-        );
         let setup = Setup::new().await;
         let client = setup.client();
 
