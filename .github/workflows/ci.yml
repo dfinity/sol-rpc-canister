@@ -2,6 +2,7 @@ name: 'SOL RPC'
 
 on:
   pull_request:
+  merge_group:
   push:
     branches:
       - main
@@ -100,3 +101,51 @@ jobs:
 
       - name: Cargo test
         run: cargo test --package sol_rpc_int_tests -- --test-threads 2 --nocapture
+
+  end-to-end-tests:
+    needs: [ reproducible-build ]
+    runs-on: ubuntu-22.04
+    concurrency:
+      group: ci_environment
+      cancel-in-progress: true
+    env:
+      sol_rpc_canister_id: zaylz-mqaaa-aaaar-qaqzq-cai
+      wallet_canister_id: zo2gr-xaaaa-aaaar-qaqyq-cai
+      # Needed to surpass dfx error to use the insecure plaintext identity
+      DFX_WARNING: -mainnet_plaintext_identity
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Download Artifacts'
+        uses: actions/download-artifact@v4
+        with:
+          name: sol_rpc_canister.wasm.gz
+
+      - name: 'Install dfx'
+        uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365
+        with:
+          dfx-version: "0.25.0"
+
+      - name: 'Confirm dfx successful installation'
+        run: dfx --version
+
+      - name: "Import dfx deploy key"
+        env:
+          DFX_DEPLOY_KEY: ${{ secrets.DFX_DEPLOY_KEY }}
+        run: |
+          key_pem=$(mktemp)
+          printenv "DFX_DEPLOY_KEY" > "$key_pem"
+          dfx identity import --storage-mode plaintext ci "$key_pem"
+          rm "$key_pem"
+          dfx identity use ci
+          dfx identity get-principal
+          dfx identity set-wallet --ic --force "${{ env.wallet_canister_id }}"
+          dfx wallet balance --ic
+
+      - name: "Deploy Release Candidate"
+        run: |
+          wallet="${{ env.wallet_canister_id }}"
+          dfx canister --network ic --wallet "$wallet" install --mode upgrade \
+          --wasm "$GITHUB_WORKSPACE/sol_rpc_canister.wasm.gz" \
+          "${{ env.sol_rpc_canister_id }}"          

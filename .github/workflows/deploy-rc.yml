@@ -10,10 +10,15 @@ on:
     paths-ignore:
       - "README.md"
 
+concurrency:
+  group: ci_environment
+  cancel-in-progress: true
+
 jobs:
   deploy-rc:
     runs-on: ubuntu-latest
     env:
+      sol_rpc_canister_id: zaylz-mqaaa-aaaar-qaqzq-cai
       wallet_canister_id: zo2gr-xaaaa-aaaar-qaqyq-cai
       # Needed to surpass dfx error to use the insecure plaintext identity
       DFX_WARNING: -mainnet_plaintext_identity
