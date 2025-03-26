@@ -40,4 +40,4 @@ jobs:
           dfx identity use ci
           dfx identity get-principal
           dfx identity set-wallet --ic --force "${{ env.wallet_canister_id }}"
-          dfx wallet balance --network ic
+          dfx wallet balance --ic
