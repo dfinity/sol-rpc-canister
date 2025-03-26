@@ -20,8 +20,8 @@ impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
 }
 
 impl<T> MultiRpcResult<T> {
-    /// Maps a `MultiRpcResult` containing values of type `T` to a `MultiRpcResult` containing values
-    /// of type `R`.
+    /// Maps a [`MultiRpcResult`] containing values of type `T` to a [`MultiRpcResult`] containing
+    /// values of type `R`.
     pub fn map<R, F>(self, f: F) -> MultiRpcResult<R>
     where
         F: FnOnce(T) -> R + Clone,

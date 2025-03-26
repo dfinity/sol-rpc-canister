@@ -80,7 +80,7 @@ async fn get_slot(
     params: Option<GetSlotParams>,
 ) -> MultiRpcResult<Slot> {
     match CandidRpcClient::new(source, config) {
-        Ok(client) => client.get_slot(params.unwrap_or_default()).await.into(),
+        Ok(client) => client.get_slot(params.unwrap_or_default()).await,
         Err(err) => Err(err).into(),
     }
 }
