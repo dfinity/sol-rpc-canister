@@ -4051,6 +4051,7 @@ dependencies = [
  "ic-cdk",
  "ic-test-utilities-load-wasm",
  "pocket-ic",
+ "regex",
  "serde",
  "serde_bytes",
  "serde_json",
