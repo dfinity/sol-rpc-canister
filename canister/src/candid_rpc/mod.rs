@@ -1,6 +1,6 @@
 use crate::rpc_client::{ReducedResult, SolRpcClient};
 use canhttp::multi::ReductionError;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::Serialize;
 use sol_rpc_types::{GetSlotParams, MultiRpcResult, RpcConfig, RpcResult, RpcSources};
 use solana_clock::Slot;
 use std::fmt::Debug;

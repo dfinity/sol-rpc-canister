@@ -102,7 +102,6 @@ impl SolRpcClient {
                 resolve_rpc_provider(provider.clone()),
                 &read_state(|state| state.get_override_provider()),
             )
-            .map_err(RpcError::from)
             .map(|builder| {
                 builder
                     .max_response_bytes(effective_size_estimate)
