@@ -149,3 +149,7 @@ jobs:
           dfx canister --network ic --wallet "$wallet" install --mode upgrade \
           --wasm "$GITHUB_WORKSPACE/sol_rpc_canister.wasm.gz" \
           "${{ env.sol_rpc_canister_id }}"          
+
+      - name: "Run examples"
+        working-directory: canister/ci
+        run: ../scripts/examples.sh
