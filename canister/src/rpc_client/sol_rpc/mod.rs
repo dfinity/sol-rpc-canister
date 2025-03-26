@@ -41,19 +41,28 @@ pub const MAX_PAYLOAD_SIZE: u64 = HTTP_MAX_SIZE - HEADER_SIZE_LIMIT;
 pub enum ResponseTransform {
     #[n(0)]
     GetSlot,
+    #[n(1)]
+    Raw,
 }
 
 impl ResponseTransform {
     fn apply(&self, body_bytes: &mut Vec<u8>) {
+        use serde_json::{from_slice, to_vec, Value};
+
         fn redact_response<T>(body: &mut Vec<u8>)
         where
             T: Serialize + DeserializeOwned,
         {
-            let response: JsonRpcResponse<T> = match serde_json::from_slice(body) {
+            let response: JsonRpcResponse<T> = match from_slice(body) {
                 Ok(response) => response,
                 Err(_) => return,
             };
-            *body = serde_json::to_vec(&response).expect("BUG: failed to serialize response");
+            *body = to_vec(&response).expect("BUG: failed to serialize response");
+        }
+
+        fn canonicalize(text: &[u8]) -> Option<Vec<u8>> {
+            let json = from_slice::<Value>(text).ok()?;
+            to_vec(&json).ok()
         }
 
         match self {
@@ -61,6 +70,11 @@ impl ResponseTransform {
             //  add a unit test simulating consensus when the providers
             //  return slightly differing results.
             Self::GetSlot => redact_response::<Slot>(body_bytes),
+            Self::Raw => {
+                if let Some(bytes) = canonicalize(body_bytes) {
+                    *body_bytes = bytes
+                }
+            }
         }
     }
 }
@@ -104,9 +118,9 @@ impl fmt::Display for ResponseSizeEstimate {
 
 /// Calls a JSON-RPC method at the specified URL.
 pub async fn call<I, O>(
+    retry: bool,
     provider: &RpcSource,
-    method: impl Into<String>,
-    params: I,
+    request_body: JsonRpcRequest<I>,
     response_size_estimate: ResponseSizeEstimate,
     response_transform: &Option<ResponseTransform>,
 ) -> Result<O, RpcError>
@@ -135,10 +149,10 @@ where
         "cleanup_response".to_owned(),
         transform_op.clone(),
     ))
-    .body(JsonRpcRequest::new(method, params))
+    .body(request_body)
     .expect("BUG: invalid request");
 
-    let mut client = http_client(true);
+    let mut client = http_client(retry);
     let response = client.call(request).await?;
     match response.into_body().into_result() {
         Ok(r) => Ok(r),

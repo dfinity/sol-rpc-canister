@@ -7,6 +7,7 @@ use crate::{
     providers::Providers,
     rpc_client::sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
 };
+use canhttp::http::json::JsonRpcRequest;
 use canlog::log;
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
@@ -18,6 +19,25 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Debug,
 };
+
+pub async fn call<I, O>(
+    provider: &RpcSource,
+    request: JsonRpcRequest<I>,
+    max_response_size: u64,
+) -> Result<O, RpcError>
+where
+    I: Serialize + Clone + Debug,
+    O: Debug + DeserializeOwned,
+{
+    sol_rpc::call::<_, _>(
+        false,
+        provider,
+        request,
+        ResponseSizeEstimate::new(max_response_size),
+        &Some(ResponseTransform::Raw),
+    )
+    .await
+}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SolRpcClient {
@@ -58,7 +78,7 @@ impl SolRpcClient {
     /// there is no single point of failure.
     async fn parallel_call<I, O>(
         &self,
-        method: impl Into<String> + Clone,
+        method: impl Into<String>,
         params: I,
         response_size_estimate: ResponseSizeEstimate,
         response_transform: &Option<ResponseTransform>,
@@ -68,6 +88,7 @@ impl SolRpcClient {
         O: Debug + DeserializeOwned,
     {
         let providers = self.providers();
+        let request = JsonRpcRequest::new(method, params);
         let results = {
             let mut fut = Vec::with_capacity(providers.len());
             for provider in providers {
@@ -78,9 +99,9 @@ impl SolRpcClient {
                 );
                 fut.push(async {
                     sol_rpc::call::<_, _>(
+                        true,
                         provider,
-                        method.clone(),
-                        params.clone(),
+                        request.clone(),
                         response_size_estimate,
                         response_transform,
                     )

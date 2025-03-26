@@ -602,8 +602,9 @@ dependencies = [
 [[package]]
 name = "canhttp"
 version = "0.1.0"
-source = "git+https://github.com/dfinity/evm-rpc-canister?rev=c1d9a12eb9d3af92671dc07963c8887ec178fcbc#c1d9a12eb9d3af92671dc07963c8887ec178fcbc"
+source = "git+https://github.com/dfinity/evm-rpc-canister?rev=1aeeca3bdcb86ce4493b71e4117f65ab78475396#1aeeca3bdcb86ce4493b71e4117f65ab78475396"
 dependencies = [
+ "assert_matches",
  "futures-util",
  "http 1.3.1",
  "ic-cdk",
@@ -1528,14 +1529,14 @@ dependencies = [
 
 [[package]]
 name = "getrandom"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43a49c392881ce6d5c3b8cb70f98717b7c07aabbdff06687b9030dbfbe2725f8"
+checksum = "73fea8450eea4bac3940448fb7ae50d91f034f941199fcd9d909a5a07aa455f0"
 dependencies = [
  "cfg-if",
  "libc",
- "wasi 0.13.3+wasi-0.2.2",
- "windows-targets 0.52.6",
+ "r-efi",
+ "wasi 0.14.2+wasi-0.2.4",
 ]
 
 [[package]]
@@ -2482,18 +2483,18 @@ dependencies = [
 
 [[package]]
 name = "minicbor"
-version = "0.26.2"
+version = "0.26.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9463b6054ac1e6df4f04fdec5313cf443363e15c804deae85ceee9c14eb7ea33"
+checksum = "1936e27fffe7d8557c060eb82cb71668608cd1a5fb56b63e66d22ae8d7564321"
 dependencies = [
  "minicbor-derive",
 ]
 
 [[package]]
 name = "minicbor-derive"
-version = "0.16.1"
+version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75aafe3a28e1128ffca395f05b987fbdd0c49faefb8a852e0dd2ac007c9669a1"
+checksum = "a9882ef5c56df184b8ffc107fc6c61e33ee3a654b021961d790a78571bb9d67a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3130,6 +3131,12 @@ checksum = "1885c039570dc00dcb4ff087a89e185fd56bae234ddc7f056a945bf36467248d"
 dependencies = [
  "proc-macro2",
 ]
+
+[[package]]
+name = "r-efi"
+version = "5.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "74765f6d916ee2faa39bc8e68e4f3ed8949b48cccdac59983d287a7cb71ce9c5"
 
 [[package]]
 name = "rand"
@@ -4006,7 +4013,7 @@ dependencies = [
  "serde_json",
  "sol_rpc_types",
  "solana-clock",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
  "tower",
  "tower-http",
  "url",
@@ -4029,6 +4036,7 @@ dependencies = [
 name = "sol_rpc_int_tests"
 version = "0.1.0"
 dependencies = [
+ "assert_matches",
  "async-trait",
  "candid",
  "canlog",
@@ -4057,7 +4065,7 @@ dependencies = [
  "ic-cdk",
  "regex",
  "serde",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
  "url",
 ]
 
@@ -5651,7 +5659,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "488960f40a3fd53d72c2a29a58722561dee8afdd175bd88e3db4677d7b2ba600"
 dependencies = [
  "fastrand",
- "getrandom 0.3.1",
+ "getrandom 0.3.2",
  "once_cell",
  "rustix",
  "windows-sys 0.59.0",
@@ -6218,9 +6226,9 @@ checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 
 [[package]]
 name = "wasi"
-version = "0.13.3+wasi-0.2.2"
+version = "0.14.2+wasi-0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26816d2e1a4a36a2940b96c5296ce403917633dff8f3440e9b236ed6f6bacad2"
+checksum = "9683f9a5a998d873c0d21fcbe3c083009670149a8fab228644b8bd36b2c48cb3"
 dependencies = [
  "wit-bindgen-rt",
 ]
@@ -6661,9 +6669,9 @@ dependencies = [
 
 [[package]]
 name = "wit-bindgen-rt"
-version = "0.33.0"
+version = "0.39.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3268f3d866458b787f390cf61f4bbb563b922d091359f9608842999eaee3943c"
+checksum = "6f42320e61fe2cfd34354ecb597f86f413484a798ba44a8ca1165c58d42da6c1"
 dependencies = [
  "bitflags 2.9.0",
 ]

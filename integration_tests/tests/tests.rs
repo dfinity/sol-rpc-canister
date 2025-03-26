@@ -1,5 +1,107 @@
+use sol_rpc_canister::constants::*;
 use sol_rpc_int_tests::{Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID};
-use sol_rpc_types::{InstallArgs, RpcAccess, RpcAuth, SolanaCluster, SupportedRpcProviderId};
+use sol_rpc_types::{
+    InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcEndpoint, RpcError, RpcSource,
+    SolanaCluster, SupportedRpcProviderId,
+};
+
+const MOCK_REQUEST_URL: &str = "https://api.devnet.solana.com/";
+const MOCK_REQUEST_PAYLOAD: &str = r#"{"jsonrpc":"2.0","id":1,"method":"getVersion"}"#;
+const MOCK_REQUEST_RESPONSE: &str =
+    r#"{"jsonrpc":"2.0","id":1,"result":{"feature-set":2891131721,"solana-core":"1.16.7"}}"#;
+const MOCK_REQUEST_MAX_RESPONSE_BYTES: u64 = 1000;
+
+mod mock_request_tests {
+    use super::*;
+    use assert_matches::*;
+    use ic_cdk::api::management_canister::http_request::HttpHeader;
+    use pocket_ic::common::rest::CanisterHttpMethod;
+    use sol_rpc_int_tests::mock::*;
+
+    async fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
+        let setup = Setup::with_args(InstallArgs {
+            mode: Some(Mode::Demo),
+            ..Default::default()
+        })
+        .await;
+        let client = setup.client();
+        let expected_result: serde_json::Value =
+            serde_json::from_str(MOCK_REQUEST_RESPONSE).unwrap();
+        assert_matches!(
+            client
+                .mock_http(builder_fn(MockOutcallBuilder::new(
+                    200,
+                    MOCK_REQUEST_RESPONSE
+                )))
+                .request(
+                    RpcSource::Custom(RpcEndpoint {
+                        url: MOCK_REQUEST_URL.to_string(),
+                        headers: Some(vec![HttpHeader {
+                            name: "custom".to_string(),
+                            value: "Value".to_string(),
+                        }]),
+                    }),
+                    MOCK_REQUEST_PAYLOAD,
+                    MOCK_REQUEST_MAX_RESPONSE_BYTES,
+                    0,
+                )
+                .await,
+            Ok(msg) if msg == serde_json::Value::to_string(&expected_result["result"])
+        );
+    }
+
+    #[tokio::test]
+    async fn mock_request_should_succeed() {
+        mock_request(|builder| builder).await
+    }
+
+    #[tokio::test]
+    async fn mock_request_should_succeed_with_url() {
+        mock_request(|builder| builder.with_url(MOCK_REQUEST_URL)).await
+    }
+
+    #[tokio::test]
+    async fn mock_request_should_succeed_with_method() {
+        mock_request(|builder| builder.with_method(CanisterHttpMethod::POST)).await
+    }
+
+    #[tokio::test]
+    async fn mock_request_should_succeed_with_request_headers() {
+        mock_request(|builder| {
+            builder.with_request_headers(vec![
+                (CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE),
+                ("custom", "Value"),
+            ])
+        })
+        .await
+    }
+
+    #[tokio::test]
+    async fn mock_request_should_succeed_with_request_body() {
+        mock_request(|builder| builder.with_raw_request_body(MOCK_REQUEST_PAYLOAD)).await
+    }
+
+    #[tokio::test]
+    async fn mock_request_should_succeed_with_max_response_bytes() {
+        mock_request(|builder| builder.with_max_response_bytes(MOCK_REQUEST_MAX_RESPONSE_BYTES))
+            .await
+    }
+
+    #[tokio::test]
+    async fn mock_request_should_succeed_with_all() {
+        mock_request(|builder| {
+            builder
+                .with_url(MOCK_REQUEST_URL)
+                .with_method(CanisterHttpMethod::POST)
+                .with_request_headers(vec![
+                    (CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE),
+                    ("custom", "Value"),
+                ])
+                .with_raw_request_body(MOCK_REQUEST_PAYLOAD)
+        })
+        .await
+    }
+}
 
 mod get_provider_tests {
     use super::*;
@@ -30,6 +132,63 @@ mod get_provider_tests {
                 },
             )
         );
+
+        setup.drop().await;
+    }
+}
+
+mod generic_request_tests {
+    use super::*;
+    use assert_matches::*;
+    use sol_rpc_int_tests::mock::MockOutcallBuilder;
+
+    #[tokio::test]
+    async fn request_should_require_cycles() {
+        let setup = Setup::new().await;
+        let client = setup.client();
+
+        let result = client
+            .request(
+                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
+                MOCK_REQUEST_PAYLOAD,
+                MOCK_REQUEST_MAX_RESPONSE_BYTES,
+                0,
+            )
+            .await;
+
+        assert_matches!(
+            result,
+            Err(RpcError::ProviderError(ProviderError::TooFewCycles {
+                expected: _,
+                received: 0
+            }))
+        );
+
+        setup.drop().await;
+    }
+
+    #[tokio::test]
+    async fn request_should_succeed_in_demo_mode() {
+        let setup = Setup::with_args(InstallArgs {
+            mode: Some(Mode::Demo),
+            ..Default::default()
+        })
+        .await;
+        let client = setup.client();
+
+        let result = client
+            .mock_http(MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE))
+            .request(
+                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
+                MOCK_REQUEST_PAYLOAD,
+                MOCK_REQUEST_MAX_RESPONSE_BYTES,
+                0,
+            )
+            .await;
+
+        let expected_result: serde_json::Value =
+            serde_json::from_str(MOCK_REQUEST_RESPONSE).unwrap();
+        assert_matches!(result, Ok(msg) if msg == serde_json::Value::to_string(&expected_result["result"]));
 
         setup.drop().await;
     }
