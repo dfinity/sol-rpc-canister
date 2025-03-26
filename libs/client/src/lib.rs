@@ -90,7 +90,7 @@ impl<R: Runtime> SolRpcClient<R> {
                 self.sol_rpc_canister,
                 "updateApiKeys",
                 (api_keys.to_vec(),),
-                10_000,
+                0,
             )
             .await
             .unwrap()
@@ -110,10 +110,10 @@ impl<R: Runtime> SolRpcClient<R> {
                     None::<RpcConfig>,
                     params,
                 ),
-                1_000_000_000,
+                10_000_000_000,
             )
             .await
-            .expect("Client error: failed to call getSlot")
+            .expect("Client error: failed to call `getSlot`")
     }
 
     /// Call `request` on the SOL RPC canister.
