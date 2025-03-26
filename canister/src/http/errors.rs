@@ -88,8 +88,8 @@ impl HttpsOutcallError for HttpClientError {
             HttpClientError::NotHandledError(_)
             | HttpClientError::CyclesAccountingError(_)
             | HttpClientError::UnsuccessfulHttpResponse(_)
-            | HttpClientError::InvalidJsonResponse(_)
-            | HttpClientError::InvalidJsonResponseId(_) => false,
+            | HttpClientError::InvalidJsonResponseId(_)
+            | HttpClientError::InvalidJsonResponse(_) => false,
         }
     }
 }

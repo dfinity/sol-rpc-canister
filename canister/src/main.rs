@@ -8,11 +8,12 @@ use sol_rpc_canister::{
     logs::Priority,
     metrics::encode_metrics,
     providers::{get_provider, PROVIDERS},
+    rpc_client,
     state::{mutate_state, read_state},
 };
 use sol_rpc_types::{
-    GetSlotParams, MultiRpcResult, RpcAccess, RpcConfig, RpcSources, SupportedRpcProvider,
-    SupportedRpcProviderId,
+    GetSlotParams, MultiRpcResult, RpcAccess, RpcConfig, RpcError, RpcResult, RpcSource,
+    RpcSources, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_clock::Slot;
 use std::str::FromStr;
@@ -84,6 +85,21 @@ async fn get_slot(
         Ok(client) => client.get_slot(params.unwrap_or_default()).await.into(),
         Err(err) => Err(err).into(),
     }
+}
+
+#[update]
+#[candid_method]
+async fn request(
+    provider: RpcSource,
+    json_rpc_payload: String,
+    max_response_bytes: u64,
+) -> RpcResult<String> {
+    let request: canhttp::http::json::JsonRpcRequest<serde_json::Value> =
+        serde_json::from_str(&json_rpc_payload)
+            .map_err(|e| RpcError::ValidationError(format!("Invalid JSON RPC request: {e}")))?;
+    rpc_client::call(&provider, request, max_response_bytes)
+        .await
+        .map(|value: serde_json::Value| value.to_string())
 }
 
 #[query(hidden = true)]
