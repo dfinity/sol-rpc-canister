@@ -13,6 +13,8 @@ on:
 jobs:
   deploy-rc:
     runs-on: ubuntu-latest
+    env:
+      wallet_canister_id: zo2gr-xaaaa-aaaar-qaqyq-cai
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
@@ -25,13 +27,15 @@ jobs:
       - name: 'Confirm dfx successful installation'
         run: dfx --version
 
-      - name: "Install dfx deploy key"
+      - name: "Import dfx deploy key"
         env:
           DFX_DEPLOY_KEY: ${{ secrets.DFX_DEPLOY_KEY }}
         run: |
-            key_pem=$(mktemp)
-            printenv "DFX_DEPLOY_KEY" > "$key_pem"
-            dfx identity import --storage-mode plaintext ci "$key_pem"
-            rm "$key_pem"
-            dfx identity use ci
-            dfx identity get-principal
+          key_pem=$(mktemp)
+          printenv "DFX_DEPLOY_KEY" > "$key_pem"
+          dfx identity import --storage-mode plaintext ci "$key_pem"
+          rm "$key_pem"
+          dfx identity use ci
+          dfx identity get-principal
+          dfx identity set-wallet --ic --force "${{ env.wallet_canister_id }}"
+          dfx wallet balance --network ic
