@@ -1,5 +1,5 @@
 use sol_rpc_canister::constants::*;
-use sol_rpc_int_tests::{Setup, SolRpcTestClient, ADDITIONAL_TEST_ID};
+use sol_rpc_int_tests::{Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID};
 use sol_rpc_types::{
     InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcEndpoint, RpcError, RpcSource,
     SolanaCluster, SupportedRpcProviderId,
@@ -190,7 +190,11 @@ mod retrieve_logs_tests {
 
     #[tokio::test]
     async fn should_retrieve_logs() {
-        let setup = Setup::new().await;
+        let setup = Setup::with_args(InstallArgs {
+            manage_api_keys: Some(vec![DEFAULT_CALLER_TEST_ID]),
+            ..Default::default()
+        })
+        .await;
         let client = setup.client();
         assert_eq!(client.retrieve_logs("DEBUG").await, vec![]);
         assert_eq!(client.retrieve_logs("INFO").await, vec![]);
@@ -198,7 +202,6 @@ mod retrieve_logs_tests {
         // Generate some log
         setup
             .client()
-            .with_caller(setup.controller())
             .update_api_keys(&[(
                 SupportedRpcProviderId::AlchemyMainnet,
                 Some("unauthorized-api-key".to_string()),
@@ -217,16 +220,15 @@ mod update_api_key_tests {
 
     #[tokio::test]
     async fn should_update_api_key() {
-        let authorized_caller = ADDITIONAL_TEST_ID;
         let setup = Setup::with_args(InstallArgs {
-            manage_api_keys: Some(vec![authorized_caller]),
+            manage_api_keys: Some(vec![DEFAULT_CALLER_TEST_ID]),
             ..Default::default()
         })
         .await;
 
         let provider = SupportedRpcProviderId::AlchemyMainnet;
         let api_key = "test-api-key";
-        let client = setup.client().with_caller(authorized_caller);
+        let client = setup.client();
         client
             .update_api_keys(&[(provider, Some(api_key.to_string()))])
             .await;
@@ -254,10 +256,13 @@ mod update_api_key_tests {
     #[tokio::test]
     #[should_panic(expected = "Trying to set API key for unauthenticated provider")]
     async fn should_prevent_unauthenticated_update_api_keys() {
-        let setup = Setup::new().await;
+        let setup = Setup::with_args(InstallArgs {
+            manage_api_keys: Some(vec![DEFAULT_CALLER_TEST_ID]),
+            ..Default::default()
+        })
+        .await;
         setup
             .client()
-            .with_caller(setup.controller())
             .update_api_keys(&[(
                 SupportedRpcProviderId::PublicNodeMainnet,
                 Some("invalid-api-key".to_string()),
@@ -271,10 +276,14 @@ mod canister_upgrade_tests {
 
     #[tokio::test]
     async fn upgrade_should_keep_api_keys() {
-        let setup = Setup::new().await;
+        let setup = Setup::with_args(InstallArgs {
+            manage_api_keys: Some(vec![DEFAULT_CALLER_TEST_ID]),
+            ..Default::default()
+        })
+        .await;
         let provider = SupportedRpcProviderId::AlchemyMainnet;
         let api_key = "test-api-key";
-        let client = setup.client().with_caller(setup.controller());
+        let client = setup.client();
         client
             .update_api_keys(&[(provider, Some(api_key.to_string()))])
             .await;
@@ -291,9 +300,8 @@ mod canister_upgrade_tests {
 
     #[tokio::test]
     async fn upgrade_should_keep_manage_api_key_principals() {
-        let authorized_caller = ADDITIONAL_TEST_ID;
         let setup = Setup::with_args(InstallArgs {
-            manage_api_keys: Some(vec![authorized_caller]),
+            manage_api_keys: Some(vec![DEFAULT_CALLER_TEST_ID]),
             ..Default::default()
         })
         .await;
@@ -305,7 +313,6 @@ mod canister_upgrade_tests {
             .await;
         setup
             .client()
-            .with_caller(authorized_caller)
             .update_api_keys(&[(
                 SupportedRpcProviderId::AlchemyMainnet,
                 Some("authorized-api-key".to_string()),
@@ -316,9 +323,8 @@ mod canister_upgrade_tests {
     #[tokio::test]
     #[should_panic(expected = "You are not authorized")]
     async fn upgrade_should_change_manage_api_key_principals() {
-        let deauthorized_caller = ADDITIONAL_TEST_ID;
         let setup = Setup::with_args(InstallArgs {
-            manage_api_keys: Some(vec![deauthorized_caller]),
+            manage_api_keys: Some(vec![DEFAULT_CALLER_TEST_ID]),
             ..Default::default()
         })
         .await;
@@ -330,7 +336,6 @@ mod canister_upgrade_tests {
             .await;
         setup
             .client()
-            .with_caller(deauthorized_caller)
             .update_api_keys(&[(
                 SupportedRpcProviderId::AlchemyMainnet,
                 Some("unauthorized-api-key".to_string()),
