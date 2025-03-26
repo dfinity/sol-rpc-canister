@@ -8,8 +8,7 @@ use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    GetSlotParams, RpcConfig, RpcSources,
-    SupportedRpcProvider, SupportedRpcProviderId,
+    GetSlotParams, RpcConfig, RpcSources, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_clock::Slot;
 
@@ -140,7 +139,6 @@ impl<R: Runtime> SolRpcClient<R> {
     pub async fn request(
         &self,
         json_rpc_payload: &str,
-        max_response_bytes: u64,
         cycles: u128,
     ) -> sol_rpc_types::MultiRpcResult<String> {
         self.runtime
@@ -151,7 +149,6 @@ impl<R: Runtime> SolRpcClient<R> {
                     self.rpc_sources.clone(),
                     self.rpc_config.clone(),
                     json_rpc_payload,
-                    max_response_bytes,
                 ),
                 cycles,
             )

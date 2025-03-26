@@ -2,7 +2,6 @@ use candid::candid_method;
 use canhttp::http::json::JsonRpcRequest;
 use canlog::{log, Log, Sort};
 use ic_cdk::{api::is_controller, query, update};
-use serde::{Deserialize, Serialize};
 use sol_rpc_canister::{
     candid_rpc::CandidRpcClient,
     http_types, lifecycle,
@@ -11,8 +10,8 @@ use sol_rpc_canister::{
     state::{mutate_state, read_state},
 };
 use sol_rpc_types::{
-    GenericRequestResult, GetSlotParams, MultiRpcResult, RpcAccess, RpcConfig, RpcError,
-    RpcSources, SupportedRpcProvider, SupportedRpcProviderId,
+    GetSlotParams, MultiRpcResult, RpcAccess, RpcConfig, RpcError, RpcSources,
+    SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_clock::Slot;
 use std::str::FromStr;
@@ -102,12 +101,10 @@ async fn request(
             .into()
         }
     };
-    let result: MultiRpcResult<String> = match CandidRpcClient::new(source, config) {
+    match CandidRpcClient::new(source, config) {
         Ok(client) => client.call(request).await.map(|value| value.to_string()),
         Err(err) => Err(err).into(),
-    };
-    ic_cdk::println!("Result: {:?}", result);
-    result
+    }
 }
 
 #[query(hidden = true)]

@@ -1,8 +1,15 @@
+use assert_matches::*;
+use ic_cdk::api::management_canister::http_request::HttpHeader;
+use pocket_ic::common::rest::CanisterHttpMethod;
+use serde_json::json;
 use sol_rpc_canister::constants::*;
-use sol_rpc_int_tests::{Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID};
+use sol_rpc_int_tests::{
+    json_rpc_sequential_id, mock::MockOutcallBuilder, Setup, SolRpcTestClient,
+    DEFAULT_CALLER_TEST_ID,
+};
 use sol_rpc_types::{
-    InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcEndpoint, RpcError, RpcSource,
-    SolanaCluster, SupportedRpcProviderId,
+    InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
+    RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
 
 const MOCK_REQUEST_URL: &str = "https://api.devnet.solana.com/";
@@ -13,11 +20,6 @@ const MOCK_REQUEST_MAX_RESPONSE_BYTES: u64 = 1000;
 
 mod mock_request_tests {
     use super::*;
-    use assert_matches::*;
-    use ic_cdk::api::management_canister::http_request::HttpHeader;
-    use pocket_ic::common::rest::CanisterHttpMethod;
-    use sol_rpc_int_tests::mock::*;
-    use sol_rpc_types::RpcSources;
 
     async fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
         let setup = Setup::with_args(InstallArgs {
@@ -27,6 +29,10 @@ mod mock_request_tests {
         .await;
         let client = setup
             .client()
+            .with_rpc_config(RpcConfig {
+                response_size_estimate: Some(MOCK_REQUEST_MAX_RESPONSE_BYTES),
+                ..RpcConfig::default()
+            })
             .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Custom(RpcEndpoint {
                 url: MOCK_REQUEST_URL.to_string(),
                 headers: Some(vec![HttpHeader {
@@ -38,11 +44,8 @@ mod mock_request_tests {
             serde_json::from_str(MOCK_REQUEST_RESPONSE).unwrap();
         assert_matches!(
             client
-                .mock_http(builder_fn(MockOutcallBuilder::new(
-                    200,
-                    MOCK_REQUEST_RESPONSE,
-                )))
-                .request(MOCK_REQUEST_PAYLOAD, MOCK_REQUEST_MAX_RESPONSE_BYTES, 0)
+                .mock_http(builder_fn(MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE)))
+                .request(MOCK_REQUEST_PAYLOAD, 0)
                 .await,
             sol_rpc_types::MultiRpcResult::Consistent(Ok(msg)) if msg == serde_json::Value::to_string(&expected_result["result"])
         );
@@ -103,7 +106,6 @@ mod mock_request_tests {
 
 mod get_provider_tests {
     use super::*;
-    use sol_rpc_types::SupportedRpcProvider;
 
     #[tokio::test]
     async fn should_get_providers() {
@@ -137,34 +139,40 @@ mod get_provider_tests {
 
 mod generic_request_tests {
     use super::*;
-    use assert_matches::*;
-    use sol_rpc_int_tests::mock::MockOutcallBuilder;
-    
 
     #[tokio::test]
     async fn request_should_require_cycles() {
+        let [response_0, response_1, response_2] = json_rpc_sequential_id(
+            json!({"id":0,"jsonrpc":"2.0","result":{"feature-set":2891131721u32,"solana-core":"1.16.7"}}),
+        );
         let setup = Setup::new().await;
         let client = setup.client();
 
-        let result = client
-            .request(MOCK_REQUEST_PAYLOAD, MOCK_REQUEST_MAX_RESPONSE_BYTES, 0)
-            .await;
+        let results = client
+            .request(MOCK_REQUEST_PAYLOAD, 0)
+            .await
+            // The result is expected to be inconsistent because the different provider URLs means
+            // the request and hence expected number of cycles for each provider is different.
+            .expect_inconsistent();
 
-        assert_matches!(
-            result,
-            sol_rpc_types::MultiRpcResult::Consistent(Err(RpcError::ProviderError(
-                ProviderError::TooFewCycles {
+        for (_provider, result) in results {
+            assert_matches!(
+                result,
+                Err(RpcError::ProviderError(ProviderError::TooFewCycles {
                     expected: _,
                     received: 0
-                }
-            )))
-        );
+                }))
+            );
+        }
 
         setup.drop().await;
     }
 
     #[tokio::test]
     async fn request_should_succeed_in_demo_mode() {
+        let [response_0, response_1, response_2] = json_rpc_sequential_id(
+            json!({"id":0,"jsonrpc":"2.0","result":{"feature-set":2891131721u32,"solana-core":"1.16.7"}}),
+        );
         let setup = Setup::with_args(InstallArgs {
             mode: Some(Mode::Demo),
             ..Default::default()
@@ -173,13 +181,20 @@ mod generic_request_tests {
         let client = setup.client();
 
         let result = client
-            .mock_http(MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE))
-            .request(MOCK_REQUEST_PAYLOAD, MOCK_REQUEST_MAX_RESPONSE_BYTES, 0)
-            .await;
+            .mock_http_sequence(vec![
+                MockOutcallBuilder::new(200, &response_0),
+                MockOutcallBuilder::new(200, &response_1),
+                MockOutcallBuilder::new(200, &response_2),
+            ])
+            .request(MOCK_REQUEST_PAYLOAD, 0)
+            .await
+            .expect_consistent();
 
-        let expected_result: serde_json::Value =
-            serde_json::from_str(MOCK_REQUEST_RESPONSE).unwrap();
-        assert_matches!(result, sol_rpc_types::MultiRpcResult::Consistent(Ok(msg)) if msg == serde_json::Value::to_string(&expected_result["result"]));
+        fn extract_result(response: &str) -> String {
+            let response = serde_json::from_str::<serde_json::Value>(response).unwrap();
+            serde_json::Value::to_string(&response["result"])
+        }
+        assert_matches!(result, Ok(msg) if msg == extract_result(MOCK_REQUEST_RESPONSE));
 
         setup.drop().await;
     }

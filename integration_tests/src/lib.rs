@@ -18,8 +18,11 @@ use sol_rpc_canister::{
 };
 use sol_rpc_client::{Runtime, SolRpcClient};
 use sol_rpc_types::{InstallArgs, RpcSources, SolanaCluster, SupportedRpcProviderId};
-use std::env::var;
-use std::{env::set_var, path::PathBuf, time::Duration};
+use std::{
+    env::{set_var, var},
+    path::PathBuf,
+    time::Duration,
+};
 
 pub mod mock;
 use mock::MockOutcall;
@@ -300,6 +303,11 @@ impl PocketIcRuntime<'_> {
             Some(MockStrategy::MockOnce(mock)) => {
                 self.mock_http_once_inner(mock).await;
             }
+            Some(MockStrategy::MockSequence(mocks)) => {
+                for mock in mocks {
+                    self.mock_http_once_inner(mock).await;
+                }
+            }
         }
     }
 
@@ -462,6 +470,7 @@ pub trait SolRpcTestClient<R: Runtime> {
     async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry<Priority>>;
     fn mock_http(self, mock: impl Into<MockOutcall>) -> Self;
     fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self;
+    fn mock_http_sequence(self, mocks: Vec<impl Into<MockOutcall>>) -> Self;
 }
 
 #[async_trait]
@@ -505,12 +514,37 @@ impl SolRpcTestClient<PocketIcRuntime<'_>> for SolRpcClient<PocketIcRuntime<'_>>
             ..self
         }
     }
+
+    fn mock_http_sequence(self, mocks: Vec<impl Into<MockOutcall>>) -> Self {
+        Self {
+            runtime: self.runtime.with_strategy(MockStrategy::MockSequence(
+                mocks.into_iter().map(|mock| mock.into()).collect(),
+            )),
+            ..self
+        }
+    }
+}
+
+pub fn json_rpc_sequential_id<const N: usize>(
+    response: serde_json::Value,
+) -> [serde_json::Value; N] {
+    let first_id = response["id"].as_u64().expect("missing request ID");
+    let mut requests = Vec::with_capacity(N);
+    requests.push(response.clone());
+    for i in 1..N {
+        let mut next_request = response.clone();
+        let new_id = first_id + i as u64;
+        *next_request.get_mut("id").unwrap() = serde_json::Value::Number(new_id.into());
+        requests.push(next_request);
+    }
+    requests.try_into().unwrap()
 }
 
 #[derive(Clone, Debug)]
 enum MockStrategy {
     Mock(MockOutcall),
     MockOnce(MockOutcall),
+    MockSequence(Vec<MockOutcall>),
 }
 
 /// Argument to the wallet canister `wallet_call128` method.

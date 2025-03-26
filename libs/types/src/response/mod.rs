@@ -1,6 +1,7 @@
 use crate::{RpcResult, RpcSource};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
 
 /// Represents an aggregated result from multiple RPC calls to different RPC providers.
 /// The results are aggregated using a [`crate::ConsensusStrategy`].
@@ -33,6 +34,30 @@ impl<T> MultiRpcResult<T> {
                     .map(|(source, result)| (source, result.map(f.clone())))
                     .collect(),
             ),
+        }
+    }
+}
+
+impl<T: Debug> MultiRpcResult<T> {
+    /// Returns the contents of a [`MultiRpcResult`] if it is an instance of
+    /// [`MultiRpcResult::Consistent`] and panics otherwise.
+    pub fn expect_consistent(self) -> RpcResult<T> {
+        match self {
+            MultiRpcResult::Consistent(result) => result,
+            MultiRpcResult::Inconsistent(inconsistent_result) => {
+                panic!("Expected consistent, but got: {:?}", inconsistent_result)
+            }
+        }
+    }
+
+    /// Returns the contents of a [`MultiRpcResult`] if it is an instance of
+    /// [`MultiRpcResult::Inconsistent`] and panics otherwise.
+    pub fn expect_inconsistent(self) -> Vec<(RpcSource, RpcResult<T>)> {
+        match self {
+            MultiRpcResult::Consistent(consistent_result) => {
+                panic!("Expected inconsistent:, but got: {:?}", consistent_result)
+            }
+            MultiRpcResult::Inconsistent(results) => results,
         }
     }
 }
