@@ -50,16 +50,22 @@ pub struct SolRpcClient<R: Runtime> {
     pub runtime: R,
     /// The [`Principal`] of the SOL RPC canister.
     pub sol_rpc_canister: Principal,
+    /// Configuration for how to perform RPC HTTP calls.
+    pub rpc_config: Option<RpcConfig>,
+    /// Defines what RPC sources to fetch from.
+    pub rpc_sources: RpcSources,
 }
 
 impl SolRpcClient<IcRuntime> {
     /// Instantiate a new client to be used by a canister on the Internet Computer.
     ///
     /// To use another runtime, see [`Self::new`].
-    pub fn new_for_ic(sol_rpc_canister: Principal) -> Self {
+    pub fn new_for_ic(sol_rpc_canister: Principal, rpc_sources: RpcSources) -> Self {
         Self {
             runtime: IcRuntime {},
             sol_rpc_canister,
+            rpc_config: None,
+            rpc_sources,
         }
     }
 }
@@ -68,10 +74,28 @@ impl<R: Runtime> SolRpcClient<R> {
     /// Instantiate a new client with a specific runtime.
     ///
     /// To use the client inside a canister, see [`SolRpcClient<IcRuntime>::new_for_ic`].
-    pub fn new(runtime: R, sol_rpc_canister: Principal) -> Self {
+    pub fn new(runtime: R, sol_rpc_canister: Principal, rpc_sources: RpcSources) -> Self {
         Self {
             runtime,
             sol_rpc_canister,
+            rpc_config: None,
+            rpc_sources,
+        }
+    }
+
+    ///
+    pub fn with_rpc_sources(self, rpc_sources: RpcSources) -> Self {
+        SolRpcClient {
+            rpc_sources,
+            ..self
+        }
+    }
+
+    ///
+    pub fn with_rpc_config(self, rpc_config: RpcConfig) -> Self {
+        SolRpcClient {
+            rpc_config: Some(rpc_config),
+            ..self
         }
     }
 
@@ -105,11 +129,7 @@ impl<R: Runtime> SolRpcClient<R> {
             .update_call(
                 self.sol_rpc_canister,
                 "getSlot",
-                (
-                    RpcSources::Default(SolanaCluster::Devnet),
-                    None::<RpcConfig>,
-                    params,
-                ),
+                (self.rpc_sources.clone(), self.rpc_config.clone(), params),
                 1_000_000_000,
             )
             .await
@@ -119,16 +139,20 @@ impl<R: Runtime> SolRpcClient<R> {
     /// Call `request` on the SOL RPC canister.
     pub async fn request(
         &self,
-        service: RpcSource,
         json_rpc_payload: &str,
         max_response_bytes: u64,
         cycles: u128,
-    ) -> RpcResult<String> {
+    ) -> sol_rpc_types::MultiRpcResult<String> {
         self.runtime
             .update_call(
                 self.sol_rpc_canister,
                 "request",
-                (service, json_rpc_payload, max_response_bytes),
+                (
+                    self.rpc_sources.clone(),
+                    self.rpc_config.clone(),
+                    json_rpc_payload,
+                    max_response_bytes,
+                ),
                 cycles,
             )
             .await

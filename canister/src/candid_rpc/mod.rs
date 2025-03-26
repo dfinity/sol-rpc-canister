@@ -1,17 +1,17 @@
-use crate::{
-    rpc_client::{MultiCallError, SolRpcClient},
-    types::MultiRpcResult,
-};
-use sol_rpc_types::{GetSlotParams, RpcConfig, RpcResult, RpcSources};
+use crate::rpc_client::{ReducedResult, SolRpcClient};
+use canhttp::multi::ReductionError;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use sol_rpc_types::{GetSlotParams, MultiRpcResult, RpcConfig, RpcResult, RpcSources};
 use solana_clock::Slot;
+use std::fmt::Debug;
 
-fn process_result<T>(result: Result<T, MultiCallError<T>>) -> MultiRpcResult<T> {
+fn process_result<T>(result: ReducedResult<T>) -> MultiRpcResult<T> {
     match result {
         Ok(value) => MultiRpcResult::Consistent(Ok(value)),
         Err(err) => match err {
-            MultiCallError::ConsistentError(err) => MultiRpcResult::Consistent(Err(err)),
-            MultiCallError::InconsistentResults(multi_call_results) => {
-                let results = multi_call_results.into_vec();
+            ReductionError::ConsistentError(err) => MultiRpcResult::Consistent(Err(err)),
+            ReductionError::InconsistentResults(multi_call_results) => {
+                let results: Vec<_> = multi_call_results.into_iter().collect();
                 results.iter().for_each(|(_service, _service_result)| {
                     // TODO XC-296: Add metrics for inconsistent providers
                 });
@@ -35,5 +35,15 @@ impl CandidRpcClient {
 
     pub async fn get_slot(&self, params: GetSlotParams) -> MultiRpcResult<Slot> {
         process_result(self.client.get_slot(params).await)
+    }
+
+    pub async fn call<I>(
+        &self,
+        request: canhttp::http::json::JsonRpcRequest<I>,
+    ) -> MultiRpcResult<serde_json::Value>
+    where
+        I: Serialize + Clone + Debug,
+    {
+        process_result(self.client.call(request).await)
     }
 }

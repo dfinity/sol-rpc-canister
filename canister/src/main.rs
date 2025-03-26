@@ -1,16 +1,17 @@
 use candid::candid_method;
+use canhttp::http::json::JsonRpcRequest;
 use canlog::{log, Log, Sort};
 use ic_cdk::{api::is_controller, query, update};
+use serde::{Deserialize, Serialize};
 use sol_rpc_canister::{
     candid_rpc::CandidRpcClient,
     http_types, lifecycle,
     logs::Priority,
     providers::{get_provider, PROVIDERS},
-    rpc_client,
     state::{mutate_state, read_state},
 };
 use sol_rpc_types::{
-    GetSlotParams, MultiRpcResult, RpcAccess, RpcConfig, RpcError, RpcResult, RpcSource,
+    GenericRequestResult, GetSlotParams, MultiRpcResult, RpcAccess, RpcConfig, RpcError,
     RpcSources, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_clock::Slot;
@@ -88,16 +89,25 @@ async fn get_slot(
 #[update]
 #[candid_method]
 async fn request(
-    provider: RpcSource,
+    source: RpcSources,
+    config: Option<RpcConfig>,
     json_rpc_payload: String,
-    max_response_bytes: u64,
-) -> RpcResult<String> {
-    let request: canhttp::http::json::JsonRpcRequest<serde_json::Value> =
-        serde_json::from_str(&json_rpc_payload)
-            .map_err(|e| RpcError::ValidationError(format!("Invalid JSON RPC request: {e}")))?;
-    rpc_client::call(&provider, request, max_response_bytes)
-        .await
-        .map(|value: serde_json::Value| value.to_string())
+) -> MultiRpcResult<String> {
+    let request: JsonRpcRequest<serde_json::Value> = match serde_json::from_str(&json_rpc_payload) {
+        Ok(req) => req,
+        Err(e) => {
+            return Err(RpcError::ValidationError(format!(
+                "Invalid JSON RPC request: {e}"
+            )))
+            .into()
+        }
+    };
+    let result: MultiRpcResult<String> = match CandidRpcClient::new(source, config) {
+        Ok(client) => client.call(request).await.map(|value| value.to_string()),
+        Err(err) => Err(err).into(),
+    };
+    ic_cdk::println!("Result: {:?}", result);
+    result
 }
 
 #[query(hidden = true)]

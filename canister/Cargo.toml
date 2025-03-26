@@ -15,7 +15,7 @@ path = "src/main.rs"
 [dependencies]
 assert_matches = { workspace = true }
 candid = { workspace = true }
-canhttp = { workspace = true, features = ["json"] }
+canhttp = { workspace = true, features = ["json", "multi"] }
 canlog = { path = "../canlog", features = ["derive"] }
 ciborium = { workspace = true }
 const_format = { workspace = true }

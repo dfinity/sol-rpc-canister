@@ -8,7 +8,7 @@ use sol_rpc_types::{
 const MOCK_REQUEST_URL: &str = "https://api.devnet.solana.com/";
 const MOCK_REQUEST_PAYLOAD: &str = r#"{"jsonrpc":"2.0","id":1,"method":"getVersion"}"#;
 const MOCK_REQUEST_RESPONSE: &str =
-    r#"{"jsonrpc":"2.0","id":1,"result":{"feature-set":2891131721,"solana-core":"1.16.7"}}"#;
+    r#"{"jsonrpc":"2.0","id":0,"result":{"feature-set":2891131721,"solana-core":"1.16.7"}}"#;
 const MOCK_REQUEST_MAX_RESPONSE_BYTES: u64 = 1000;
 
 mod mock_request_tests {
@@ -17,6 +17,7 @@ mod mock_request_tests {
     use ic_cdk::api::management_canister::http_request::HttpHeader;
     use pocket_ic::common::rest::CanisterHttpMethod;
     use sol_rpc_int_tests::mock::*;
+    use sol_rpc_types::RpcSources;
 
     async fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
         let setup = Setup::with_args(InstallArgs {
@@ -24,29 +25,26 @@ mod mock_request_tests {
             ..Default::default()
         })
         .await;
-        let client = setup.client();
+        let client = setup.client_with_rpc_sources(RpcSources::Custom(vec![RpcSource::Custom(
+            RpcEndpoint {
+                url: MOCK_REQUEST_URL.to_string(),
+                headers: Some(vec![HttpHeader {
+                    name: "custom".to_string(),
+                    value: "Value".to_string(),
+                }]),
+            },
+        )]));
         let expected_result: serde_json::Value =
             serde_json::from_str(MOCK_REQUEST_RESPONSE).unwrap();
         assert_matches!(
             client
                 .mock_http(builder_fn(MockOutcallBuilder::new(
                     200,
-                    MOCK_REQUEST_RESPONSE
+                    MOCK_REQUEST_RESPONSE,
                 )))
-                .request(
-                    RpcSource::Custom(RpcEndpoint {
-                        url: MOCK_REQUEST_URL.to_string(),
-                        headers: Some(vec![HttpHeader {
-                            name: "custom".to_string(),
-                            value: "Value".to_string(),
-                        }]),
-                    }),
-                    MOCK_REQUEST_PAYLOAD,
-                    MOCK_REQUEST_MAX_RESPONSE_BYTES,
-                    0,
-                )
+                .request(MOCK_REQUEST_PAYLOAD, MOCK_REQUEST_MAX_RESPONSE_BYTES, 0)
                 .await,
-            Ok(msg) if msg == serde_json::Value::to_string(&expected_result["result"])
+            sol_rpc_types::MultiRpcResult::Consistent(Ok(msg)) if msg == serde_json::Value::to_string(&expected_result["result"])
         );
     }
 
@@ -148,20 +146,15 @@ mod generic_request_tests {
         let client = setup.client();
 
         let result = client
-            .request(
-                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
-                MOCK_REQUEST_PAYLOAD,
-                MOCK_REQUEST_MAX_RESPONSE_BYTES,
-                0,
-            )
+            .request(MOCK_REQUEST_PAYLOAD, MOCK_REQUEST_MAX_RESPONSE_BYTES, 0)
             .await;
 
         assert_matches!(
             result,
-            Err(RpcError::ProviderError(ProviderError::TooFewCycles {
+            sol_rpc_types::MultiRpcResult::Consistent(Err(RpcError::ProviderError(ProviderError::TooFewCycles {
                 expected: _,
                 received: 0
-            }))
+            })))
         );
 
         setup.drop().await;
@@ -178,17 +171,12 @@ mod generic_request_tests {
 
         let result = client
             .mock_http(MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE))
-            .request(
-                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
-                MOCK_REQUEST_PAYLOAD,
-                MOCK_REQUEST_MAX_RESPONSE_BYTES,
-                0,
-            )
+            .request(MOCK_REQUEST_PAYLOAD, MOCK_REQUEST_MAX_RESPONSE_BYTES, 0)
             .await;
 
         let expected_result: serde_json::Value =
             serde_json::from_str(MOCK_REQUEST_RESPONSE).unwrap();
-        assert_matches!(result, Ok(msg) if msg == serde_json::Value::to_string(&expected_result["result"]));
+        assert_matches!(result, sol_rpc_types::MultiRpcResult::Consistent(Ok(msg)) if msg == serde_json::Value::to_string(&expected_result["result"]));
 
         setup.drop().await;
     }

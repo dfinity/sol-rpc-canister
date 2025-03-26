@@ -201,7 +201,9 @@ pub enum RpcSource {
 }
 
 /// Defines a collection of Solana RPC sources.
-#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
+#[derive(
+    Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType, Debug,
+)]
 pub enum RpcSources {
     /// A collection of [`RpcSource`] (either [`RpcSource::Supported`] or [`RpcSource::Custom`]).
     Custom(Vec<RpcSource>),
