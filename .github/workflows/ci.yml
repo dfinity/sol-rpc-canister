@@ -100,3 +100,11 @@ jobs:
 
       - name: Cargo test
         run: cargo test --package sol_rpc_int_tests -- --test-threads 2 --nocapture
+
+      - name: 'Download wallet canister'
+        run: |
+          wget https://github.com/dfinity/sdk/blob/0a82e042adec6f24ba53665312713923bf276a34/src/distributed/wallet.wasm.gz
+
+      - name: 'Set WALLET_WASM_PATH for load_wasm'
+        run: |
+          echo "WALLET_WASM_PATH=$GITHUB_WORKSPACE/wallet.wasm.gz" >> "$GITHUB_ENV"
