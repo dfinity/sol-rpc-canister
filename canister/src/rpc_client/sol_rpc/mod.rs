@@ -9,7 +9,6 @@ use ic_cdk::{
 };
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
-use solana_account_info::AccountInfo;
 use solana_clock::Slot;
 use std::{fmt, fmt::Debug};
 
@@ -60,7 +59,9 @@ impl ResponseTransform {
         }
 
         match self {
-            Self::GetAccountInfo => canonicalize_json_rpc_response::<AccountInfo>(body_bytes),
+            Self::GetAccountInfo => {
+                canonicalize_json_rpc_response::<solana_account::Account>(body_bytes)
+            }
             // TODO XC-292: Add rounding to the response transform and
             //  add a unit test simulating consensus when the providers
             //  return slightly differing results.

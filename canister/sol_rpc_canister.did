@@ -125,6 +125,49 @@ type RejectionCode = variant {
   CanisterReject;
 };
 
+// Represents the encoding of the return value of the `getAccountInfo` Solana RPC method.
+type GetAccountInfoEncoding = variant {
+  base58;
+  base64;
+  // base64+zstd;
+  jsonParsed;
+};
+
+//  Represents a slice of the return value of the `getAccountInfo` Solana RPC method.
+type DataSlice = record {
+  length: nat64;
+  offset: nat64;
+};
+
+// The parameters for a call to the `getAccountInfo` Solana RPC method.
+type GetAccountInfoParams = record {
+  commitment: opt CommitmentLevel;
+  encoding: opt GetAccountInfoEncoding;
+  dataSlice: opt DataSlice;
+  minContextSlot: opt nat64;
+};
+
+// A Solana Ed25519 public key.
+type Pubkey = vec nat8;
+
+// Solana account info.
+type AccountInfo = record {
+    lamports: nat64;
+    data: vec nat8;
+    owner: Pubkey;
+    executable: bool;
+    rent_epoch: nat64;
+};
+
+// Represents the result of a call to the `getAccountInfo` Solana RPC method.
+type GetAccountInfoResult = variant { Ok : AccountInfo; Err : RpcError };
+
+// Represents an aggregated result from multiple RPC calls to the `getAccountInfo` Solana RPC method.
+type MultiGetAccountInfoResult = variant {
+    Consistent : GetAccountInfoResult;
+    Inconsistent : vec record { RpcSource; GetAccountInfoResult };
+};
+
 // Represents a Solana slot
 type Slot = nat64;
 
@@ -211,6 +254,9 @@ service : (InstallArgs,) -> {
   //
   // The caller is the controller or a principal specified in `InstallArgs::manage_api_keys`.
   updateApiKeys : (vec record { SupportedProvider; opt text }) -> ();
+
+  // Call the Solana `getAccountInfo` RPC method and return the resulting slot.
+  getAccountInfo : (RpcSources, opt RpcConfig, Pubkey, opt GetAccountInfoParams) -> (MultiGetAccountInfoResult);
 
   // Call the Solana `getSlot` RPC method and return the resulting slot.
   getSlot : (RpcSources, opt RpcConfig, opt GetSlotParams) -> (MultiGetSlotResult);

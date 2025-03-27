@@ -3999,6 +3999,7 @@ name = "sol_rpc_canister"
 version = "0.1.0"
 dependencies = [
  "assert_matches",
+ "bincode",
  "candid",
  "candid_parser",
  "canhttp",
@@ -4022,7 +4023,7 @@ dependencies = [
  "serde_bytes",
  "serde_json",
  "sol_rpc_types",
- "solana-account-info",
+ "solana-account",
  "solana-clock",
  "solana-pubkey",
  "thiserror 2.0.12",
@@ -4041,7 +4042,9 @@ dependencies = [
  "ic-cdk",
  "serde",
  "sol_rpc_types",
+ "solana-account",
  "solana-clock",
+ "solana-pubkey",
 ]
 
 [[package]]
@@ -4078,7 +4081,7 @@ dependencies = [
  "ic-cdk",
  "regex",
  "serde",
- "solana-account-info",
+ "solana-account",
  "solana-pubkey",
  "strum 0.27.1",
  "thiserror 2.0.12",

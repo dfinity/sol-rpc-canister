@@ -1,8 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::cell::RefCell;
 use std::fmt::Debug;
-use std::rc::Rc;
+
+/// A Solana [slot](https://solana.com/docs/references/terminology#slot).
+pub type Slot = u64;
 
 /// The parameters for a Solana [`getSlot`](https://solana.com/docs/rpc/http/getslot) RPC method call.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
@@ -53,10 +54,11 @@ pub enum GetAccountInfoEncoding {
     /// The account data is base-64 encoded.
     #[serde(rename = "base64")]
     Base64,
-    /// Account data is first compressed using [Zstandard](http://facebook.github.io/zstd/) and the
-    /// result is then base-64 encoded.
-    #[serde(rename = "base64+zstd")]
-    Base64ZStd,
+    // TODO XC-288
+    // /// Account data is first compressed using [Zstandard](http://facebook.github.io/zstd/) and the
+    // /// result is then base-64 encoded.
+    // #[serde(rename = "base64+zstd")]
+    // Base64ZStd,
     /// The encoding attempts to use program-specific state parsers to return more human-readable
     /// and explicit account state data. If [`JsonParsed`] is requested but a parser cannot be
     /// found, the fallback is [`Base64`] encoding.
@@ -68,9 +70,9 @@ pub enum GetAccountInfoEncoding {
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
 pub struct DataSlice {
     /// Number of bytes to return.
-    length: usize,
+    length: u64, // TODO XC-288: Is this correct for usize?
     /// Byte offset from which to start reading.
-    offset: usize,
+    offset: u64, // TODO XC-288: Is this correct for usize?
 }
 
 /// Solana Ed25519 [public key](`https://solana.com/docs/references/terminology#public-key-pubkey`).
@@ -83,38 +85,47 @@ impl From<solana_pubkey::Pubkey> for Pubkey {
     }
 }
 
+impl From<Pubkey> for solana_pubkey::Pubkey {
+    fn from(pubkey: Pubkey) -> Self {
+        solana_pubkey::Pubkey::from(pubkey.0)
+    }
+}
+
 /// Solana [account](https://solana.com/docs/references/terminology#account) information.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
-pub struct AccountInfo {
-    /// Public key of the account
-    pub key: Pubkey,
+pub struct Account {
     /// The lamports in the account.  Modifiable by programs.
     pub lamports: u64,
     /// The data held in this account.  Modifiable by programs.
     pub data: Vec<u8>,
     /// Program that owns this account
     pub owner: Pubkey,
-    /// The epoch at which this account will next owe rent
-    pub rent_epoch: u64,
-    /// Was the transaction signed by this account's public key?
-    pub is_signer: bool,
-    /// Is the account writable?
-    pub is_writable: bool,
     /// This account's data contains a loaded program (and is now read-only)
     pub executable: bool,
+    /// The epoch at which this account will next owe rent
+    pub rent_epoch: u64,
 }
 
-impl<'a> From<solana_account_info::AccountInfo<'a>> for AccountInfo {
-    fn from(account_info: solana_account_info::AccountInfo<'a>) -> Self {
-        AccountInfo {
-            key: account_info.key.clone().into(),
-            lamports: **account_info.lamports.borrow(),
-            data: account_info.data.borrow().to_vec(),
-            owner: account_info.owner.clone().into(),
-            rent_epoch: account_info.rent_epoch,
-            is_signer: account_info.is_signer,
-            is_writable: account_info.is_writable,
-            executable: account_info.executable,
+impl From<solana_account::Account> for Account {
+    fn from(account: solana_account::Account) -> Self {
+        Account {
+            lamports: account.lamports,
+            data: account.data,
+            owner: account.owner.into(),
+            executable: account.executable,
+            rent_epoch: account.rent_epoch,
+        }
+    }
+}
+
+impl From<Account> for solana_account::Account {
+    fn from(account: Account) -> Self {
+        solana_account::Account {
+            lamports: account.lamports,
+            data: account.data,
+            owner: account.owner.into(),
+            executable: account.executable,
+            rent_epoch: account.rent_epoch,
         }
     }
 }

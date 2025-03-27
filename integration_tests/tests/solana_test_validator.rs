@@ -34,6 +34,11 @@ async fn should_get_slot() {
     setup.setup.drop().await;
 }
 
+#[tokio::test(flavor = "multi_thread")]
+async fn should_get_account_info() {
+    // TODO XC-288
+}
+
 pub struct Setup {
     solana_client: SolanaRpcClient,
     setup: sol_rpc_int_tests::Setup,

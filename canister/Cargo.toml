@@ -36,13 +36,14 @@ regex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_bytes = { workspace = true }
-solana-account-info = { workspace = true }
+solana-account = { workspace = true, features = ["serde"] }
 solana-pubkey = { workspace = true }
 tower = { workspace = true }
 tower-http = { workspace = true, features = ["set-header", "util"] }
 url = { workspace = true }
 zeroize = { workspace = true }
 thiserror = { workspace = true }
+bincode = "1.3.3"
 
 [dev-dependencies]
 candid_parser = { workspace = true }

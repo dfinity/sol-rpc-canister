@@ -1,8 +1,10 @@
 #[cfg(test)]
 mod tests;
 
-use crate::metrics::Metrics;
-use crate::types::{ApiKey, OverrideProvider};
+use crate::{
+    metrics::Metrics,
+    types::{ApiKey, OverrideProvider},
+};
 use candid::{Deserialize, Principal};
 use canhttp::http::json::Id;
 use canlog::LogFilter;

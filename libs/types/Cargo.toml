@@ -20,5 +20,5 @@ serde = { workspace = true }
 strum = { workspace = true }
 thiserror = { workspace = true }
 url = { workspace = true }
-solana-account-info = { workspace = true }
+solana-account = { workspace = true }
 solana-pubkey = { workspace = true }

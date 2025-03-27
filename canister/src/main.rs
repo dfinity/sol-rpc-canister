@@ -12,12 +12,10 @@ use sol_rpc_canister::{
     providers::{get_provider, PROVIDERS},
 };
 use sol_rpc_types::{
-    GetSlotParams, MultiRpcResult, RpcAccess, RpcConfig, RpcError, RpcSources,
-    SupportedRpcProvider, SupportedRpcProviderId,
+    Account, GetAccountInfoParams, GetSlotParams, MultiRpcResult, Pubkey, RpcAccess, RpcConfig,
+    RpcError, RpcSources, Slot, SupportedRpcProvider, SupportedRpcProviderId,
 };
-use solana_clock::Slot;
 use std::str::FromStr;
-use solana_account_info::AccountInfo;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
     let caller = ic_cdk::caller();
@@ -80,10 +78,11 @@ async fn update_api_keys(api_keys: Vec<(SupportedRpcProviderId, Option<String>)>
 async fn get_account_info(
     source: RpcSources,
     config: Option<RpcConfig>,
-    params: Option<GetSlotParams>,
-) -> MultiRpcResult<AccountInfo> {
+    pubkey: Pubkey,
+    params: Option<GetAccountInfoParams>,
+) -> MultiRpcResult<Account> {
     match CandidRpcClient::new(source, config) {
-        Ok(client) => client.get_slot(params.unwrap_or_default()).await.into(),
+        Ok(client) => client.get_account_info(pubkey, params).await,
         Err(err) => Err(err).into(),
     }
 }
@@ -96,7 +95,7 @@ async fn get_slot(
     params: Option<GetSlotParams>,
 ) -> MultiRpcResult<Slot> {
     match CandidRpcClient::new(source, config) {
-        Ok(client) => client.get_slot(params.unwrap_or_default()).await,
+        Ok(client) => client.get_slot(params).await,
         Err(err) => Err(err).into(),
     }
 }
@@ -118,10 +117,7 @@ async fn request(
         }
     };
     match CandidRpcClient::new(source, config) {
-        Ok(client) => client
-            .raw_request(request)
-            .await
-            .map(|value| value.to_string()),
+        Ok(client) => client.raw_request(request).await,
         Err(err) => Err(err).into(),
     }
 }

@@ -8,11 +8,9 @@ use crate::{
 use canhttp::multi::ReductionError;
 use serde::Serialize;
 use sol_rpc_types::{
-    GetAccountInfoParams, GetSlotParams, MultiRpcResult, RpcAccess, RpcAuth, RpcConfig, RpcResult,
-    RpcSource, RpcSources, SupportedRpcProvider,
+    Account, GetAccountInfoParams, GetSlotParams, MultiRpcResult, Pubkey, RpcAccess, RpcAuth,
+    RpcConfig, RpcResult, RpcSource, RpcSources, Slot, SupportedRpcProvider,
 };
-use solana_account_info::AccountInfo;
-use solana_clock::Slot;
 use std::fmt::Debug;
 
 fn process_result<T>(method: RpcMethod, result: ReducedResult<T>) -> MultiRpcResult<T> {
@@ -66,25 +64,28 @@ impl CandidRpcClient {
 
     pub async fn get_account_info(
         &self,
-        params: GetAccountInfoParams,
-    ) -> MultiRpcResult<AccountInfo> {
+        pubkey: Pubkey,
+        params: Option<GetAccountInfoParams>,
+    ) -> MultiRpcResult<Account> {
         process_result(
             RpcMethod::GetAccountInfo,
-            self.client.get_account_info(params).await,
+            self.client.get_account_info(pubkey.into(), params).await,
         )
+        .map(Account::from)
     }
 
-    pub async fn get_slot(&self, params: GetSlotParams) -> MultiRpcResult<Slot> {
+    pub async fn get_slot(&self, params: Option<GetSlotParams>) -> MultiRpcResult<Slot> {
         process_result(RpcMethod::GetSlot, self.client.get_slot(params).await)
     }
 
     pub async fn raw_request<I>(
         &self,
         request: canhttp::http::json::JsonRpcRequest<I>,
-    ) -> MultiRpcResult<serde_json::Value>
+    ) -> MultiRpcResult<String>
     where
         I: Serialize + Clone + Debug,
     {
         process_result(RpcMethod::Generic, self.client.raw_request(request).await)
+            .map(|value| value.to_string())
     }
 }

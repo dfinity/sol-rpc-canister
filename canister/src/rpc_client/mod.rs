@@ -137,7 +137,10 @@ impl SolRpcClient {
     }
 
     /// Query the Solana [`getSlot`](https://solana.com/docs/rpc/http/getslot) RPC method.
-    pub async fn get_slot(&self, params: GetSlotParams) -> ReducedResult<solana_clock::Slot> {
+    pub async fn get_slot(
+        &self,
+        params: Option<GetSlotParams>,
+    ) -> ReducedResult<solana_clock::Slot> {
         self.parallel_call(
             "getSlot",
             vec![params],
@@ -151,11 +154,15 @@ impl SolRpcClient {
     /// Query the Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method.
     pub async fn get_account_info(
         &self,
-        params: GetAccountInfoParams,
-    ) -> ReducedResult<solana_account_info::AccountInfo> {
+        pubkey: solana_pubkey::Pubkey,
+        params: Option<GetAccountInfoParams>,
+    ) -> ReducedResult<solana_account::Account> {
         self.parallel_call(
             "getAccountInfo",
-            vec![params],
+            serde_json::Value::Array(vec![
+                serde_json::to_value(pubkey).expect("BUG: could not serialize pubkey"),
+                serde_json::to_value(params).expect("BUG: could not serialize params"),
+            ]),
             self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
             &Some(ResponseTransform::GetAccountInfo),
         )

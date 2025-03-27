@@ -16,4 +16,6 @@ candid = { workspace = true }
 ic-cdk = { workspace = true }
 serde = { workspace = true }
 solana-clock = { workspace = true }
+solana-account = { workspace = true }
+solana-pubkey = { workspace = true }
 sol_rpc_types = { path = "../types" }

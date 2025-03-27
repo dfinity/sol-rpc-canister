@@ -8,9 +8,12 @@ use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    GetSlotParams, RpcConfig, RpcSources, SupportedRpcProvider, SupportedRpcProviderId,
+    GetAccountInfoParams, GetSlotParams, RpcConfig, RpcSources, SupportedRpcProvider,
+    SupportedRpcProviderId,
 };
+use solana_account::Account;
 use solana_clock::Slot;
+use solana_pubkey::Pubkey;
 
 /// Abstract the canister runtime so that the client code can be reused:
 /// * in production using `ic_cdk`,
@@ -117,6 +120,34 @@ impl<R: Runtime> SolRpcClient<R> {
             )
             .await
             .unwrap()
+    }
+
+    /// Call `getAccountInfo` on the SOL RPC canister.
+    pub async fn get_account_info(
+        &self,
+        pubkey: Pubkey,
+        params: GetAccountInfoParams,
+    ) -> sol_rpc_types::MultiRpcResult<Account> {
+        self.runtime
+            .update_call::<(
+                RpcSources,
+                Option<RpcConfig>,
+                sol_rpc_types::Pubkey,
+                GetAccountInfoParams,
+            ), sol_rpc_types::MultiRpcResult<sol_rpc_types::Account>>(
+                self.sol_rpc_canister,
+                "getAccountInfo",
+                (
+                    self.rpc_sources.clone(),
+                    self.rpc_config.clone(),
+                    pubkey.into(),
+                    params,
+                ),
+                10_000_000_000,
+            )
+            .await
+            .expect("Client error: failed to call `getAccountInfo`")
+            .map(Account::from)
     }
 
     /// Call `getSlot` on the SOL RPC canister.

@@ -68,7 +68,7 @@ solana-program = "2.2.0"
 solana-pubkey = "2.2.0"
 solana-signature = "2.2.0"
 solana-transaction = { version = "2.2.0", features = ["bincode"] }
-solana-account-info = "2.2.0"
+solana-account = "2.2.0"
 strum = { version = "0.27.0", features = ["derive"] }
 thiserror = "2.0.12"
 tokio = "1.44.1"
@@ -82,7 +82,7 @@ zeroize = { version = "1.8", features = ["zeroize_derive"] }
 #   when they are built for wasm32-unknown-unknown target. For this reason, we
 #   are using forked version of the relevant repositories.
 [patch.crates-io]
-solana-account-info = { git = "https://github.com/lpahlavi/agave.git" }
+solana-account = { git = "https://github.com/lpahlavi/agave.git" }
 solana-client = { git = "https://github.com/lpahlavi/agave.git" }
 solana-clock = { git = "https://github.com/lpahlavi/agave.git" }
 solana-hash = { git = "https://github.com/lpahlavi/agave.git" }
