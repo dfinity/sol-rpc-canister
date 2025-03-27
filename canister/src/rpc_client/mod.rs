@@ -146,7 +146,10 @@ impl SolRpcClient {
         .reduce(self.reduction_strategy())
     }
 
-    pub async fn raw_request<I>(&self, request: JsonRpcRequest<I>) -> ReducedResult<serde_json::Value>
+    pub async fn raw_request<I>(
+        &self,
+        request: JsonRpcRequest<I>,
+    ) -> ReducedResult<serde_json::Value>
     where
         I: Serialize + Clone + Debug,
     {
