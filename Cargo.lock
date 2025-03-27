@@ -602,9 +602,11 @@ dependencies = [
 [[package]]
 name = "canhttp"
 version = "0.1.0"
-source = "git+https://github.com/dfinity/evm-rpc-canister?rev=1aeeca3bdcb86ce4493b71e4117f65ab78475396#1aeeca3bdcb86ce4493b71e4117f65ab78475396"
+source = "git+https://github.com/dfinity/evm-rpc-canister?rev=b976abe57379be7d2649f6a31522d0bb25c5f455#b976abe57379be7d2649f6a31522d0bb25c5f455"
 dependencies = [
  "assert_matches",
+ "ciborium",
+ "futures-channel",
  "futures-util",
  "http 1.3.1",
  "ic-cdk",
@@ -612,6 +614,7 @@ dependencies = [
  "pin-project",
  "serde",
  "serde_json",
+ "sha2 0.10.8",
  "thiserror 2.0.12",
  "tower",
  "tower-layer",
@@ -2951,8 +2954,8 @@ dependencies = [
  "serde_json",
  "sha2 0.10.8",
  "slog",
- "strum",
- "strum_macros",
+ "strum 0.26.3",
+ "strum_macros 0.26.4",
  "thiserror 2.0.12",
  "tokio",
  "tracing",
@@ -4047,6 +4050,7 @@ dependencies = [
  "async-trait",
  "candid",
  "canlog",
+ "const_format",
  "futures",
  "ic-cdk",
  "ic-test-utilities-load-wasm",
@@ -4072,6 +4076,7 @@ dependencies = [
  "ic-cdk",
  "regex",
  "serde",
+ "strum 0.27.1",
  "thiserror 2.0.12",
  "url",
 ]
@@ -5547,7 +5552,16 @@ version = "0.26.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8fec0f0aef304996cf250b31b5a10dee7980c85da9d759361292b8bca5a18f06"
 dependencies = [
- "strum_macros",
+ "strum_macros 0.26.4",
+]
+
+[[package]]
+name = "strum"
+version = "0.27.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f64def088c51c9510a8579e3c5d67c65349dcf755e5479ad3d010aa6454e2c32"
+dependencies = [
+ "strum_macros 0.27.1",
 ]
 
 [[package]]
@@ -5555,6 +5569,19 @@ name = "strum_macros"
 version = "0.26.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4c6bee85a5a24955dc440386795aa378cd9cf82acd5f764469152d2270e581be"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "rustversion",
+ "syn 2.0.100",
+]
+
+[[package]]
+name = "strum_macros"
+version = "0.27.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c77a8c5abcaf0f9ce05d62342b7d298c346515365c36b673df4ebe3ced01fde8"
 dependencies = [
  "heck",
  "proc-macro2",

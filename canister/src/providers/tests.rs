@@ -39,3 +39,14 @@ fn test_rpc_provider_url_patterns() {
         }
     })
 }
+
+#[test]
+fn should_have_consistent_name_for_cluster() {
+    PROVIDERS.with(|providers| {
+        for (provider_id, provider) in providers {
+            assert!(provider_id
+                .to_string()
+                .ends_with(&provider.cluster.to_string()));
+        }
+    })
+}

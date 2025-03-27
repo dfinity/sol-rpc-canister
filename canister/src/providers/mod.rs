@@ -55,7 +55,7 @@ thread_local! {
             },
         },
         SupportedRpcProviderId::DrpcDevnet => SupportedRpcProvider {
-            cluster: SolanaCluster::Mainnet,
+            cluster: SolanaCluster::Devnet,
             access: RpcAccess::Unauthenticated {
                 public_url: "https://solana-devnet.drpc.org".to_string(),
             },
@@ -70,7 +70,7 @@ thread_local! {
             },
         },
         SupportedRpcProviderId::HeliusDevnet => SupportedRpcProvider {
-            cluster: SolanaCluster::Mainnet,
+            cluster: SolanaCluster::Devnet,
             access: RpcAccess::Authenticated {
                 auth: RpcAuth::UrlParameter {
                     url_pattern: "https://mainnet.helius-rpc.com/?api-key={API_KEY}".to_string(),

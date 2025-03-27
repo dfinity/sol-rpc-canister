@@ -1,4 +1,5 @@
 use candid::CandidType;
+use derive_more::From;
 use ic_cdk::api::call::RejectionCode;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -64,11 +65,11 @@ impl<A: MetricLabels, B: MetricLabels, C: MetricLabels> MetricLabels for (A, B, 
             self.1.metric_labels(),
             self.2.metric_labels(),
         ]
-        .concat()
+            .concat()
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize, From)]
 pub struct MetricRpcMethod(pub String);
 
 impl From<RpcMethod> for MetricRpcMethod {
@@ -143,12 +144,14 @@ pub struct Metrics {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RpcMethod {
     GetSlot,
+    Generic,
 }
 
 impl RpcMethod {
     fn name(self) -> &'static str {
         match self {
             RpcMethod::GetSlot => "getSlot",
+            RpcMethod::Generic => "generic",
         }
     }
 }

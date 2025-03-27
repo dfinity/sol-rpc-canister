@@ -2,23 +2,25 @@ use crate::{
     add_metric_entry,
     metrics::{MetricRpcHost, RpcMethod},
     providers::get_provider,
-    rpc_client::{MultiCallError, SolRpcClient},
-    types::MultiRpcResult,
+    rpc_client::{ReducedResult, SolRpcClient},
     util::hostname_from_url,
 };
+use canhttp::multi::ReductionError;
+use serde::Serialize;
 use sol_rpc_types::{
-    GetSlotParams, RpcAccess, RpcAuth, RpcConfig, RpcResult, RpcSource, RpcSources,
+    GetSlotParams, MultiRpcResult, RpcAccess, RpcAuth, RpcConfig, RpcResult, RpcSource, RpcSources,
     SupportedRpcProvider,
 };
 use solana_clock::Slot;
+use std::fmt::Debug;
 
-fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) -> MultiRpcResult<T> {
+fn process_result<T>(method: RpcMethod, result: ReducedResult<T>) -> MultiRpcResult<T> {
     match result {
         Ok(value) => MultiRpcResult::Consistent(Ok(value)),
         Err(err) => match err {
-            MultiCallError::ConsistentError(err) => MultiRpcResult::Consistent(Err(err)),
-            MultiCallError::InconsistentResults(multi_call_results) => {
-                let results = multi_call_results.into_vec();
+            ReductionError::ConsistentError(err) => MultiRpcResult::Consistent(Err(err)),
+            ReductionError::InconsistentResults(multi_call_results) => {
+                let results: Vec<_> = multi_call_results.into_iter().collect();
                 results.iter().for_each(|(source, _service_result)| {
                     if let RpcSource::Supported(provider_id) = source {
                         if let Some(provider) = get_provider(provider_id) {
@@ -61,5 +63,15 @@ impl CandidRpcClient {
 
     pub async fn get_slot(&self, params: GetSlotParams) -> MultiRpcResult<Slot> {
         process_result(RpcMethod::GetSlot, self.client.get_slot(params).await)
+    }
+
+    pub async fn raw_request<I>(
+        &self,
+        request: canhttp::http::json::JsonRpcRequest<I>,
+    ) -> MultiRpcResult<serde_json::Value>
+    where
+        I: Serialize + Clone + Debug,
+    {
+        process_result(RpcMethod::Generic, self.client.raw_request(request).await)
     }
 }
