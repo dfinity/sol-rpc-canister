@@ -1,23 +1,14 @@
 #[cfg(test)]
 mod tests;
 
-use crate::{
-    http::http_client,
-    providers::{request_builder, resolve_rpc_provider},
-    state::read_state,
-};
 use candid::candid_method;
-use canhttp::{
-    http::json::{JsonRpcRequest, JsonRpcResponse},
-    MaxResponseBytesRequestExtension, TransformContextRequestExtension,
-};
+use canhttp::http::json::JsonRpcResponse;
 use ic_cdk::{
-    api::management_canister::http_request::{HttpResponse, TransformArgs, TransformContext},
+    api::management_canister::http_request::{HttpResponse, TransformArgs},
     query,
 };
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
-use sol_rpc_types::{JsonRpcError, RpcError, RpcSource};
 use solana_clock::Slot;
 use std::{fmt, fmt::Debug};
 
@@ -113,53 +104,5 @@ impl ResponseSizeEstimate {
 impl fmt::Display for ResponseSizeEstimate {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
-    }
-}
-
-/// Calls a JSON-RPC method at the specified URL.
-pub async fn call<I, O>(
-    retry: bool,
-    provider: &RpcSource,
-    request_body: JsonRpcRequest<I>,
-    response_size_estimate: ResponseSizeEstimate,
-    response_transform: &Option<ResponseTransform>,
-) -> Result<O, RpcError>
-where
-    I: Serialize + Clone + Debug,
-    O: Debug + DeserializeOwned,
-{
-    use tower::Service;
-
-    let transform_op = response_transform
-        .as_ref()
-        .map(|t| {
-            let mut buf = vec![];
-            minicbor::encode(t, &mut buf).unwrap();
-            buf
-        })
-        .unwrap_or_default();
-
-    let effective_size_estimate = response_size_estimate.get();
-    let request = request_builder(
-        resolve_rpc_provider(provider.clone()),
-        &read_state(|state| state.get_override_provider()),
-    )?
-    .max_response_bytes(effective_size_estimate)
-    .transform_context(TransformContext::from_name(
-        "cleanup_response".to_owned(),
-        transform_op.clone(),
-    ))
-    .body(request_body)
-    .expect("BUG: invalid request");
-
-    let mut client = http_client(retry);
-    let response = client.call(request).await?;
-    match response.into_body().into_result() {
-        Ok(r) => Ok(r),
-        Err(canhttp::http::json::JsonRpcError {
-            code,
-            message,
-            data: _,
-        }) => Err(JsonRpcError { code, message }.into()),
     }
 }

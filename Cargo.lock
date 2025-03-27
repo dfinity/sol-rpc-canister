@@ -602,9 +602,11 @@ dependencies = [
 [[package]]
 name = "canhttp"
 version = "0.1.0"
-source = "git+https://github.com/dfinity/evm-rpc-canister?rev=1aeeca3bdcb86ce4493b71e4117f65ab78475396#1aeeca3bdcb86ce4493b71e4117f65ab78475396"
+source = "git+https://github.com/dfinity/evm-rpc-canister?rev=b976abe57379be7d2649f6a31522d0bb25c5f455#b976abe57379be7d2649f6a31522d0bb25c5f455"
 dependencies = [
  "assert_matches",
+ "ciborium",
+ "futures-channel",
  "futures-util",
  "http 1.3.1",
  "ic-cdk",
@@ -612,6 +614,7 @@ dependencies = [
  "pin-project",
  "serde",
  "serde_json",
+ "sha2 0.10.8",
  "thiserror 2.0.12",
  "tower",
  "tower-layer",
@@ -4040,6 +4043,7 @@ dependencies = [
  "async-trait",
  "candid",
  "canlog",
+ "const_format",
  "futures",
  "ic-cdk",
  "ic-test-utilities-load-wasm",
