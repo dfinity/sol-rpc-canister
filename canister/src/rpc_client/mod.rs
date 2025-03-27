@@ -19,10 +19,9 @@ use canlog::log;
 use ic_cdk::api::management_canister::http_request::TransformContext;
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
-    ConsensusStrategy, GetSlotParams, JsonRpcError, ProviderError, RpcConfig, RpcError, RpcSource,
-    RpcSources,
+    ConsensusStrategy, GetAccountInfoParams, GetSlotParams, JsonRpcError, ProviderError, RpcConfig,
+    RpcError, RpcSource, RpcSources,
 };
-use solana_clock::Slot;
 use std::{collections::BTreeSet, fmt::Debug};
 use tower::ServiceExt;
 
@@ -138,12 +137,27 @@ impl SolRpcClient {
     }
 
     /// Query the Solana [`getSlot`](https://solana.com/docs/rpc/http/getslot) RPC method.
-    pub async fn get_slot(&self, params: GetSlotParams) -> ReducedResult<Slot> {
+    pub async fn get_slot(&self, params: GetSlotParams) -> ReducedResult<solana_clock::Slot> {
         self.parallel_call(
             "getSlot",
             vec![params],
             self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
             &Some(ResponseTransform::GetSlot),
+        )
+        .await
+        .reduce(self.reduction_strategy())
+    }
+
+    /// Query the Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method.
+    pub async fn get_account_info(
+        &self,
+        params: GetAccountInfoParams,
+    ) -> ReducedResult<solana_account_info::AccountInfo> {
+        self.parallel_call(
+            "getAccountInfo",
+            vec![params],
+            self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
+            &Some(ResponseTransform::GetAccountInfo),
         )
         .await
         .reduce(self.reduction_strategy())

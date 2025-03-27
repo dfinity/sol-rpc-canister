@@ -8,9 +8,10 @@ use crate::{
 use canhttp::multi::ReductionError;
 use serde::Serialize;
 use sol_rpc_types::{
-    GetSlotParams, MultiRpcResult, RpcAccess, RpcAuth, RpcConfig, RpcResult, RpcSource, RpcSources,
-    SupportedRpcProvider,
+    GetAccountInfoParams, GetSlotParams, MultiRpcResult, RpcAccess, RpcAuth, RpcConfig, RpcResult,
+    RpcSource, RpcSources, SupportedRpcProvider,
 };
+use solana_account_info::AccountInfo;
 use solana_clock::Slot;
 use std::fmt::Debug;
 
@@ -61,6 +62,16 @@ impl CandidRpcClient {
         Ok(Self {
             client: SolRpcClient::new(source, config)?,
         })
+    }
+
+    pub async fn get_account_info(
+        &self,
+        params: GetAccountInfoParams,
+    ) -> MultiRpcResult<AccountInfo> {
+        process_result(
+            RpcMethod::GetAccountInfo,
+            self.client.get_account_info(params).await,
+        )
     }
 
     pub async fn get_slot(&self, params: GetSlotParams) -> MultiRpcResult<Slot> {

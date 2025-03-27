@@ -17,6 +17,7 @@ use sol_rpc_types::{
 };
 use solana_clock::Slot;
 use std::str::FromStr;
+use solana_account_info::AccountInfo;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
     let caller = ic_cdk::caller();
@@ -71,6 +72,19 @@ async fn update_api_keys(api_keys: Vec<(SupportedRpcProviderId, Option<String>)>
             }),
             None => mutate_state(|state| state.remove_api_key(&provider)),
         }
+    }
+}
+
+#[update(name = "getAccountInfo")]
+#[candid_method(rename = "getAccountInfo")]
+async fn get_account_info(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: Option<GetSlotParams>,
+) -> MultiRpcResult<AccountInfo> {
+    match CandidRpcClient::new(source, config) {
+        Ok(client) => client.get_slot(params.unwrap_or_default()).await.into(),
+        Err(err) => Err(err).into(),
     }
 }
 
