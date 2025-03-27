@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests;
 
-use crate::{constants::API_KEY_REPLACE_STRING, state::read_state, types::OverrideProvider};
+use crate::{constants::API_KEY_REPLACE_STRING, memory::read_state, types::OverrideProvider};
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use maplit::btreemap;
 use sol_rpc_types::{

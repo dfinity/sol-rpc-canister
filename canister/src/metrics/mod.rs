@@ -65,7 +65,7 @@ impl<A: MetricLabels, B: MetricLabels, C: MetricLabels> MetricLabels for (A, B, 
             self.1.metric_labels(),
             self.2.metric_labels(),
         ]
-            .concat()
+        .concat()
     }
 }
 
@@ -84,7 +84,7 @@ impl MetricLabels for MetricRpcMethod {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize, From)]
 pub struct MetricRpcHost(pub String);
 
 impl From<&str> for MetricRpcHost {
@@ -135,8 +135,6 @@ pub struct Metrics {
     pub responses: HashMap<(MetricRpcMethod, MetricRpcHost, MetricHttpStatusCode), u64>,
     #[serde(rename = "inconsistentResponses")]
     pub inconsistent_responses: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
-    #[serde(rename = "cyclesCharged")]
-    pub cycles_charged: HashMap<(MetricRpcMethod, MetricRpcHost), u128>,
     #[serde(rename = "errHttpOutcall")]
     pub err_http_outcall: HashMap<(MetricRpcMethod, MetricRpcHost, RejectionCode), u64>,
 }
@@ -211,11 +209,6 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
             "Size of the heap memory allocated by this canister.",
         )?;
 
-        w.counter_entries(
-            "solrpc_cycles_charged",
-            &m.cycles_charged,
-            "Number of cycles charged for RPC calls",
-        );
         w.counter_entries(
             "solrpc_requests",
             &m.requests,

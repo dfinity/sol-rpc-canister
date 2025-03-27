@@ -1,6 +1,6 @@
 use crate::{
     add_metric_entry,
-    metrics::{MetricRpcHost, RpcMethod},
+    metrics::RpcMethod,
     providers::get_provider,
     rpc_client::{ReducedResult, SolRpcClient},
     util::hostname_from_url,
@@ -24,11 +24,13 @@ fn process_result<T>(method: RpcMethod, result: ReducedResult<T>) -> MultiRpcRes
                 results.iter().for_each(|(source, _service_result)| {
                     if let RpcSource::Supported(provider_id) = source {
                         if let Some(provider) = get_provider(provider_id) {
-                            add_metric_entry!(
-                                inconsistent_responses,
-                                (method.into(), MetricRpcHost(hostname(provider.clone()))),
-                                1
-                            )
+                            if let Some(host) = hostname(provider.clone()) {
+                                add_metric_entry!(
+                                    inconsistent_responses,
+                                    (method.into(), host.into()),
+                                    1
+                                )
+                            }
                         }
                     }
                 });
@@ -38,7 +40,7 @@ fn process_result<T>(method: RpcMethod, result: ReducedResult<T>) -> MultiRpcRes
     }
 }
 
-pub fn hostname(provider: SupportedRpcProvider) -> String {
+pub fn hostname(provider: SupportedRpcProvider) -> Option<String> {
     let url = match provider.access {
         RpcAccess::Authenticated { auth, .. } => match auth {
             RpcAuth::BearerToken { url } => url,
@@ -46,7 +48,7 @@ pub fn hostname(provider: SupportedRpcProvider) -> String {
         },
         RpcAccess::Unauthenticated { public_url } => public_url,
     };
-    hostname_from_url(url.as_str()).unwrap_or_else(|| "(unknown)".to_string())
+    hostname_from_url(url.as_str())
 }
 
 /// Adapt the `EthRpcClient` to the `Candid` interface used by the EVM-RPC canister.

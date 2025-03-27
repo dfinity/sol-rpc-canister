@@ -7,7 +7,7 @@ use crate::{
     logs::Priority,
     memory::next_request_id,
     metrics::{MetricRpcHost, MetricRpcMethod},
-    state::{read_state, State},
+    memory::{read_state, State},
 };
 use canhttp::{
     convert::ConvertRequestLayer,

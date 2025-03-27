@@ -8,7 +8,7 @@ use crate::{
     metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider, Providers},
     rpc_client::sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
-    state::read_state,
+    memory::read_state,
 };
 use canhttp::{
     http::json::JsonRpcRequest,

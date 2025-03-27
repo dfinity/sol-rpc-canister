@@ -9,7 +9,7 @@ use sol_rpc_canister::{
     logs::Priority,
     metrics::encode_metrics,
     providers::{get_provider, PROVIDERS},
-    state::{mutate_state, read_state},
+    memory::{mutate_state, read_state},
 };
 use sol_rpc_types::{
     GetSlotParams, MultiRpcResult, RpcAccess, RpcConfig, RpcError, RpcSources,
