@@ -82,7 +82,7 @@ impl<R: Runtime> SolRpcClient<R> {
         }
     }
 
-    /// TODO
+    /// Returns a new client with the given [`RpcSources`].
     pub fn with_rpc_sources(self, rpc_sources: RpcSources) -> Self {
         SolRpcClient {
             rpc_sources,
@@ -90,7 +90,7 @@ impl<R: Runtime> SolRpcClient<R> {
         }
     }
 
-    /// TODO
+    /// Returns a new client with the given [`RpcConfig`].
     pub fn with_rpc_config(self, rpc_config: RpcConfig) -> Self {
         SolRpcClient {
             rpc_config: Some(rpc_config),

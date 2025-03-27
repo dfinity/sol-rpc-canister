@@ -1,6 +1,6 @@
 use crate::{RpcResult, RpcSource};
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::fmt::Debug;
 
 /// Represents an aggregated result from multiple RPC calls to different RPC providers.
@@ -60,11 +60,4 @@ impl<T: Debug> MultiRpcResult<T> {
             MultiRpcResult::Inconsistent(results) => results,
         }
     }
-}
-
-/// blah
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct GenericRequestResult {
-    /// blah
-    pub body: String,
 }

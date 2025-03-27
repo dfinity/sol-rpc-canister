@@ -102,7 +102,7 @@ async fn request(
         }
     };
     match CandidRpcClient::new(source, config) {
-        Ok(client) => client.call(request).await.map(|value| value.to_string()),
+        Ok(client) => client.raw_request(request).await.map(|value| value.to_string()),
         Err(err) => Err(err).into(),
     }
 }

@@ -37,13 +37,13 @@ impl CandidRpcClient {
         process_result(self.client.get_slot(params).await)
     }
 
-    pub async fn call<I>(
+    pub async fn raw_request<I>(
         &self,
         request: canhttp::http::json::JsonRpcRequest<I>,
     ) -> MultiRpcResult<serde_json::Value>
     where
         I: Serialize + Clone + Debug,
     {
-        process_result(self.client.call(request).await)
+        process_result(self.client.raw_request(request).await)
     }
 }

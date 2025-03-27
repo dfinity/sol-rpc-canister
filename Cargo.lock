@@ -4043,6 +4043,7 @@ dependencies = [
  "async-trait",
  "candid",
  "canlog",
+ "const_format",
  "futures",
  "ic-cdk",
  "ic-test-utilities-load-wasm",

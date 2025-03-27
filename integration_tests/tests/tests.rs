@@ -1,4 +1,5 @@
 use assert_matches::*;
+use const_format::formatcp;
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use pocket_ic::common::rest::CanisterHttpMethod;
 use serde_json::json;
@@ -14,8 +15,11 @@ use sol_rpc_types::{
 
 const MOCK_REQUEST_URL: &str = "https://api.devnet.solana.com/";
 const MOCK_REQUEST_PAYLOAD: &str = r#"{"jsonrpc":"2.0","id":0,"method":"getVersion"}"#;
-const MOCK_REQUEST_RESPONSE: &str =
-    r#"{"jsonrpc":"2.0","id":0,"result":{"feature-set":2891131721,"solana-core":"1.16.7"}}"#;
+const MOCK_REQUEST_RESPONSE_RESULT: &str = r#"{"feature-set":2891131721,"solana-core":"1.16.7"}"#;
+const MOCK_REQUEST_RESPONSE: &str = formatcp!(
+    "{{\"jsonrpc\":\"2.0\",\"id\":0,\"result\":{}}}",
+    MOCK_REQUEST_RESPONSE_RESULT
+);
 const MOCK_REQUEST_MAX_RESPONSE_BYTES: u64 = 1000;
 
 mod mock_request_tests {
@@ -187,11 +191,7 @@ mod generic_request_tests {
             .await
             .expect_consistent();
 
-        fn extract_result(response: &str) -> String {
-            let response = serde_json::from_str::<serde_json::Value>(response).unwrap();
-            serde_json::Value::to_string(&response["result"])
-        }
-        assert_matches!(result, Ok(msg) if msg == extract_result(MOCK_REQUEST_RESPONSE));
+        assert_matches!(result, Ok(msg) if msg == MOCK_REQUEST_RESPONSE_RESULT);
 
         setup.drop().await;
     }
