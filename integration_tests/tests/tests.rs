@@ -1,22 +1,29 @@
+use assert_matches::*;
+use const_format::formatcp;
+use ic_cdk::api::management_canister::http_request::HttpHeader;
+use pocket_ic::common::rest::CanisterHttpMethod;
+use serde_json::json;
 use sol_rpc_canister::constants::*;
-use sol_rpc_int_tests::{Setup, SolRpcTestClient, ADDITIONAL_TEST_ID};
+use sol_rpc_int_tests::{
+    json_rpc_sequential_id, mock::MockOutcallBuilder, Setup, SolRpcTestClient,
+    DEFAULT_CALLER_TEST_ID,
+};
 use sol_rpc_types::{
-    InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcEndpoint, RpcError, RpcSource,
-    SolanaCluster, SupportedRpcProviderId,
+    InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
+    RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
 
 const MOCK_REQUEST_URL: &str = "https://api.devnet.solana.com/";
-const MOCK_REQUEST_PAYLOAD: &str = r#"{"jsonrpc":"2.0","id":1,"method":"getVersion"}"#;
-const MOCK_REQUEST_RESPONSE: &str =
-    r#"{"jsonrpc":"2.0","id":1,"result":{"feature-set":2891131721,"solana-core":"1.16.7"}}"#;
+const MOCK_REQUEST_PAYLOAD: &str = r#"{"jsonrpc":"2.0","id":0,"method":"getVersion"}"#;
+const MOCK_RESPONSE_RESULT: &str = r#"{"feature-set":2891131721,"solana-core":"1.16.7"}"#;
+const MOCK_RESPONSE: &str = formatcp!(
+    "{{\"jsonrpc\":\"2.0\",\"id\":0,\"result\":{}}}",
+    MOCK_RESPONSE_RESULT
+);
 const MOCK_REQUEST_MAX_RESPONSE_BYTES: u64 = 1000;
 
 mod mock_request_tests {
     use super::*;
-    use assert_matches::*;
-    use ic_cdk::api::management_canister::http_request::HttpHeader;
-    use pocket_ic::common::rest::CanisterHttpMethod;
-    use sol_rpc_int_tests::mock::*;
 
     async fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
         let setup = Setup::with_args(InstallArgs {
@@ -24,29 +31,26 @@ mod mock_request_tests {
             ..Default::default()
         })
         .await;
-        let client = setup.client();
-        let expected_result: serde_json::Value =
-            serde_json::from_str(MOCK_REQUEST_RESPONSE).unwrap();
+        let client = setup
+            .client()
+            .with_rpc_config(RpcConfig {
+                response_size_estimate: Some(MOCK_REQUEST_MAX_RESPONSE_BYTES),
+                ..RpcConfig::default()
+            })
+            .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Custom(RpcEndpoint {
+                url: MOCK_REQUEST_URL.to_string(),
+                headers: Some(vec![HttpHeader {
+                    name: "custom".to_string(),
+                    value: "Value".to_string(),
+                }]),
+            })]));
+        let expected_result: serde_json::Value = serde_json::from_str(MOCK_RESPONSE).unwrap();
         assert_matches!(
             client
-                .mock_http(builder_fn(MockOutcallBuilder::new(
-                    200,
-                    MOCK_REQUEST_RESPONSE
-                )))
-                .request(
-                    RpcSource::Custom(RpcEndpoint {
-                        url: MOCK_REQUEST_URL.to_string(),
-                        headers: Some(vec![HttpHeader {
-                            name: "custom".to_string(),
-                            value: "Value".to_string(),
-                        }]),
-                    }),
-                    MOCK_REQUEST_PAYLOAD,
-                    MOCK_REQUEST_MAX_RESPONSE_BYTES,
-                    0,
-                )
+                .mock_http(builder_fn(MockOutcallBuilder::new(200, MOCK_RESPONSE)))
+                .request(MOCK_REQUEST_PAYLOAD, 0)
                 .await,
-            Ok(msg) if msg == serde_json::Value::to_string(&expected_result["result"])
+            sol_rpc_types::MultiRpcResult::Consistent(Ok(msg)) if msg == serde_json::Value::to_string(&expected_result["result"])
         );
     }
 
@@ -105,7 +109,6 @@ mod mock_request_tests {
 
 mod get_provider_tests {
     use super::*;
-    use sol_rpc_types::SupportedRpcProvider;
 
     #[tokio::test]
     async fn should_get_providers() {
@@ -139,36 +142,40 @@ mod get_provider_tests {
 
 mod generic_request_tests {
     use super::*;
-    use assert_matches::*;
-    use sol_rpc_int_tests::mock::MockOutcallBuilder;
+    use std::str::FromStr;
 
     #[tokio::test]
     async fn request_should_require_cycles() {
         let setup = Setup::new().await;
         let client = setup.client();
 
-        let result = client
-            .request(
-                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
-                MOCK_REQUEST_PAYLOAD,
-                MOCK_REQUEST_MAX_RESPONSE_BYTES,
-                0,
-            )
-            .await;
+        let results = client
+            .request(MOCK_REQUEST_PAYLOAD, 0)
+            .await
+            // The result is expected to be inconsistent because the different provider URLs means
+            // the request and hence expected number of cycles for each provider is different.
+            .expect_inconsistent();
 
-        assert_matches!(
-            result,
-            Err(RpcError::ProviderError(ProviderError::TooFewCycles {
-                expected: _,
-                received: 0
-            }))
-        );
+        for (_provider, result) in results {
+            assert_matches!(
+                result,
+                Err(RpcError::ProviderError(ProviderError::TooFewCycles {
+                    expected: _,
+                    received: 0
+                }))
+            );
+        }
 
         setup.drop().await;
     }
 
     #[tokio::test]
     async fn request_should_succeed_in_demo_mode() {
+        let [response_0, response_1, response_2] = json_rpc_sequential_id(json!({
+            "id": 0,
+            "jsonrpc": "2.0",
+            "result": serde_json::Value::from_str(MOCK_RESPONSE_RESULT).unwrap()
+        }));
         let setup = Setup::with_args(InstallArgs {
             mode: Some(Mode::Demo),
             ..Default::default()
@@ -177,18 +184,16 @@ mod generic_request_tests {
         let client = setup.client();
 
         let result = client
-            .mock_http(MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE))
-            .request(
-                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
-                MOCK_REQUEST_PAYLOAD,
-                MOCK_REQUEST_MAX_RESPONSE_BYTES,
-                0,
-            )
-            .await;
+            .mock_http_sequence(vec![
+                MockOutcallBuilder::new(200, &response_0),
+                MockOutcallBuilder::new(200, &response_1),
+                MockOutcallBuilder::new(200, &response_2),
+            ])
+            .request(MOCK_REQUEST_PAYLOAD, 0)
+            .await
+            .expect_consistent();
 
-        let expected_result: serde_json::Value =
-            serde_json::from_str(MOCK_REQUEST_RESPONSE).unwrap();
-        assert_matches!(result, Ok(msg) if msg == serde_json::Value::to_string(&expected_result["result"]));
+        assert_matches!(result, Ok(msg) if msg == MOCK_RESPONSE_RESULT);
 
         setup.drop().await;
     }
@@ -199,7 +204,11 @@ mod retrieve_logs_tests {
 
     #[tokio::test]
     async fn should_retrieve_logs() {
-        let setup = Setup::new().await;
+        let setup = Setup::with_args(InstallArgs {
+            manage_api_keys: Some(vec![DEFAULT_CALLER_TEST_ID]),
+            ..Default::default()
+        })
+        .await;
         let client = setup.client();
         assert_eq!(client.retrieve_logs("DEBUG").await, vec![]);
         assert_eq!(client.retrieve_logs("INFO").await, vec![]);
@@ -207,7 +216,6 @@ mod retrieve_logs_tests {
         // Generate some log
         setup
             .client()
-            .with_caller(setup.controller())
             .update_api_keys(&[(
                 SupportedRpcProviderId::AlchemyMainnet,
                 Some("unauthorized-api-key".to_string()),
@@ -226,16 +234,15 @@ mod update_api_key_tests {
 
     #[tokio::test]
     async fn should_update_api_key() {
-        let authorized_caller = ADDITIONAL_TEST_ID;
         let setup = Setup::with_args(InstallArgs {
-            manage_api_keys: Some(vec![authorized_caller]),
+            manage_api_keys: Some(vec![DEFAULT_CALLER_TEST_ID]),
             ..Default::default()
         })
         .await;
 
         let provider = SupportedRpcProviderId::AlchemyMainnet;
         let api_key = "test-api-key";
-        let client = setup.client().with_caller(authorized_caller);
+        let client = setup.client();
         client
             .update_api_keys(&[(provider, Some(api_key.to_string()))])
             .await;
@@ -263,10 +270,13 @@ mod update_api_key_tests {
     #[tokio::test]
     #[should_panic(expected = "Trying to set API key for unauthenticated provider")]
     async fn should_prevent_unauthenticated_update_api_keys() {
-        let setup = Setup::new().await;
+        let setup = Setup::with_args(InstallArgs {
+            manage_api_keys: Some(vec![DEFAULT_CALLER_TEST_ID]),
+            ..Default::default()
+        })
+        .await;
         setup
             .client()
-            .with_caller(setup.controller())
             .update_api_keys(&[(
                 SupportedRpcProviderId::PublicNodeMainnet,
                 Some("invalid-api-key".to_string()),
@@ -280,10 +290,14 @@ mod canister_upgrade_tests {
 
     #[tokio::test]
     async fn upgrade_should_keep_api_keys() {
-        let setup = Setup::new().await;
+        let setup = Setup::with_args(InstallArgs {
+            manage_api_keys: Some(vec![DEFAULT_CALLER_TEST_ID]),
+            ..Default::default()
+        })
+        .await;
         let provider = SupportedRpcProviderId::AlchemyMainnet;
         let api_key = "test-api-key";
-        let client = setup.client().with_caller(setup.controller());
+        let client = setup.client();
         client
             .update_api_keys(&[(provider, Some(api_key.to_string()))])
             .await;
@@ -300,9 +314,8 @@ mod canister_upgrade_tests {
 
     #[tokio::test]
     async fn upgrade_should_keep_manage_api_key_principals() {
-        let authorized_caller = ADDITIONAL_TEST_ID;
         let setup = Setup::with_args(InstallArgs {
-            manage_api_keys: Some(vec![authorized_caller]),
+            manage_api_keys: Some(vec![DEFAULT_CALLER_TEST_ID]),
             ..Default::default()
         })
         .await;
@@ -314,7 +327,6 @@ mod canister_upgrade_tests {
             .await;
         setup
             .client()
-            .with_caller(authorized_caller)
             .update_api_keys(&[(
                 SupportedRpcProviderId::AlchemyMainnet,
                 Some("authorized-api-key".to_string()),
@@ -325,9 +337,8 @@ mod canister_upgrade_tests {
     #[tokio::test]
     #[should_panic(expected = "You are not authorized")]
     async fn upgrade_should_change_manage_api_key_principals() {
-        let deauthorized_caller = ADDITIONAL_TEST_ID;
         let setup = Setup::with_args(InstallArgs {
-            manage_api_keys: Some(vec![deauthorized_caller]),
+            manage_api_keys: Some(vec![DEFAULT_CALLER_TEST_ID]),
             ..Default::default()
         })
         .await;
@@ -339,7 +350,6 @@ mod canister_upgrade_tests {
             .await;
         setup
             .client()
-            .with_caller(deauthorized_caller)
             .update_api_keys(&[(
                 SupportedRpcProviderId::AlchemyMainnet,
                 Some("unauthorized-api-key".to_string()),

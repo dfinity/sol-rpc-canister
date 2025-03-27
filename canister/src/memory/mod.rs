@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests;
 
+use crate::metrics::Metrics;
 use crate::types::{ApiKey, OverrideProvider};
 use candid::{Deserialize, Principal};
 use canhttp::http::json::Id;
@@ -20,6 +21,7 @@ type StableMemory = VirtualMemory<DefaultMemoryImpl>;
 
 thread_local! {
     // Unstable static data: these are reset when the canister is upgraded.
+    pub static UNSTABLE_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
     static UNSTABLE_HTTP_REQUEST_COUNTER: RefCell<u64> = const {RefCell::new(0)};
 
     // Stable static data: these are preserved when the canister is upgraded.
@@ -30,14 +32,14 @@ thread_local! {
             MEMORY_MANAGER.with_borrow(|m| m.get(STATE_MEMORY_ID)),
             ConfigState::default(),
         )
-        .expect("Unable to read state from stable memory"),
+        .expect("Unable to read memory from stable memory"),
     );
 }
 
-/// Configuration state of the ledger orchestrator.
+/// Configuration memory of the ledger orchestrator.
 #[derive(Clone, PartialEq, Debug, Default)]
 pub enum ConfigState {
-    // This state is only used between wasm module initialization and init().
+    // This memory is only used between wasm module initialization and init().
     #[default]
     Uninitialized,
     Initialized(State),
@@ -46,7 +48,7 @@ pub enum ConfigState {
 impl ConfigState {
     fn expect_initialized(&self) -> &State {
         match &self {
-            ConfigState::Uninitialized => ic_cdk::trap("BUG: state not initialized"),
+            ConfigState::Uninitialized => ic_cdk::trap("BUG: memory not initialized"),
             ConfigState::Initialized(s) => s,
         }
     }
@@ -72,13 +74,13 @@ impl Storable for ConfigState {
 
 fn encode<S: ?Sized + serde::Serialize>(state: &S) -> Vec<u8> {
     let mut buf = vec![];
-    ciborium::ser::into_writer(state, &mut buf).expect("failed to encode state");
+    ciborium::ser::into_writer(state, &mut buf).expect("failed to encode memory");
     buf
 }
 
 fn decode<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> T {
     ciborium::de::from_reader(bytes)
-        .unwrap_or_else(|e| panic!("failed to decode state bytes {}: {e}", hex::encode(bytes)))
+        .unwrap_or_else(|e| panic!("failed to decode memory bytes {}: {e}", hex::encode(bytes)))
 }
 
 #[derive(Default, Clone, PartialEq, Debug, Deserialize, Serialize)]
@@ -169,9 +171,9 @@ pub fn read_state<R>(f: impl FnOnce(&State) -> R) -> R {
     STATE.with(|cell| f(cell.borrow().get().expect_initialized()))
 }
 
-/// Mutates (part of) the current state using `f`.
+/// Mutates (part of) the current memory using `f`.
 ///
-/// Panics if there is no state.
+/// Panics if there is no memory.
 pub fn mutate_state<F, R>(f: F) -> R
 where
     F: FnOnce(&mut State) -> R,
@@ -182,7 +184,7 @@ where
         let result = f(&mut state);
         borrowed
             .set(ConfigState::Initialized(state))
-            .expect("failed to write state in stable cell");
+            .expect("failed to write memory in stable cell");
         result
     })
 }
@@ -198,17 +200,17 @@ pub fn init_state(state: State) {
         );
         borrowed
             .set(ConfigState::Initialized(state))
-            .expect("failed to initialize state in stable cell")
+            .expect("failed to initialize memory in stable cell")
     });
 }
 
-/// Resets the state to [`ConfigState::Uninitialized`] which is useful e.g. in property tests where
-/// the thread gets re-used and thus the state persists across test instances.
+/// Resets the memory to [`ConfigState::Uninitialized`] which is useful e.g. in property tests where
+/// the thread gets re-used and thus the memory persists across test instances.
 pub fn reset_state() {
     STATE.with(|cell| {
         cell.borrow_mut()
             .set(ConfigState::Uninitialized)
-            .unwrap_or_else(|err| panic!("Could not reset state: {:?}", err));
+            .unwrap_or_else(|err| panic!("Could not reset memory: {:?}", err));
     })
 }
 

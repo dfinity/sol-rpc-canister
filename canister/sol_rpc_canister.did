@@ -153,6 +153,12 @@ type GetSlotParams = record {
 // Represents the result of a generic RPC request.
 type RequestResult = variant { Ok : text; Err : RpcError };
 
+// Represents an aggregated result from multiple RPC calls for a generic RPC request.
+type MultiRequestResult = variant {
+    Consistent : RequestResult;
+    Inconsistent : vec record { RpcSource; RequestResult };
+};
+
 // A string used as a regex pattern.
 type Regex = text;
 
@@ -210,5 +216,5 @@ service : (InstallArgs,) -> {
   getSlot : (RpcSources, opt RpcConfig, opt GetSlotParams) -> (MultiGetSlotResult);
 
   // Make a generic RPC request that sends the given json_rpc_payload.
-  request : (RpcSource, json_rpc_paylod: text, max_response_bytes: nat64) -> (RequestResult)
+  request : (RpcSources, opt RpcConfig, json_rpc_paylod: text) -> (MultiRequestResult)
 };

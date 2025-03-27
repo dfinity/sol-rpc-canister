@@ -1,17 +1,19 @@
 use candid::candid_method;
+use canhttp::http::json::JsonRpcRequest;
 use canlog::{log, Log, Sort};
 use ic_cdk::{api::is_controller, query, update};
+use ic_metrics_encoder::MetricsEncoder;
 use sol_rpc_canister::{
     candid_rpc::CandidRpcClient,
     http_types, lifecycle,
     logs::Priority,
+    memory::{mutate_state, read_state},
+    metrics::encode_metrics,
     providers::{get_provider, PROVIDERS},
-    rpc_client,
-    state::{mutate_state, read_state},
 };
 use sol_rpc_types::{
-    GetSlotParams, MultiRpcResult, RpcAccess, RpcConfig, RpcError, RpcResult, RpcSource,
-    RpcSources, SupportedRpcProvider, SupportedRpcProviderId,
+    GetSlotParams, MultiRpcResult, RpcAccess, RpcConfig, RpcError, RpcSources,
+    SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_clock::Slot;
 use std::str::FromStr;
@@ -80,7 +82,7 @@ async fn get_slot(
     params: Option<GetSlotParams>,
 ) -> MultiRpcResult<Slot> {
     match CandidRpcClient::new(source, config) {
-        Ok(client) => client.get_slot(params.unwrap_or_default()).await.into(),
+        Ok(client) => client.get_slot(params.unwrap_or_default()).await,
         Err(err) => Err(err).into(),
     }
 }
@@ -88,21 +90,46 @@ async fn get_slot(
 #[update]
 #[candid_method]
 async fn request(
-    provider: RpcSource,
+    source: RpcSources,
+    config: Option<RpcConfig>,
     json_rpc_payload: String,
-    max_response_bytes: u64,
-) -> RpcResult<String> {
-    let request: canhttp::http::json::JsonRpcRequest<serde_json::Value> =
-        serde_json::from_str(&json_rpc_payload)
-            .map_err(|e| RpcError::ValidationError(format!("Invalid JSON RPC request: {e}")))?;
-    rpc_client::call(&provider, request, max_response_bytes)
-        .await
-        .map(|value: serde_json::Value| value.to_string())
+) -> MultiRpcResult<String> {
+    let request: JsonRpcRequest<serde_json::Value> = match serde_json::from_str(&json_rpc_payload) {
+        Ok(req) => req,
+        Err(e) => {
+            return Err(RpcError::ValidationError(format!(
+                "Invalid JSON RPC request: {e}"
+            )))
+            .into()
+        }
+    };
+    match CandidRpcClient::new(source, config) {
+        Ok(client) => client
+            .raw_request(request)
+            .await
+            .map(|value| value.to_string()),
+        Err(err) => Err(err).into(),
+    }
 }
 
 #[query(hidden = true)]
 fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
     match request.path() {
+        "/metrics" => {
+            let mut writer = MetricsEncoder::new(vec![], ic_cdk::api::time() as i64 / 1_000_000);
+
+            match encode_metrics(&mut writer) {
+                Ok(()) => http_types::HttpResponseBuilder::ok()
+                    .header("Content-Type", "text/plain; version=0.0.4")
+                    .with_body_and_content_length(writer.into_inner())
+                    .build(),
+                Err(err) => http_types::HttpResponseBuilder::server_error(format!(
+                    "Failed to encode metrics: {}",
+                    err
+                ))
+                .build(),
+            }
+        }
         "/logs" => {
             let max_skip_timestamp = match request.raw_query_param("time") {
                 Some(arg) => match u64::from_str(arg) {

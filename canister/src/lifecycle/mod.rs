@@ -1,6 +1,6 @@
 use crate::{
     logs::Priority,
-    state::{init_state, mutate_state, State},
+    memory::{init_state, mutate_state, State},
 };
 use canlog::log;
 use sol_rpc_types::InstallArgs;
