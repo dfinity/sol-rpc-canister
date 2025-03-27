@@ -7,9 +7,9 @@ use sol_rpc_canister::{
     candid_rpc::CandidRpcClient,
     http_types, lifecycle,
     logs::Priority,
+    memory::{mutate_state, read_state},
     metrics::encode_metrics,
     providers::{get_provider, PROVIDERS},
-    memory::{mutate_state, read_state},
 };
 use sol_rpc_types::{
     GetSlotParams, MultiRpcResult, RpcAccess, RpcConfig, RpcError, RpcSources,

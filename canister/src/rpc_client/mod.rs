@@ -5,10 +5,10 @@ mod tests;
 use crate::{
     http::http_client,
     logs::Priority,
+    memory::read_state,
     metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider, Providers},
     rpc_client::sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
-    memory::read_state,
 };
 use canhttp::{
     http::json::JsonRpcRequest,

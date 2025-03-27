@@ -6,8 +6,8 @@ use crate::{
     http::errors::HttpClientError,
     logs::Priority,
     memory::next_request_id,
-    metrics::{MetricRpcHost, MetricRpcMethod},
     memory::{read_state, State},
+    metrics::{MetricRpcHost, MetricRpcMethod},
 };
 use canhttp::{
     convert::ConvertRequestLayer,
