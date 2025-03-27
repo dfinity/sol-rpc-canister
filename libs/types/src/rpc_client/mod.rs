@@ -8,6 +8,7 @@ pub use ic_cdk::api::management_canister::http_request::HttpHeader;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+use strum::Display;
 use thiserror::Error;
 
 /// An RPC result type.
@@ -146,7 +147,18 @@ impl Debug for RpcEndpoint {
 
 /// [Solana clusters](https://solana.com/docs/references/clusters).
 #[derive(
-    Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, CandidType, Deserialize, Serialize,
+    Copy,
+    Clone,
+    Debug,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    CandidType,
+    Deserialize,
+    Serialize,
+    Display,
 )]
 pub enum SolanaCluster {
     /// Mainnet: live production environment for deployed applications.
@@ -159,7 +171,18 @@ pub enum SolanaCluster {
 
 /// Uniquely identifies a supported RPC provider for a particular Solana cluster.
 #[derive(
-    Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, CandidType, Deserialize, Serialize,
+    Copy,
+    Clone,
+    Debug,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    CandidType,
+    Deserialize,
+    Serialize,
+    Display,
 )]
 pub enum SupportedRpcProviderId {
     /// [Alchemy](https://www.alchemy.com/) provider for [Solana Mainnet](https://solana.com/docs/references/clusters)
