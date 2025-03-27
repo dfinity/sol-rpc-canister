@@ -151,11 +151,11 @@ jobs:
           "${{ env.sol_rpc_canister_id }}"          
 
       - name: "Run examples"
-        id: "e2e_examples"
         working-directory: canister/ci
-        run: echo "output=$(../scripts/examples.sh)" >> $GITHUB_OUTPUT
+        run: ../scripts/examples.sh 2>&1 | tee e2e_examples.log
 
       - name: "Detect Inconsistent Results"
         # TODO XC-292: Should no longer fail once rounding is in
         continue-on-error: true
-        run: echo "${{ steps.e2e_examples.outputs.output }}" | grep -e Inconsistent
+        working-directory: canister/ci
+        run: cat e2e_examples.log | grep -e Inconsistent
