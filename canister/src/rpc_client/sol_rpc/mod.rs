@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests;
 
+use crate::constants::SLOT_ROUNDING_ERROR;
 use candid::candid_method;
 use canhttp::http::json::JsonRpcResponse;
 use ic_cdk::{
@@ -58,13 +59,12 @@ impl ResponseTransform {
         }
 
         match self {
-            // TODO XC-292: Add rounding to the response transform and
-            //  add a unit test simulating consensus when the providers
-            //  return slightly differing results.
             Self::GetSlot => {
                 canonicalize::<JsonRpcResponse<Slot>>(
                     body_bytes,
-                    map_json_rpc_result(|slot: Slot| slot),
+                    map_json_rpc_result(|slot: Slot| {
+                        (slot / SLOT_ROUNDING_ERROR) * SLOT_ROUNDING_ERROR
+                    }),
                 );
             }
             Self::Raw => {
