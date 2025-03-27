@@ -79,7 +79,7 @@ async fn get_slot(
     config: Option<GetSlotRpcConfig>,
     params: Option<GetSlotParams>,
 ) -> MultiRpcResult<Slot> {
-    let rounding_error = config.as_ref().map(|c| c.rounding_error).flatten();
+    let rounding_error = config.as_ref().and_then(|c| c.rounding_error);
     match CandidRpcClient::new_with_rounding_error(
         source,
         config.map(RpcConfig::from),
