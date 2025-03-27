@@ -1,4 +1,4 @@
-use crate::state::read_state;
+use crate::memory::read_state;
 use canlog::{GetLogFilter, LogFilter, LogPriorityLevels};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;

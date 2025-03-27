@@ -1,6 +1,6 @@
 use crate::{
+    memory::{init_state, reset_state, State},
     providers::{resolve_rpc_provider, PROVIDERS},
-    state::{init_state, reset_state, State},
     types::{ApiKey, OverrideProvider},
 };
 use proptest::{

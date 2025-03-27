@@ -13,7 +13,7 @@ pub struct GetSlotParams {
 }
 
 /// [Commitment levels](https://solana.com/docs/rpc#configuring-state-commitment) in Solana,
-/// representing finality guarantees of transactions and state queries.
+/// representing finality guarantees of transactions and memory queries.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub enum CommitmentLevel {
     /// The transaction is processed by a leader, but may be dropped.
