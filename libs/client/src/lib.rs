@@ -8,7 +8,8 @@ use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    GetSlotParams, RpcConfig, RpcSources, SupportedRpcProvider, SupportedRpcProviderId,
+    GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources, SupportedRpcProvider,
+    SupportedRpcProviderId,
 };
 use solana_clock::Slot;
 
@@ -51,6 +52,8 @@ pub struct SolRpcClient<R: Runtime> {
     pub sol_rpc_canister: Principal,
     /// Configuration for how to perform RPC HTTP calls.
     pub rpc_config: Option<RpcConfig>,
+    /// Rounding error to use for `getSlot` RPC calls.
+    pub rounding_error: Option<u64>,
     /// Defines what RPC sources to fetch from.
     pub rpc_sources: RpcSources,
 }
@@ -64,6 +67,7 @@ impl SolRpcClient<IcRuntime> {
             runtime: IcRuntime {},
             sol_rpc_canister,
             rpc_config: None,
+            rounding_error: None,
             rpc_sources,
         }
     }
@@ -78,6 +82,7 @@ impl<R: Runtime> SolRpcClient<R> {
             runtime,
             sol_rpc_canister,
             rpc_config: None,
+            rounding_error: None,
             rpc_sources,
         }
     }
@@ -147,7 +152,11 @@ impl<R: Runtime> SolRpcClient<R> {
                 "request",
                 (
                     self.rpc_sources.clone(),
-                    self.rpc_config.clone(),
+                    self.rpc_config.as_ref().map(|config| GetSlotRpcConfig {
+                        response_size_estimate: config.response_size_estimate,
+                        response_consensus: config.response_consensus.clone(),
+                        rounding_error: None,
+                    }),
                     json_rpc_payload,
                 ),
                 cycles,

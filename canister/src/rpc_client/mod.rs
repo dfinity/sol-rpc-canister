@@ -2,6 +2,7 @@ mod sol_rpc;
 #[cfg(test)]
 mod tests;
 
+use crate::constants::DEFAULT_ROUNDING_ERROR;
 use crate::{
     http::http_client,
     logs::Priority,
@@ -29,15 +30,22 @@ use tower::ServiceExt;
 pub struct SolRpcClient {
     providers: Providers,
     config: RpcConfig,
+    rounding_error: u64,
 }
 
 impl SolRpcClient {
-    pub fn new(source: RpcSources, config: Option<RpcConfig>) -> Result<Self, ProviderError> {
+    pub fn new(
+        source: RpcSources,
+        config: Option<RpcConfig>,
+        rounding_error: Option<u64>,
+    ) -> Result<Self, ProviderError> {
         let config = config.unwrap_or_default();
+        let rounding_error = rounding_error.unwrap_or(DEFAULT_ROUNDING_ERROR);
         let strategy = config.response_consensus.clone().unwrap_or_default();
         Ok(Self {
             providers: Providers::new(source, strategy)?,
             config,
+            rounding_error,
         })
     }
 
@@ -140,7 +148,7 @@ impl SolRpcClient {
             "getSlot",
             vec![params],
             self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
-            &Some(ResponseTransform::GetSlot),
+            &Some(ResponseTransform::GetSlot(self.rounding_error)),
         )
         .await
         .reduce(self.reduction_strategy())

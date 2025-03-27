@@ -33,6 +33,13 @@ type RpcConfig = record {
   responseConsensus : opt ConsensusStrategy;
 };
 
+// Configures how to perform `getSlot` RPC HTTP calls.
+type GetSlotRpcConfig = record {
+  responseSizeEstimate : opt nat64;
+  responseConsensus : opt ConsensusStrategy;
+  roundingError : opt nat64;
+};
+
 // Defines a consensus strategy for combining responses from different providers.
 type ConsensusStrategy = variant {
   Equality;
@@ -213,7 +220,7 @@ service : (InstallArgs,) -> {
   updateApiKeys : (vec record { SupportedProvider; opt text }) -> ();
 
   // Call the Solana `getSlot` RPC method and return the resulting slot.
-  getSlot : (RpcSources, opt RpcConfig, opt GetSlotParams) -> (MultiGetSlotResult);
+  getSlot : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (MultiGetSlotResult);
 
   // Make a generic RPC request that sends the given json_rpc_payload.
   request : (RpcSources, opt RpcConfig, json_rpc_paylod: text) -> (MultiRequestResult)

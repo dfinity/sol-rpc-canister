@@ -10,7 +10,7 @@ use sol_rpc_canister::{
     state::{mutate_state, read_state},
 };
 use sol_rpc_types::{
-    GetSlotParams, MultiRpcResult, RpcAccess, RpcConfig, RpcError, RpcSources,
+    GetSlotParams, GetSlotRpcConfig, MultiRpcResult, RpcAccess, RpcConfig, RpcError, RpcSources,
     SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_clock::Slot;
@@ -76,10 +76,15 @@ async fn update_api_keys(api_keys: Vec<(SupportedRpcProviderId, Option<String>)>
 #[candid_method(rename = "getSlot")]
 async fn get_slot(
     source: RpcSources,
-    config: Option<RpcConfig>,
+    config: Option<GetSlotRpcConfig>,
     params: Option<GetSlotParams>,
 ) -> MultiRpcResult<Slot> {
-    match CandidRpcClient::new(source, config) {
+    let rounding_error = config.as_ref().map(|c| c.rounding_error).flatten();
+    match CandidRpcClient::new_with_rounding_error(
+        source,
+        config.map(RpcConfig::from),
+        rounding_error,
+    ) {
         Ok(client) => client.get_slot(params.unwrap_or_default()).await,
         Err(err) => Err(err).into(),
     }

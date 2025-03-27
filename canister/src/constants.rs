@@ -10,4 +10,4 @@ pub const API_KEY_MAX_SIZE: usize = 512;
 pub const VALID_API_KEY_CHARS: &str =
     "0123456789ABCDEFGHIJKLMNOPQRTSUVWXYZabcdefghijklmnopqrstuvwxyz$-_.+!*";
 
-pub const SLOT_ROUNDING_ERROR: u64 = 20;
+pub const DEFAULT_ROUNDING_ERROR: u64 = 20;

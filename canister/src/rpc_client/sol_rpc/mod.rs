@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests;
 
-use crate::constants::SLOT_ROUNDING_ERROR;
 use candid::candid_method;
 use canhttp::http::json::JsonRpcResponse;
 use ic_cdk::{
@@ -33,8 +32,8 @@ pub const MAX_PAYLOAD_SIZE: u64 = HTTP_MAX_SIZE - HEADER_SIZE_LIMIT;
 #[derive(Debug, Decode, Encode)]
 pub enum ResponseTransform {
     #[n(0)]
-    GetSlot,
-    #[n(1)]
+    GetSlot(#[n(1)] u64),
+    #[n(2)]
     Raw,
 }
 
@@ -49,23 +48,11 @@ impl ResponseTransform {
             }
         }
 
-        // TODO: Add `map_result` method to `JsonRpcResponse` instead
-        fn map_json_rpc_result<T>(
-            f: fn(T) -> T,
-        ) -> impl FnOnce(JsonRpcResponse<T>) -> JsonRpcResponse<T> {
-            move |response: JsonRpcResponse<T>| {
-                JsonRpcResponse::from_parts(response.id().clone(), response.into_result().map(f))
-            }
-        }
-
         match self {
-            Self::GetSlot => {
-                canonicalize::<JsonRpcResponse<Slot>>(
-                    body_bytes,
-                    map_json_rpc_result(|slot: Slot| {
-                        (slot / SLOT_ROUNDING_ERROR) * SLOT_ROUNDING_ERROR
-                    }),
-                );
+            Self::GetSlot(rounding_error) => {
+                canonicalize::<JsonRpcResponse<Slot>>(body_bytes, |response| {
+                    response.map(|slot: Slot| (slot / rounding_error) * rounding_error)
+                });
             }
             Self::Raw => {
                 canonicalize::<serde_json::Value>(body_bytes, std::convert::identity);
