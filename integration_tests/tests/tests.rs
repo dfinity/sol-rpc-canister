@@ -15,10 +15,10 @@ use sol_rpc_types::{
 
 const MOCK_REQUEST_URL: &str = "https://api.devnet.solana.com/";
 const MOCK_REQUEST_PAYLOAD: &str = r#"{"jsonrpc":"2.0","id":0,"method":"getVersion"}"#;
-const MOCK_REQUEST_RESPONSE_RESULT: &str = r#"{"feature-set":2891131721,"solana-core":"1.16.7"}"#;
-const MOCK_REQUEST_RESPONSE: &str = formatcp!(
+const MOCK_RESPONSE_RESULT: &str = r#"{"feature-set":2891131721,"solana-core":"1.16.7"}"#;
+const MOCK_RESPONSE: &str = formatcp!(
     "{{\"jsonrpc\":\"2.0\",\"id\":0,\"result\":{}}}",
-    MOCK_REQUEST_RESPONSE_RESULT
+    MOCK_RESPONSE_RESULT
 );
 const MOCK_REQUEST_MAX_RESPONSE_BYTES: u64 = 1000;
 
@@ -44,11 +44,10 @@ mod mock_request_tests {
                     value: "Value".to_string(),
                 }]),
             })]));
-        let expected_result: serde_json::Value =
-            serde_json::from_str(MOCK_REQUEST_RESPONSE).unwrap();
+        let expected_result: serde_json::Value = serde_json::from_str(MOCK_RESPONSE).unwrap();
         assert_matches!(
             client
-                .mock_http(builder_fn(MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE)))
+                .mock_http(builder_fn(MockOutcallBuilder::new(200, MOCK_RESPONSE)))
                 .request(MOCK_REQUEST_PAYLOAD, 0)
                 .await,
             sol_rpc_types::MultiRpcResult::Consistent(Ok(msg)) if msg == serde_json::Value::to_string(&expected_result["result"])
@@ -143,6 +142,7 @@ mod get_provider_tests {
 
 mod generic_request_tests {
     use super::*;
+    use std::str::FromStr;
 
     #[tokio::test]
     async fn request_should_require_cycles() {
@@ -171,9 +171,11 @@ mod generic_request_tests {
 
     #[tokio::test]
     async fn request_should_succeed_in_demo_mode() {
-        let [response_0, response_1, response_2] = json_rpc_sequential_id(
-            json!({"id":0,"jsonrpc":"2.0","result":{"feature-set":2891131721u32,"solana-core":"1.16.7"}}),
-        );
+        let [response_0, response_1, response_2] = json_rpc_sequential_id(json!({
+            "id": 0,
+            "jsonrpc": "2.0",
+            "result": serde_json::Value::from_str(MOCK_RESPONSE_RESULT).unwrap()
+        }));
         let setup = Setup::with_args(InstallArgs {
             mode: Some(Mode::Demo),
             ..Default::default()
@@ -191,7 +193,7 @@ mod generic_request_tests {
             .await
             .expect_consistent();
 
-        assert_matches!(result, Ok(msg) if msg == MOCK_REQUEST_RESPONSE_RESULT);
+        assert_matches!(result, Ok(msg) if msg == MOCK_RESPONSE_RESULT);
 
         setup.drop().await;
     }
