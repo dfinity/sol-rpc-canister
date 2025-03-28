@@ -176,7 +176,7 @@ impl SolRpcClient {
     {
         self.parallel_call(
             request.method(),
-            &[request.params()],
+            vec![request.params()],
             self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
             &Some(ResponseTransform::Raw),
         )

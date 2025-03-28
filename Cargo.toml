@@ -45,7 +45,6 @@ ic-canister-log = "0.2.0"
 ic-cdk = "0.17.1"
 ic-ed25519 = "0.1.0"
 ic-metrics-encoder = "1.1"
-ic-sha3 = "1.0.0"
 ic-stable-structures = "0.6.7"
 ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", tag = "release-2025-01-23_03-04-base" }
 maplit = "1.0.2"
@@ -58,7 +57,6 @@ regex = "1.11.1"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_bytes = "0.11.17"
 serde_json = "1.0.140"
-serde_tuple = "1.1.0"
 solana-clock = "2.2.0"
 solana-client = "2.2.0"
 solana-hash = "2.2.0"
@@ -75,7 +73,6 @@ strum = { version = "0.27.0", features = ["derive"] }
 thiserror = "2.0.12"
 tokio = "1.44.1"
 tower = "0.5.2"
-tower-layer = "0.3.3"
 tower-http = "0.6.2"
 url = "2.5"
 zeroize = { version = "1.8", features = ["zeroize_derive"] }

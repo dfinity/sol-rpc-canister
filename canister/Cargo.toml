@@ -20,12 +20,10 @@ canlog = { path = "../canlog", features = ["derive"] }
 ciborium = { workspace = true }
 const_format = { workspace = true }
 derive_more = { workspace = true }
-futures = { workspace = true }
 hex = { workspace = true }
 http = { workspace = true }
 ic-cdk = { workspace = true }
 ic-metrics-encoder = { workspace = true }
-ic-sha3 = { workspace = true }
 ic-stable-structures = { workspace = true }
 maplit = { workspace = true }
 minicbor = { workspace = true }
@@ -36,7 +34,6 @@ regex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_bytes = { workspace = true }
-serde_tuple = { workspace = true }
 solana-account = { workspace = true, features = ["serde"] }
 solana-account-decoder-client-types = { workspace = true, features = ["zstd"] }
 solana-pubkey = { workspace = true }
@@ -45,7 +42,6 @@ tower-http = { workspace = true, features = ["set-header", "util"] }
 url = { workspace = true }
 zeroize = { workspace = true }
 thiserror = { workspace = true }
-bincode = "1.3.3"
 
 [dev-dependencies]
 candid_parser = { workspace = true }
