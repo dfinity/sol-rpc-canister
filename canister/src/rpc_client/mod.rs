@@ -125,14 +125,7 @@ impl SolRpcClient {
         }
 
         let rpc_method = MetricRpcMethod::from(request_body.method().to_string());
-        let client =
-            http_client(rpc_method, true).map_result(|r| match r?.into_body().into_result() {
-                Ok(value) => Ok(value),
-                Err(json_rpc_error) => Err(RpcError::JsonRpcError(JsonRpcError {
-                    code: json_rpc_error.code,
-                    message: json_rpc_error.message,
-                })),
-            });
+        let client = http_client(rpc_method, true);
 
         let (requests, errors) = requests.into_inner();
         let (_client, mut results) = canhttp::multi::parallel_call(client, requests).await;

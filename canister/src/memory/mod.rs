@@ -151,6 +151,10 @@ impl State {
         self.mode
     }
 
+    pub fn is_demo_mode_active(&self) -> bool {
+        self.mode == Mode::Demo
+    }
+
     pub fn set_mode(&mut self, mode: Mode) {
         self.mode = mode
     }

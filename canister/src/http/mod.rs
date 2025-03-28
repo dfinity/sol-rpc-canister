@@ -27,7 +27,7 @@ use canlog::log;
 use http::{header::CONTENT_TYPE, HeaderValue};
 use ic_cdk::api::management_canister::http_request::CanisterHttpRequestArgument;
 use serde::{de::DeserializeOwned, Serialize};
-use sol_rpc_types::{Mode, RpcError};
+use sol_rpc_types::{JsonRpcError, Mode, RpcError};
 use std::fmt::Debug;
 use tower::{
     layer::util::{Identity, Stack},
@@ -40,7 +40,7 @@ use tower_http::{set_header::SetRequestHeaderLayer, ServiceBuilderExt};
 pub fn http_client<I, O>(
     rpc_method: MetricRpcMethod,
     retry: bool,
-) -> impl Service<HttpJsonRpcRequest<I>, Response = HttpJsonRpcResponse<O>, Error = RpcError>
+) -> impl Service<HttpJsonRpcRequest<I>, Response = O, Error = RpcError>
 where
     I: Serialize + Clone + Debug,
     O: DeserializeOwned + Debug,
@@ -56,6 +56,7 @@ where
         None
     };
     ServiceBuilder::new()
+        .map_result(extract_json_rpc_response)
         .map_err(|e: HttpClientError| RpcError::from(e))
         .option_layer(maybe_retry)
         .option_layer(maybe_unique_id)
@@ -157,6 +158,18 @@ where
         .service(canhttp::Client::new_with_error::<HttpClientError>())
 }
 
+fn extract_json_rpc_response<O>(
+    result: Result<HttpJsonRpcResponse<O>, RpcError>,
+) -> Result<O, RpcError> {
+    match result?.into_body().into_result() {
+        Ok(value) => Ok(value),
+        Err(json_rpc_error) => Err(RpcError::JsonRpcError(JsonRpcError {
+            code: json_rpc_error.code,
+            message: json_rpc_error.message,
+        })),
+    }
+}
+
 fn generate_request_id<I>(request: HttpJsonRpcRequest<I>) -> HttpJsonRpcRequest<I> {
     let (parts, mut body) = request.into_parts();
     body.set_id(next_request_id());
@@ -220,7 +233,7 @@ impl ChargingPolicyWithCollateral {
     fn new_from_state(s: &State) -> Self {
         Self::new(
             s.get_num_subnet_nodes(),
-            !matches!(s.get_mode(), Mode::Demo),
+            !s.is_demo_mode_active(),
             COLLATERAL_CYCLES_PER_NODE,
         )
     }
