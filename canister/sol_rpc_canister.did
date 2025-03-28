@@ -150,6 +150,10 @@ type RejectionCode = variant {
   CanisterReject;
 };
 
+// Cycles cost of a request made to the SOL RPC canister.
+// E.g., the cycle cost for `getSlot` can be retrieved by calling `getSlotRequestCost`.
+type RequestCostResult = variant { Ok : nat; Err : RpcError };
+
 // Represents a Solana slot
 type Slot = nat64;
 
@@ -239,6 +243,7 @@ service : (InstallArgs,) -> {
 
   // Call the Solana `getSlot` RPC method and return the resulting slot.
   getSlot : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (MultiGetSlotResult);
+  getSlotRequestCost : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (RequestCostResult) query;
 
   // Make a generic RPC request that sends the given json_rpc_payload.
   request : (RpcSources, opt RpcConfig, json_rpc_paylod: text) -> (MultiRequestResult)
