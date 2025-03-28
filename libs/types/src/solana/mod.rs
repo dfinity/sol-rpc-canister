@@ -59,8 +59,8 @@ pub enum GetAccountInfoEncoding {
     #[serde(rename = "base64+zstd")]
     Base64ZStd,
     /// The encoding attempts to use program-specific state parsers to return more human-readable
-    /// and explicit account state data. If [`JsonParsed`] is requested but a parser cannot be
-    /// found, the fallback is [`Base64`] encoding.
+    /// and explicit account state data. If [`GetAccountInfoEncoding::JsonParsed`] is requested but
+    /// a parser cannot be found, the fallback is [`GetAccountInfoEncoding::Base64`] encoding.
     #[serde(rename = "jsonParsed")]
     JsonParsed,
 }
