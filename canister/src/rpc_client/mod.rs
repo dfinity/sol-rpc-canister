@@ -148,8 +148,8 @@ impl SolRpcClient {
             self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
             &Some(ResponseTransform::GetAccountInfo),
         )
-            .await
-            .reduce(self.reduction_strategy())
+        .await
+        .reduce(self.reduction_strategy())
     }
 
     /// Query the Solana [`getSlot`](https://solana.com/docs/rpc/http/getslot) RPC method.
