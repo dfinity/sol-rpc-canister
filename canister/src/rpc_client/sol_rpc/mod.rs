@@ -45,10 +45,7 @@ impl ResponseTransform {
     fn apply(&self, body_bytes: &mut Vec<u8>) {
         use serde_json::{from_slice, to_vec, Value};
 
-        fn canonicalize_get_account_info_response<T>(body: &mut Vec<u8>) -> Option<Vec<u8>>
-        where
-            T: Debug + Serialize + DeserializeOwned,
-        {
+        fn canonicalize_get_account_info_response(body: &[u8]) -> Option<Vec<u8>> {
             let response = from_slice::<JsonRpcResponse<Value>>(body)
                 .ok()?
                 .map(|result| {
@@ -60,15 +57,12 @@ impl ResponseTransform {
             to_vec(&response).ok()
         }
 
-        fn canonicalize_json_rpc_response<T>(body: &mut Vec<u8>)
+        fn canonicalize_json_rpc_response<T>(body: &[u8]) -> Option<Vec<u8>>
         where
             T: Serialize + DeserializeOwned,
         {
-            let response: JsonRpcResponse<T> = match from_slice(body) {
-                Ok(response) => response,
-                Err(_) => return,
-            };
-            *body = to_vec(&response).expect("BUG: failed to serialize response");
+            let response: JsonRpcResponse<T> = from_slice(body).ok()?;
+            to_vec(&response).ok()
         }
 
         fn canonicalize_raw(text: &[u8]) -> Option<Vec<u8>> {
@@ -78,14 +72,18 @@ impl ResponseTransform {
 
         match self {
             Self::GetAccountInfo => {
-                if let Some(bytes) = canonicalize_get_account_info_response::<Account>(body_bytes) {
+                if let Some(bytes) = canonicalize_get_account_info_response(body_bytes) {
                     *body_bytes = bytes
                 }
             }
             // TODO XC-292: Add rounding to the response transform and
             //  add a unit test simulating consensus when the providers
             //  return slightly differing results.
-            Self::GetSlot => canonicalize_json_rpc_response::<Slot>(body_bytes),
+            Self::GetSlot => {
+                if let Some(bytes) = canonicalize_json_rpc_response::<Slot>(body_bytes) {
+                    *body_bytes = bytes
+                }
+            }
             Self::Raw => {
                 if let Some(bytes) = canonicalize_raw(body_bytes) {
                     *body_bytes = bytes

@@ -136,21 +136,6 @@ impl SolRpcClient {
         results
     }
 
-    /// Query the Solana [`getSlot`](https://solana.com/docs/rpc/http/getslot) RPC method.
-    pub async fn get_slot(
-        &self,
-        params: Option<GetSlotParams>,
-    ) -> ReducedResult<solana_clock::Slot> {
-        self.parallel_call(
-            "getSlot",
-            vec![params],
-            self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
-            &Some(ResponseTransform::GetSlot),
-        )
-        .await
-        .reduce(self.reduction_strategy())
-    }
-
     /// Query the Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method.
     pub async fn get_account_info(
         &self,
@@ -162,6 +147,21 @@ impl SolRpcClient {
             (pubkey.to_string(), params),
             self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
             &Some(ResponseTransform::GetAccountInfo),
+        )
+            .await
+            .reduce(self.reduction_strategy())
+    }
+
+    /// Query the Solana [`getSlot`](https://solana.com/docs/rpc/http/getslot) RPC method.
+    pub async fn get_slot(
+        &self,
+        params: Option<GetSlotParams>,
+    ) -> ReducedResult<solana_clock::Slot> {
+        self.parallel_call(
+            "getSlot",
+            vec![params],
+            self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
+            &Some(ResponseTransform::GetSlot),
         )
         .await
         .reduce(self.reduction_strategy())
