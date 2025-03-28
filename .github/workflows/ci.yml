@@ -151,7 +151,7 @@ jobs:
           dfx identity set-wallet --ic --force "${{ env.wallet_canister_id }}"
           dfx wallet balance --ic
 
-      - name: "Deploy Release Candidate"
+      - name: "Deploy SOL RPC Canister"
         run: |
           wallet="${{ env.wallet_canister_id }}"
           dfx canister --network ic --wallet "$wallet" install --mode upgrade \
