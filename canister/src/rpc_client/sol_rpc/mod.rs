@@ -43,7 +43,7 @@ pub enum ResponseTransform {
 
 impl ResponseTransform {
     fn apply(&self, body_bytes: &mut Vec<u8>) {
-        fn canonicalize_json_rpc_response<T, R>(body_bytes: &mut Vec<u8>, f: impl FnOnce(T) -> R)
+        fn canonicalize_response<T, R>(body_bytes: &mut Vec<u8>, f: impl FnOnce(T) -> R)
         where
             T: Serialize + DeserializeOwned,
             R: Serialize + DeserializeOwned,
@@ -57,15 +57,15 @@ impl ResponseTransform {
 
         match self {
             Self::GetAccountInfo => {
-                canonicalize_json_rpc_response::<Value, Account>(body_bytes, |result| {
+                canonicalize_response::<Value, Account>(body_bytes, |result| {
                     from_value::<UiAccount>(result["value"].clone())
-                        .unwrap()
+                        .expect("BUG: Unable to deserialize account")
                         .decode::<Account>()
-                        .unwrap()
+                        .expect("BUG: Unable to decode account")
                 });
             }
             Self::GetSlot => {
-                canonicalize_json_rpc_response::<Slot, Slot>(
+                canonicalize_response::<Slot, Slot>(
                     body_bytes,
                     // TODO XC-292: Add rounding to the response transform and
                     //  add a unit test simulating consensus when the providers
@@ -74,7 +74,7 @@ impl ResponseTransform {
                 );
             }
             Self::Raw => {
-                canonicalize_json_rpc_response::<Value, Value>(body_bytes, std::convert::identity);
+                canonicalize_response::<Value, Value>(body_bytes, std::convert::identity);
             }
         }
     }
