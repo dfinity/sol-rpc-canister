@@ -9,7 +9,7 @@ use ic_cdk::{
 };
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
-use serde_json::from_value;
+use serde_json::{from_slice, from_value, to_vec, Value};
 use solana_account::Account;
 use solana_account_decoder_client_types::UiAccount;
 use solana_clock::Slot;
@@ -43,51 +43,38 @@ pub enum ResponseTransform {
 
 impl ResponseTransform {
     fn apply(&self, body_bytes: &mut Vec<u8>) {
-        use serde_json::{from_slice, to_vec, Value};
+        fn canonicalize_json_rpc_response<T, R>(body_bytes: &mut Vec<u8>, f: impl FnOnce(T) -> R)
+        where
+            T: Serialize + DeserializeOwned,
+            R: Serialize + DeserializeOwned,
+        {
+            if let Ok(response) = from_slice::<JsonRpcResponse<T>>(body_bytes) {
+                if let Ok(bytes) = to_vec(&response.map(f)) {
+                    *body_bytes = bytes
+                }
+            }
+        }
 
-        fn canonicalize_get_account_info_response(body: &[u8]) -> Option<Vec<u8>> {
-            let response = from_slice::<JsonRpcResponse<Value>>(body)
-                .ok()?
-                .map(|result| {
+        match self {
+            Self::GetAccountInfo => {
+                canonicalize_json_rpc_response::<Value, Account>(body_bytes, |result| {
                     from_value::<UiAccount>(result["value"].clone())
                         .unwrap()
                         .decode::<Account>()
                         .unwrap()
                 });
-            to_vec(&response).ok()
-        }
-
-        fn canonicalize_json_rpc_response<T>(body: &[u8]) -> Option<Vec<u8>>
-        where
-            T: Serialize + DeserializeOwned,
-        {
-            let response: JsonRpcResponse<T> = from_slice(body).ok()?;
-            to_vec(&response).ok()
-        }
-
-        fn canonicalize_raw(text: &[u8]) -> Option<Vec<u8>> {
-            let json = from_slice::<Value>(text).ok()?;
-            to_vec(&json).ok()
-        }
-
-        match self {
-            Self::GetAccountInfo => {
-                if let Some(bytes) = canonicalize_get_account_info_response(body_bytes) {
-                    *body_bytes = bytes
-                }
             }
-            // TODO XC-292: Add rounding to the response transform and
-            //  add a unit test simulating consensus when the providers
-            //  return slightly differing results.
             Self::GetSlot => {
-                if let Some(bytes) = canonicalize_json_rpc_response::<Slot>(body_bytes) {
-                    *body_bytes = bytes
-                }
+                canonicalize_json_rpc_response::<Slot, Slot>(
+                    body_bytes,
+                    // TODO XC-292: Add rounding to the response transform and
+                    //  add a unit test simulating consensus when the providers
+                    //  return slightly differing results.
+                    std::convert::identity,
+                );
             }
             Self::Raw => {
-                if let Some(bytes) = canonicalize_raw(body_bytes) {
-                    *body_bytes = bytes
-                }
+                canonicalize_json_rpc_response::<Value, Value>(body_bytes, std::convert::identity);
             }
         }
     }
