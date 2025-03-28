@@ -9,6 +9,9 @@ use ic_cdk::{
 };
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
+use serde_json::from_value;
+use solana_account::Account;
+use solana_account_decoder_client_types::UiAccount;
 use solana_clock::Slot;
 use std::{fmt, fmt::Debug};
 
@@ -42,6 +45,21 @@ impl ResponseTransform {
     fn apply(&self, body_bytes: &mut Vec<u8>) {
         use serde_json::{from_slice, to_vec, Value};
 
+        fn canonicalize_get_account_info_response<T>(body: &mut Vec<u8>) -> Option<Vec<u8>>
+        where
+            T: Debug + Serialize + DeserializeOwned,
+        {
+            let response = from_slice::<JsonRpcResponse<Value>>(body)
+                .ok()?
+                .map(|result| {
+                    from_value::<UiAccount>(result["value"].clone())
+                        .unwrap()
+                        .decode::<Account>()
+                        .unwrap()
+                });
+            to_vec(&response).ok()
+        }
+
         fn canonicalize_json_rpc_response<T>(body: &mut Vec<u8>)
         where
             T: Serialize + DeserializeOwned,
@@ -60,7 +78,9 @@ impl ResponseTransform {
 
         match self {
             Self::GetAccountInfo => {
-                canonicalize_json_rpc_response::<solana_account::Account>(body_bytes)
+                if let Some(bytes) = canonicalize_get_account_info_response::<Account>(body_bytes) {
+                    *body_bytes = bytes
+                }
             }
             // TODO XC-292: Add rounding to the response transform and
             //  add a unit test simulating consensus when the providers

@@ -6,9 +6,13 @@ use futures::future;
 use pocket_ic::PocketIcBuilder;
 use sol_rpc_client::SolRpcClient;
 use sol_rpc_int_tests::PocketIcLiveModeRuntime;
-use sol_rpc_types::{InstallArgs, MultiRpcResult, OverrideProvider, RegexSubstitution};
+use sol_rpc_types::{
+    GetAccountInfoEncoding, GetAccountInfoParams, InstallArgs, MultiRpcResult, OverrideProvider,
+    RegexSubstitution,
+};
 use solana_client::rpc_client::RpcClient as SolanaRpcClient;
-use std::future::Future;
+use solana_pubkey::Pubkey;
+use std::{future::Future, str::FromStr};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn should_get_slot() {
@@ -36,7 +40,33 @@ async fn should_get_slot() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn should_get_account_info() {
-    // TODO XC-288
+    let setup = Setup::new().await;
+    let pubkey = Pubkey::from_str("11111111111111111111111111111111").unwrap();
+
+    let (sol_res, ic_res) = setup
+        .compare_client(
+            |sol| sol.get_account(&pubkey).expect("Failed to get account"),
+            |ic| async move {
+                match ic
+                    .get_account_info(
+                        pubkey,
+                        Some(GetAccountInfoParams {
+                            encoding: Some(GetAccountInfoEncoding::Base64ZStd),
+                            ..GetAccountInfoParams::default()
+                        }),
+                    )
+                    .await
+                {
+                    MultiRpcResult::Consistent(Ok(account)) => account,
+                    result => panic!("Failed to get account, received: {:?}", result),
+                }
+            },
+        )
+        .await;
+
+    assert_eq!(sol_res, ic_res);
+
+    setup.setup.drop().await;
 }
 
 pub struct Setup {

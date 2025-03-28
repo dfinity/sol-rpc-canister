@@ -159,10 +159,7 @@ impl SolRpcClient {
     ) -> ReducedResult<solana_account::Account> {
         self.parallel_call(
             "getAccountInfo",
-            serde_json::Value::Array(vec![
-                serde_json::to_value(pubkey).expect("BUG: could not serialize pubkey"),
-                serde_json::to_value(params).expect("BUG: could not serialize params"),
-            ]),
+            (pubkey.to_string(), params),
             self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
             &Some(ResponseTransform::GetAccountInfo),
         )
@@ -179,7 +176,7 @@ impl SolRpcClient {
     {
         self.parallel_call(
             request.method(),
-            request.params(),
+            &[request.params()],
             self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
             &Some(ResponseTransform::Raw),
         )

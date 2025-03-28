@@ -126,14 +126,14 @@ impl<R: Runtime> SolRpcClient<R> {
     pub async fn get_account_info(
         &self,
         pubkey: Pubkey,
-        params: GetAccountInfoParams,
+        params: Option<GetAccountInfoParams>,
     ) -> sol_rpc_types::MultiRpcResult<Account> {
         self.runtime
             .update_call::<(
                 RpcSources,
                 Option<RpcConfig>,
                 sol_rpc_types::Pubkey,
-                GetAccountInfoParams,
+                Option<GetAccountInfoParams>,
             ), sol_rpc_types::MultiRpcResult<sol_rpc_types::Account>>(
                 self.sol_rpc_canister,
                 "getAccountInfo",

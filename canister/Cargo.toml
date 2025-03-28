@@ -36,7 +36,9 @@ regex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_bytes = { workspace = true }
+serde_tuple = { workspace = true }
 solana-account = { workspace = true, features = ["serde"] }
+solana-account-decoder-client-types = { workspace = true, features = ["zstd"] }
 solana-pubkey = { workspace = true }
 tower = { workspace = true }
 tower-http = { workspace = true, features = ["set-header", "util"] }

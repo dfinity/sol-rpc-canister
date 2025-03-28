@@ -129,7 +129,7 @@ type RejectionCode = variant {
 type GetAccountInfoEncoding = variant {
   base58;
   base64;
-  // base64+zstd;
+  "base64+zstd";
   jsonParsed;
 };
 

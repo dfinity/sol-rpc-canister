@@ -602,7 +602,7 @@ dependencies = [
 [[package]]
 name = "canhttp"
 version = "0.1.0"
-source = "git+https://github.com/dfinity/evm-rpc-canister?rev=b976abe57379be7d2649f6a31522d0bb25c5f455#b976abe57379be7d2649f6a31522d0bb25c5f455"
+source = "git+https://github.com/dfinity/evm-rpc-canister?branch=lpahlavi%2Fjson-rpc-response-map-method-v2#ec70414ad2a4c185a9cbb35f64edcea554a0240a"
 dependencies = [
  "assert_matches",
  "ciborium",
@@ -3835,6 +3835,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_tuple"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0f9b739e59a0e07b7a73bc11c3dcd6abf790d0f54042b67a422d4bd1f6cf6c0"
+dependencies = [
+ "serde",
+ "serde_tuple_macros",
+]
+
+[[package]]
+name = "serde_tuple_macros"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e87546e85c5047d03b454d12ee25266fc269a461a4029956ca58d246b9aefae"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "serde_urlencoded"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4022,8 +4043,10 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_json",
+ "serde_tuple",
  "sol_rpc_types",
  "solana-account",
+ "solana-account-decoder-client-types",
  "solana-clock",
  "solana-pubkey",
  "thiserror 2.0.12",
@@ -4067,7 +4090,9 @@ dependencies = [
  "sol_rpc_canister",
  "sol_rpc_client",
  "sol_rpc_types",
+ "solana-account",
  "solana-client",
+ "solana-pubkey",
  "tokio",
 ]
 

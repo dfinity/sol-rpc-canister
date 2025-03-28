@@ -22,6 +22,8 @@ serde_json = { workspace = true }
 sol_rpc_canister = { path = "../canister" }
 sol_rpc_client = { path = "../libs/client" }
 sol_rpc_types = { path = "../libs/types" }
+solana-account = { workspace = true }
+solana-pubkey = { workspace = true }
 
 [dev-dependencies]
 assert_matches = { workspace = true }

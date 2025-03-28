@@ -31,7 +31,7 @@ assert_matches = "1.5.0"
 async-trait = "0.1.88"
 candid = "0.10.13"
 candid_parser = "0.1.4"
-canhttp = { git = "https://github.com/dfinity/evm-rpc-canister", rev = "b976abe57379be7d2649f6a31522d0bb25c5f455" }
+canhttp = { git = "https://github.com/dfinity/evm-rpc-canister", branch = "lpahlavi/json-rpc-response-map-method-v2" }
 ciborium = "0.2.2"
 # Transitive dependency of ic-ed25519
 # See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
@@ -58,6 +58,7 @@ regex = "1.11.1"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_bytes = "0.11.17"
 serde_json = "1.0.140"
+serde_tuple = "1.1.0"
 solana-clock = "2.2.0"
 solana-client = "2.2.0"
 solana-hash = "2.2.0"
@@ -69,6 +70,7 @@ solana-pubkey = "2.2.0"
 solana-signature = "2.2.0"
 solana-transaction = { version = "2.2.0", features = ["bincode"] }
 solana-account = "2.2.0"
+solana-account-decoder-client-types = { version = "2.2.0", features = ["zstd"] }
 strum = { version = "0.27.0", features = ["derive"] }
 thiserror = "2.0.12"
 tokio = "1.44.1"
@@ -83,6 +85,7 @@ zeroize = { version = "1.8", features = ["zeroize_derive"] }
 #   are using forked version of the relevant repositories.
 [patch.crates-io]
 solana-account = { git = "https://github.com/lpahlavi/agave.git" }
+solana-account-decoder-client-types = { git = "https://github.com/lpahlavi/agave.git" }
 solana-client = { git = "https://github.com/lpahlavi/agave.git" }
 solana-clock = { git = "https://github.com/lpahlavi/agave.git" }
 solana-hash = { git = "https://github.com/lpahlavi/agave.git" }

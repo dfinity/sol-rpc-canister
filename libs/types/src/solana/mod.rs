@@ -54,11 +54,10 @@ pub enum GetAccountInfoEncoding {
     /// The account data is base-64 encoded.
     #[serde(rename = "base64")]
     Base64,
-    // TODO XC-288
-    // /// Account data is first compressed using [Zstandard](http://facebook.github.io/zstd/) and the
-    // /// result is then base-64 encoded.
-    // #[serde(rename = "base64+zstd")]
-    // Base64ZStd,
+    /// Account data is first compressed using [Zstandard](http://facebook.github.io/zstd/) and the
+    /// result is then base-64 encoded.
+    #[serde(rename = "base64+zstd")]
+    Base64ZStd,
     /// The encoding attempts to use program-specific state parsers to return more human-readable
     /// and explicit account state data. If [`JsonParsed`] is requested but a parser cannot be
     /// found, the fallback is [`Base64`] encoding.

@@ -15,4 +15,7 @@ pub use rpc_client::{
     RegexString, RegexSubstitution, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
     RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
-pub use solana::{Account, CommitmentLevel, GetAccountInfoParams, GetSlotParams, Pubkey, Slot};
+pub use solana::{
+    Account, CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams,
+    GetSlotParams, Pubkey, Slot,
+};
