@@ -5,9 +5,10 @@ mod tests;
 use crate::{
     http::http_client,
     logs::Priority,
+    memory::read_state,
+    metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider, Providers},
     rpc_client::sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
-    state::read_state,
 };
 use canhttp::{
     http::json::JsonRpcRequest,
@@ -122,13 +123,15 @@ impl SolRpcClient {
             requests.insert_once(provider.clone(), request);
         }
 
-        let client = http_client(true).map_result(|r| match r?.into_body().into_result() {
-            Ok(value) => Ok(value),
-            Err(json_rpc_error) => Err(RpcError::JsonRpcError(JsonRpcError {
-                code: json_rpc_error.code,
-                message: json_rpc_error.message,
-            })),
-        });
+        let rpc_method = MetricRpcMethod::from(request_body.method().to_string());
+        let client =
+            http_client(rpc_method, true).map_result(|r| match r?.into_body().into_result() {
+                Ok(value) => Ok(value),
+                Err(json_rpc_error) => Err(RpcError::JsonRpcError(JsonRpcError {
+                    code: json_rpc_error.code,
+                    message: json_rpc_error.message,
+                })),
+            });
 
         let (requests, errors) = requests.into_inner();
         let (_client, mut results) = canhttp::multi::parallel_call(client, requests).await;

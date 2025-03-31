@@ -1,26 +1,54 @@
-use crate::rpc_client::{ReducedResult, SolRpcClient};
+use crate::{
+    add_metric_entry,
+    metrics::RpcMethod,
+    providers::get_provider,
+    rpc_client::{ReducedResult, SolRpcClient},
+    util::hostname_from_url,
+};
 use canhttp::multi::ReductionError;
 use serde::Serialize;
 use sol_rpc_types::{
-    GetSlotParams, MultiRpcResult, RoundingError, RpcConfig, RpcResult, RpcSources,
+    GetSlotParams, MultiRpcResult, RoundingError, RpcAccess, RpcAuth, RpcConfig, RpcResult,
+    RpcSource, RpcSources, SupportedRpcProvider,
 };
 use solana_clock::Slot;
 use std::fmt::Debug;
 
-fn process_result<T>(result: ReducedResult<T>) -> MultiRpcResult<T> {
+fn process_result<T>(method: RpcMethod, result: ReducedResult<T>) -> MultiRpcResult<T> {
     match result {
         Ok(value) => MultiRpcResult::Consistent(Ok(value)),
         Err(err) => match err {
             ReductionError::ConsistentError(err) => MultiRpcResult::Consistent(Err(err)),
             ReductionError::InconsistentResults(multi_call_results) => {
                 let results: Vec<_> = multi_call_results.into_iter().collect();
-                results.iter().for_each(|(_service, _service_result)| {
-                    // TODO XC-296: Add metrics for inconsistent providers
+                results.iter().for_each(|(source, _service_result)| {
+                    if let RpcSource::Supported(provider_id) = source {
+                        if let Some(provider) = get_provider(provider_id) {
+                            if let Some(host) = hostname(provider.clone()) {
+                                add_metric_entry!(
+                                    inconsistent_responses,
+                                    (method.into(), host.into()),
+                                    1
+                                )
+                            }
+                        }
+                    }
                 });
                 MultiRpcResult::Inconsistent(results)
             }
         },
     }
+}
+
+pub fn hostname(provider: SupportedRpcProvider) -> Option<String> {
+    let url = match provider.access {
+        RpcAccess::Authenticated { auth, .. } => match auth {
+            RpcAuth::BearerToken { url } => url,
+            RpcAuth::UrlParameter { url_pattern } => url_pattern,
+        },
+        RpcAccess::Unauthenticated { public_url } => public_url,
+    };
+    hostname_from_url(url.as_str())
 }
 
 /// Adapt the `EthRpcClient` to the `Candid` interface used by the EVM-RPC canister.
@@ -44,7 +72,7 @@ impl CandidRpcClient {
     }
 
     pub async fn get_slot(&self, params: GetSlotParams) -> MultiRpcResult<Slot> {
-        process_result(self.client.get_slot(params).await)
+        process_result(RpcMethod::GetSlot, self.client.get_slot(params).await)
     }
 
     pub async fn raw_request<I>(
@@ -54,6 +82,6 @@ impl CandidRpcClient {
     where
         I: Serialize + Clone + Debug,
     {
-        process_result(self.client.raw_request(request).await)
+        process_result(RpcMethod::Generic, self.client.raw_request(request).await)
     }
 }
