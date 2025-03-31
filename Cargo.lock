@@ -4055,6 +4055,7 @@ dependencies = [
  "futures",
  "ic-cdk",
  "ic-test-utilities-load-wasm",
+ "num-traits",
  "pocket-ic",
  "regex",
  "serde",
