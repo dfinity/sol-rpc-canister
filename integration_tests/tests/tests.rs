@@ -499,3 +499,26 @@ mod canister_upgrade_tests {
 fn get_version_request() -> serde_json::Value {
     json!({"jsonrpc": "2.0", "id": 0, "method": "getVersion"})
 }
+
+#[tokio::test]
+async fn should_get_slot() {
+    let setup = Setup::new().await;
+    let client = setup.client().mock_http_sequence(vec![
+        MockOutcallBuilder::new(
+            200,
+            json!({ "jsonrpc": "2.0", "result": 371059358, "id": 0 }),
+        ),
+        MockOutcallBuilder::new(
+            200,
+            json!({ "jsonrpc": "2.0", "result": 371059358, "id": 1 }),
+        ),
+        MockOutcallBuilder::new(
+            200,
+            json!({ "jsonrpc": "2.0", "result": 371059358, "id": 2 }),
+        ),
+    ]);
+
+    let slot = client.get_slot(None).await.expect_consistent().unwrap();
+
+    assert_eq!(slot, 371059358)
+}

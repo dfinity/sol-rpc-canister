@@ -12,6 +12,11 @@ impl From<&serde_json::Value> for MockOutcallBody {
         value.to_string().into()
     }
 }
+impl From<serde_json::Value> for MockOutcallBody {
+    fn from(value: serde_json::Value) -> Self {
+        Self::from(serde_json::to_vec(&value).unwrap())
+    }
+}
 impl From<String> for MockOutcallBody {
     fn from(string: String) -> Self {
         string.as_bytes().to_vec().into()
