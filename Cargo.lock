@@ -602,7 +602,7 @@ dependencies = [
 [[package]]
 name = "canhttp"
 version = "0.1.0"
-source = "git+https://github.com/dfinity/evm-rpc-canister?branch=lpahlavi%2Fjson-rpc-response-map-method#5d16c2193e48278233e2fae23950b4dd3ae62d03"
+source = "git+https://github.com/dfinity/evm-rpc-canister#d7261024d16df7fadd1ee60e4cd70798f3cf5577"
 dependencies = [
  "assert_matches",
  "ciborium",
@@ -4076,6 +4076,7 @@ dependencies = [
  "canlog",
  "derive_more",
  "ic-cdk",
+ "minicbor",
  "regex",
  "serde",
  "strum 0.27.1",

@@ -1,7 +1,9 @@
 use crate::rpc_client::{ReducedResult, SolRpcClient};
 use canhttp::multi::ReductionError;
 use serde::Serialize;
-use sol_rpc_types::{GetSlotParams, MultiRpcResult, RpcConfig, RpcResult, RpcSources};
+use sol_rpc_types::{
+    GetSlotParams, MultiRpcResult, RoundingError, RpcConfig, RpcResult, RpcSources,
+};
 use solana_clock::Slot;
 use std::fmt::Debug;
 
@@ -34,7 +36,7 @@ impl CandidRpcClient {
     pub fn new_with_rounding_error(
         source: RpcSources,
         config: Option<RpcConfig>,
-        rounding_error: Option<u64>,
+        rounding_error: Option<RoundingError>,
     ) -> RpcResult<Self> {
         Ok(Self {
             client: SolRpcClient::new(source, config, rounding_error)?,

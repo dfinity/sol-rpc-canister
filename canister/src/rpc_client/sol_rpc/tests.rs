@@ -24,9 +24,21 @@ mod normalization_tests {
 
     #[test]
     fn should_normalize_get_slot_response() {
-        assert_normalized_equal(&ResponseTransform::GetSlot(20), "329535108", "329535108");
-        assert_normalized_equal(&ResponseTransform::GetSlot(20), "329535108", "329535116");
-        assert_normalized_not_equal(&ResponseTransform::GetSlot(20), "329535108", "329535128");
+        assert_normalized_equal(
+            &ResponseTransform::GetSlot(RoundingError::default()),
+            "329535108",
+            "329535108",
+        );
+        assert_normalized_equal(
+            &ResponseTransform::GetSlot(RoundingError::default()),
+            "329535108",
+            "329535116",
+        );
+        assert_normalized_not_equal(
+            &ResponseTransform::GetSlot(RoundingError::default()),
+            "329535108",
+            "329535128",
+        );
     }
 
     fn normalize_result(transform: &ResponseTransform, result: &str) -> String {

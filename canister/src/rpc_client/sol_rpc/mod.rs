@@ -10,6 +10,7 @@ use ic_cdk::{
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{from_slice, to_vec};
+use sol_rpc_types::RoundingError;
 use solana_clock::Slot;
 use std::{fmt, fmt::Debug};
 
@@ -32,7 +33,7 @@ pub const MAX_PAYLOAD_SIZE: u64 = HTTP_MAX_SIZE - HEADER_SIZE_LIMIT;
 #[derive(Debug, Decode, Encode)]
 pub enum ResponseTransform {
     #[n(0)]
-    GetSlot(#[n(1)] u64),
+    GetSlot(#[n(1)] RoundingError),
     #[n(2)]
     Raw,
 }
@@ -51,7 +52,7 @@ impl ResponseTransform {
         match self {
             Self::GetSlot(rounding_error) => {
                 canonicalize::<JsonRpcResponse<Slot>>(body_bytes, |response| {
-                    response.map(|slot: Slot| (slot / rounding_error) * rounding_error)
+                    response.map(|slot| rounding_error.round(slot))
                 });
             }
             Self::Raw => {

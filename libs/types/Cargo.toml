@@ -15,6 +15,7 @@ candid = { workspace = true }
 canlog = { path = "../../canlog" }
 derive_more = { workspace = true }
 ic-cdk = { workspace = true }
+minicbor = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true }
 strum = { workspace = true }

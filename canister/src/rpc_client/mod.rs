@@ -2,7 +2,6 @@ mod sol_rpc;
 #[cfg(test)]
 mod tests;
 
-use crate::constants::DEFAULT_ROUNDING_ERROR;
 use crate::{
     http::http_client,
     logs::Priority,
@@ -19,8 +18,8 @@ use canlog::log;
 use ic_cdk::api::management_canister::http_request::TransformContext;
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
-    ConsensusStrategy, GetSlotParams, JsonRpcError, ProviderError, RpcConfig, RpcError, RpcSource,
-    RpcSources,
+    ConsensusStrategy, GetSlotParams, JsonRpcError, ProviderError, RoundingError, RpcConfig,
+    RpcError, RpcSource, RpcSources,
 };
 use solana_clock::Slot;
 use std::{collections::BTreeSet, fmt::Debug};
@@ -30,17 +29,17 @@ use tower::ServiceExt;
 pub struct SolRpcClient {
     providers: Providers,
     config: RpcConfig,
-    rounding_error: u64,
+    rounding_error: RoundingError,
 }
 
 impl SolRpcClient {
     pub fn new(
         source: RpcSources,
         config: Option<RpcConfig>,
-        rounding_error: Option<u64>,
+        rounding_error: Option<RoundingError>,
     ) -> Result<Self, ProviderError> {
         let config = config.unwrap_or_default();
-        let rounding_error = rounding_error.unwrap_or(DEFAULT_ROUNDING_ERROR);
+        let rounding_error = rounding_error.unwrap_or_default();
         let strategy = config.response_consensus.clone().unwrap_or_default();
         Ok(Self {
             providers: Providers::new(source, strategy)?,

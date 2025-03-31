@@ -2,9 +2,10 @@
 mod tests;
 
 use candid::CandidType;
-use derive_more::From;
+use derive_more::{From, Into};
 use ic_cdk::api::call::RejectionCode;
 pub use ic_cdk::api::management_canister::http_request::HttpHeader;
+use minicbor::{Decode, Encode};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
@@ -116,6 +117,8 @@ pub struct GetSlotRpcConfig {
     /// The result of the `getSlot` method will be rounded down to the nearest value within
     /// this error threshold. This is done to achieve consensus between nodes on the value
     /// of the latest slot despite the fast Solana block time.
+    ///
+    /// See the [`RoundingError`] documentation for more details.
     #[serde(rename = "roundingError")]
     pub rounding_error: Option<u64>,
 }
@@ -355,4 +358,59 @@ pub struct OverrideProvider {
     /// The regular expression used to override the [`RpcEndpoint`] in when the [`OverrideProvider`] is applied.
     #[serde(rename = "overrideUrl")]
     pub override_url: Option<RegexSubstitution>,
+}
+
+/// This type defines a rounding error to use when fetching the current
+/// [slot](https://solana.com/docs/references/terminology#slot) from Solana using the JSON-RPC
+/// interface, meaning slots will be rounded down to the nearest multiple of this error when
+/// being fetched.
+///
+/// This is done to achieve consensus on the HTTP outcalls whose responses contain Solana slots
+/// despite Solana's fast blocktime and hence fast-changing slot value. However, this solution
+/// does not guarantee consensus on the slot value across nodes and different consensus rates
+/// will be achieved depending on the rounding error value used. A higher rounding error will
+/// lead to a higher consensus rate, but also means the slot value may differ more from the actual
+/// value on the Solana blockchain. This means, for example, that setting a large rounding error
+/// and then fetching the corresponding block with the Solana
+/// [`getBlock`](https://solana.com/docs/rpc/http/getblock) RPC method can result in obtaining a
+/// block whose hash is too old to use in a valid Solana transaction (see more details about using
+/// recent blockhashes [here](https://solana.com/developers/guides/advanced/confirmation#how-does-transaction-expiration-work).
+///
+/// The default value given by [`RoundingError::default`]
+/// has been experimentally shown to achieve a high HTTP outcall consensus rate.
+///
+/// See the [`RoundingError::round`] method for more details and examples.
+#[derive(Debug, Decode, Encode, Clone, Copy, Eq, PartialEq, From, Into)]
+pub struct RoundingError(#[n(0)] u64);
+
+impl Default for RoundingError {
+    fn default() -> Self {
+        Self(20)
+    }
+}
+
+impl RoundingError {
+    /// Create a new instance of [`RoundingError`] with the given value.
+    pub fn new(rounding_error: u64) -> Self {
+        Self(rounding_error)
+    }
+
+    /// Round the given [`Slot`] down to the nearest multiple of the rounding error.
+    /// A rounding error of 0 or 1 leads to this method returning the input unchanged.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_types::RoundingError;
+    ///
+    /// assert_eq!(RoundingError::new(0).round(19), 19);
+    /// assert_eq!(RoundingError::new(10).round(19), 10);
+    /// assert_eq!(RoundingError::new(20).round(19), 0);
+    /// ```
+    pub fn round(&self, slot: u64) -> u64 {
+        match self.0 {
+            0 => slot,
+            n => (slot / n) * n,
+        }
+    }
 }

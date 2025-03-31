@@ -33,11 +33,27 @@ type RpcConfig = record {
   responseConsensus : opt ConsensusStrategy;
 };
 
+
+// This type defines a rounding error to use when fetching the current from Solana using the JSON-RPC
+// interface, meaning slots will be rounded down to the nearest multiple of this error when being fetched.
+//
+// This is done to achieve consensus on the HTTP outcalls whose responses contain Solana slots despite Solana's fast
+// blocktime and hence fast-changing slot value. However, this solution does not guarantee consensus on the slot value
+// across nodes and different consensus rates will be achieved depending on the rounding error value used.
+// A higher rounding error will lead to a higher consensus rate, but also means the slot value may differ more from the
+// actual value on the Solana blockchain. This means, for example, that setting a large rounding error and then fetching
+// the corresponding block with the Solana `getBlock` RPC method can result in obtaining a block whose hash is too old
+// to use in a valid Solana transaction.
+//
+// The default value of 20 has been experimentally shown to achieve a high HTTP outcall consensus rate while still
+// resulting in a slot whose corresponding block is "recent enough" to be used in a Solana transaction.
+type RoundingError = nat64;
+
 // Configures how to perform `getSlot` RPC HTTP calls.
 type GetSlotRpcConfig = record {
   responseSizeEstimate : opt nat64;
   responseConsensus : opt ConsensusStrategy;
-  roundingError : opt nat64;
+  roundingError : opt RoundingError;
 };
 
 // Defines a consensus strategy for combining responses from different providers.
