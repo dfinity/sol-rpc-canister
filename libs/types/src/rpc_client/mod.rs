@@ -395,7 +395,7 @@ impl RoundingError {
         Self(rounding_error)
     }
 
-    /// Round the given [`Slot`] down to the nearest multiple of the rounding error.
+    /// Round the given value down to the nearest multiple of the rounding error.
     /// A rounding error of 0 or 1 leads to this method returning the input unchanged.
     ///
     /// # Examples
