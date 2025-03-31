@@ -14,7 +14,7 @@ include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
 syn = { version = "2.0.100", features = ["derive"] }
 quote = "1.0.40"
 proc-macro2 = "1.0.94"
-darling = "0.20.10"
+darling = "0.20.11"
 
 [dev-dependencies]
 canlog = { path = "../canlog" }
