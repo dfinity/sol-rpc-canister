@@ -8,8 +8,8 @@ use sol_rpc_int_tests::{
     mock::MockOutcallBuilder, Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID,
 };
 use sol_rpc_types::{
-    InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
-    RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    GetSlotParams, InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint,
+    RpcError, RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use std::str::FromStr;
 
@@ -518,7 +518,21 @@ async fn should_get_slot() {
         ),
     ]);
 
-    let slot = client.get_slot(None).await.expect_consistent().unwrap();
+    let request = Some(GetSlotParams::default());
 
-    assert_eq!(slot, 371059358)
+    let cycles_cost = client.get_slot_request_cost(request.clone()).await.unwrap();
+    assert_eq!(cycles_cost, 1_792_072_000);
+
+    let cycles_before = setup.sol_rpc_canister_cycles_balance().await;
+    let slot = client.get_slot(request).await.expect_consistent().unwrap();
+    let cycles_after = setup.sol_rpc_canister_cycles_balance().await;
+    let cycles_consumed = cycles_before + cycles_cost - cycles_after;
+    assert_eq!(cycles_consumed, 841_119_743);
+
+    assert_eq!(slot, 371059358);
+    assert!(
+        cycles_after > cycles_before,
+        "BUG: not enough cycles requested. Requested {cycles_cost} cycles, but consumed {cycles_consumed} cycles"
+    );
+    setup.drop().await;
 }
