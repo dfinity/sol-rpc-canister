@@ -1,10 +1,8 @@
-use candid::{candid_method, Nat};
+use candid::candid_method;
 use canhttp::http::json::JsonRpcRequest;
-use canhttp::{CyclesChargingPolicy, CyclesCostEstimator};
 use canlog::{log, Log, Sort};
 use ic_cdk::{api::is_controller, query, update};
 use ic_metrics_encoder::MetricsEncoder;
-use sol_rpc_canister::http::{service_request_builder, ChargingPolicyWithCollateral};
 use sol_rpc_canister::memory::State;
 use sol_rpc_canister::{
     candid_rpc::CandidRpcClient,
@@ -21,7 +19,6 @@ use sol_rpc_types::{
 };
 use solana_clock::Slot;
 use std::str::FromStr;
-use tower::Service;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
     let caller = ic_cdk::caller();
@@ -107,6 +104,13 @@ async fn get_slot_request_cost(
     config: Option<RpcConfig>,
     params: Option<GetSlotParams>,
 ) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
+    CandidRpcClient::new(source, config)?
+        .as_ref()
+        .get_slot_request_cost(params.unwrap_or_default())
+        .await
 }
 
 #[update]

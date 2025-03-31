@@ -86,3 +86,9 @@ impl CandidRpcClient {
         process_result(RpcMethod::Generic, self.client.raw_request(request).await)
     }
 }
+
+impl AsRef<SolRpcClient> for CandidRpcClient {
+    fn as_ref(&self) -> &SolRpcClient {
+        &self.client
+    }
+}

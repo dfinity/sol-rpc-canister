@@ -1,4 +1,4 @@
-mod errors;
+pub mod errors;
 
 use crate::{
     add_metric_entry,
@@ -27,7 +27,7 @@ use canlog::log;
 use http::{header::CONTENT_TYPE, HeaderValue};
 use ic_cdk::api::management_canister::http_request::CanisterHttpRequestArgument;
 use serde::{de::DeserializeOwned, Serialize};
-use sol_rpc_types::{JsonRpcError, Mode, RpcError};
+use sol_rpc_types::{JsonRpcError, RpcError};
 use std::fmt::Debug;
 use tower::{
     layer::util::{Identity, Stack},

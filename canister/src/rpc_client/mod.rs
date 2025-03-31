@@ -2,6 +2,9 @@ mod sol_rpc;
 #[cfg(test)]
 mod tests;
 
+use crate::http::errors::HttpClientError;
+use crate::http::{service_request_builder, ChargingPolicyWithCollateral};
+use crate::memory::State;
 use crate::{
     http::http_client,
     logs::Priority,
@@ -14,13 +17,15 @@ use crate::{
 use canhttp::{
     http::json::JsonRpcRequest,
     multi::{MultiResults, Reduce, ReduceWithEquality, ReduceWithThreshold},
-    MaxResponseBytesRequestExtension, TransformContextRequestExtension,
+    CyclesChargingPolicy, CyclesCostEstimator, MaxResponseBytesRequestExtension,
+    TransformContextRequestExtension,
 };
 use canlog::log;
+use ic_cdk::api::management_canister::http_request::CanisterHttpRequestArgument as IcHttpRequest;
 use ic_cdk::api::management_canister::http_request::TransformContext;
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
-    ConsensusStrategy, GetSlotParams, JsonRpcError, ProviderError, RpcConfig, RpcError, RpcSource,
+    ConsensusStrategy, GetSlotParams, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource,
     RpcSources,
 };
 use solana_clock::Slot;
@@ -138,6 +143,74 @@ impl SolRpcClient {
         results
     }
 
+    //TODO XC-321: refactor duplicated code
+    async fn create_requests<I>(
+        &self,
+        method: impl Into<String>,
+        params: I,
+        response_size_estimate: ResponseSizeEstimate,
+        response_transform: &Option<ResponseTransform>,
+    ) -> MultiCallResults<IcHttpRequest>
+    where
+        I: Serialize + Clone + Debug,
+    {
+        async fn extract_request(
+            request: IcHttpRequest,
+        ) -> Result<http::Response<IcHttpRequest>, HttpClientError> {
+            Ok(http::Response::new(request))
+        }
+
+        let providers = self.providers();
+        let request_body = JsonRpcRequest::new(method, params);
+        let effective_size_estimate = response_size_estimate.get();
+        let transform_op = response_transform
+            .as_ref()
+            .map(|t| {
+                let mut buf = vec![];
+                minicbor::encode(t, &mut buf).unwrap();
+                buf
+            })
+            .unwrap_or_default();
+        let mut requests = MultiResults::default();
+        for provider in providers {
+            log!(
+                Priority::Debug,
+                "[parallel_call]: will call provider: {:?}",
+                provider
+            );
+            let request = request_builder(
+                resolve_rpc_provider(provider.clone()),
+                &read_state(|state| state.get_override_provider()),
+            )
+            .map(|builder| {
+                builder
+                    .max_response_bytes(effective_size_estimate)
+                    .transform_context(TransformContext::from_name(
+                        "cleanup_response".to_owned(),
+                        transform_op.clone(),
+                    ))
+                    .body(request_body.clone())
+                    .expect("BUG: invalid request")
+            });
+            requests.insert_once(provider.clone(), request);
+        }
+
+        let client = service_request_builder()
+            .service_fn(extract_request)
+            .map_err(|e: HttpClientError| RpcError::from(e))
+            .map_response(|r| r.into_body());
+
+        let (requests, errors) = requests.into_inner();
+        let (_client, mut results) = canhttp::multi::parallel_call(client, requests).await;
+        results.add_errors(errors);
+        assert_eq!(
+            results.len(),
+            providers.len(),
+            "BUG: expected 1 result per provider"
+        );
+        results
+    }
+
     /// Query the Solana [`getSlot`](https://solana.com/docs/rpc/http/getslot) RPC method.
     pub async fn get_slot(&self, params: GetSlotParams) -> ReducedResult<Slot> {
         self.parallel_call(
@@ -148,6 +221,18 @@ impl SolRpcClient {
         )
         .await
         .reduce(self.reduction_strategy())
+    }
+
+    pub async fn get_slot_request_cost(&self, params: GetSlotParams) -> RpcResult<u128> {
+        self.cycles_cost(
+            self.create_requests(
+                "getSlot",
+                vec![params],
+                self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
+                &Some(ResponseTransform::GetSlot),
+            )
+            .await,
+        )
     }
 
     pub async fn raw_request<I>(
@@ -165,6 +250,24 @@ impl SolRpcClient {
         )
         .await
         .reduce(self.reduction_strategy())
+    }
+
+    fn cycles_cost(&self, requests: MultiCallResults<IcHttpRequest>) -> RpcResult<u128> {
+        let (requests, errors) = requests.into_inner();
+        if !errors.is_empty() {
+            return Err(errors
+                .into_values()
+                .next()
+                .expect("BUG: errors is not empty"));
+        }
+        let mut cycles_to_attach = 0_u128;
+        let estimator = CyclesCostEstimator::new(read_state(State::get_num_subnet_nodes));
+        let policy = ChargingPolicyWithCollateral::default();
+        for request in requests.into_values() {
+            cycles_to_attach +=
+                policy.cycles_to_charge(&request, estimator.cost_of_http_request(&request));
+        }
+        Ok(cycles_to_attach)
     }
 }
 
