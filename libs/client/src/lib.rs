@@ -5,7 +5,7 @@
 
 mod request;
 
-use crate::request::{GetSlotRequest, Request, RequestBuilder, SolRpcEndpoint};
+use crate::request::{GetSlotRequest, RawRequest, Request, RequestBuilder, SolRpcEndpoint};
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
@@ -127,6 +127,14 @@ impl<R> SolRpcClient<R> {
         self.rpc_request(GetSlotRequest::from(params), 10_000_000_000)
     }
 
+    /// Call `request` on the SOL RPC canister.
+    pub fn raw_request(&self, json_request: serde_json::Value) -> RequestBuilder<R, RawRequest> {
+        self.rpc_request(
+            RawRequest::try_from(json_request).expect("Client error: invalid JSON request"),
+            10_000_000_000,
+        )
+    }
+
     fn rpc_request<E>(&self, endpoint: E, cycles: u128) -> RequestBuilder<R, E> {
         let request = Request {
             endpoint,
@@ -159,28 +167,6 @@ impl<R: Runtime> SolRpcClient<R> {
                 "updateApiKeys",
                 (api_keys.to_vec(),),
                 0,
-            )
-            .await
-            .unwrap()
-    }
-
-    /// Call `request` on the SOL RPC canister.
-    pub async fn request(
-        &self,
-        json_rpc_payload: &str,
-        cycles: u128,
-    ) -> sol_rpc_types::MultiRpcResult<String> {
-        self.config
-            .runtime
-            .update_call(
-                self.config.sol_rpc_canister,
-                "request",
-                (
-                    self.config.rpc_sources.clone(),
-                    self.config.rpc_config.clone(),
-                    json_rpc_payload,
-                ),
-                cycles,
             )
             .await
             .unwrap()

@@ -24,12 +24,37 @@ impl SolRpcEndpoint for GetSlotRequest {
     type Params = Option<GetSlotParams>;
     type Output = sol_rpc_types::MultiRpcResult<Slot>;
 
+    fn rpc_method(&self) -> &str {
+        "getSlot"
+    }
+
     fn params(self) -> Self::Params {
         self.0
     }
+}
+
+pub struct RawRequest(String);
+
+impl TryFrom<serde_json::Value> for RawRequest {
+    type Error = String;
+
+    fn try_from(value: serde_json::Value) -> Result<Self, Self::Error> {
+        serde_json::to_string(&value)
+            .map(RawRequest)
+            .map_err(|e| e.to_string())
+    }
+}
+
+impl SolRpcEndpoint for RawRequest {
+    type Params = String;
+    type Output = sol_rpc_types::MultiRpcResult<String>;
 
     fn rpc_method(&self) -> &str {
-        "getSlot"
+        "request"
+    }
+
+    fn params(self) -> Self::Params {
+        self.0
     }
 }
 
@@ -42,6 +67,11 @@ pub struct RequestBuilder<R, E> {
 impl<R, E> RequestBuilder<R, E> {
     pub fn new(client: SolRpcClient<R>, request: Request<E>) -> Self {
         RequestBuilder { client, request }
+    }
+
+    pub fn with_cycles(mut self, cycles: u128) -> Self {
+        *self.request.cycles_mut() = cycles;
+        self
     }
 }
 
@@ -60,4 +90,12 @@ pub struct Request<E> {
     pub(super) rpc_sources: RpcSources,
     pub(super) rpc_config: Option<RpcConfig>,
     pub(super) cycles: u128,
+}
+
+impl<E> Request<E> {
+    /// Get a mutable reference to the cycles.
+    #[inline]
+    pub fn cycles_mut(&mut self) -> &mut u128 {
+        &mut self.cycles
+    }
 }

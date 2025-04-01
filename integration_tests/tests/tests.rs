@@ -48,7 +48,9 @@ mod mock_request_tests {
         assert_matches!(
             client
                 .mock_http(builder_fn(MockOutcallBuilder::new(200, MOCK_RESPONSE))).build()
-                .request(MOCK_REQUEST_PAYLOAD, 0)
+                .raw_request(get_version_request())
+                .with_cycles(0)
+                .send()
                 .await,
             sol_rpc_types::MultiRpcResult::Consistent(Ok(msg)) if msg == serde_json::Value::to_string(&expected_result["result"])
         );
@@ -150,7 +152,9 @@ mod generic_request_tests {
         let client = setup.client().build();
 
         let results = client
-            .request(MOCK_REQUEST_PAYLOAD, 0)
+            .raw_request(get_version_request())
+            .with_cycles(0)
+            .send()
             .await
             // The result is expected to be inconsistent because the different provider URLs means
             // the request and hence expected number of cycles for each provider is different.
@@ -192,7 +196,9 @@ mod generic_request_tests {
                 MockOutcallBuilder::new(200, &response_2),
             ])
             .build()
-            .request(MOCK_REQUEST_PAYLOAD, 0)
+            .raw_request(get_version_request())
+            .with_cycles(0)
+            .send()
             .await
             .expect_consistent();
 
@@ -363,4 +369,8 @@ mod canister_upgrade_tests {
             )])
             .await;
     }
+}
+
+fn get_version_request() -> serde_json::Value {
+    json!({"jsonrpc": "2.0", "id": 0, "method": "getVersion"})
 }
