@@ -18,7 +18,7 @@ async fn should_get_slot() {
         .compare_client(
             |sol| sol.get_slot().expect("Failed to get slot"),
             |ic| async move {
-                match ic.get_slot(None).await {
+                match ic.get_slot(None).send().await {
                     MultiRpcResult::Consistent(Ok(slot)) => slot,
                     result => panic!("Failed to get slot, received: {:?}", result),
                 }

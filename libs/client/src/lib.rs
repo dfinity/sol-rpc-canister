@@ -5,7 +5,7 @@
 
 mod request;
 
-use crate::request::{Request, SolRpcEndpoint};
+use crate::request::{GetSlotRequest, Request, RequestBuilder, SolRpcEndpoint};
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
@@ -14,7 +14,6 @@ use sol_rpc_types::{
     GetSlotParams, RpcConfig, RpcSources, SolanaCluster, SupportedRpcProvider,
     SupportedRpcProviderId,
 };
-use solana_clock::Slot;
 use std::sync::Arc;
 
 /// Abstract the canister runtime so that the client code can be reused:
@@ -48,9 +47,16 @@ pub trait Runtime {
 }
 
 /// Client to interact with the SOL RPC canister.
-#[derive(Clone)]
 pub struct SolRpcClient<R> {
     config: Arc<ClientConfig<R>>,
+}
+
+impl<R> Clone for SolRpcClient<R> {
+    fn clone(&self) -> Self {
+        Self {
+            config: self.config.clone(),
+        }
+    }
 }
 
 impl<R> SolRpcClient<R> {
@@ -115,6 +121,23 @@ impl<R> ClientBuilder<R> {
     }
 }
 
+impl<R> SolRpcClient<R> {
+    /// Call `getSlot` on the SOL RPC canister.
+    pub fn get_slot(&self, params: Option<GetSlotParams>) -> RequestBuilder<R, GetSlotRequest> {
+        self.rpc_request(GetSlotRequest::from(params), 10_000_000_000)
+    }
+
+    fn rpc_request<E>(&self, endpoint: E, cycles: u128) -> RequestBuilder<R, E> {
+        let request = Request {
+            endpoint,
+            rpc_sources: self.config.rpc_sources.clone(),
+            rpc_config: self.config.rpc_config.clone(),
+            cycles,
+        };
+        RequestBuilder::new(self.clone(), request)
+    }
+}
+
 impl SolRpcClient<IcRuntime> {}
 
 impl<R: Runtime> SolRpcClient<R> {
@@ -139,27 +162,6 @@ impl<R: Runtime> SolRpcClient<R> {
             )
             .await
             .unwrap()
-    }
-
-    /// Call `getSlot` on the SOL RPC canister.
-    pub async fn get_slot(
-        &self,
-        params: Option<GetSlotParams>,
-    ) -> sol_rpc_types::MultiRpcResult<Slot> {
-        self.config
-            .runtime
-            .update_call(
-                self.config.sol_rpc_canister,
-                "getSlot",
-                (
-                    self.config.rpc_sources.clone(),
-                    self.config.rpc_config.clone(),
-                    params,
-                ),
-                10_000_000_000,
-            )
-            .await
-            .expect("Client error: failed to call `getSlot`")
     }
 
     /// Call `request` on the SOL RPC canister.

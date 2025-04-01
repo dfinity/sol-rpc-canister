@@ -1,5 +1,4 @@
 use crate::{Runtime, SolRpcClient};
-use candid::utils::ArgumentEncoder;
 use candid::CandidType;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{GetSlotParams, RpcConfig, RpcSources};
@@ -14,6 +13,12 @@ pub trait SolRpcEndpoint {
 }
 
 pub struct GetSlotRequest(Option<GetSlotParams>);
+
+impl From<Option<GetSlotParams>> for GetSlotRequest {
+    fn from(value: Option<GetSlotParams>) -> Self {
+        GetSlotRequest(value)
+    }
+}
 
 impl SolRpcEndpoint for GetSlotRequest {
     type Params = Option<GetSlotParams>;
@@ -32,6 +37,12 @@ impl SolRpcEndpoint for GetSlotRequest {
 pub struct RequestBuilder<R, E> {
     client: SolRpcClient<R>,
     request: Request<E>,
+}
+
+impl<R, E> RequestBuilder<R, E> {
+    pub fn new(client: SolRpcClient<R>, request: Request<E>) -> Self {
+        RequestBuilder { client, request }
+    }
 }
 
 impl<R: Runtime, E: SolRpcEndpoint> RequestBuilder<R, E> {
