@@ -5,8 +5,7 @@ use crate::{
     constants::{COLLATERAL_CYCLES_PER_NODE, CONTENT_TYPE_VALUE},
     http::errors::HttpClientError,
     logs::Priority,
-    memory::next_request_id,
-    memory::{read_state, State},
+    memory::{next_request_id, read_state, State},
     metrics::{MetricRpcHost, MetricRpcMethod},
 };
 use canhttp::{

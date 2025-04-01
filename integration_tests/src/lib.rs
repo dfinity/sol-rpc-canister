@@ -25,6 +25,7 @@ use std::{
 };
 
 pub mod mock;
+use crate::mock::MockOutcallBuilder;
 use mock::MockOutcall;
 
 const DEFAULT_MAX_RESPONSE_BYTES: u64 = 2_000_000;
@@ -512,6 +513,11 @@ pub trait SolRpcTestClient<R: Runtime> {
     fn mock_http(self, mock: impl Into<MockOutcall>) -> Self;
     fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self;
     fn mock_http_sequence(self, mocks: Vec<impl Into<MockOutcall>>) -> Self;
+    fn mock_sequential_json_rpc_responses<const N: usize>(
+        self,
+        status: u16,
+        body: serde_json::Value,
+    ) -> Self;
 }
 
 #[async_trait]
@@ -530,6 +536,18 @@ impl SolRpcTestClient<PocketIcRuntime<'_>> for ClientBuilder<PocketIcRuntime<'_>
                 mocks.into_iter().map(|mock| mock.into()).collect(),
             ))
         })
+    }
+
+    fn mock_sequential_json_rpc_responses<const N: usize>(
+        self,
+        status: u16,
+        body: serde_json::Value,
+    ) -> Self {
+        let mocks = json_rpc_sequential_id::<N>(body)
+            .into_iter()
+            .map(|response| MockOutcallBuilder::new(status, &response))
+            .collect();
+        self.mock_http_sequence(mocks)
     }
 }
 

@@ -100,6 +100,35 @@ pub struct RpcConfig {
     pub response_consensus: Option<ConsensusStrategy>,
 }
 
+/// Configures how to perform HTTP calls for the Solana `getSlot` RPC method.
+#[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]
+pub struct GetSlotRpcConfig {
+    /// Describes the expected (90th percentile) number of bytes in the HTTP response body.
+    /// This number should be less than `MAX_PAYLOAD_SIZE`.
+    #[serde(rename = "responseSizeEstimate")]
+    pub response_size_estimate: Option<u64>,
+
+    /// Specifies how the responses of the different RPC providers should be aggregated into
+    /// a single response.
+    #[serde(rename = "responseConsensus")]
+    pub response_consensus: Option<ConsensusStrategy>,
+
+    /// The result of the `getSlot` method will be rounded down to the nearest value within
+    /// this error threshold. This is done to achieve consensus between nodes on the value
+    /// of the latest slot despite the fast Solana block time.
+    #[serde(rename = "roundingError")]
+    pub rounding_error: Option<u64>,
+}
+
+impl From<GetSlotRpcConfig> for RpcConfig {
+    fn from(config: GetSlotRpcConfig) -> Self {
+        RpcConfig {
+            response_size_estimate: config.response_size_estimate,
+            response_consensus: config.response_consensus,
+        }
+    }
+}
+
 /// Defines a consensus strategy for combining responses from different providers.
 #[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]
 pub enum ConsensusStrategy {

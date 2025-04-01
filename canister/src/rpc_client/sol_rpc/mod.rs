@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests;
 
+use crate::types::RoundingError;
 use candid::candid_method;
 use canhttp::http::json::JsonRpcResponse;
 use ic_cdk::{
@@ -9,6 +10,7 @@ use ic_cdk::{
 };
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
+use serde_json::{from_slice, to_vec};
 use solana_clock::Slot;
 use std::{fmt, fmt::Debug};
 
@@ -31,40 +33,30 @@ pub const MAX_PAYLOAD_SIZE: u64 = HTTP_MAX_SIZE - HEADER_SIZE_LIMIT;
 #[derive(Debug, Decode, Encode)]
 pub enum ResponseTransform {
     #[n(0)]
-    GetSlot,
-    #[n(1)]
+    GetSlot(#[n(1)] RoundingError),
+    #[n(2)]
     Raw,
 }
 
 impl ResponseTransform {
     fn apply(&self, body_bytes: &mut Vec<u8>) {
-        use serde_json::{from_slice, to_vec, Value};
-
-        fn redact_response<T>(body: &mut Vec<u8>)
+        fn canonicalize<T>(body_bytes: &mut Vec<u8>, f: impl FnOnce(T) -> T)
         where
             T: Serialize + DeserializeOwned,
         {
-            let response: JsonRpcResponse<T> = match from_slice(body) {
-                Ok(response) => response,
-                Err(_) => return,
-            };
-            *body = to_vec(&response).expect("BUG: failed to serialize response");
-        }
-
-        fn canonicalize(text: &[u8]) -> Option<Vec<u8>> {
-            let json = from_slice::<Value>(text).ok()?;
-            to_vec(&json).ok()
+            if let Ok(Ok(bytes)) = from_slice::<T>(body_bytes).map(f).as_ref().map(to_vec) {
+                *body_bytes = bytes
+            }
         }
 
         match self {
-            // TODO XC-292: Add rounding to the response transform and
-            //  add a unit test simulating consensus when the providers
-            //  return slightly differing results.
-            Self::GetSlot => redact_response::<Slot>(body_bytes),
+            Self::GetSlot(rounding_error) => {
+                canonicalize::<JsonRpcResponse<Slot>>(body_bytes, |response| {
+                    response.map(|slot| rounding_error.round(slot))
+                });
+            }
             Self::Raw => {
-                if let Some(bytes) = canonicalize(body_bytes) {
-                    *body_bytes = bytes
-                }
+                canonicalize::<serde_json::Value>(body_bytes, std::convert::identity);
             }
         }
     }

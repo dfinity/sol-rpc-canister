@@ -210,9 +210,6 @@ impl<R> SolRpcClient<R> {
     }
 }
 
-impl SolRpcClient<IcRuntime> {}
-
-impl<R: Runtime> SolRpcClient<R> {
     /// Call `getProviders` on the SOL RPC canister.
     pub async fn get_providers(&self) -> Vec<(SupportedRpcProviderId, SupportedRpcProvider)> {
         self.config
