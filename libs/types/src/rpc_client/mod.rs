@@ -116,8 +116,6 @@ pub struct GetSlotRpcConfig {
     /// The result of the `getSlot` method will be rounded down to the nearest value within
     /// this error threshold. This is done to achieve consensus between nodes on the value
     /// of the latest slot despite the fast Solana block time.
-    ///
-    /// See the [`RoundingError`] documentation for more details.
     #[serde(rename = "roundingError")]
     pub rounding_error: Option<u64>,
 }
