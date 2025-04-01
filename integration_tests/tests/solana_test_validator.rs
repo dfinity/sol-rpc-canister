@@ -51,7 +51,7 @@ async fn should_get_account_info() {
                     .get_account_info(
                         pubkey,
                         Some(GetAccountInfoParams {
-                            encoding: Some(GetAccountInfoEncoding::Base64ZStd),
+                            encoding: Some(GetAccountInfoEncoding::Base64),
                             ..GetAccountInfoParams::default()
                         }),
                     )

@@ -31,7 +31,7 @@ assert_matches = "1.5.0"
 async-trait = "0.1.88"
 candid = "0.10.13"
 candid_parser = "0.1.4"
-canhttp = { git = "https://github.com/dfinity/evm-rpc-canister", branch = "lpahlavi/json-rpc-response-map-method-v2" }
+canhttp = { git = "https://github.com/dfinity/evm-rpc-canister", ref = "6cade0c6167da858b8d45700db7de44bf627b207" }
 ciborium = "0.2.2"
 # Transitive dependency of ic-ed25519
 # See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
@@ -66,9 +66,9 @@ solana-nonce = "2.2.0"
 solana-program = "2.2.0"
 solana-pubkey = "2.2.0"
 solana-signature = "2.2.0"
-solana-transaction = { version = "2.2.0", features = ["bincode"] }
+solana-transaction = "2.2.0"
 solana-account = "2.2.0"
-solana-account-decoder-client-types = { version = "2.2.0", features = ["zstd"] }
+solana-account-decoder-client-types = "2.2.0"
 strum = { version = "0.27.0", features = ["derive"] }
 thiserror = "2.0.12"
 tokio = "1.44.1"
