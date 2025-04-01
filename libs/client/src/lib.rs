@@ -8,7 +8,7 @@ use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    GetSlotParams, GetSlotRpcConfig, RoundingError, RpcConfig, RpcSources, SupportedRpcProvider,
+    GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources, SupportedRpcProvider,
     SupportedRpcProviderId,
 };
 use solana_clock::Slot;
@@ -124,11 +124,11 @@ impl<R: Runtime> SolRpcClient<R> {
     pub async fn get_slot(
         &self,
         params: Option<GetSlotParams>,
-        rounding_error: Option<RoundingError>,
+        rounding_error: Option<u64>,
     ) -> sol_rpc_types::MultiRpcResult<Slot> {
         let rpc_config = if self.rpc_config.is_some() || rounding_error.is_some() {
             Some(GetSlotRpcConfig {
-                rounding_error: rounding_error.map(u64::from),
+                rounding_error,
                 response_size_estimate: self
                     .rpc_config
                     .as_ref()

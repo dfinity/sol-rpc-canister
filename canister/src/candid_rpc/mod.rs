@@ -3,13 +3,14 @@ use crate::{
     metrics::RpcMethod,
     providers::get_provider,
     rpc_client::{ReducedResult, SolRpcClient},
+    types::RoundingError,
     util::hostname_from_url,
 };
 use canhttp::multi::ReductionError;
 use serde::Serialize;
 use sol_rpc_types::{
-    GetSlotParams, MultiRpcResult, RoundingError, RpcAccess, RpcAuth, RpcConfig, RpcResult,
-    RpcSource, RpcSources, SupportedRpcProvider,
+    GetSlotParams, MultiRpcResult, RpcAccess, RpcAuth, RpcConfig, RpcResult, RpcSource, RpcSources,
+    SupportedRpcProvider,
 };
 use solana_clock::Slot;
 use std::fmt::Debug;

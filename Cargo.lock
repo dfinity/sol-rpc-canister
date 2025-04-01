@@ -4074,8 +4074,6 @@ dependencies = [
  "canlog",
  "derive_more",
  "ic-cdk",
- "minicbor",
- "proptest",
  "regex",
  "serde",
  "strum 0.27.1",

@@ -9,6 +9,7 @@ use crate::{
     metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider, Providers},
     rpc_client::sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
+    types::RoundingError,
 };
 use canhttp::{
     http::json::JsonRpcRequest,
@@ -19,8 +20,8 @@ use canlog::log;
 use ic_cdk::api::management_canister::http_request::TransformContext;
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
-    ConsensusStrategy, GetSlotParams, JsonRpcError, ProviderError, RoundingError, RpcConfig,
-    RpcError, RpcSource, RpcSources,
+    ConsensusStrategy, GetSlotParams, JsonRpcError, ProviderError, RpcConfig, RpcError, RpcSource,
+    RpcSources,
 };
 use solana_clock::Slot;
 use std::{collections::BTreeSet, fmt::Debug};

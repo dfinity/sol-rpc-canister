@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests;
 
+use crate::types::RoundingError;
 use candid::candid_method;
 use canhttp::http::json::JsonRpcResponse;
 use ic_cdk::{
@@ -10,7 +11,6 @@ use ic_cdk::{
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{from_slice, to_vec};
-use sol_rpc_types::RoundingError;
 use solana_clock::Slot;
 use std::{fmt, fmt::Debug};
 

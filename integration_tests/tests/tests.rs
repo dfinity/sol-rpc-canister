@@ -166,7 +166,7 @@ mod get_slot_tests {
                         "result": 1234,
                     }),
                 )
-                .get_slot(None, Some(0.into()))
+                .get_slot(None, Some(0))
                 .await
                 .expect_consistent();
 
@@ -246,7 +246,7 @@ mod get_slot_tests {
 
             let results: Vec<RpcResult<_>> = client
                 .mock_http_sequence(responses)
-                .get_slot(None, Some(0.into()))
+                .get_slot(None, Some(0))
                 .await
                 .expect_inconsistent()
                 .into_iter()

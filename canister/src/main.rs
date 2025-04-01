@@ -10,10 +10,11 @@ use sol_rpc_canister::{
     memory::{mutate_state, read_state},
     metrics::encode_metrics,
     providers::{get_provider, PROVIDERS},
+    types::RoundingError,
 };
 use sol_rpc_types::{
-    GetSlotParams, GetSlotRpcConfig, MultiRpcResult, RoundingError, RpcAccess, RpcConfig, RpcError,
-    RpcSources, SupportedRpcProvider, SupportedRpcProviderId,
+    GetSlotParams, GetSlotRpcConfig, MultiRpcResult, RpcAccess, RpcConfig, RpcError, RpcSources,
+    SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_clock::Slot;
 use std::str::FromStr;
