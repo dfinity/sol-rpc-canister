@@ -4,11 +4,17 @@ use serde::de::DeserializeOwned;
 use sol_rpc_types::{GetSlotParams, RpcConfig, RpcSources};
 use solana_clock::Slot;
 
-pub trait SolRpcEndpoint {
+/// Solana RPC endpoint supported by the SOL RPC canister.
+pub trait SolRpcRequest {
+    /// The type of parameters taken by this endpoint.
     type Params;
+    /// The type returned by this endpoint.
     type Output;
 
+    /// The name of the endpoint on the SOL RPC canister.
     fn rpc_method(&self) -> &str;
+
+    /// Return the request parameters.
     fn params(self) -> Self::Params;
 }
 
@@ -20,7 +26,7 @@ impl From<Option<GetSlotParams>> for GetSlotRequest {
     }
 }
 
-impl SolRpcEndpoint for GetSlotRequest {
+impl SolRpcRequest for GetSlotRequest {
     type Params = Option<GetSlotParams>;
     type Output = sol_rpc_types::MultiRpcResult<Slot>;
 
@@ -45,7 +51,7 @@ impl TryFrom<serde_json::Value> for RawRequest {
     }
 }
 
-impl SolRpcEndpoint for RawRequest {
+impl SolRpcRequest for RawRequest {
     type Params = String;
     type Output = sol_rpc_types::MultiRpcResult<String>;
 
@@ -58,6 +64,9 @@ impl SolRpcEndpoint for RawRequest {
     }
 }
 
+/// A builder to construct a [`Request`].
+///
+/// To construct a [`RequestBuilder`], refer to the [`SolRpcClient`] documentation.
 #[must_use = "RequestBuilder does nothing until you 'send' it"]
 pub struct RequestBuilder<R, E> {
     client: SolRpcClient<R>,
@@ -65,17 +74,19 @@ pub struct RequestBuilder<R, E> {
 }
 
 impl<R, E> RequestBuilder<R, E> {
-    pub fn new(client: SolRpcClient<R>, request: Request<E>) -> Self {
+    pub(super) fn new(client: SolRpcClient<R>, request: Request<E>) -> Self {
         RequestBuilder { client, request }
     }
 
+    /// Change the amount of cycles to send for that request.
     pub fn with_cycles(mut self, cycles: u128) -> Self {
         *self.request.cycles_mut() = cycles;
         self
     }
 }
 
-impl<R: Runtime, E: SolRpcEndpoint> RequestBuilder<R, E> {
+impl<R: Runtime, E: SolRpcRequest> RequestBuilder<R, E> {
+    /// Constructs the [`Request`] and send it using the [`SolRpcClient`].
     pub async fn send(self) -> E::Output
     where
         E::Params: CandidType + Send,
@@ -85,6 +96,7 @@ impl<R: Runtime, E: SolRpcEndpoint> RequestBuilder<R, E> {
     }
 }
 
+/// A request which can be executed with [`SolRpcClient::execute_request`].
 pub struct Request<E> {
     pub(super) endpoint: E,
     pub(super) rpc_sources: RpcSources,

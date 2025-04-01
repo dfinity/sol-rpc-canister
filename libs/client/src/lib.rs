@@ -1,11 +1,12 @@
 //! Client to interact with the SOL RPC canister
 
 #![forbid(unsafe_code)]
-// #![forbid(missing_docs)]
+#![forbid(missing_docs)]
 
 mod request;
+pub use request::{Request, RequestBuilder, SolRpcRequest};
 
-use crate::request::{GetSlotRequest, RawRequest, Request, RequestBuilder, SolRpcEndpoint};
+use crate::request::{GetSlotRequest, RawRequest};
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
@@ -60,15 +61,9 @@ impl<R> Clone for SolRpcClient<R> {
 }
 
 impl<R> SolRpcClient<R> {
+    /// Creates a [`ClientBuilder`] to configure a [`SolRpcClient`].
     pub fn builder(runtime: R, sol_rpc_canister: Principal) -> ClientBuilder<R> {
-        ClientBuilder {
-            config: ClientConfig {
-                runtime,
-                sol_rpc_canister,
-                rpc_config: None,
-                rpc_sources: RpcSources::Default(SolanaCluster::Mainnet),
-            },
-        }
+        ClientBuilder::new(runtime, sol_rpc_canister)
     }
 }
 
@@ -85,12 +80,27 @@ pub struct ClientConfig<R> {
     pub rpc_sources: RpcSources,
 }
 
+/// A [`ClientBuilder`] to create a [`SolRpcClient`] with custom configuration.
 #[must_use]
 pub struct ClientBuilder<R> {
     config: ClientConfig<R>,
 }
 
 impl<R> ClientBuilder<R> {
+    fn new(runtime: R, sol_rpc_canister: Principal) -> Self {
+        Self {
+            config: ClientConfig {
+                runtime,
+                sol_rpc_canister,
+                rpc_config: None,
+                rpc_sources: RpcSources::Default(SolanaCluster::Mainnet),
+            },
+        }
+    }
+
+    /// Modify the existing runtime by applying a transformation function.
+    ///
+    /// The transformation does not necessarily produce a runtime of the same type.
     pub fn with_runtime<S, F: FnOnce(R) -> S>(self, other_runtime: F) -> ClientBuilder<S> {
         ClientBuilder {
             config: ClientConfig {
@@ -114,6 +124,7 @@ impl<R> ClientBuilder<R> {
         self
     }
 
+    /// Creates a [`SolRpcClient`] from the configuration specified in the [`ClientBuilder`].
     pub fn build(self) -> SolRpcClient<R> {
         SolRpcClient {
             config: Arc::new(self.config),
@@ -172,9 +183,9 @@ impl<R: Runtime> SolRpcClient<R> {
             .unwrap()
     }
 
-    pub async fn execute_request<E>(&self, request: Request<E>) -> E::Output
+    async fn execute_request<E>(&self, request: Request<E>) -> E::Output
     where
-        E: SolRpcEndpoint,
+        E: SolRpcRequest,
         E::Params: CandidType + Send,
         E::Output: CandidType + DeserializeOwned,
     {
