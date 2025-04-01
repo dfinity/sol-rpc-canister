@@ -96,7 +96,7 @@ impl<R: Runtime, E: SolRpcRequest> RequestBuilder<R, E> {
     }
 }
 
-/// A request which can be executed with [`SolRpcClient::execute_request`].
+/// A request which can be executed with `SolRpcClient::execute_request`.
 pub struct Request<E> {
     pub(super) endpoint: E,
     pub(super) rpc_sources: RpcSources,
