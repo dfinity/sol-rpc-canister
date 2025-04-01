@@ -164,4 +164,4 @@ jobs:
 
       - name: "Detect Inconsistent Results"
         working-directory: canister/ci
-        run: cat e2e_examples.log | ! grep -e Inconsistent
+        run: cat e2e_examples.log | grep -q -e Inconsistent; test $? -eq 1
