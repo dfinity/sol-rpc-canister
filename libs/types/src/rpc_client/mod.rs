@@ -129,6 +129,16 @@ impl From<GetSlotRpcConfig> for RpcConfig {
     }
 }
 
+impl From<RpcConfig> for GetSlotRpcConfig {
+    fn from(value: RpcConfig) -> Self {
+        GetSlotRpcConfig {
+            response_size_estimate: value.response_size_estimate,
+            response_consensus: value.response_consensus,
+            ..Default::default()
+        }
+    }
+}
+
 /// Defines a consensus strategy for combining responses from different providers.
 #[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]
 pub enum ConsensusStrategy {

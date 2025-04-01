@@ -168,7 +168,10 @@ mod get_slot_tests {
                         "result": 1234,
                     }),
                 )
-                .get_slot(None, Some(0))
+                .build()
+                .get_slot(None)
+                .with_rounding_error(0)
+                .send()
                 .await
                 .expect_consistent();
 
@@ -208,7 +211,9 @@ mod get_slot_tests {
 
             let results = client
                 .mock_http_sequence(responses)
-                .get_slot(None, None)
+                .build()
+                .get_slot(None)
+                .send()
                 .await
                 .expect_consistent();
 
@@ -248,7 +253,10 @@ mod get_slot_tests {
 
             let results: Vec<RpcResult<_>> = client
                 .mock_http_sequence(responses)
-                .get_slot(None, Some(0))
+                .build()
+                .get_slot(None)
+                .with_rounding_error(0)
+                .send()
                 .await
                 .expect_inconsistent()
                 .into_iter()
@@ -312,6 +320,7 @@ mod generic_request_tests {
                     "result": serde_json::Value::from_str(MOCK_RESPONSE_RESULT).unwrap()
                 }),
             )
+            .build()
             .raw_request(get_version_request())
             .with_cycles(0)
             .send()

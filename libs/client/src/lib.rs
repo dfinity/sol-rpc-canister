@@ -39,17 +39,19 @@
 #![forbid(missing_docs)]
 
 mod request;
-pub use request::{Request, RequestBuilder, SolRpcRequest};
 
-use crate::request::{GetSlotRequest, RawRequest};
+pub use request::{Request, RequestBuilder, SolRpcRequest};
+use std::marker::PhantomData;
+
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    GetSlotParams, RpcConfig, RpcSources, SolanaCluster, SupportedRpcProvider,
+    GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources, SolanaCluster, SupportedRpcProvider,
     SupportedRpcProviderId,
 };
+use solana_clock::Slot;
 use std::sync::Arc;
 
 /// The principal identifying the productive Solana RPC canister under NNS control.
@@ -187,29 +189,49 @@ impl<R> ClientBuilder<R> {
 
 impl<R> SolRpcClient<R> {
     /// Call `getSlot` on the SOL RPC canister.
-    pub fn get_slot(&self, params: Option<GetSlotParams>) -> RequestBuilder<R, GetSlotRequest> {
-        self.rpc_request(GetSlotRequest::from(params), 10_000_000_000)
+    pub fn get_slot(
+        &self,
+        params: Option<GetSlotParams>,
+    ) -> RequestBuilder<
+        R,
+        GetSlotRpcConfig,
+        Option<GetSlotParams>,
+        sol_rpc_types::MultiRpcResult<Slot>,
+    > {
+        self.rpc_request("getSlot", params, 10_000_000_000)
     }
 
     /// Call `request` on the SOL RPC canister.
-    pub fn raw_request(&self, json_request: serde_json::Value) -> RequestBuilder<R, RawRequest> {
+    pub fn raw_request(
+        &self,
+        json_request: serde_json::Value,
+    ) -> RequestBuilder<R, RpcConfig, String, sol_rpc_types::MultiRpcResult<String>> {
         self.rpc_request(
-            RawRequest::try_from(json_request).expect("Client error: invalid JSON request"),
+            "request",
+            serde_json::to_string(&json_request).expect("Client error: invalid JSON request"),
             10_000_000_000,
         )
     }
 
-    fn rpc_request<E>(&self, endpoint: E, cycles: u128) -> RequestBuilder<R, E> {
+    fn rpc_request<Config: From<RpcConfig>, Params, Output>(
+        &self,
+        rpc_method: impl Into<String>,
+        params: Params,
+        cycles: u128,
+    ) -> RequestBuilder<R, Config, Params, Output> {
         let request = Request {
-            endpoint,
+            rpc_method: rpc_method.into(),
             rpc_sources: self.config.rpc_sources.clone(),
-            rpc_config: self.config.rpc_config.clone(),
+            rpc_config: self.config.rpc_config.clone().map(Config::from),
+            params,
             cycles,
+            _marker: PhantomData,
         };
         RequestBuilder::new(self.clone(), request)
     }
 }
 
+impl<R: Runtime> SolRpcClient<R> {
     /// Call `getProviders` on the SOL RPC canister.
     pub async fn get_providers(&self) -> Vec<(SupportedRpcProviderId, SupportedRpcProvider)> {
         self.config
@@ -233,27 +255,30 @@ impl<R> SolRpcClient<R> {
             .unwrap()
     }
 
-    async fn execute_request<E>(&self, request: Request<E>) -> E::Output
+    async fn execute_request<Config, Params, Output>(
+        &self,
+        request: Request<Config, Params, Output>,
+    ) -> Output
     where
-        E: SolRpcRequest,
-        E::Params: CandidType + Send,
-        E::Output: CandidType + DeserializeOwned,
+        Config: CandidType + Send,
+        Params: CandidType + Send,
+        Output: CandidType + DeserializeOwned,
     {
-        let rpc_method = request.endpoint.rpc_method().to_string();
         self.config
             .runtime
             .update_call(
                 self.config.sol_rpc_canister,
-                &rpc_method,
-                (
-                    request.rpc_sources,
-                    request.rpc_config,
-                    request.endpoint.params(),
-                ),
+                &request.rpc_method,
+                (request.rpc_sources, request.rpc_config, request.params),
                 request.cycles,
             )
             .await
-            .unwrap_or_else(|e| panic!("Client error: failed to call `{rpc_method}`: {e:?}"))
+            .unwrap_or_else(|e| {
+                panic!(
+                    "Client error: failed to call `{}`: {e:?}",
+                    request.rpc_method
+                )
+            })
     }
 }
 
