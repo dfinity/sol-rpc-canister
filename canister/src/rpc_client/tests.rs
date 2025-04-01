@@ -1,5 +1,3 @@
-// TODO XC-292: Add more unit tests
-
 mod sol_rpc_client {
     use crate::rpc_client::SolRpcClient;
     use assert_matches::assert_matches;
