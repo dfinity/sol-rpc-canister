@@ -210,8 +210,8 @@ mod retrieve_logs_tests {
         })
         .await;
         let client = setup.client();
-        assert_eq!(client.retrieve_logs("DEBUG").await, vec![]);
-        assert_eq!(client.retrieve_logs("INFO").await, vec![]);
+        assert_eq!(setup.retrieve_logs("DEBUG").await, vec![]);
+        assert_eq!(setup.retrieve_logs("INFO").await, vec![]);
 
         // Generate some log
         setup
@@ -222,8 +222,8 @@ mod retrieve_logs_tests {
             )])
             .await;
 
-        assert_eq!(client.retrieve_logs("DEBUG").await, vec![]);
-        assert!(client.retrieve_logs("INFO").await[0]
+        assert_eq!(setup.retrieve_logs("DEBUG").await, vec![]);
+        assert!(setup.retrieve_logs("INFO").await[0]
             .message
             .contains("Updating API keys"));
     }
@@ -246,12 +246,12 @@ mod update_api_key_tests {
         client
             .update_api_keys(&[(provider, Some(api_key.to_string()))])
             .await;
-        client
+        setup
             .verify_api_key((provider, Some(api_key.to_string())))
             .await;
 
         client.update_api_keys(&[(provider, None)]).await;
-        client.verify_api_key((provider, None)).await;
+        setup.verify_api_key((provider, None)).await;
     }
 
     #[tokio::test]

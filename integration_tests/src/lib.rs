@@ -126,6 +126,32 @@ impl Setup {
             self.sol_rpc_canister_id,
             RpcSources::Default(SolanaCluster::Devnet),
         )
+    // TODO XC-329: remove verifyApiKey endpoint
+    pub async fn verify_api_key(&self, api_key: (SupportedRpcProviderId, Option<String>)) {
+        let runtime = self.new_pocket_ic_runtime();
+        runtime
+            .query_call(self.sol_rpc_canister_id, "verifyApiKey", (api_key,))
+            .await
+            .unwrap()
+    }
+
+    pub async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry<Priority>> {
+        let request = HttpRequest {
+            method: "POST".to_string(),
+            url: format!("/logs?priority={priority}"),
+            headers: vec![],
+            body: serde_bytes::ByteBuf::new(),
+        };
+        let runtime = self.new_pocket_ic_runtime();
+        let response: HttpResponse = runtime
+            .query_call(self.sol_rpc_canister_id, "http_request", (request,))
+            .await
+            .unwrap();
+        serde_json::from_slice::<Log<Priority>>(&response.body)
+            .expect("failed to parse SOL RPC canister log")
+            .entries
+    }
+
     }
 
     pub fn client_live_mode(&self) -> SolRpcClient<PocketIcLiveModeRuntime> {
@@ -466,39 +492,12 @@ impl Runtime for PocketIcLiveModeRuntime<'_> {
 
 #[async_trait]
 pub trait SolRpcTestClient<R: Runtime> {
-    async fn verify_api_key(&self, api_key: (SupportedRpcProviderId, Option<String>));
-    async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry<Priority>>;
     fn mock_http(self, mock: impl Into<MockOutcall>) -> Self;
     fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self;
     fn mock_http_sequence(self, mocks: Vec<impl Into<MockOutcall>>) -> Self;
 }
 
 #[async_trait]
-impl SolRpcTestClient<PocketIcRuntime<'_>> for SolRpcClient<PocketIcRuntime<'_>> {
-    async fn verify_api_key(&self, api_key: (SupportedRpcProviderId, Option<String>)) {
-        self.runtime
-            .query_call(self.sol_rpc_canister, "verifyApiKey", (api_key,))
-            .await
-            .unwrap()
-    }
-
-    async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry<Priority>> {
-        let request = HttpRequest {
-            method: "POST".to_string(),
-            url: format!("/logs?priority={priority}"),
-            headers: vec![],
-            body: serde_bytes::ByteBuf::new(),
-        };
-        let response: HttpResponse = self
-            .runtime
-            .query_call(self.sol_rpc_canister, "http_request", (request,))
-            .await
-            .unwrap();
-        serde_json::from_slice::<Log<Priority>>(&response.body)
-            .expect("failed to parse SOL RPC canister log")
-            .entries
-    }
-
     fn mock_http(self, mock: impl Into<MockOutcall>) -> Self {
         Self {
             runtime: self.runtime.with_strategy(MockStrategy::Mock(mock.into())),
