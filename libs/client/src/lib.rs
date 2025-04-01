@@ -41,8 +41,8 @@
 mod request;
 
 pub use request::{Request, RequestBuilder, SolRpcRequest};
-use std::marker::PhantomData;
 
+use crate::request::{GetSlotRequest, RawRequest};
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
@@ -198,7 +198,7 @@ impl<R> SolRpcClient<R> {
         Option<GetSlotParams>,
         sol_rpc_types::MultiRpcResult<Slot>,
     > {
-        self.rpc_request("getSlot", params, 10_000_000_000)
+        RequestBuilder::new(self.clone(), GetSlotRequest::from(params), 10_000_000_000)
     }
 
     /// Call `request` on the SOL RPC canister.
@@ -206,28 +206,11 @@ impl<R> SolRpcClient<R> {
         &self,
         json_request: serde_json::Value,
     ) -> RequestBuilder<R, RpcConfig, String, sol_rpc_types::MultiRpcResult<String>> {
-        self.rpc_request(
-            "request",
-            serde_json::to_string(&json_request).expect("Client error: invalid JSON request"),
+        RequestBuilder::new(
+            self.clone(),
+            RawRequest::try_from(json_request).expect("Client error: invalid JSON request"),
             10_000_000_000,
         )
-    }
-
-    fn rpc_request<Config: From<RpcConfig>, Params, Output>(
-        &self,
-        rpc_method: impl Into<String>,
-        params: Params,
-        cycles: u128,
-    ) -> RequestBuilder<R, Config, Params, Output> {
-        let request = Request {
-            rpc_method: rpc_method.into(),
-            rpc_sources: self.config.rpc_sources.clone(),
-            rpc_config: self.config.rpc_config.clone().map(Config::from),
-            params,
-            cycles,
-            _marker: PhantomData,
-        };
-        RequestBuilder::new(self.clone(), request)
     }
 }
 

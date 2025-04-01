@@ -78,10 +78,23 @@ pub struct RequestBuilder<Runtime, Config, Params, Output> {
 }
 
 impl<Runtime, Config, Params, Output> RequestBuilder<Runtime, Config, Params, Output> {
-    pub(super) fn new(
+    pub(super) fn new<RpcRequest>(
         client: SolRpcClient<Runtime>,
-        request: Request<Config, Params, Output>,
-    ) -> Self {
+        rpc_request: RpcRequest,
+        cycles: u128,
+    ) -> Self
+    where
+        RpcRequest: SolRpcRequest<Config = Config, Params = Params, Output = Output>,
+        Config: From<RpcConfig>,
+    {
+        let request = Request {
+            rpc_method: rpc_request.rpc_method().to_string(),
+            rpc_sources: client.config.rpc_sources.clone(),
+            rpc_config: client.config.rpc_config.clone().map(Config::from),
+            params: rpc_request.params(),
+            cycles,
+            _marker: Default::default(),
+        };
         RequestBuilder { client, request }
     }
 
