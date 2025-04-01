@@ -33,6 +33,31 @@ type RpcConfig = record {
   responseConsensus : opt ConsensusStrategy;
 };
 
+
+// Rounding error for fetching the current slot from Solana using the JSON-RPC interface, meaning slots will be rounded
+// down to the nearest multiple of this error when being fetched.
+//
+// Solana slot time (around 400ms) is faster than the latency of an HTTPs outcall (which involves every node in the
+// subnet making an HTTP request), which is typically around a couple of seconds. It is therefore extremely likely that
+// the nodes will receive different results and will fail to reach consensus.
+//
+// Rounding down the slot received by each node artificially increases the slot time observed by each node and therefore
+// increases the probability of reaching consensus. In other words, the higher the rounding error, the more likely it is
+// that consensus will be reached (which is required for the HTTPs outcall to be successful), but the older the
+// resulting slot will be. Certain use cases, such as sending transactions, require a relatively recent block hash (less
+// than 150 blocks old) so that too a large rounding error is not advisable.
+//
+// The default value of 20 has been experimentally shown to likely achieve consensus while still resulting in a slot
+// whose corresponding block is "recent enough" to be used in a Solana transaction.
+type RoundingError = nat64;
+
+// Configures how to perform `getSlot` RPC HTTP calls.
+type GetSlotRpcConfig = record {
+  responseSizeEstimate : opt nat64;
+  responseConsensus : opt ConsensusStrategy;
+  roundingError : opt RoundingError;
+};
+
 // Defines a consensus strategy for combining responses from different providers.
 type ConsensusStrategy = variant {
   Equality;
@@ -213,7 +238,7 @@ service : (InstallArgs,) -> {
   updateApiKeys : (vec record { SupportedProvider; opt text }) -> ();
 
   // Call the Solana `getSlot` RPC method and return the resulting slot.
-  getSlot : (RpcSources, opt RpcConfig, opt GetSlotParams) -> (MultiGetSlotResult);
+  getSlot : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (MultiGetSlotResult);
 
   // Make a generic RPC request that sends the given json_rpc_payload.
   request : (RpcSources, opt RpcConfig, json_rpc_paylod: text) -> (MultiRequestResult)

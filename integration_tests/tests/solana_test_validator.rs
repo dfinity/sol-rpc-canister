@@ -18,7 +18,7 @@ async fn should_get_slot() {
         .compare_client(
             |sol| sol.get_slot().expect("Failed to get slot"),
             |ic| async move {
-                match ic.get_slot(None).await {
+                match ic.get_slot(None, None).await {
                     MultiRpcResult::Consistent(Ok(slot)) => slot,
                     result => panic!("Failed to get slot, received: {:?}", result),
                 }
@@ -27,7 +27,7 @@ async fn should_get_slot() {
         .await;
 
     assert!(
-        sol_res.abs_diff(ic_res) < 10,
+        sol_res.abs_diff(ic_res) < 20,
         "Difference is too large between slot {sol_res} from Solana client and slot {ic_res} from the SOL RPC canister"
     );
 

@@ -163,7 +163,5 @@ jobs:
         run: ../scripts/examples.sh 2>&1 | tee e2e_examples.log
 
       - name: "Detect Inconsistent Results"
-        # TODO XC-292: Should no longer fail once rounding is in
-        continue-on-error: true
         working-directory: canister/ci
-        run: cat e2e_examples.log | grep -e Inconsistent
+        run: cat e2e_examples.log | grep -q -e Inconsistent && exit 1 || exit 0
