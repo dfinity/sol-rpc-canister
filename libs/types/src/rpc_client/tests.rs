@@ -57,7 +57,7 @@ mod rounding_error_tests {
     proptest! {
         #[test]
         fn should_not_panic (rounding_error: u64, slot: u64) {
-            RoundingError::new(rounding_error).round(slot);
+            let _result = RoundingError::new(rounding_error).round(slot);
         }
     }
 }
