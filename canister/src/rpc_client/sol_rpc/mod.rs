@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests;
 
+use crate::types::RoundingError;
 use candid::candid_method;
 use canhttp::http::json::JsonRpcResponse;
 use ic_cdk::{
@@ -36,7 +37,7 @@ pub enum ResponseTransform {
     #[n(0)]
     GetAccountInfo,
     #[n(1)]
-    GetSlot,
+    GetSlot(#[n(1)] RoundingError),
     #[n(2)]
     Raw,
 }
@@ -64,14 +65,8 @@ impl ResponseTransform {
                         .expect("BUG: Unable to decode account")
                 });
             }
-            Self::GetSlot => {
-                canonicalize_response::<Slot, Slot>(
-                    body_bytes,
-                    // TODO XC-292: Add rounding to the response transform and
-                    //  add a unit test simulating consensus when the providers
-                    //  return slightly differing results.
-                    std::convert::identity,
-                );
+            Self::GetSlot(rounding_error) => {
+                canonicalize_response::<Slot, Slot>(body_bytes, |slot| rounding_error.round(slot));
             }
             Self::Raw => {
                 canonicalize_response::<Value, Value>(body_bytes, std::convert::identity);

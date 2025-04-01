@@ -11,9 +11,10 @@ mod solana;
 pub use lifecycle::{InstallArgs, Mode, NumSubnetNodes};
 pub use response::MultiRpcResult;
 pub use rpc_client::{
-    ConsensusStrategy, HttpHeader, HttpOutcallError, JsonRpcError, OverrideProvider, ProviderError,
-    RegexString, RegexSubstitution, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
-    RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    ConsensusStrategy, GetSlotRpcConfig, HttpHeader, HttpOutcallError, JsonRpcError,
+    OverrideProvider, ProviderError, RegexString, RegexSubstitution, RpcAccess, RpcAuth, RpcConfig,
+    RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider,
+    SupportedRpcProviderId,
 };
 pub use solana::{
     Account, CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams,

@@ -10,9 +10,10 @@ use sol_rpc_canister::{
     memory::{mutate_state, read_state},
     metrics::encode_metrics,
     providers::{get_provider, PROVIDERS},
+    types::RoundingError,
 };
 use sol_rpc_types::{
-    Account, GetAccountInfoParams, GetSlotParams, MultiRpcResult, Pubkey, RpcAccess, RpcConfig,
+    Account, GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, MultiRpcResult, Pubkey, RpcAccess, RpcConfig,
     RpcError, RpcSources, Slot, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use std::str::FromStr;
@@ -91,10 +92,18 @@ async fn get_account_info(
 #[candid_method(rename = "getSlot")]
 async fn get_slot(
     source: RpcSources,
-    config: Option<RpcConfig>,
+    config: Option<GetSlotRpcConfig>,
     params: Option<GetSlotParams>,
 ) -> MultiRpcResult<Slot> {
-    match CandidRpcClient::new(source, config) {
+    let rounding_error = config
+        .as_ref()
+        .and_then(|c| c.rounding_error)
+        .map(RoundingError::from);
+    match CandidRpcClient::new_with_rounding_error(
+        source,
+        config.map(RpcConfig::from),
+        rounding_error,
+    ) {
         Ok(client) => client.get_slot(params).await,
         Err(err) => Err(err).into(),
     }

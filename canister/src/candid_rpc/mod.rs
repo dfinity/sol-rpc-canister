@@ -3,6 +3,7 @@ use crate::{
     metrics::RpcMethod,
     providers::get_provider,
     rpc_client::{ReducedResult, SolRpcClient},
+    types::RoundingError,
     util::hostname_from_url,
 };
 use canhttp::multi::ReductionError;
@@ -57,8 +58,16 @@ pub struct CandidRpcClient {
 
 impl CandidRpcClient {
     pub fn new(source: RpcSources, config: Option<RpcConfig>) -> RpcResult<Self> {
+        Self::new_with_rounding_error(source, config, None)
+    }
+
+    pub fn new_with_rounding_error(
+        source: RpcSources,
+        config: Option<RpcConfig>,
+        rounding_error: Option<RoundingError>,
+    ) -> RpcResult<Self> {
         Ok(Self {
-            client: SolRpcClient::new(source, config)?,
+            client: SolRpcClient::new(source, config, rounding_error)?,
         })
     }
 

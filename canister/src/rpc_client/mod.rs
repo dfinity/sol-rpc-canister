@@ -9,6 +9,7 @@ use crate::{
     metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider, Providers},
     rpc_client::sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
+    types::RoundingError,
 };
 use canhttp::{
     http::json::JsonRpcRequest,
@@ -29,15 +30,22 @@ use tower::ServiceExt;
 pub struct SolRpcClient {
     providers: Providers,
     config: RpcConfig,
+    rounding_error: RoundingError,
 }
 
 impl SolRpcClient {
-    pub fn new(source: RpcSources, config: Option<RpcConfig>) -> Result<Self, ProviderError> {
+    pub fn new(
+        source: RpcSources,
+        config: Option<RpcConfig>,
+        rounding_error: Option<RoundingError>,
+    ) -> Result<Self, ProviderError> {
         let config = config.unwrap_or_default();
+        let rounding_error = rounding_error.unwrap_or_default();
         let strategy = config.response_consensus.clone().unwrap_or_default();
         Ok(Self {
             providers: Providers::new(source, strategy)?,
             config,
+            rounding_error,
         })
     }
 
@@ -161,7 +169,7 @@ impl SolRpcClient {
             "getSlot",
             vec![params],
             self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
-            &Some(ResponseTransform::GetSlot),
+            &Some(ResponseTransform::GetSlot(self.rounding_error)),
         )
         .await
         .reduce(self.reduction_strategy())

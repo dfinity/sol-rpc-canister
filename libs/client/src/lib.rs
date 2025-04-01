@@ -8,8 +8,8 @@ use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    GetAccountInfoParams, GetSlotParams, RpcConfig, RpcSources, SupportedRpcProvider,
-    SupportedRpcProviderId,
+    GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources,
+    SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_account::Account;
 use solana_clock::Slot;
@@ -154,12 +154,28 @@ impl<R: Runtime> SolRpcClient<R> {
     pub async fn get_slot(
         &self,
         params: Option<GetSlotParams>,
+        rounding_error: Option<u64>,
     ) -> sol_rpc_types::MultiRpcResult<Slot> {
+        let rpc_config = if self.rpc_config.is_some() || rounding_error.is_some() {
+            Some(GetSlotRpcConfig {
+                rounding_error,
+                response_size_estimate: self
+                    .rpc_config
+                    .as_ref()
+                    .and_then(|c| c.response_size_estimate),
+                response_consensus: self
+                    .rpc_config
+                    .as_ref()
+                    .and_then(|c| c.response_consensus.clone()),
+            })
+        } else {
+            None
+        };
         self.runtime
             .update_call(
                 self.sol_rpc_canister,
                 "getSlot",
-                (self.rpc_sources.clone(), self.rpc_config.clone(), params),
+                (self.rpc_sources.clone(), rpc_config, params),
                 10_000_000_000,
             )
             .await
