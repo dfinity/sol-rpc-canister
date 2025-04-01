@@ -47,7 +47,7 @@ mod mock_request_tests {
         let expected_result: serde_json::Value = serde_json::from_str(MOCK_RESPONSE).unwrap();
         assert_matches!(
             client
-                .mock_http(builder_fn(MockOutcallBuilder::new(200, MOCK_RESPONSE)))
+                .mock_http(builder_fn(MockOutcallBuilder::new(200, MOCK_RESPONSE))).build()
                 .request(MOCK_REQUEST_PAYLOAD, 0)
                 .await,
             sol_rpc_types::MultiRpcResult::Consistent(Ok(msg)) if msg == serde_json::Value::to_string(&expected_result["result"])
@@ -113,7 +113,7 @@ mod get_provider_tests {
     #[tokio::test]
     async fn should_get_providers() {
         let setup = Setup::new().await;
-        let client = setup.client();
+        let client = setup.client().build();
         let providers = client.get_providers().await;
 
         assert_eq!(providers.len(), 9);
@@ -147,7 +147,7 @@ mod generic_request_tests {
     #[tokio::test]
     async fn request_should_require_cycles() {
         let setup = Setup::new().await;
-        let client = setup.client();
+        let client = setup.client().build();
 
         let results = client
             .request(MOCK_REQUEST_PAYLOAD, 0)
@@ -189,6 +189,7 @@ mod generic_request_tests {
                 MockOutcallBuilder::new(200, &response_1),
                 MockOutcallBuilder::new(200, &response_2),
             ])
+            .build()
             .request(MOCK_REQUEST_PAYLOAD, 0)
             .await
             .expect_consistent();
@@ -209,13 +210,13 @@ mod retrieve_logs_tests {
             ..Default::default()
         })
         .await;
-        let client = setup.client();
         assert_eq!(setup.retrieve_logs("DEBUG").await, vec![]);
         assert_eq!(setup.retrieve_logs("INFO").await, vec![]);
 
         // Generate some log
         setup
             .client()
+            .build()
             .update_api_keys(&[(
                 SupportedRpcProviderId::AlchemyMainnet,
                 Some("unauthorized-api-key".to_string()),
@@ -242,7 +243,7 @@ mod update_api_key_tests {
 
         let provider = SupportedRpcProviderId::AlchemyMainnet;
         let api_key = "test-api-key";
-        let client = setup.client();
+        let client = setup.client().build();
         client
             .update_api_keys(&[(provider, Some(api_key.to_string()))])
             .await;
@@ -260,6 +261,7 @@ mod update_api_key_tests {
         let setup = Setup::new().await;
         setup
             .client()
+            .build()
             .update_api_keys(&[(
                 SupportedRpcProviderId::AlchemyMainnet,
                 Some("unauthorized-api-key".to_string()),
@@ -277,6 +279,7 @@ mod update_api_key_tests {
         .await;
         setup
             .client()
+            .build()
             .update_api_keys(&[(
                 SupportedRpcProviderId::PublicNodeMainnet,
                 Some("invalid-api-key".to_string()),
@@ -297,17 +300,17 @@ mod canister_upgrade_tests {
         .await;
         let provider = SupportedRpcProviderId::AlchemyMainnet;
         let api_key = "test-api-key";
-        let client = setup.client();
+        let client = setup.client().build();
         client
             .update_api_keys(&[(provider, Some(api_key.to_string()))])
             .await;
-        client
+        setup
             .verify_api_key((provider, Some(api_key.to_string())))
             .await;
 
         setup.upgrade_canister(InstallArgs::default()).await;
 
-        client
+        setup
             .verify_api_key((provider, Some(api_key.to_string())))
             .await;
     }
@@ -327,6 +330,7 @@ mod canister_upgrade_tests {
             .await;
         setup
             .client()
+            .build()
             .update_api_keys(&[(
                 SupportedRpcProviderId::AlchemyMainnet,
                 Some("authorized-api-key".to_string()),
@@ -350,6 +354,7 @@ mod canister_upgrade_tests {
             .await;
         setup
             .client()
+            .build()
             .update_api_keys(&[(
                 SupportedRpcProviderId::AlchemyMainnet,
                 Some("unauthorized-api-key".to_string()),

@@ -68,7 +68,7 @@ impl Setup {
     }
 
     fn icp_client(&self) -> SolRpcClient<PocketIcLiveModeRuntime> {
-        self.setup.client_live_mode()
+        self.setup.client_live_mode().build()
     }
 
     async fn compare_client<'a, Sol, SolOutput, Icp, IcpOutput, Fut>(

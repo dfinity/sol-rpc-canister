@@ -16,8 +16,8 @@ use sol_rpc_canister::{
     http_types::{HttpRequest, HttpResponse},
     logs::Priority,
 };
-use sol_rpc_client::{Runtime, SolRpcClient};
-use sol_rpc_types::{InstallArgs, RpcSources, SolanaCluster, SupportedRpcProviderId};
+use sol_rpc_client::{ClientBuilder, Runtime, SolRpcClient};
+use sol_rpc_types::{InstallArgs, SupportedRpcProviderId};
 use std::{
     env::{set_var, var},
     path::PathBuf,
@@ -120,12 +120,6 @@ impl Setup {
             .unwrap_or_else(|err| panic!("Upgrade canister failed: {:?}", err));
     }
 
-    pub fn client(&self) -> SolRpcClient<PocketIcRuntime> {
-        SolRpcClient::new(
-            self.new_pocket_ic(),
-            self.sol_rpc_canister_id,
-            RpcSources::Default(SolanaCluster::Devnet),
-        )
     // TODO XC-329: remove verifyApiKey endpoint
     pub async fn verify_api_key(&self, api_key: (SupportedRpcProviderId, Option<String>)) {
         let runtime = self.new_pocket_ic_runtime();
@@ -152,17 +146,15 @@ impl Setup {
             .entries
     }
 
+    pub fn client(&self) -> ClientBuilder<PocketIcRuntime> {
+        SolRpcClient::builder(self.new_pocket_ic_runtime(), self.sol_rpc_canister_id)
     }
 
-    pub fn client_live_mode(&self) -> SolRpcClient<PocketIcLiveModeRuntime> {
-        SolRpcClient::new(
-            self.new_live_pocket_ic(),
-            self.sol_rpc_canister_id,
-            RpcSources::Default(SolanaCluster::Devnet),
-        )
+    pub fn client_live_mode(&self) -> ClientBuilder<PocketIcLiveModeRuntime> {
+        SolRpcClient::builder(self.new_live_pocket_ic_runtime(), self.sol_rpc_canister_id)
     }
 
-    fn new_pocket_ic(&self) -> PocketIcRuntime {
+    fn new_pocket_ic_runtime(&self) -> PocketIcRuntime {
         PocketIcRuntime {
             env: &self.env,
             caller: self.caller,
@@ -172,7 +164,7 @@ impl Setup {
         }
     }
 
-    fn new_live_pocket_ic(&self) -> PocketIcLiveModeRuntime {
+    fn new_live_pocket_ic_runtime(&self) -> PocketIcLiveModeRuntime {
         PocketIcLiveModeRuntime {
             env: &self.env,
             caller: self.caller,
@@ -498,29 +490,21 @@ pub trait SolRpcTestClient<R: Runtime> {
 }
 
 #[async_trait]
+impl SolRpcTestClient<PocketIcRuntime<'_>> for ClientBuilder<PocketIcRuntime<'_>> {
     fn mock_http(self, mock: impl Into<MockOutcall>) -> Self {
-        Self {
-            runtime: self.runtime.with_strategy(MockStrategy::Mock(mock.into())),
-            ..self
-        }
+        self.with_runtime(|r| r.with_strategy(MockStrategy::Mock(mock.into())))
     }
 
     fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self {
-        Self {
-            runtime: self
-                .runtime
-                .with_strategy(MockStrategy::MockOnce(mock.into())),
-            ..self
-        }
+        self.with_runtime(|r| r.with_strategy(MockStrategy::MockOnce(mock.into())))
     }
 
     fn mock_http_sequence(self, mocks: Vec<impl Into<MockOutcall>>) -> Self {
-        Self {
-            runtime: self.runtime.with_strategy(MockStrategy::MockSequence(
+        self.with_runtime(|r| {
+            r.with_strategy(MockStrategy::MockSequence(
                 mocks.into_iter().map(|mock| mock.into()).collect(),
-            )),
-            ..self
-        }
+            ))
+        })
     }
 }
 

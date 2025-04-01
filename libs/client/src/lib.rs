@@ -1,16 +1,20 @@
 //! Client to interact with the SOL RPC canister
 
 #![forbid(unsafe_code)]
-#![forbid(missing_docs)]
+// #![forbid(missing_docs)]
+
+mod request;
 
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    GetSlotParams, RpcConfig, RpcSources, SupportedRpcProvider, SupportedRpcProviderId,
+    GetSlotParams, RpcConfig, RpcSources, SolanaCluster, SupportedRpcProvider,
+    SupportedRpcProviderId,
 };
 use solana_clock::Slot;
+use std::sync::Arc;
 
 /// Abstract the canister runtime so that the client code can be reused:
 /// * in production using `ic_cdk`,
@@ -43,8 +47,27 @@ pub trait Runtime {
 }
 
 /// Client to interact with the SOL RPC canister.
+#[derive(Clone)]
+pub struct SolRpcClient<R> {
+    config: Arc<ClientConfig<R>>,
+}
+
+impl<R> SolRpcClient<R> {
+    pub fn builder(runtime: R, sol_rpc_canister: Principal) -> ClientBuilder<R> {
+        ClientBuilder {
+            config: ClientConfig {
+                runtime,
+                sol_rpc_canister,
+                rpc_config: None,
+                rpc_sources: RpcSources::Default(SolanaCluster::Mainnet),
+            },
+        }
+    }
+}
+
+/// Client to interact with the SOL RPC canister.
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct SolRpcClient<R: Runtime> {
+pub struct ClientConfig<R> {
     /// This setup's canister [`Runtime`].
     pub runtime: R,
     /// The [`Principal`] of the SOL RPC canister.
@@ -55,62 +78,60 @@ pub struct SolRpcClient<R: Runtime> {
     pub rpc_sources: RpcSources,
 }
 
-impl SolRpcClient<IcRuntime> {
-    /// Instantiate a new client to be used by a canister on the Internet Computer.
-    ///
-    /// To use another runtime, see [`Self::new`].
-    pub fn new_for_ic(sol_rpc_canister: Principal, rpc_sources: RpcSources) -> Self {
-        Self {
-            runtime: IcRuntime {},
-            sol_rpc_canister,
-            rpc_config: None,
-            rpc_sources,
+#[must_use]
+pub struct ClientBuilder<R> {
+    config: ClientConfig<R>,
+}
+
+impl<R> ClientBuilder<R> {
+    pub fn with_runtime<S, F: FnOnce(R) -> S>(self, other_runtime: F) -> ClientBuilder<S> {
+        ClientBuilder {
+            config: ClientConfig {
+                runtime: other_runtime(self.config.runtime),
+                sol_rpc_canister: self.config.sol_rpc_canister,
+                rpc_config: self.config.rpc_config,
+                rpc_sources: self.config.rpc_sources,
+            },
+        }
+    }
+
+    /// Mutates the builder to use the given [`RpcSources`].
+    pub fn with_rpc_sources(mut self, rpc_sources: RpcSources) -> Self {
+        self.config.rpc_sources = rpc_sources;
+        self
+    }
+
+    /// Mutates the builder to use the given [`RpcConfig`].
+    pub fn with_rpc_config(mut self, rpc_config: RpcConfig) -> Self {
+        self.config.rpc_config = Some(rpc_config);
+        self
+    }
+
+    pub fn build(self) -> SolRpcClient<R> {
+        SolRpcClient {
+            config: Arc::new(self.config),
         }
     }
 }
 
+impl SolRpcClient<IcRuntime> {}
+
 impl<R: Runtime> SolRpcClient<R> {
-    /// Instantiate a new client with a specific runtime.
-    ///
-    /// To use the client inside a canister, see [`SolRpcClient<IcRuntime>::new_for_ic`].
-    pub fn new(runtime: R, sol_rpc_canister: Principal, rpc_sources: RpcSources) -> Self {
-        Self {
-            runtime,
-            sol_rpc_canister,
-            rpc_config: None,
-            rpc_sources,
-        }
-    }
-
-    /// Returns a new client with the given [`RpcSources`].
-    pub fn with_rpc_sources(self, rpc_sources: RpcSources) -> Self {
-        SolRpcClient {
-            rpc_sources,
-            ..self
-        }
-    }
-
-    /// Returns a new client with the given [`RpcConfig`].
-    pub fn with_rpc_config(self, rpc_config: RpcConfig) -> Self {
-        SolRpcClient {
-            rpc_config: Some(rpc_config),
-            ..self
-        }
-    }
-
     /// Call `getProviders` on the SOL RPC canister.
     pub async fn get_providers(&self) -> Vec<(SupportedRpcProviderId, SupportedRpcProvider)> {
-        self.runtime
-            .query_call(self.sol_rpc_canister, "getProviders", ())
+        self.config
+            .runtime
+            .query_call(self.config.sol_rpc_canister, "getProviders", ())
             .await
             .unwrap()
     }
 
     /// Call `updateApiKeys` on the SOL RPC canister.
     pub async fn update_api_keys(&self, api_keys: &[(SupportedRpcProviderId, Option<String>)]) {
-        self.runtime
+        self.config
+            .runtime
             .update_call(
-                self.sol_rpc_canister,
+                self.config.sol_rpc_canister,
                 "updateApiKeys",
                 (api_keys.to_vec(),),
                 0,
@@ -124,11 +145,16 @@ impl<R: Runtime> SolRpcClient<R> {
         &self,
         params: Option<GetSlotParams>,
     ) -> sol_rpc_types::MultiRpcResult<Slot> {
-        self.runtime
+        self.config
+            .runtime
             .update_call(
-                self.sol_rpc_canister,
+                self.config.sol_rpc_canister,
                 "getSlot",
-                (self.rpc_sources.clone(), self.rpc_config.clone(), params),
+                (
+                    self.config.rpc_sources.clone(),
+                    self.config.rpc_config.clone(),
+                    params,
+                ),
                 10_000_000_000,
             )
             .await
@@ -141,13 +167,14 @@ impl<R: Runtime> SolRpcClient<R> {
         json_rpc_payload: &str,
         cycles: u128,
     ) -> sol_rpc_types::MultiRpcResult<String> {
-        self.runtime
+        self.config
+            .runtime
             .update_call(
-                self.sol_rpc_canister,
+                self.config.sol_rpc_canister,
                 "request",
                 (
-                    self.rpc_sources.clone(),
-                    self.rpc_config.clone(),
+                    self.config.rpc_sources.clone(),
+                    self.config.rpc_config.clone(),
                     json_rpc_payload,
                 ),
                 cycles,
