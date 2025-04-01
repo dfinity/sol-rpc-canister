@@ -63,6 +63,8 @@ impl Setup {
                     ..Default::default()
                 },
             )
+            .await
+            .with_mock_api_keys()
             .await,
         }
     }

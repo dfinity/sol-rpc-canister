@@ -17,7 +17,7 @@ use sol_rpc_canister::{
     logs::Priority,
 };
 use sol_rpc_client::{ClientBuilder, Runtime, SolRpcClient};
-use sol_rpc_types::{InstallArgs, SupportedRpcProviderId};
+use sol_rpc_types::{InstallArgs, RpcAccess, SupportedRpcProviderId};
 use std::{
     env::{set_var, var},
     path::PathBuf,
@@ -32,6 +32,7 @@ const MAX_TICKS: usize = 10;
 pub const DEFAULT_CALLER_TEST_ID: Principal =
     Principal::from_slice(&[0x0, 0x0, 0x0, 0x0, 0x3, 0x31, 0x1, 0x8, 0x2, 0x2]);
 pub const DEFAULT_CONTROLLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x02]);
+const MOCK_API_KEY: &str = "mock-api-key";
 
 pub struct Setup {
     env: PocketIc,
@@ -118,6 +119,30 @@ impl Setup {
             )
             .await
             .unwrap_or_else(|err| panic!("Upgrade canister failed: {:?}", err));
+    }
+
+    pub async fn with_mock_api_keys(self) -> Self {
+        let client = self.client().build();
+        let providers = client.get_providers().await;
+        let mut api_keys = Vec::new();
+        for (id, provider) in providers {
+            match provider.access {
+                RpcAccess::Authenticated { .. } => {
+                    api_keys.push((id, Some(MOCK_API_KEY.to_string())));
+                }
+                RpcAccess::Unauthenticated { .. } => {}
+            }
+        }
+        self.env
+            .update_call(
+                self.sol_rpc_canister_id,
+                self.controller,
+                "updateApiKeys",
+                PocketIcRuntime::encode_args((api_keys,)),
+            )
+            .await
+            .expect("BUG: Failed to call updateApiKeys");
+        self
     }
 
     // TODO XC-329: remove verifyApiKey endpoint

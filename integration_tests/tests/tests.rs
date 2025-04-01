@@ -146,7 +146,7 @@ mod generic_request_tests {
 
     #[tokio::test]
     async fn request_should_require_cycles() {
-        let setup = Setup::new().await;
+        let setup = Setup::new().await.with_mock_api_keys().await;
         let client = setup.client().build();
 
         let results = client
@@ -180,6 +180,8 @@ mod generic_request_tests {
             mode: Some(Mode::Demo),
             ..Default::default()
         })
+        .await
+        .with_mock_api_keys()
         .await;
         let client = setup.client();
 
