@@ -34,19 +34,21 @@ type RpcConfig = record {
 };
 
 
-// This type defines a rounding error to use when fetching the current from Solana using the JSON-RPC
-// interface, meaning slots will be rounded down to the nearest multiple of this error when being fetched.
+// Rounding error for fetching the current slot from Solana using the JSON-RPC interface, meaning slots will be rounded
+// down to the nearest multiple of this error when being fetched.
 //
-// This is done to achieve consensus on the HTTP outcalls whose responses contain Solana slots despite Solana's fast
-// blocktime and hence fast-changing slot value. However, this solution does not guarantee consensus on the slot value
-// across nodes and different consensus rates will be achieved depending on the rounding error value used.
-// A higher rounding error will lead to a higher consensus rate, but also means the slot value may differ more from the
-// actual value on the Solana blockchain. This means, for example, that setting a large rounding error and then fetching
-// the corresponding block with the Solana `getBlock` RPC method can result in obtaining a block whose hash is too old
-// to use in a valid Solana transaction.
+// Solana slot time (around 400ms) is faster than the latency of an HTTPs outcall (which involves every node in the
+// subnet making an HTTP request), which is typically around a couple of seconds. It is therefore extremely likely that
+// the nodes will receive different results and will fail to reach consensus.
 //
-// The default value of 20 has been experimentally shown to achieve a high HTTP outcall consensus rate while still
-// resulting in a slot whose corresponding block is "recent enough" to be used in a Solana transaction.
+// Rounding down the slot received by each node artificially increases the slot time observed by each node and therefore
+// increases the probability of reaching consensus. In other words, the higher the rounding error, the more likely it is
+// that consensus will be reached (which is required for the HTTPs outcall to be successful), but the older the
+// resulting slot will be. Certain use cases, such as sending transactions, require a relatively recent block hash (less
+// than 150 blocks old) so that too a large rounding error is not advisable.
+//
+// The default value of 20 has been experimentally shown to likely achieve consensus while still resulting in a slot
+// whose corresponding block is "recent enough" to be used in a Solana transaction.
 type RoundingError = nat64;
 
 // Configures how to perform `getSlot` RPC HTTP calls.

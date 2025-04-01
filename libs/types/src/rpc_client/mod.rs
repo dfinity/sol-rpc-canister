@@ -404,12 +404,13 @@ impl RoundingError {
     /// use sol_rpc_types::RoundingError;
     ///
     /// assert_eq!(RoundingError::new(0).round(19), 19);
+    /// assert_eq!(RoundingError::new(1).round(19), 19);
     /// assert_eq!(RoundingError::new(10).round(19), 10);
     /// assert_eq!(RoundingError::new(20).round(19), 0);
     /// ```
     pub fn round(&self, slot: u64) -> u64 {
         match self.0 {
-            0 => slot,
+            0 | 1 => slot,
             n => (slot / n) * n,
         }
     }

@@ -5,13 +5,13 @@ use pocket_ic::common::rest::CanisterHttpMethod;
 use serde_json::json;
 use sol_rpc_canister::constants::*;
 use sol_rpc_int_tests::{
-    json_rpc_sequential_id, mock::MockOutcallBuilder, Setup, SolRpcTestClient,
-    DEFAULT_CALLER_TEST_ID,
+    mock::MockOutcallBuilder, Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID,
 };
 use sol_rpc_types::{
     InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
-    RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
+use std::str::FromStr;
 
 const MOCK_REQUEST_URL: &str = "https://api.devnet.solana.com/";
 const MOCK_REQUEST_PAYLOAD: &str = r#"{"jsonrpc":"2.0","id":0,"method":"getVersion"}"#;
@@ -140,9 +140,128 @@ mod get_provider_tests {
     }
 }
 
+mod get_slot_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn should_get_slot_without_rounding() {
+        for sources in [
+            // Use Mainnet providers that do not require API keys
+            RpcSources::Custom(vec![
+                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
+            ]),
+            RpcSources::Default(SolanaCluster::Devnet),
+        ] {
+            let setup = Setup::new().await;
+            let client = setup.client().with_rpc_sources(sources);
+
+            let results = client
+                .mock_sequential_json_rpc_responses::<3>(
+                    200,
+                    json!({
+                        "id": 0,
+                        "jsonrpc": "2.0",
+                        "result": 1234,
+                    }),
+                )
+                .get_slot(None, Some(0.into()))
+                .await
+                .expect_consistent();
+
+            assert_eq!(results, Ok(1234));
+
+            setup.drop().await;
+        }
+    }
+
+    #[tokio::test]
+    async fn should_get_consistent_result_with_rounding() {
+        for sources in [
+            // Use Mainnet providers that do not require API keys
+            RpcSources::Custom(vec![
+                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
+            ]),
+            RpcSources::Default(SolanaCluster::Devnet),
+        ] {
+            let responses = [1234, 1229, 1237]
+                .iter()
+                .enumerate()
+                .map(|(id, slot)| {
+                    MockOutcallBuilder::new(
+                        200,
+                        &json!({
+                            "id": id,
+                            "jsonrpc": "2.0",
+                            "result": slot,
+                        }),
+                    )
+                })
+                .collect();
+            let setup = Setup::new().await;
+            let client = setup.client().with_rpc_sources(sources);
+
+            let results = client
+                .mock_http_sequence(responses)
+                .get_slot(None, None)
+                .await
+                .expect_consistent();
+
+            assert_eq!(results, Ok(1220));
+
+            setup.drop().await;
+        }
+    }
+
+    #[tokio::test]
+    async fn should_get_inconsistent_result_without_rounding() {
+        for sources in [
+            // Use Mainnet providers that do not require API keys
+            RpcSources::Custom(vec![
+                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
+            ]),
+            RpcSources::Default(SolanaCluster::Devnet),
+        ] {
+            let responses = [1234, 1229, 1237]
+                .iter()
+                .enumerate()
+                .map(|(id, slot)| {
+                    MockOutcallBuilder::new(
+                        200,
+                        &json!({
+                            "id": id,
+                            "jsonrpc": "2.0",
+                            "result": slot,
+                        }),
+                    )
+                })
+                .collect();
+            let setup = Setup::new().await;
+            let client = setup.client().with_rpc_sources(sources);
+
+            let results: Vec<RpcResult<_>> = client
+                .mock_http_sequence(responses)
+                .get_slot(None, Some(0.into()))
+                .await
+                .expect_inconsistent()
+                .into_iter()
+                .map(|(_source, result)| result)
+                .collect();
+
+            assert_eq!(results, vec![Ok(1234), Ok(1229), Ok(1237)]);
+
+            setup.drop().await;
+        }
+    }
+}
+
 mod generic_request_tests {
     use super::*;
-    use std::str::FromStr;
 
     #[tokio::test]
     async fn request_should_require_cycles() {
@@ -171,11 +290,6 @@ mod generic_request_tests {
 
     #[tokio::test]
     async fn request_should_succeed_in_demo_mode() {
-        let [response_0, response_1, response_2] = json_rpc_sequential_id(json!({
-            "id": 0,
-            "jsonrpc": "2.0",
-            "result": serde_json::Value::from_str(MOCK_RESPONSE_RESULT).unwrap()
-        }));
         let setup = Setup::with_args(InstallArgs {
             mode: Some(Mode::Demo),
             ..Default::default()
@@ -184,11 +298,14 @@ mod generic_request_tests {
         let client = setup.client();
 
         let result = client
-            .mock_http_sequence(vec![
-                MockOutcallBuilder::new(200, &response_0),
-                MockOutcallBuilder::new(200, &response_1),
-                MockOutcallBuilder::new(200, &response_2),
-            ])
+            .mock_sequential_json_rpc_responses::<3>(
+                200,
+                json!({
+                    "id": 0,
+                    "jsonrpc": "2.0",
+                    "result": serde_json::Value::from_str(MOCK_RESPONSE_RESULT).unwrap()
+                }),
+            )
             .request(MOCK_REQUEST_PAYLOAD, 0)
             .await
             .expect_consistent();

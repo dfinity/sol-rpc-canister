@@ -126,11 +126,21 @@ impl<R: Runtime> SolRpcClient<R> {
         params: Option<GetSlotParams>,
         rounding_error: Option<RoundingError>,
     ) -> sol_rpc_types::MultiRpcResult<Slot> {
-        let rpc_config = self.rpc_config.as_ref().map(|config| GetSlotRpcConfig {
-            rounding_error: rounding_error.map(u64::from),
-            response_size_estimate: config.response_size_estimate,
-            response_consensus: config.response_consensus.clone(),
-        });
+        let rpc_config = if self.rpc_config.is_some() || rounding_error.is_some() {
+            Some(GetSlotRpcConfig {
+                rounding_error: rounding_error.map(u64::from),
+                response_size_estimate: self
+                    .rpc_config
+                    .as_ref()
+                    .and_then(|c| c.response_size_estimate),
+                response_consensus: self
+                    .rpc_config
+                    .as_ref()
+                    .and_then(|c| c.response_consensus.clone()),
+            })
+        } else {
+            None
+        };
         self.runtime
             .update_call(
                 self.sol_rpc_canister,
