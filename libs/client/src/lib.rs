@@ -1,4 +1,39 @@
 //! Client to interact with the SOL RPC canister
+//!
+//! # Examples
+//!
+//! ## Configuring the client
+//!
+//! By default, any RPC endpoint supported by the SOL RPC canister will call 3 providers and require equality between their results.
+//! It is possible to customize the client so that another strategy, such as 3-out-of-2 in the example below, is used for all following calls.
+//!
+//! ```rust
+//! use candid::Principal;
+//! use sol_rpc_client::SolRpcClient;
+//! use sol_rpc_types::{ConsensusStrategy, RpcConfig, RpcSources, SolanaCluster};
+//!
+//! let client = SolRpcClient::builder_for_ic()
+//!     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+//!     .with_rpc_config(RpcConfig {
+//!         response_consensus: Some(ConsensusStrategy::Threshold {
+//!             total: Some(3),
+//!             min: 2,
+//!         }),
+//!         ..Default::default()
+//!     })
+//!     .build();
+//! ```
+//!
+//! ## Overriding client configuration for a specific call
+//!
+//! It is sometimes desirable to have a custom configuration for a specific call, e.g. to change the amount of cycles attached:
+//!
+//! ```rust
+//! use sol_rpc_client::SolRpcClient;
+//! let client = SolRpcClient::builder_for_ic().build();
+//!
+//! let slot = client.get_slot(None).with_cycles(42).send();
+//! ```
 
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
@@ -16,6 +51,16 @@ use sol_rpc_types::{
     SupportedRpcProviderId,
 };
 use std::sync::Arc;
+
+/// The principal identifying the productive Solana RPC canister under NNS control.
+///
+/// ```rust
+/// use candid::Principal;
+/// use sol_rpc_client::SOL_RPC_CANISTER;
+///
+/// assert_eq!(SOL_RPC_CANISTER, Principal::from_text("tghme-zyaaa-aaaar-qarca-cai").unwrap())
+/// ```
+pub const SOL_RPC_CANISTER: Principal = Principal::from_slice(&[0, 0, 0, 0, 2, 48, 4, 68, 1, 1]);
 
 /// Abstract the canister runtime so that the client code can be reused:
 /// * in production using `ic_cdk`,
@@ -64,6 +109,14 @@ impl<R> SolRpcClient<R> {
     /// Creates a [`ClientBuilder`] to configure a [`SolRpcClient`].
     pub fn builder(runtime: R, sol_rpc_canister: Principal) -> ClientBuilder<R> {
         ClientBuilder::new(runtime, sol_rpc_canister)
+    }
+}
+
+impl SolRpcClient<IcRuntime> {
+    /// Creates a [`ClientBuilder`] to configure a [`SolRpcClient`] targeting [`SOL_RPC_CANISTER`]
+    /// running on the Internet Computer.
+    pub fn builder_for_ic() -> ClientBuilder<IcRuntime> {
+        ClientBuilder::new(IcRuntime, SOL_RPC_CANISTER)
     }
 }
 
@@ -207,8 +260,9 @@ impl<R: Runtime> SolRpcClient<R> {
     }
 }
 
+/// Runtime when interacting with a canister running on the Internet Computer.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-struct IcRuntime {}
+pub struct IcRuntime;
 
 #[async_trait]
 impl Runtime for IcRuntime {
