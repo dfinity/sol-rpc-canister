@@ -5,6 +5,7 @@
 
 mod request;
 
+use crate::request::{Request, SolRpcEndpoint};
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
@@ -181,6 +182,29 @@ impl<R: Runtime> SolRpcClient<R> {
             )
             .await
             .unwrap()
+    }
+
+    pub async fn execute_request<E>(&self, request: Request<E>) -> E::Output
+    where
+        E: SolRpcEndpoint,
+        E::Params: CandidType + Send,
+        E::Output: CandidType + DeserializeOwned,
+    {
+        let rpc_method = request.endpoint.rpc_method().to_string();
+        self.config
+            .runtime
+            .update_call(
+                self.config.sol_rpc_canister,
+                &rpc_method,
+                (
+                    request.rpc_sources,
+                    request.rpc_config,
+                    request.endpoint.params(),
+                ),
+                request.cycles,
+            )
+            .await
+            .unwrap_or_else(|e| panic!("Client error: failed to call `{rpc_method}`: {e:?}"))
     }
 }
 
