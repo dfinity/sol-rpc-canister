@@ -152,13 +152,22 @@ type RejectionCode = variant {
 
 // Represents the encoding of the return value of the `getAccountInfo` Solana RPC method.
 type GetAccountInfoEncoding = variant {
+  // Return the account data encoded in base-58. This is slow and limited to less than 129 bytes of account data.
   base58;
+  // Return the account data encoded in base-64. This works for account data of any size.
   base64;
+  // Compress the account data using the Zstandard library and return the base64-encoded result.
   "base64+zstd";
+  // Return the data as a JSON string.
+  // * jsonParsed encoding attempts to use program-specific state parsers to return more human-readable and explicit
+  //   account state data.
+  // * If jsonParsed is requested but a parser cannot be found, the field falls back to base64 encoding, detectable
+  //   when the data field is type string.
   jsonParsed;
 };
 
-//  Represents a slice of the return value of the `getAccountInfo` Solana RPC method.
+// Represents a slice of the return value of the `getAccountInfo` Solana RPC method.
+// NOTE: Data slicing is only available for base58, base64, or base64+zstd encodings.
 type DataSlice = record {
   length: nat64;
   offset: nat64;
@@ -181,7 +190,8 @@ type AccountInfo = record {
     data: vec nat8;
     owner: Pubkey;
     executable: bool;
-    rent_epoch: nat64;
+    rentEpoch: nat64;
+    space: nat64;
 };
 
 // Represents the result of a call to the `getAccountInfo` Solana RPC method.

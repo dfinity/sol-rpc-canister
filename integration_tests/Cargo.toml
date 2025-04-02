@@ -23,6 +23,7 @@ sol_rpc_canister = { path = "../canister" }
 sol_rpc_client = { path = "../libs/client" }
 sol_rpc_types = { path = "../libs/types" }
 solana-pubkey = { workspace = true }
+solana-account-decoder-client-types = { workspace = true }
 
 [dev-dependencies]
 assert_matches = { workspace = true }

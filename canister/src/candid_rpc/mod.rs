@@ -51,7 +51,7 @@ pub fn hostname(provider: SupportedRpcProvider) -> Option<String> {
     hostname_from_url(url.as_str())
 }
 
-/// Adapt the `EthRpcClient` to the `Candid` interface used by the EVM-RPC canister.
+/// Adapt the `SolRpcClient` to the `Candid` interface used by the SOL-RPC canister.
 pub struct CandidRpcClient {
     client: SolRpcClient,
 }

@@ -149,7 +149,7 @@ impl SolRpcClient {
         &self,
         pubkey: solana_pubkey::Pubkey,
         params: Option<GetAccountInfoParams>,
-    ) -> ReducedResult<solana_account::Account> {
+    ) -> ReducedResult<solana_account_decoder_client_types::UiAccount> {
         self.parallel_call(
             "getAccountInfo",
             (pubkey.to_string(), params),

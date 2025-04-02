@@ -11,6 +11,7 @@ use sol_rpc_types::{
     InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
     RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
+use solana_account_decoder_client_types::{UiAccount, UiAccountData, UiAccountEncoding};
 use std::str::FromStr;
 
 const MOCK_REQUEST_URL: &str = "https://api.devnet.solana.com/";
@@ -137,6 +138,65 @@ mod get_provider_tests {
         );
 
         setup.drop().await;
+    }
+}
+
+mod get_account_info_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn should_get_account_info() {
+        for sources in [
+            // Use Mainnet providers that do not require API keys
+            RpcSources::Custom(vec![
+                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
+            ]),
+            RpcSources::Default(SolanaCluster::Devnet),
+        ] {
+            let setup = Setup::new().await;
+            let client = setup.client().with_rpc_sources(sources);
+            let pubkey =
+                solana_pubkey::Pubkey::from_str("11111111111111111111111111111111").unwrap();
+
+            let results = client
+                .mock_sequential_json_rpc_responses::<3>(
+                    200,
+                    json!({
+                        "id": 0,
+                        "jsonrpc": "2.0",
+                        "result": {
+                            "context": { "apiVersion": "2.0.15", "slot": 341197053 },
+                            "value": {
+                                "data": ["1234", "base58"],
+                                "executable": false,
+                                "lamports": 88849814690250u64,
+                                "owner": "11111111111111111111111111111111",
+                                "rentEpoch": 18446744073709551615u64,
+                                "space": 0
+                            }
+                        },
+                    }),
+                )
+                .get_account_info(pubkey.into(), None)
+                .await
+                .expect_consistent();
+
+            assert_eq!(
+                results,
+                Ok(UiAccount {
+                    lamports: 88849814690250,
+                    data: UiAccountData::Binary("1234".to_string(), UiAccountEncoding::Base58),
+                    owner: "11111111111111111111111111111111".to_string(),
+                    executable: false,
+                    rent_epoch: 18446744073709551615,
+                    space: Some(0),
+                })
+            );
+
+            setup.drop().await;
+        }
     }
 }
 

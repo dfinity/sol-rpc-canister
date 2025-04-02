@@ -7,8 +7,7 @@ use pocket_ic::PocketIcBuilder;
 use sol_rpc_client::SolRpcClient;
 use sol_rpc_int_tests::PocketIcLiveModeRuntime;
 use sol_rpc_types::{
-    GetAccountInfoEncoding, GetAccountInfoParams, InstallArgs, MultiRpcResult, OverrideProvider,
-    RegexSubstitution,
+    GetAccountInfoEncoding, GetAccountInfoParams, InstallArgs, OverrideProvider, RegexSubstitution,
 };
 use solana_client::rpc_client::RpcClient as SolanaRpcClient;
 use solana_pubkey::Pubkey;
@@ -22,10 +21,10 @@ async fn should_get_slot() {
         .compare_client(
             |sol| sol.get_slot().expect("Failed to get slot"),
             |ic| async move {
-                match ic.get_slot(None, None).await {
-                    MultiRpcResult::Consistent(Ok(slot)) => slot,
-                    result => panic!("Failed to get slot, received: {:?}", result),
-                }
+                ic.get_slot(None, None)
+                    .await
+                    .expect_consistent()
+                    .unwrap_or_else(|e| panic!("`getSlot` call failed: {e}"))
             },
         )
         .await;
@@ -42,24 +41,21 @@ async fn should_get_slot() {
 async fn should_get_account_info() {
     let setup = Setup::new().await;
     let pubkey = Pubkey::from_str("11111111111111111111111111111111").unwrap();
+    let config = GetAccountInfoParams {
+        encoding: Some(GetAccountInfoEncoding::Base64),
+        ..GetAccountInfoParams::default()
+    };
 
     let (sol_res, ic_res) = setup
         .compare_client(
             |sol| sol.get_account(&pubkey).expect("Failed to get account"),
             |ic| async move {
-                match ic
-                    .get_account_info(
-                        pubkey,
-                        Some(GetAccountInfoParams {
-                            encoding: Some(GetAccountInfoEncoding::Base64),
-                            ..GetAccountInfoParams::default()
-                        }),
-                    )
+                ic.get_account_info(pubkey, Some(config))
                     .await
-                {
-                    MultiRpcResult::Consistent(Ok(account)) => account,
-                    result => panic!("Failed to get account, received: {:?}", result),
-                }
+                    .expect_consistent()
+                    .unwrap_or_else(|e| panic!("`getAccountInfo` call failed: {e}"))
+                    .decode()
+                    .expect("Failed to decode UiAccount")
             },
         )
         .await;

@@ -11,7 +11,6 @@ use ic_cdk::{
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{from_slice, from_value, to_vec, Value};
-use solana_account::Account;
 use solana_account_decoder_client_types::UiAccount;
 use solana_clock::Slot;
 use std::{fmt, fmt::Debug};
@@ -58,11 +57,10 @@ impl ResponseTransform {
 
         match self {
             Self::GetAccountInfo => {
-                canonicalize_response::<Value, Account>(body_bytes, |result| {
-                    from_value::<UiAccount>(result["value"].clone())
+                canonicalize_response::<Value, UiAccount>(body_bytes, |result| {
+                    let value = result["value"].clone();
+                    from_value::<UiAccount>(value)
                         .expect("BUG: Unable to deserialize account")
-                        .decode::<Account>()
-                        .expect("BUG: Unable to decode account")
                 });
             }
             Self::GetSlot(rounding_error) => {

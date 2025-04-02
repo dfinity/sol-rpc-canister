@@ -11,7 +11,7 @@ use sol_rpc_types::{
     GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources,
     SupportedRpcProvider, SupportedRpcProviderId,
 };
-use solana_account::Account;
+use solana_account_decoder_client_types::UiAccount;
 use solana_clock::Slot;
 use solana_pubkey::Pubkey;
 
@@ -123,11 +123,34 @@ impl<R: Runtime> SolRpcClient<R> {
     }
 
     /// Call `getAccountInfo` on the SOL RPC canister.
+    ///
+    /// This method returns a [`solana_account_decoder_client_types::UiAccount`] which contains
+    /// the whole response from the Solana `getAccountInfo` call. A [`solana_account::Account`]
+    /// instance may be obtained as follows:
+    /// ```rust
+    /// use candid::Principal;
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster};
+    /// use std::str::FromStr;
+    ///
+    /// let client = SolRpcClient::new_for_ic(
+    ///     Principal::from_text("tghme-zyaaa-aaaar-qarca-cai").unwrap(),
+    ///     RpcSources::Default(SolanaCluster::Mainnet)
+    /// );
+    ///
+    /// let pubkey = solana_pubkey::Pubkey::from_str("11111111111111111111111111111111");
+    ///
+    /// let account: solana_account::Account = client.get_account_info(pubkey.into(), None)
+    ///     .decode()
+    ///     .expect("Failed to decode UiAccount");
+    /// ```
+    /// Note, however that [`solana_account::Account`] does not include the `space` field from the
+    /// response and does not support all account data encoding formats.
     pub async fn get_account_info(
         &self,
         pubkey: Pubkey,
         params: Option<GetAccountInfoParams>,
-    ) -> sol_rpc_types::MultiRpcResult<Account> {
+    ) -> sol_rpc_types::MultiRpcResult<UiAccount> {
         self.runtime
             .update_call::<(
                 RpcSources,
@@ -147,7 +170,7 @@ impl<R: Runtime> SolRpcClient<R> {
             )
             .await
             .expect("Client error: failed to call `getAccountInfo`")
-            .map(Account::from)
+            .map(UiAccount::from)
     }
 
     /// Call `getSlot` on the SOL RPC canister.
