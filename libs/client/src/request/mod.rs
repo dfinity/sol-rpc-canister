@@ -77,6 +77,17 @@ pub struct RequestBuilder<Runtime, Config, Params, Output> {
     request: Request<Config, Params, Output>,
 }
 
+impl<Runtime, Config: Clone, Params: Clone, Output> Clone
+    for RequestBuilder<Runtime, Config, Params, Output>
+{
+    fn clone(&self) -> Self {
+        Self {
+            client: self.client.clone(),
+            request: self.request.clone(),
+        }
+    }
+}
+
 impl<Runtime, Config, Params, Output> RequestBuilder<Runtime, Config, Params, Output> {
     pub(super) fn new<RpcRequest>(
         client: SolRpcClient<Runtime>,
@@ -141,6 +152,19 @@ pub struct Request<Config, Params, Output> {
     pub(super) params: Params,
     pub(super) cycles: u128,
     pub(super) _marker: std::marker::PhantomData<Output>,
+}
+
+impl<Config: Clone, Params: Clone, Output> Clone for Request<Config, Params, Output> {
+    fn clone(&self) -> Self {
+        Self {
+            rpc_method: self.rpc_method.clone(),
+            rpc_sources: self.rpc_sources.clone(),
+            rpc_config: self.rpc_config.clone(),
+            params: self.params.clone(),
+            cycles: self.cycles,
+            _marker: *self._marker,
+        }
+    }
 }
 
 impl<Config, Params, Output> Request<Config, Params, Output> {
