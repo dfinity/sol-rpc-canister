@@ -144,18 +144,20 @@ mod get_provider_tests {
 
 mod get_slot_tests {
     use super::*;
+    use std::iter::zip;
 
     #[tokio::test]
     async fn should_get_slot_without_rounding() {
-        for sources in rpc_sources() {
-            let setup = Setup::new().await.with_mock_api_keys().await;
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
                 .mock_sequential_json_rpc_responses::<3>(
                     200,
                     json!({
-                        "id": 0,
+                        "id": first_id,
                         "jsonrpc": "2.0",
                         "result": 1234,
                     }),
@@ -168,14 +170,16 @@ mod get_slot_tests {
                 .expect_consistent();
 
             assert_eq!(results, Ok(1234));
-
-            setup.drop().await;
         }
+
+        setup.drop().await;
     }
 
     #[tokio::test]
     async fn should_get_consistent_result_with_rounding() {
-        for sources in rpc_sources() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
             let responses = [1234, 1229, 1237]
                 .iter()
                 .enumerate()
@@ -183,14 +187,13 @@ mod get_slot_tests {
                     MockOutcallBuilder::new(
                         200,
                         &json!({
-                            "id": id,
+                            "id": id + first_id as usize,
                             "jsonrpc": "2.0",
                             "result": slot,
                         }),
                     )
                 })
                 .collect();
-            let setup = Setup::new().await.with_mock_api_keys().await;
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
@@ -202,14 +205,16 @@ mod get_slot_tests {
                 .expect_consistent();
 
             assert_eq!(results, Ok(1220));
-
-            setup.drop().await;
         }
+
+        setup.drop().await;
     }
 
     #[tokio::test]
     async fn should_get_inconsistent_result_without_rounding() {
-        for sources in rpc_sources() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
             let responses = [1234, 1229, 1237]
                 .iter()
                 .enumerate()
@@ -217,14 +222,13 @@ mod get_slot_tests {
                     MockOutcallBuilder::new(
                         200,
                         &json!({
-                            "id": id,
+                            "id": id + first_id as usize,
                             "jsonrpc": "2.0",
                             "result": slot,
                         }),
                     )
                 })
                 .collect();
-            let setup = Setup::new().await.with_mock_api_keys().await;
             let client = setup.client().with_rpc_sources(sources);
 
             let results: Vec<RpcResult<_>> = client
@@ -240,9 +244,9 @@ mod get_slot_tests {
                 .collect();
 
             assert_eq!(results, vec![Ok(1234), Ok(1229), Ok(1237)]);
-
-            setup.drop().await;
         }
+
+        setup.drop().await;
     }
 }
 
