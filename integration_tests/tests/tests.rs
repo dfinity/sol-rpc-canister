@@ -144,7 +144,43 @@ mod get_provider_tests {
 
 mod get_slot_tests {
     use super::*;
+    use sol_rpc_types::{CommitmentLevel, GetSlotParams};
     use std::iter::zip;
+
+    #[tokio::test]
+    async fn should_get_slot_with_full_params() {
+        fn request_body(id: u8) -> serde_json::Value {
+            json!({ "jsonrpc": "2.0", "id": id, "method": "getSlot", "params": [{"commitment": "processed", "minContextSlot": 100}] })
+        }
+
+        fn response_body(id: u8) -> serde_json::Value {
+            json!({ "id": id, "jsonrpc": "2.0", "result": 1234, })
+        }
+
+        let setup = Setup::new().await.with_mock_api_keys().await;
+        let client = setup.client();
+
+        let slot = client
+            .mock_http_sequence(vec![
+                MockOutcallBuilder::new(200, response_body(0)).with_request_body(request_body(0)),
+                MockOutcallBuilder::new(200, response_body(1)).with_request_body(request_body(1)),
+                MockOutcallBuilder::new(200, response_body(2)).with_request_body(request_body(2)),
+            ])
+            .build()
+            .get_slot()
+            .with_params(GetSlotParams {
+                commitment: Some(CommitmentLevel::Processed),
+                min_context_slot: Some(100),
+            })
+            .with_rounding_error(10)
+            .send()
+            .await
+            .expect_consistent();
+
+        assert_eq!(slot, Ok(1230));
+
+        setup.drop().await;
+    }
 
     #[tokio::test]
     async fn should_get_slot_without_rounding() {
@@ -186,7 +222,7 @@ mod get_slot_tests {
                 .map(|(id, slot)| {
                     MockOutcallBuilder::new(
                         200,
-                        &json!({
+                        json!({
                             "id": id + first_id as usize,
                             "jsonrpc": "2.0",
                             "result": slot,
@@ -221,7 +257,7 @@ mod get_slot_tests {
                 .map(|(id, slot)| {
                     MockOutcallBuilder::new(
                         200,
-                        &json!({
+                        json!({
                             "id": id + first_id as usize,
                             "jsonrpc": "2.0",
                             "result": slot,
