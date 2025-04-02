@@ -147,16 +147,8 @@ mod get_slot_tests {
 
     #[tokio::test]
     async fn should_get_slot_without_rounding() {
-        for sources in [
-            // Use Mainnet providers that do not require API keys
-            RpcSources::Custom(vec![
-                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
-                RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
-                RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
-            ]),
-            RpcSources::Default(SolanaCluster::Devnet),
-        ] {
-            let setup = Setup::new().await;
+        for sources in rpc_sources() {
+            let setup = Setup::new().await.with_mock_api_keys().await;
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
@@ -183,15 +175,7 @@ mod get_slot_tests {
 
     #[tokio::test]
     async fn should_get_consistent_result_with_rounding() {
-        for sources in [
-            // Use Mainnet providers that do not require API keys
-            RpcSources::Custom(vec![
-                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
-                RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
-                RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
-            ]),
-            RpcSources::Default(SolanaCluster::Devnet),
-        ] {
+        for sources in rpc_sources() {
             let responses = [1234, 1229, 1237]
                 .iter()
                 .enumerate()
@@ -206,7 +190,7 @@ mod get_slot_tests {
                     )
                 })
                 .collect();
-            let setup = Setup::new().await;
+            let setup = Setup::new().await.with_mock_api_keys().await;
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
@@ -225,15 +209,7 @@ mod get_slot_tests {
 
     #[tokio::test]
     async fn should_get_inconsistent_result_without_rounding() {
-        for sources in [
-            // Use Mainnet providers that do not require API keys
-            RpcSources::Custom(vec![
-                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
-                RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
-                RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
-            ]),
-            RpcSources::Default(SolanaCluster::Devnet),
-        ] {
+        for sources in rpc_sources() {
             let responses = [1234, 1229, 1237]
                 .iter()
                 .enumerate()
@@ -248,7 +224,7 @@ mod get_slot_tests {
                     )
                 })
                 .collect();
-            let setup = Setup::new().await;
+            let setup = Setup::new().await.with_mock_api_keys().await;
             let client = setup.client().with_rpc_sources(sources);
 
             let results: Vec<RpcResult<_>> = client
@@ -498,4 +474,16 @@ mod canister_upgrade_tests {
 
 fn get_version_request() -> serde_json::Value {
     json!({"jsonrpc": "2.0", "id": 0, "method": "getVersion"})
+}
+
+fn rpc_sources() -> Vec<RpcSources> {
+    vec![
+        RpcSources::Default(SolanaCluster::Devnet),
+        RpcSources::Default(SolanaCluster::Mainnet),
+        RpcSources::Custom(vec![
+            RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
+            RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
+            RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
+        ]),
+    ]
 }
