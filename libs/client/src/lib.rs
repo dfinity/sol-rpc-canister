@@ -201,21 +201,6 @@ impl<R> SolRpcClient<R> {
         RequestBuilder::new(self.clone(), GetSlotRequest::from(params), 10_000_000_000)
     }
 
-    /// Call `getSlot` on the SOL RPC canister.
-    pub async fn get_slot_request_cost(
-        &self,
-        params: Option<GetSlotParams>,
-    ) -> sol_rpc_types::RpcResult<u128> {
-        self.runtime
-            .query_call(
-                self.sol_rpc_canister,
-                "getSlotRequestCost",
-                (self.rpc_sources.clone(), self.rpc_config.clone(), params),
-            )
-            .await
-            .expect("Client error: failed to call `getSlotRequestCost`")
-    }
-
     /// Call `request` on the SOL RPC canister.
     pub fn raw_request(
         &self,

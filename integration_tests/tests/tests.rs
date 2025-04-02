@@ -9,7 +9,8 @@ use sol_rpc_int_tests::{
 };
 use sol_rpc_types::{
     GetSlotParams, InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint,
-    RpcError, RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    RpcError, RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider,
+    SupportedRpcProviderId,
 };
 use std::str::FromStr;
 
@@ -503,28 +504,31 @@ fn get_version_request() -> serde_json::Value {
 #[tokio::test]
 async fn should_get_slot() {
     let setup = Setup::new().await;
-    let client = setup.client().mock_http_sequence(vec![
-        MockOutcallBuilder::new(
-            200,
-            json!({ "jsonrpc": "2.0", "result": 371059358, "id": 0 }),
-        ),
-        MockOutcallBuilder::new(
-            200,
-            json!({ "jsonrpc": "2.0", "result": 371059358, "id": 1 }),
-        ),
-        MockOutcallBuilder::new(
-            200,
-            json!({ "jsonrpc": "2.0", "result": 371059358, "id": 2 }),
-        ),
-    ]);
+    let client = setup
+        .client()
+        .mock_http_sequence(vec![
+            MockOutcallBuilder::new(
+                200,
+                json!({ "jsonrpc": "2.0", "result": 371059358, "id": 0 }),
+            ),
+            MockOutcallBuilder::new(
+                200,
+                json!({ "jsonrpc": "2.0", "result": 371059358, "id": 1 }),
+            ),
+            MockOutcallBuilder::new(
+                200,
+                json!({ "jsonrpc": "2.0", "result": 371059358, "id": 2 }),
+            ),
+        ])
+        .build();
 
-    let request = Some(GetSlotParams::default());
+    let request = client.get_slot(Some(GetSlotParams::default()));
 
-    let cycles_cost = client.get_slot_request_cost(request.clone()).await.unwrap();
+    let cycles_cost = request.clone().query_cycles_cost().await;
     assert_eq!(cycles_cost, 1_792_072_000);
 
     let cycles_before = setup.sol_rpc_canister_cycles_balance().await;
-    let slot = client.get_slot(request).await.expect_consistent().unwrap();
+    let slot = request.send().await.expect_consistent().unwrap();
     let cycles_after = setup.sol_rpc_canister_cycles_balance().await;
     let cycles_consumed = cycles_before + cycles_cost - cycles_after;
     assert_eq!(cycles_consumed, 841_119_743);

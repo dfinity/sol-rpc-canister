@@ -16,6 +16,11 @@ pub trait SolRpcRequest {
     /// The name of the endpoint on the SOL RPC canister.
     fn rpc_method(&self) -> &str;
 
+    /// Method to compute the exact cycles cost for the given request.
+    fn cycles_cost_method(&self) -> String {
+        format!("{}RequestCost", self.rpc_method())
+    }
+
     /// Return the request parameters.
     fn params(self) -> Self::Params;
 }
@@ -126,6 +131,11 @@ impl<R: Runtime, Config, Params, Output> RequestBuilder<R, Config, Params, Outpu
     {
         self.client.execute_request(self.request).await
     }
+
+    /// Query the cycles cost for that request
+    pub async fn query_cycles_cost(self) -> u128 {
+        todo!()
+    }
 }
 
 impl<Runtime, Params, Output> RequestBuilder<Runtime, GetSlotRpcConfig, Params, Output> {
@@ -162,7 +172,7 @@ impl<Config: Clone, Params: Clone, Output> Clone for Request<Config, Params, Out
             rpc_config: self.rpc_config.clone(),
             params: self.params.clone(),
             cycles: self.cycles,
-            _marker: *self._marker,
+            _marker: self._marker,
         }
     }
 }

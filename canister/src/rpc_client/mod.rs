@@ -229,7 +229,7 @@ impl SolRpcClient {
                 "getSlot",
                 vec![params],
                 self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
-                &Some(ResponseTransform::GetSlot),
+                &Some(ResponseTransform::GetSlot(self.rounding_error)),
             )
             .await,
         )
