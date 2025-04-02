@@ -20,13 +20,8 @@ pub trait SolRpcRequest {
     fn params(self) -> Self::Params;
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct GetSlotRequest(Option<GetSlotParams>);
-
-impl From<Option<GetSlotParams>> for GetSlotRequest {
-    fn from(value: Option<GetSlotParams>) -> Self {
-        GetSlotRequest(value)
-    }
-}
 
 impl SolRpcRequest for GetSlotRequest {
     type Config = GetSlotRpcConfig;
@@ -103,6 +98,12 @@ impl<Runtime, Config, Params, Output> RequestBuilder<Runtime, Config, Params, Ou
         *self.request.cycles_mut() = cycles;
         self
     }
+
+    /// Change the parameters to send for that request.
+    pub fn with_params(mut self, params: impl Into<Params>) -> Self {
+        *self.request.params_mut() = params.into();
+        self
+    }
 }
 
 impl<R: Runtime, Config, Params, Output> RequestBuilder<R, Config, Params, Output> {
@@ -154,5 +155,11 @@ impl<Config, Params, Output> Request<Config, Params, Output> {
     #[inline]
     pub fn rpc_config_mut(&mut self) -> &mut Option<Config> {
         &mut self.rpc_config
+    }
+
+    /// Get a mutable reference to the request parameters.
+    #[inline]
+    pub fn params_mut(&mut self) -> &mut Params {
+        &mut self.params
     }
 }

@@ -163,7 +163,7 @@ mod get_slot_tests {
                     }),
                 )
                 .build()
-                .get_slot(None)
+                .get_slot()
                 .with_rounding_error(0)
                 .send()
                 .await
@@ -199,7 +199,7 @@ mod get_slot_tests {
             let results = client
                 .mock_http_sequence(responses)
                 .build()
-                .get_slot(None)
+                .get_slot()
                 .send()
                 .await
                 .expect_consistent();
@@ -234,7 +234,7 @@ mod get_slot_tests {
             let results: Vec<RpcResult<_>> = client
                 .mock_http_sequence(responses)
                 .build()
-                .get_slot(None)
+                .get_slot()
                 .with_rounding_error(0)
                 .send()
                 .await
