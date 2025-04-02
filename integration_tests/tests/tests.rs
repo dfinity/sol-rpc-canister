@@ -199,7 +199,7 @@ mod get_slot_tests {
                 .map(|(id, slot)| {
                     MockOutcallBuilder::new(
                         200,
-                        &json!({
+                        json!({
                             "id": id,
                             "jsonrpc": "2.0",
                             "result": slot,
@@ -241,7 +241,7 @@ mod get_slot_tests {
                 .map(|(id, slot)| {
                     MockOutcallBuilder::new(
                         200,
-                        &json!({
+                        json!({
                             "id": id,
                             "jsonrpc": "2.0",
                             "result": slot,
@@ -503,7 +503,7 @@ fn get_version_request() -> serde_json::Value {
 
 #[tokio::test]
 async fn should_get_slot() {
-    let setup = Setup::new().await;
+    let setup = Setup::new().await.with_mock_api_keys().await;
     let client = setup
         .client()
         .mock_http_sequence(vec![
@@ -524,19 +524,33 @@ async fn should_get_slot() {
 
     let request = client.get_slot(Some(GetSlotParams::default()));
 
-    let cycles_cost = request.clone().query_cycles_cost().await;
-    assert_eq!(cycles_cost, 1_792_072_000);
+    let cycles_cost = request.clone().request_cost().send().await.unwrap();
+    assert_eq!(cycles_cost, 1_792_548_000);
 
     let cycles_before = setup.sol_rpc_canister_cycles_balance().await;
     let slot = request.send().await.expect_consistent().unwrap();
     let cycles_after = setup.sol_rpc_canister_cycles_balance().await;
     let cycles_consumed = cycles_before + cycles_cost - cycles_after;
-    assert_eq!(cycles_consumed, 841_119_743);
+    assert_eq!(cycles_consumed, 841_708_745);
 
-    assert_eq!(slot, 371059358);
+    assert_eq!(slot, 371059340);
     assert!(
         cycles_after > cycles_before,
         "BUG: not enough cycles requested. Requested {cycles_cost} cycles, but consumed {cycles_consumed} cycles"
     );
     setup.drop().await;
+}
+
+fn assert_within(actual: u128, expected: u128, percentage_error: u8) {
+    assert!(percentage_error <= 100);
+    let error_margin = expected.saturating_mul(percentage_error as u128) / 100;
+    let lower_bound = expected.saturating_sub(error_margin);
+    let upper_bound = expected.saturating_add(error_margin);
+    assert!(
+        lower_bound <= actual && actual <= upper_bound,
+        "Expected {} <= {} <= {}",
+        lower_bound,
+        actual,
+        upper_bound
+    );
 }

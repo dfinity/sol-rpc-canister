@@ -251,7 +251,7 @@ impl<R: Runtime> SolRpcClient<R> {
             .runtime
             .update_call(
                 self.config.sol_rpc_canister,
-                &request.rpc_method,
+                request.endpoint.rpc_method(),
                 (request.rpc_sources, request.rpc_config, request.params),
                 request.cycles,
             )
@@ -259,7 +259,32 @@ impl<R: Runtime> SolRpcClient<R> {
             .unwrap_or_else(|e| {
                 panic!(
                     "Client error: failed to call `{}`: {e:?}",
-                    request.rpc_method
+                    request.endpoint.rpc_method()
+                )
+            })
+    }
+
+    async fn execute_cycles_cost_request<Config, Params, Output>(
+        &self,
+        request: Request<Config, Params, Output>,
+    ) -> Output
+    where
+        Config: CandidType + Send,
+        Params: CandidType + Send,
+        Output: CandidType + DeserializeOwned,
+    {
+        self.config
+            .runtime
+            .query_call(
+                self.config.sol_rpc_canister,
+                request.endpoint.cycles_cost_method(),
+                (request.rpc_sources, request.rpc_config, request.params),
+            )
+            .await
+            .unwrap_or_else(|e| {
+                panic!(
+                    "Client error: failed to call `{}`: {e:?}",
+                    request.endpoint.cycles_cost_method()
                 )
             })
     }
