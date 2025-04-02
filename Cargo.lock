@@ -18,6 +18,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "512761e0bb2578dd7380c6baaa0f4ce03e84f95e960231d1dec8bf4d7d6e2627"
 
 [[package]]
+name = "agave-feature-set"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
+dependencies = [
+ "ahash",
+ "solana-epoch-schedule 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-hash",
+ "solana-pubkey",
+ "solana-sha256-hasher 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "ahash"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -237,12 +249,6 @@ checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
 name = "base64"
-version = "0.21.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
-
-[[package]]
-name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
@@ -345,12 +351,6 @@ name = "bit-vec"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e764a1d40d510daf35e07be9eb06e75770908c27d411ee6c92109c9840eaaf7"
-
-[[package]]
-name = "bitflags"
-version = "1.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitflags"
@@ -850,16 +850,6 @@ dependencies = [
 
 [[package]]
 name = "core-foundation"
-version = "0.9.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91e195e091a93c46f7102ec7818a2aa394e1e1771c3ab4825963fa03e45afb8f"
-dependencies = [
- "core-foundation-sys",
- "libc",
-]
-
-[[package]]
-name = "core-foundation"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b55271e5c8c478ad3f38ad24ef34923091e0548492a266d19b3c0b4d82574c63"
@@ -1245,15 +1235,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "34aa73646ffb006b8f5147f3dc182bd4bcb190227ce861fc4a4844bf8e3cb2c0"
 
 [[package]]
-name = "encoding_rs"
-version = "0.8.35"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75030f3c4f45dafd7586dd6780965a8c7e8e285a5ecb86713e63a79c5b2766f3"
-dependencies = [
- "cfg-if",
-]
-
-[[package]]
 name = "equivalent"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1368,9 +1349,9 @@ checksum = "0ce7134b9999ecaf8bcd65542e436736ef32ddca1b3e06094cb6ec5755203b80"
 
 [[package]]
 name = "flate2"
-version = "1.1.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11faaf5a5236997af9848be0bef4db95824b1d534ebc64d0f0c6cf3e67bd38dc"
+checksum = "7ced92e76e966ca2fd84c8f7aa01a4aea65b0eb6648d72f7c8f3e2764a67fece"
 dependencies = [
  "crc32fast",
  "miniz_oxide",
@@ -1583,25 +1564,6 @@ dependencies = [
 
 [[package]]
 name = "h2"
-version = "0.3.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81fe527a889e1532da5c525686d96d4c2e74cdd345badf8dfef9f6b39dd5f5e8"
-dependencies = [
- "bytes",
- "fnv",
- "futures-core",
- "futures-sink",
- "futures-util",
- "http 0.2.12",
- "indexmap",
- "slab",
- "tokio",
- "tokio-util",
- "tracing",
-]
-
-[[package]]
-name = "h2"
 version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5017294ff4bb30944501348f6f8e42e6ad28f42c8bbef7a74029aff064a4e3c2"
@@ -1725,17 +1687,6 @@ dependencies = [
 
 [[package]]
 name = "http-body"
-version = "0.4.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ceab25649e9960c0311ea418d17bee82c0dcec1bd053b5f9a66e265a693bed2"
-dependencies = [
- "bytes",
- "http 0.2.12",
- "pin-project-lite",
-]
-
-[[package]]
-name = "http-body"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1efedce1fb8e6913f23e0c92de8e62cd5b772a67e7b3946df930a62566c93184"
@@ -1753,7 +1704,7 @@ dependencies = [
  "bytes",
  "futures-core",
  "http 1.3.1",
- "http-body 1.0.1",
+ "http-body",
  "pin-project-lite",
 ]
 
@@ -1764,36 +1715,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6dbf3de79e51f3d586ab4cb9d5c3e2c14aa28ed23d180cf89b4df0454a69cc87"
 
 [[package]]
-name = "httpdate"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
-
-[[package]]
-name = "hyper"
-version = "0.14.32"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41dfc780fdec9373c01bae43289ea34c972e40ee3c9f6b3c8801a35f35586ce7"
-dependencies = [
- "bytes",
- "futures-channel",
- "futures-core",
- "futures-util",
- "h2 0.3.26",
- "http 0.2.12",
- "http-body 0.4.6",
- "httparse",
- "httpdate",
- "itoa",
- "pin-project-lite",
- "socket2",
- "tokio",
- "tower-service",
- "tracing",
- "want",
-]
-
-[[package]]
 name = "hyper"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1802,9 +1723,9 @@ dependencies = [
  "bytes",
  "futures-channel",
  "futures-util",
- "h2 0.4.8",
+ "h2",
  "http 1.3.1",
- "http-body 1.0.1",
+ "http-body",
  "httparse",
  "itoa",
  "pin-project-lite",
@@ -1815,27 +1736,13 @@ dependencies = [
 
 [[package]]
 name = "hyper-rustls"
-version = "0.24.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec3efd23720e2049821a693cbc7e65ea87c72f1c58ff2f9522ff332b1491e590"
-dependencies = [
- "futures-util",
- "http 0.2.12",
- "hyper 0.14.32",
- "rustls 0.21.12",
- "tokio",
- "tokio-rustls 0.24.1",
-]
-
-[[package]]
-name = "hyper-rustls"
 version = "0.27.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2d191583f3da1305256f22463b9bb0471acad48a4e534a5218b9963e9c1f59b2"
 dependencies = [
  "futures-util",
  "http 1.3.1",
- "hyper 1.6.0",
+ "hyper",
  "hyper-util",
  "rustls 0.23.25",
  "rustls-native-certs",
@@ -1856,8 +1763,8 @@ dependencies = [
  "futures-channel",
  "futures-util",
  "http 1.3.1",
- "http-body 1.0.1",
- "hyper 1.6.0",
+ "http-body",
+ "hyper",
  "libc",
  "pin-project-lite",
  "socket2",
@@ -2222,10 +2129,11 @@ checksum = "8eaf4bc02d17cbdd7ff4c7438cafcdf7fb9a4613313ad11b4f8fefe7d3fa0130"
 
 [[package]]
 name = "jobserver"
-version = "0.1.32"
+version = "0.1.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48d1dbcbbeb6a7fec7e059840aa538bd62aaccf972c7346c4d9d2059312853d0"
+checksum = "38f262f097c174adebe41eb73d66ae9c06b2844fb0da69969647bbddd9b0538a"
 dependencies = [
+ "getrandom 0.3.2",
  "libc",
 ]
 
@@ -2318,7 +2226,7 @@ version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c0ff37bd590ca25063e35af745c343cb7a0271906fb7b37e4813e8f79f00268d"
 dependencies = [
- "bitflags 2.9.0",
+ "bitflags",
  "libc",
 ]
 
@@ -2544,7 +2452,7 @@ version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71e2746dc3a24dd78b3cfcb7be93368c6de9963d30f43a6a73998a9cf4b17b46"
 dependencies = [
- "bitflags 2.9.0",
+ "bitflags",
  "cfg-if",
  "cfg_aliases",
  "libc",
@@ -2942,7 +2850,7 @@ dependencies = [
  "hex",
  "ic-certification",
  "ic-transport-types",
- "reqwest 0.12.15",
+ "reqwest",
  "schemars",
  "serde",
  "serde_bytes",
@@ -3033,7 +2941,7 @@ checksum = "14cae93065090804185d3b75f0bf93b8eeda30c7a9b4a33d3bdb3988d6229e50"
 dependencies = [
  "bit-set 0.8.0",
  "bit-vec 0.8.0",
- "bitflags 2.9.0",
+ "bitflags",
  "lazy_static",
  "num-traits",
  "rand 0.8.5",
@@ -3261,7 +3169,7 @@ version = "11.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c6df7ab838ed27997ba19a4664507e6f82b41fe6e20be42929332156e5e85146"
 dependencies = [
- "bitflags 2.9.0",
+ "bitflags",
 ]
 
 [[package]]
@@ -3290,7 +3198,7 @@ version = "0.5.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b8c0c260b63a8219631167be35e6a988e9554dbd323f8bd08439c8ed1302bd1"
 dependencies = [
- "bitflags 2.9.0",
+ "bitflags",
 ]
 
 [[package]]
@@ -3350,65 +3258,22 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
 name = "reqwest"
-version = "0.11.27"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd67538700a17451e7cba03ac727fb961abb7607553461627b97de0b89cf4a62"
-dependencies = [
- "async-compression",
- "base64 0.21.7",
- "bytes",
- "encoding_rs",
- "futures-core",
- "futures-util",
- "h2 0.3.26",
- "http 0.2.12",
- "http-body 0.4.6",
- "hyper 0.14.32",
- "hyper-rustls 0.24.2",
- "ipnet",
- "js-sys",
- "log",
- "mime",
- "mime_guess",
- "once_cell",
- "percent-encoding",
- "pin-project-lite",
- "rustls 0.21.12",
- "rustls-pemfile 1.0.4",
- "serde",
- "serde_json",
- "serde_urlencoded",
- "sync_wrapper 0.1.2",
- "system-configuration",
- "tokio",
- "tokio-rustls 0.24.1",
- "tokio-util",
- "tower-service",
- "url",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
- "webpki-roots 0.25.4",
- "winreg",
-]
-
-[[package]]
-name = "reqwest"
 version = "0.12.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d19c46a6fdd48bc4dab94b6103fccc55d34c67cc0ad04653aad4ea2a07cd7bbb"
 dependencies = [
+ "async-compression",
  "base64 0.22.1",
  "bytes",
  "futures-channel",
  "futures-core",
  "futures-util",
- "h2 0.4.8",
+ "h2",
  "http 1.3.1",
- "http-body 1.0.1",
+ "http-body",
  "http-body-util",
- "hyper 1.6.0",
- "hyper-rustls 0.27.5",
+ "hyper",
+ "hyper-rustls",
  "hyper-util",
  "ipnet",
  "js-sys",
@@ -3421,12 +3286,12 @@ dependencies = [
  "quinn",
  "rustls 0.23.25",
  "rustls-native-certs",
- "rustls-pemfile 2.2.0",
+ "rustls-pemfile",
  "rustls-pki-types",
  "serde",
  "serde_json",
  "serde_urlencoded",
- "sync_wrapper 1.0.2",
+ "sync_wrapper",
  "tokio",
  "tokio-rustls 0.26.2",
  "tokio-socks",
@@ -3444,17 +3309,17 @@ dependencies = [
 
 [[package]]
 name = "reqwest-middleware"
-version = "0.2.5"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a735987236a8e238bf0296c7e351b999c188ccc11477f311b82b55c93984216"
+checksum = "64e8975513bd9a7a43aad01030e79b3498e05db14e9d945df6483e8cf9b8c4c4"
 dependencies = [
  "anyhow",
  "async-trait",
- "http 0.2.12",
- "reqwest 0.11.27",
+ "http 1.3.1",
+ "reqwest",
  "serde",
- "task-local-extensions",
  "thiserror 1.0.69",
+ "tower-service",
 ]
 
 [[package]]
@@ -3503,11 +3368,11 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "1.0.3"
+version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e56a18552996ac8d29ecc3b190b4fdbb2d91ca4ec396de7bbffaf43f3d637e96"
+checksum = "d97817398dd4bb2e6da002002db259209759911da105da92bec29ccb12cf58bf"
 dependencies = [
- "bitflags 2.9.0",
+ "bitflags",
  "errno",
  "libc",
  "linux-raw-sys",
@@ -3554,15 +3419,6 @@ dependencies = [
 
 [[package]]
 name = "rustls-pemfile"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c74cae0a4cf6ccbbf5f359f08efdf8ee7e1dc532573bf0db71968cb56b1448c"
-dependencies = [
- "base64 0.21.7",
-]
-
-[[package]]
-name = "rustls-pemfile"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dce314e5fee3f39953d46bb63bb8a46d40c2f8fb7cc5a3b6cab2bde9721d6e50"
@@ -3585,7 +3441,7 @@ version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a5467026f437b4cb2a533865eaa73eb840019a0916f4b9ec563c6e617e086c9"
 dependencies = [
- "core-foundation 0.10.0",
+ "core-foundation",
  "core-foundation-sys",
  "jni",
  "log",
@@ -3715,8 +3571,8 @@ version = "3.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "271720403f46ca04f7ba6f55d438f8bd878d6b8ca0a1046e8228c4145bcbb316"
 dependencies = [
- "bitflags 2.9.0",
- "core-foundation 0.10.0",
+ "bitflags",
+ "core-foundation",
  "core-foundation-sys",
  "libc",
  "security-framework-sys",
@@ -4083,25 +3939,25 @@ dependencies = [
 
 [[package]]
 name = "solana-account"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "bincode",
  "serde",
  "serde_bytes",
  "serde_derive",
- "solana-account-info",
+ "solana-account-info 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-clock",
  "solana-instruction",
  "solana-pubkey",
- "solana-sdk-ids",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-sysvar",
 ]
 
 [[package]]
 name = "solana-account-decoder-client-types"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "base64 0.22.1",
  "bs58",
@@ -4115,20 +3971,31 @@ dependencies = [
 
 [[package]]
 name = "solana-account-info"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0c17d606a298a205fae325489fbed88ee6dc4463c111672172327e741c8905d"
+dependencies = [
+ "solana-program-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-program-memory 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-pubkey",
+]
+
+[[package]]
+name = "solana-account-info"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "bincode",
  "serde",
- "solana-program-error",
- "solana-program-memory",
+ "solana-program-error 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-program-memory 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-pubkey",
 ]
 
 [[package]]
 name = "solana-address-lookup-table-interface"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.2"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "bincode",
  "bytemuck",
@@ -4137,32 +4004,32 @@ dependencies = [
  "solana-clock",
  "solana-instruction",
  "solana-pubkey",
- "solana-sdk-ids",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-slot-hashes",
 ]
 
 [[package]]
 name = "solana-atomic-u64"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "parking_lot",
 ]
 
 [[package]]
 name = "solana-big-mod-exp"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "num-bigint 0.4.6",
  "num-traits",
- "solana-define-syscall",
+ "solana-define-syscall 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-bincode"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "bincode",
  "serde",
@@ -4171,19 +4038,19 @@ dependencies = [
 
 [[package]]
 name = "solana-blake3-hasher"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "blake3",
- "solana-define-syscall",
+ "solana-define-syscall 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-hash",
- "solana-sanitize",
+ "solana-sanitize 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-borsh"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "borsh 0.10.4",
  "borsh 1.5.7",
@@ -4191,8 +4058,8 @@ dependencies = [
 
 [[package]]
 name = "solana-client"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "async-trait",
  "bincode",
@@ -4228,7 +4095,7 @@ dependencies = [
  "solana-time-utils",
  "solana-tpu-client",
  "solana-transaction",
- "solana-transaction-error",
+ "solana-transaction-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-udp-client",
  "thiserror 2.0.12",
  "tokio",
@@ -4236,8 +4103,9 @@ dependencies = [
 
 [[package]]
 name = "solana-client-traits"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83f0071874e629f29e0eb3dab8a863e98502ac7aba55b7e0df1803fc5cac72a7"
 dependencies = [
  "solana-account",
  "solana-commitment-config",
@@ -4251,33 +4119,35 @@ dependencies = [
  "solana-signer",
  "solana-system-interface",
  "solana-transaction",
- "solana-transaction-error",
+ "solana-transaction-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "solana-clock"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "serde",
  "serde_derive",
- "solana-sdk-ids",
- "solana-sdk-macro",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sdk-macro 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-sysvar-id",
 ]
 
 [[package]]
 name = "solana-cluster-type"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ace9fea2daa28354d107ea879cff107181d85cd4e0f78a2bedb10e1a428c97e"
 dependencies = [
  "solana-hash",
 ]
 
 [[package]]
 name = "solana-commitment-config"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac49c4dde3edfa832de1697e9bcdb7c3b3f7cb7a1981b7c62526c8bb6700fb73"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4285,8 +4155,8 @@ dependencies = [
 
 [[package]]
 name = "solana-connection-cache"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "async-trait",
  "bincode",
@@ -4301,30 +4171,36 @@ dependencies = [
  "solana-metrics",
  "solana-net-utils",
  "solana-time-utils",
- "solana-transaction-error",
+ "solana-transaction-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror 2.0.12",
  "tokio",
 ]
 
 [[package]]
 name = "solana-cpi"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8dc71126edddc2ba014622fc32d0f5e2e78ec6c5a1e0eb511b85618c09e9ea11"
 dependencies = [
- "solana-account-info",
- "solana-define-syscall",
+ "solana-account-info 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-define-syscall 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-instruction",
- "solana-program-error",
+ "solana-program-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-pubkey",
- "solana-stable-layout",
+ "solana-stable-layout 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
-name = "solana-decode-error"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+name = "solana-cpi"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
- "num-traits",
+ "solana-account-info 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-define-syscall 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-instruction",
+ "solana-program-error 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-pubkey",
+ "solana-stable-layout 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
 ]
 
 [[package]]
@@ -4337,14 +4213,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "solana-decode-error"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "solana-define-syscall"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf784bb2cb3e02cac9801813c30187344228d2ae952534902108f6150573a33d"
+
+[[package]]
+name = "solana-define-syscall"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 
 [[package]]
 name = "solana-epoch-info"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "90ef6f0b449290b0b9f32973eefd95af35b01c5c0c34c569f936c34c5b20d77b"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4352,33 +4243,44 @@ dependencies = [
 
 [[package]]
 name = "solana-epoch-rewards"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "serde",
  "serde_derive",
  "solana-hash",
- "solana-sdk-ids",
- "solana-sdk-macro",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sdk-macro 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-sysvar-id",
 ]
 
 [[package]]
 name = "solana-epoch-schedule"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3fce071fbddecc55d727b1d7ed16a629afe4f6e4c217bc8d00af3b785f6f67ed"
 dependencies = [
  "serde",
  "serde_derive",
- "solana-sdk-ids",
- "solana-sdk-macro",
+ "solana-sdk-macro 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "solana-epoch-schedule"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
+dependencies = [
+ "serde",
+ "serde_derive",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sdk-macro 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-sysvar-id",
 ]
 
 [[package]]
 name = "solana-example-mocks"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4390,46 +4292,56 @@ dependencies = [
  "solana-message",
  "solana-nonce",
  "solana-pubkey",
- "solana-sdk-ids",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-system-interface",
  "thiserror 2.0.12",
 ]
 
 [[package]]
 name = "solana-feature-gate-interface"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f9c7fbf3e58b64a667c5f35e90af580538a95daea7001ff7806c0662d301bdf"
+dependencies = [
+ "serde",
+ "serde_derive",
+ "solana-pubkey",
+ "solana-sdk-ids 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "solana-feature-gate-interface"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "bincode",
  "serde",
  "serde_derive",
  "solana-account",
- "solana-account-info",
+ "solana-account-info 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-instruction",
- "solana-program-error",
+ "solana-program-error 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-pubkey",
- "solana-rent",
- "solana-sdk-ids",
+ "solana-rent 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-system-interface",
 ]
 
 [[package]]
-name = "solana-feature-set"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+name = "solana-fee-calculator"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d89bc408da0fb3812bc3008189d148b4d3e08252c79ad810b245482a3f70cd8d"
 dependencies = [
- "ahash",
- "lazy_static",
- "solana-epoch-schedule",
- "solana-hash",
- "solana-pubkey",
- "solana-sha256-hasher",
+ "log",
+ "serde",
+ "serde_derive",
 ]
 
 [[package]]
 name = "solana-fee-calculator"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "log",
  "serde",
@@ -4438,28 +4350,31 @@ dependencies = [
 
 [[package]]
 name = "solana-hash"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "borsh 1.5.7",
  "bs58",
  "bytemuck",
  "bytemuck_derive",
+ "js-sys",
  "serde",
  "serde_derive",
  "solana-atomic-u64",
- "solana-sanitize",
+ "solana-sanitize 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "wasm-bindgen",
 ]
 
 [[package]]
 name = "solana-inflation"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23eef6a09eb8e568ce6839573e4966850e85e9ce71e6ae1a6c930c1c43947de3"
 
 [[package]]
 name = "solana-inline-spl"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "bytemuck",
  "solana-pubkey",
@@ -4467,49 +4382,49 @@ dependencies = [
 
 [[package]]
 name = "solana-instruction"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "bincode",
  "borsh 1.5.7",
  "num-traits",
  "serde",
  "serde_derive",
- "solana-define-syscall",
+ "solana-define-syscall 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-pubkey",
 ]
 
 [[package]]
 name = "solana-instructions-sysvar"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
- "bitflags 2.9.0",
- "solana-account-info",
+ "bitflags",
+ "solana-account-info 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-instruction",
- "solana-program-error",
+ "solana-program-error 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-pubkey",
- "solana-sanitize",
- "solana-sdk-ids",
+ "solana-sanitize 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-serialize-utils",
  "solana-sysvar-id",
 ]
 
 [[package]]
 name = "solana-keccak-hasher"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "sha3",
- "solana-define-syscall",
+ "solana-define-syscall 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-hash",
- "solana-sanitize",
+ "solana-sanitize 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-keypair"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "bs58",
  "ed25519-dalek 1.0.1",
@@ -4522,66 +4437,66 @@ dependencies = [
 
 [[package]]
 name = "solana-last-restart-slot"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "serde",
  "serde_derive",
- "solana-sdk-ids",
- "solana-sdk-macro",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sdk-macro 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-sysvar-id",
 ]
 
 [[package]]
 name = "solana-loader-v2-interface"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "serde",
  "serde_bytes",
  "serde_derive",
  "solana-instruction",
  "solana-pubkey",
- "solana-sdk-ids",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-loader-v3-interface"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "3.0.0"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "serde",
  "serde_bytes",
  "serde_derive",
  "solana-instruction",
  "solana-pubkey",
- "solana-sdk-ids",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-system-interface",
 ]
 
 [[package]]
 name = "solana-loader-v4-interface"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "serde",
  "serde_bytes",
  "serde_derive",
  "solana-instruction",
  "solana-pubkey",
- "solana-sdk-ids",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-system-interface",
 ]
 
 [[package]]
 name = "solana-measure"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 
 [[package]]
 name = "solana-message"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "bincode",
  "blake3",
@@ -4592,52 +4507,60 @@ dependencies = [
  "solana-hash",
  "solana-instruction",
  "solana-pubkey",
- "solana-sanitize",
- "solana-sdk-ids",
- "solana-short-vec",
+ "solana-sanitize 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-short-vec 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-system-interface",
- "solana-transaction-error",
+ "solana-transaction-error 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-metrics"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "crossbeam-channel",
  "gethostname",
  "lazy_static",
  "log",
- "reqwest 0.11.27",
+ "reqwest",
  "solana-clock",
  "solana-cluster-type",
- "solana-sha256-hasher",
+ "solana-sha256-hasher 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-time-utils",
  "thiserror 2.0.12",
 ]
 
 [[package]]
 name = "solana-msg"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f36a1a14399afaabc2781a1db09cb14ee4cc4ee5c7a5a3cfcc601811379a8092"
 dependencies = [
- "solana-define-syscall",
+ "solana-define-syscall 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "solana-msg"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
+dependencies = [
+ "solana-define-syscall 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-native-token"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 
 [[package]]
 name = "solana-net-utils"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "anyhow",
  "bincode",
  "bytes",
- "crossbeam-channel",
  "itertools 0.12.1",
  "log",
  "nix",
@@ -4652,24 +4575,25 @@ dependencies = [
 
 [[package]]
 name = "solana-nonce"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "serde",
  "serde_derive",
- "solana-fee-calculator",
+ "solana-fee-calculator 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-hash",
  "solana-pubkey",
- "solana-sha256-hasher",
+ "solana-sha256-hasher 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-packet"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "004f2d2daf407b3ec1a1ca5ec34b3ccdfd6866dd2d3c7d0715004a96e4b6d127"
 dependencies = [
  "bincode",
- "bitflags 2.9.0",
+ "bitflags",
  "cfg_eval",
  "serde",
  "serde_derive",
@@ -4678,8 +4602,8 @@ dependencies = [
 
 [[package]]
 name = "solana-perf"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "ahash",
  "bincode",
@@ -4701,16 +4625,16 @@ dependencies = [
  "solana-packet",
  "solana-pubkey",
  "solana-rayon-threadlimit",
- "solana-sdk-ids",
- "solana-short-vec",
+ "solana-sdk-ids 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-short-vec 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-signature",
  "solana-time-utils",
 ]
 
 [[package]]
 name = "solana-program"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "bincode",
  "blake3",
@@ -4731,7 +4655,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_derive",
- "solana-account-info",
+ "solana-account-info 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-address-lookup-table-interface",
  "solana-atomic-u64",
  "solana-big-mod-exp",
@@ -4739,14 +4663,14 @@ dependencies = [
  "solana-blake3-hasher",
  "solana-borsh",
  "solana-clock",
- "solana-cpi",
- "solana-decode-error 2.2.0",
- "solana-define-syscall",
+ "solana-cpi 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-decode-error 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-define-syscall 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-epoch-rewards",
- "solana-epoch-schedule",
+ "solana-epoch-schedule 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-example-mocks",
- "solana-feature-gate-interface",
- "solana-fee-calculator",
+ "solana-feature-gate-interface 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-fee-calculator 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-hash",
  "solana-instruction",
  "solana-instructions-sysvar",
@@ -4756,86 +4680,111 @@ dependencies = [
  "solana-loader-v3-interface",
  "solana-loader-v4-interface",
  "solana-message",
- "solana-msg",
+ "solana-msg 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-native-token",
  "solana-nonce",
  "solana-program-entrypoint",
- "solana-program-error",
- "solana-program-memory",
+ "solana-program-error 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-program-memory 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-program-option",
  "solana-program-pack",
  "solana-pubkey",
- "solana-rent",
- "solana-sanitize",
- "solana-sdk-ids",
- "solana-sdk-macro",
+ "solana-rent 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sanitize 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sdk-macro 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-secp256k1-recover",
- "solana-serde-varint",
+ "solana-serde-varint 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-serialize-utils",
- "solana-sha256-hasher",
- "solana-short-vec",
+ "solana-sha256-hasher 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-short-vec 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-slot-hashes",
  "solana-slot-history",
- "solana-stable-layout",
+ "solana-stable-layout 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-stake-interface",
  "solana-system-interface",
  "solana-sysvar",
  "solana-sysvar-id",
  "solana-vote-interface",
  "thiserror 2.0.12",
+ "wasm-bindgen",
 ]
 
 [[package]]
 name = "solana-program-entrypoint"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
- "solana-account-info",
- "solana-msg",
- "solana-program-error",
+ "solana-account-info 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-msg 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-program-error 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-pubkey",
 ]
 
 [[package]]
 name = "solana-program-error"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8ae2c1a8d0d4ae865882d5770a7ebca92bab9c685e43f0461682c6c05a35bfa"
+dependencies = [
+ "borsh 1.5.7",
+ "num-traits",
+ "solana-decode-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-instruction",
+ "solana-msg 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-pubkey",
+]
+
+[[package]]
+name = "solana-program-error"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "borsh 1.5.7",
  "num-traits",
  "serde",
  "serde_derive",
- "solana-decode-error 2.2.0",
+ "solana-decode-error 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-instruction",
- "solana-msg",
+ "solana-msg 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-pubkey",
 ]
 
 [[package]]
 name = "solana-program-memory"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b0268f6c89825fb634a34bd0c3b8fdaeaecfc3728be1d622a8ee6dd577b60d4"
 dependencies = [
  "num-traits",
- "solana-define-syscall",
+ "solana-define-syscall 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "solana-program-memory"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
+dependencies = [
+ "solana-define-syscall 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-program-option"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 
 [[package]]
 name = "solana-program-pack"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
- "solana-program-error",
+ "solana-program-error 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-pubkey"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "borsh 0.10.4",
  "borsh 1.5.7",
@@ -4848,21 +4797,21 @@ dependencies = [
  "serde",
  "serde_derive",
  "solana-atomic-u64",
- "solana-decode-error 2.2.0",
- "solana-define-syscall",
- "solana-sanitize",
- "solana-sha256-hasher",
+ "solana-decode-error 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-define-syscall 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sanitize 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sha256-hasher 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-pubsub-client"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "crossbeam-channel",
  "futures-util",
+ "http 0.2.12",
  "log",
- "reqwest 0.11.27",
  "semver",
  "serde",
  "serde_derive",
@@ -4882,8 +4831,8 @@ dependencies = [
 
 [[package]]
 name = "solana-quic-client"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "async-lock",
  "async-trait",
@@ -4905,23 +4854,24 @@ dependencies = [
  "solana-signer",
  "solana-streamer",
  "solana-tls-utils",
- "solana-transaction-error",
+ "solana-transaction-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror 2.0.12",
  "tokio",
 ]
 
 [[package]]
 name = "solana-quic-definitions"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e606feac5110eb5d8afaa43ccaeea3ec49ccec36773387930b5ba545e745aea2"
 dependencies = [
  "solana-keypair",
 ]
 
 [[package]]
 name = "solana-rayon-threadlimit"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "lazy_static",
  "num_cpus",
@@ -4929,20 +4879,30 @@ dependencies = [
 
 [[package]]
 name = "solana-rent"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d1aea8fdea9de98ca6e8c2da5827707fb3842833521b528a713810ca685d2480"
+dependencies = [
+ "solana-sdk-macro 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "solana-rent"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "serde",
  "serde_derive",
- "solana-sdk-ids",
- "solana-sdk-macro",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sdk-macro 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-sysvar-id",
 ]
 
 [[package]]
 name = "solana-reward-info"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "18205b69139b1ae0ab8f6e11cdcb627328c0814422ad2482000fa2ca54ae4a2f"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4950,16 +4910,17 @@ dependencies = [
 
 [[package]]
 name = "solana-rpc-client"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
  "bincode",
  "bs58",
+ "futures",
  "indicatif",
  "log",
- "reqwest 0.11.27",
+ "reqwest",
  "reqwest-middleware",
  "semver",
  "serde",
@@ -4970,8 +4931,8 @@ dependencies = [
  "solana-clock",
  "solana-commitment-config",
  "solana-epoch-info",
- "solana-epoch-schedule",
- "solana-feature-gate-interface",
+ "solana-epoch-schedule 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-feature-gate-interface 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-hash",
  "solana-instruction",
  "solana-message",
@@ -4979,7 +4940,7 @@ dependencies = [
  "solana-rpc-client-api",
  "solana-signature",
  "solana-transaction",
- "solana-transaction-error",
+ "solana-transaction-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-transaction-status-client-types",
  "solana-version",
  "tokio",
@@ -4987,38 +4948,29 @@ dependencies = [
 
 [[package]]
 name = "solana-rpc-client-api"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "anyhow",
- "base64 0.22.1",
- "bs58",
  "jsonrpc-core",
- "reqwest 0.11.27",
+ "reqwest",
  "reqwest-middleware",
- "semver",
  "serde",
  "serde_derive",
  "serde_json",
- "solana-account",
  "solana-account-decoder-client-types",
  "solana-clock",
- "solana-commitment-config",
- "solana-fee-calculator",
- "solana-inflation",
- "solana-inline-spl",
- "solana-pubkey",
+ "solana-rpc-client-types",
  "solana-signer",
- "solana-transaction-error",
+ "solana-transaction-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-transaction-status-client-types",
- "solana-version",
  "thiserror 2.0.12",
 ]
 
 [[package]]
 name = "solana-rpc-client-nonce-utils"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "solana-account",
  "solana-commitment-config",
@@ -5027,27 +4979,79 @@ dependencies = [
  "solana-nonce",
  "solana-pubkey",
  "solana-rpc-client",
- "solana-sdk-ids",
+ "solana-sdk-ids 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror 2.0.12",
+]
+
+[[package]]
+name = "solana-rpc-client-types"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
+dependencies = [
+ "base64 0.22.1",
+ "bs58",
+ "semver",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "solana-account",
+ "solana-account-decoder-client-types",
+ "solana-clock",
+ "solana-commitment-config",
+ "solana-fee-calculator 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-inflation",
+ "solana-inline-spl",
+ "solana-pubkey",
+ "solana-transaction-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-transaction-status-client-types",
+ "solana-version",
  "thiserror 2.0.12",
 ]
 
 [[package]]
 name = "solana-sanitize"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "61f1bc1357b8188d9c4a3af3fc55276e56987265eb7ad073ae6f8180ee54cecf"
+
+[[package]]
+name = "solana-sanitize"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 
 [[package]]
 name = "solana-sdk-ids"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c5d8b9cc68d5c88b062a33e23a6466722467dde0035152d8fb1afbcdf350a5f"
+dependencies = [
+ "solana-pubkey",
+]
+
+[[package]]
+name = "solana-sdk-ids"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "solana-pubkey",
 ]
 
 [[package]]
 name = "solana-sdk-macro"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86280da8b99d03560f6ab5aca9de2e38805681df34e0bb8f238e69b29433b9df"
+dependencies = [
+ "bs58",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.100",
+]
+
+[[package]]
+name = "solana-sdk-macro"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "bs58",
  "proc-macro2",
@@ -5057,18 +5061,18 @@ dependencies = [
 
 [[package]]
 name = "solana-secp256k1-recover"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "libsecp256k1",
- "solana-define-syscall",
+ "solana-define-syscall 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "thiserror 2.0.12",
 ]
 
 [[package]]
 name = "solana-seed-phrase"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "hmac",
  "pbkdf2",
@@ -5077,108 +5081,169 @@ dependencies = [
 
 [[package]]
 name = "solana-serde"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1931484a408af466e14171556a47adaa215953c7f48b24e5f6b0282763818b04"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "solana-serde-varint"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bcc07d00200d82e6def2f7f7a45738e3406b17fe54a18adcf0defa16a97ccadb"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "solana-serde-varint"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "solana-serialize-utils"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "solana-instruction",
  "solana-pubkey",
- "solana-sanitize",
+ "solana-sanitize 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-sha256-hasher"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0037386961c0d633421f53560ad7c80675c0447cba4d1bb66d60974dd486c7ea"
 dependencies = [
  "sha2 0.10.8",
- "solana-define-syscall",
+ "solana-define-syscall 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-hash",
+]
+
+[[package]]
+name = "solana-sha256-hasher"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
+dependencies = [
+ "sha2 0.10.8",
+ "solana-define-syscall 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-hash",
 ]
 
 [[package]]
 name = "solana-short-vec"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c54c66f19b9766a56fa0057d060de8378676cb64987533fa088861858fc5a69"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "solana-short-vec"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "solana-signature"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "bs58",
  "ed25519-dalek 1.0.1",
  "serde",
  "serde-big-array",
  "serde_derive",
- "solana-sanitize",
+ "solana-sanitize 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-signer"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "solana-pubkey",
  "solana-signature",
- "solana-transaction-error",
+ "solana-transaction-error 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-slot-hashes"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "serde",
  "serde_derive",
  "solana-hash",
- "solana-sdk-ids",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-sysvar-id",
 ]
 
 [[package]]
 name = "solana-slot-history"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "bv",
  "serde",
  "serde_derive",
- "solana-sdk-ids",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-sysvar-id",
 ]
 
 [[package]]
 name = "solana-stable-layout"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f14f7d02af8f2bc1b5efeeae71bc1c2b7f0f65cd75bcc7d8180f2c762a57f54"
 dependencies = [
  "solana-instruction",
  "solana-pubkey",
 ]
 
 [[package]]
+name = "solana-stable-layout"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
+dependencies = [
+ "solana-instruction",
+ "solana-pubkey",
+]
+
+[[package]]
+name = "solana-stake-interface"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5269e89fde216b4d7e1d1739cf5303f8398a1ff372a81232abbee80e554a838c"
+dependencies = [
+ "borsh 0.10.4",
+ "borsh 1.5.7",
+ "num-traits",
+ "serde",
+ "serde_derive",
+ "solana-clock",
+ "solana-cpi 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-decode-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-instruction",
+ "solana-program-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-pubkey",
+ "solana-system-interface",
+ "solana-sysvar-id",
+]
+
+[[package]]
 name = "solana-streamer"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "async-channel",
  "bytes",
@@ -5213,7 +5278,7 @@ dependencies = [
  "solana-signer",
  "solana-time-utils",
  "solana-tls-utils",
- "solana-transaction-error",
+ "solana-transaction-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-transaction-metrics-tracker",
  "thiserror 2.0.12",
  "tokio",
@@ -5229,15 +5294,15 @@ dependencies = [
  "num-traits",
  "serde",
  "serde_derive",
- "solana-decode-error 2.2.1",
+ "solana-decode-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-instruction",
  "solana-pubkey",
 ]
 
 [[package]]
 name = "solana-sysvar"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "base64 0.22.1",
  "bincode",
@@ -5246,42 +5311,43 @@ dependencies = [
  "lazy_static",
  "serde",
  "serde_derive",
- "solana-account-info",
+ "solana-account-info 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-clock",
- "solana-define-syscall",
+ "solana-define-syscall 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-epoch-rewards",
- "solana-epoch-schedule",
- "solana-fee-calculator",
+ "solana-epoch-schedule 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-fee-calculator 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-hash",
  "solana-instruction",
  "solana-instructions-sysvar",
  "solana-last-restart-slot",
  "solana-program-entrypoint",
- "solana-program-error",
- "solana-program-memory",
+ "solana-program-error 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-program-memory 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-pubkey",
- "solana-rent",
- "solana-sanitize",
- "solana-sdk-ids",
- "solana-sdk-macro",
+ "solana-rent 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sanitize 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sdk-macro 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-slot-hashes",
  "solana-slot-history",
+ "solana-stake-interface",
  "solana-sysvar-id",
 ]
 
 [[package]]
 name = "solana-sysvar-id"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "solana-pubkey",
- "solana-sdk-ids",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-thin-client"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "bincode",
  "log",
@@ -5303,18 +5369,19 @@ dependencies = [
  "solana-signer",
  "solana-system-interface",
  "solana-transaction",
- "solana-transaction-error",
+ "solana-transaction-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "solana-time-utils"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6af261afb0e8c39252a04d026e3ea9c405342b08c871a2ad8aa5448e068c784c"
 
 [[package]]
 name = "solana-tls-utils"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "rustls 0.23.25",
  "solana-keypair",
@@ -5325,8 +5392,8 @@ dependencies = [
 
 [[package]]
 name = "solana-tpu-client"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "async-trait",
  "bincode",
@@ -5351,15 +5418,15 @@ dependencies = [
  "solana-signature",
  "solana-signer",
  "solana-transaction",
- "solana-transaction-error",
+ "solana-transaction-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror 2.0.12",
  "tokio",
 ]
 
 [[package]]
 name = "solana-transaction"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.2"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "bincode",
  "serde",
@@ -5367,44 +5434,57 @@ dependencies = [
  "solana-bincode",
  "solana-hash",
  "solana-instruction",
- "solana-keypair",
  "solana-message",
  "solana-pubkey",
- "solana-sanitize",
- "solana-sdk-ids",
- "solana-short-vec",
+ "solana-sanitize 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-short-vec 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-signature",
  "solana-signer",
  "solana-system-interface",
- "solana-transaction-error",
+ "solana-transaction-error 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-transaction-context"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
+ "bincode",
+ "serde",
+ "serde_derive",
  "solana-account",
  "solana-instruction",
  "solana-pubkey",
- "solana-rent",
+ "solana-rent 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-signature",
 ]
 
 [[package]]
 name = "solana-transaction-error"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "222a9dc8fdb61c6088baab34fc3a8b8473a03a7a5fd404ed8dd502fa79b67cb1"
 dependencies = [
  "serde",
  "serde_derive",
  "solana-instruction",
- "solana-sanitize",
+ "solana-sanitize 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "solana-transaction-error"
+version = "2.2.1"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
+dependencies = [
+ "solana-instruction",
+ "solana-sanitize 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-transaction-metrics-tracker"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "base64 0.22.1",
  "bincode",
@@ -5413,14 +5493,14 @@ dependencies = [
  "rand 0.8.5",
  "solana-packet",
  "solana-perf",
- "solana-short-vec",
+ "solana-short-vec 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-signature",
 ]
 
 [[package]]
 name = "solana-transaction-status-client-types"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "base64 0.22.1",
  "bincode",
@@ -5435,42 +5515,42 @@ dependencies = [
  "solana-signature",
  "solana-transaction",
  "solana-transaction-context",
- "solana-transaction-error",
+ "solana-transaction-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror 2.0.12",
 ]
 
 [[package]]
 name = "solana-udp-client"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
  "async-trait",
  "solana-connection-cache",
  "solana-keypair",
  "solana-net-utils",
  "solana-streamer",
- "solana-transaction-error",
+ "solana-transaction-error 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror 2.0.12",
  "tokio",
 ]
 
 [[package]]
 name = "solana-version"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.3.0"
+source = "git+https://github.com/lpahlavi/agave.git?branch=lpahlavi%2Fforked-sdk-dependencies#d7436671975c10d3b464e34492754b5ef392e191"
 dependencies = [
+ "agave-feature-set",
  "semver",
  "serde",
  "serde_derive",
- "solana-feature-set",
- "solana-sanitize",
- "solana-serde-varint",
+ "solana-sanitize 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-serde-varint 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "solana-vote-interface"
-version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+version = "2.2.3"
+source = "git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag#ba27b9cfe648aa80a36fdc14381d41d64d16748e"
 dependencies = [
  "bincode",
  "num-derive",
@@ -5478,15 +5558,15 @@ dependencies = [
  "serde",
  "serde_derive",
  "solana-clock",
- "solana-decode-error 2.2.0",
+ "solana-decode-error 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-hash",
  "solana-instruction",
  "solana-pubkey",
- "solana-rent",
- "solana-sdk-ids",
- "solana-serde-varint",
+ "solana-rent 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-sdk-ids 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
+ "solana-serde-varint 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-serialize-utils",
- "solana-short-vec",
+ "solana-short-vec 2.2.1 (git+https://github.com/lpahlavi/solana-sdk.git?branch=lpahlavi%2Fadd-js-feature-flag)",
  "solana-system-interface",
 ]
 
@@ -5620,12 +5700,6 @@ dependencies = [
 
 [[package]]
 name = "sync_wrapper"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2047c6ded9c721764247e62cd3b03c09ffc529b2ba5b10ec482ae507a4a70160"
-
-[[package]]
-name = "sync_wrapper"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0bf256ce5efdfa370213c1dabab5935a12e49f2c58d15e9eac2870d3b4f27263"
@@ -5654,36 +5728,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.100",
-]
-
-[[package]]
-name = "system-configuration"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba3a3adc5c275d719af8cb4272ea1c4a6d668a777f37e115f6d11ddbc1c8e0e7"
-dependencies = [
- "bitflags 1.3.2",
- "core-foundation 0.9.4",
- "system-configuration-sys",
-]
-
-[[package]]
-name = "system-configuration-sys"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a75fb188eb626b924683e3b95e3a48e63551fcfb51949de2f06a9d91dbee93c9"
-dependencies = [
- "core-foundation-sys",
- "libc",
-]
-
-[[package]]
-name = "task-local-extensions"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba323866e5d033818e3240feeb9f7db2c4296674e4d9e16b97b7bf8f490434e8"
-dependencies = [
- "pin-utils",
 ]
 
 [[package]]
@@ -5969,7 +6013,7 @@ dependencies = [
  "futures-core",
  "futures-util",
  "pin-project-lite",
- "sync_wrapper 1.0.2",
+ "sync_wrapper",
  "tokio",
  "tower-layer",
  "tower-service",
@@ -5981,7 +6025,7 @@ version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "403fa3b783d4b626a8ad51d766ab03cb6d2dbfc46b1c5d4448395e6628dc9697"
 dependencies = [
- "bitflags 2.9.0",
+ "bitflags",
  "bytes",
  "http 1.3.1",
  "pin-project-lite",
@@ -6481,15 +6525,6 @@ dependencies = [
 
 [[package]]
 name = "windows-sys"
-version = "0.48.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "677d2418bec65e3338edb076e806bc1ec15693c5d0104683f2efe857f61056a9"
-dependencies = [
- "windows-targets 0.48.5",
-]
-
-[[package]]
-name = "windows-sys"
 version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "282be5f36a8ce781fad8c8ae18fa3f9beff57ec1b52cb3de0789201425d9a33d"
@@ -6519,21 +6554,6 @@ dependencies = [
  "windows_x86_64_gnu 0.42.2",
  "windows_x86_64_gnullvm 0.42.2",
  "windows_x86_64_msvc 0.42.2",
-]
-
-[[package]]
-name = "windows-targets"
-version = "0.48.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a2fa6e2155d7247be68c096456083145c183cbbbc2764150dda45a87197940c"
-dependencies = [
- "windows_aarch64_gnullvm 0.48.5",
- "windows_aarch64_msvc 0.48.5",
- "windows_i686_gnu 0.48.5",
- "windows_i686_msvc 0.48.5",
- "windows_x86_64_gnu 0.48.5",
- "windows_x86_64_gnullvm 0.48.5",
- "windows_x86_64_msvc 0.48.5",
 ]
 
 [[package]]
@@ -6576,12 +6596,6 @@ checksum = "597a5118570b68bc08d8d59125332c54f1ba9d9adeedeef5b99b02ba2b0698f8"
 
 [[package]]
 name = "windows_aarch64_gnullvm"
-version = "0.48.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b38e32f0abccf9987a4e3079dfb67dcd799fb61361e53e2882c3cbaf0d905d8"
-
-[[package]]
-name = "windows_aarch64_gnullvm"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32a4622180e7a0ec044bb555404c800bc9fd9ec262ec147edd5989ccd0c02cd3"
@@ -6600,12 +6614,6 @@ checksum = "e08e8864a60f06ef0d0ff4ba04124db8b0fb3be5776a5cd47641e942e58c4d43"
 
 [[package]]
 name = "windows_aarch64_msvc"
-version = "0.48.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc35310971f3b2dbbf3f0690a219f40e2d9afcf64f9ab7cc1be722937c26b4bc"
-
-[[package]]
-name = "windows_aarch64_msvc"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09ec2a7bb152e2252b53fa7803150007879548bc709c039df7627cabbd05d469"
@@ -6621,12 +6629,6 @@ name = "windows_i686_gnu"
 version = "0.42.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c61d927d8da41da96a81f029489353e68739737d3beca43145c8afec9a31a84f"
-
-[[package]]
-name = "windows_i686_gnu"
-version = "0.48.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a75915e7def60c94dcef72200b9a8e58e5091744960da64ec734a6c6e9b3743e"
 
 [[package]]
 name = "windows_i686_gnu"
@@ -6660,12 +6662,6 @@ checksum = "44d840b6ec649f480a41c8d80f9c65108b92d89345dd94027bfe06ac444d1060"
 
 [[package]]
 name = "windows_i686_msvc"
-version = "0.48.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f55c233f70c4b27f66c523580f78f1004e8b5a8b659e05a4eb49d4166cca406"
-
-[[package]]
-name = "windows_i686_msvc"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "240948bc05c5e7c6dabba28bf89d89ffce3e303022809e73deaefe4f6ec56c66"
@@ -6681,12 +6677,6 @@ name = "windows_x86_64_gnu"
 version = "0.42.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8de912b8b8feb55c064867cf047dda097f92d51efad5b491dfb98f6bbb70cb36"
-
-[[package]]
-name = "windows_x86_64_gnu"
-version = "0.48.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53d40abd2583d23e4718fddf1ebec84dbff8381c07cae67ff7768bbf19c6718e"
 
 [[package]]
 name = "windows_x86_64_gnu"
@@ -6708,12 +6698,6 @@ checksum = "26d41b46a36d453748aedef1486d5c7a85db22e56aff34643984ea85514e94a3"
 
 [[package]]
 name = "windows_x86_64_gnullvm"
-version = "0.48.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b7b52767868a23d5bab768e390dc5f5c55825b6d30b86c844ff2dc7414044cc"
-
-[[package]]
-name = "windows_x86_64_gnullvm"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24d5b23dc417412679681396f2b49f3de8c1473deb516bd34410872eff51ed0d"
@@ -6729,12 +6713,6 @@ name = "windows_x86_64_msvc"
 version = "0.42.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9aec5da331524158c6d1a4ac0ab1541149c0b9505fde06423b02f5ef0106b9f0"
-
-[[package]]
-name = "windows_x86_64_msvc"
-version = "0.48.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed94fce61571a4006852b7389a063ab983c02eb1bb37b47f8272ce92d06d9538"
 
 [[package]]
 name = "windows_x86_64_msvc"
@@ -6758,22 +6736,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "winreg"
-version = "0.50.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "524e57b2c537c0f9b1e69f1965311ec12182b4122e45035b1508cd24d2adadb1"
-dependencies = [
- "cfg-if",
- "windows-sys 0.48.0",
-]
-
-[[package]]
 name = "wit-bindgen-rt"
 version = "0.39.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6f42320e61fe2cfd34354ecb597f86f413484a798ba44a8ca1165c58d42da6c1"
 dependencies = [
- "bitflags 2.9.0",
+ "bitflags",
 ]
 
 [[package]]
