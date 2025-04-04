@@ -93,9 +93,9 @@ async fn get_slot(
     }
 }
 
-#[query(name = "getSlotRequestCost")]
-#[candid_method(query, rename = "getSlotRequestCost")]
-async fn get_slot_request_cost(
+#[query(name = "getSlotCyclesCost")]
+#[candid_method(query, rename = "getSlotCyclesCost")]
+async fn get_slot_cycles_cost(
     source: RpcSources,
     config: Option<GetSlotRpcConfig>,
     params: Option<GetSlotParams>,

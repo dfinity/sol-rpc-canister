@@ -36,8 +36,8 @@ impl SolRpcEndpoint {
 
     pub fn cycles_cost_method(&self) -> &'static str {
         match &self {
-            SolRpcEndpoint::GetSlot => "getSlotRequestCost",
-            SolRpcEndpoint::JsonRequest => "requestRequestCost",
+            SolRpcEndpoint::GetSlot => "getSlotCyclesCost",
+            SolRpcEndpoint::JsonRequest => "jsonRequestCyclesCost",
         }
     }
 }
