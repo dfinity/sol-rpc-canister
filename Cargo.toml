@@ -58,16 +58,16 @@ regex = "1.11.1"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_bytes = "0.11.17"
 serde_json = "1.0.140"
-solana-clock = "2.2.0"
-solana-client = "2.2.0"
-solana-hash = "2.2.0"
-solana-instruction = "2.2.0"
-solana-message = "2.2.0"
-solana-nonce = "2.2.0"
-solana-program = "2.2.0"
-solana-pubkey = "2.2.0"
-solana-signature = "2.2.0"
-solana-transaction = { version = "2.2.0", features = ["bincode"] }
+solana-clock = "2.2.1"
+solana-client = "2.3.0"
+solana-hash = "2.2.1"
+solana-instruction = "2.2.1"
+solana-message = "2.3.0"
+solana-nonce = "2.2.1"
+solana-program = "2.2.1"
+solana-pubkey = "2.2.1"
+solana-signature = "2.2.1"
+solana-transaction = { version = "2.2.1" }
 strum = { version = "0.27.0", features = ["derive"] }
 thiserror = "2.0.12"
 tokio = "1.44.1"
@@ -81,15 +81,19 @@ zeroize = { version = "1.8", features = ["zeroize_derive"] }
 #   when they are built for wasm32-unknown-unknown target. For this reason, we
 #   are using forked version of the relevant repositories.
 [patch.crates-io]
-solana-client = { git = "https://github.com/lpahlavi/agave.git" }
-solana-clock = { git = "https://github.com/lpahlavi/agave.git" }
-solana-hash = { git = "https://github.com/lpahlavi/agave.git" }
-solana-instruction = { git = "https://github.com/lpahlavi/agave.git" }
-solana-keypair = { git = "https://github.com/lpahlavi/agave.git" }
-solana-message = { git = "https://github.com/lpahlavi/agave.git" }
-solana-nonce = { git = "https://github.com/lpahlavi/agave.git" }
-solana-program = { git = "https://github.com/lpahlavi/agave.git" }
-solana-pubkey = { git = "https://github.com/lpahlavi/agave.git" }
-solana-signature = { git = "https://github.com/lpahlavi/agave.git" }
-solana-transaction = { git = "https://github.com/lpahlavi/agave.git" }
+solana-client = { git = "https://github.com/lpahlavi/agave.git", branch = "lpahlavi/forked-sdk-dependencies" }
+solana-account = { git = "https://github.com/lpahlavi/solana-sdk.git", branch = "lpahlavi/add-js-feature-flag" }
+solana-clock = { git = "https://github.com/lpahlavi/solana-sdk.git", branch = "lpahlavi/add-js-feature-flag" }
+solana-hash = { git = "https://github.com/lpahlavi/solana-sdk.git", branch = "lpahlavi/add-js-feature-flag" }
+solana-instruction = { git = "https://github.com/lpahlavi/solana-sdk.git", branch = "lpahlavi/add-js-feature-flag" }
+solana-keypair = { git = "https://github.com/lpahlavi/solana-sdk.git", branch = "lpahlavi/add-js-feature-flag" }
+solana-message = { git = "https://github.com/lpahlavi/solana-sdk.git", branch = "lpahlavi/add-js-feature-flag" }
+solana-nonce = { git = "https://github.com/lpahlavi/solana-sdk.git", branch = "lpahlavi/add-js-feature-flag" }
+solana-program = { git = "https://github.com/lpahlavi/solana-sdk.git", branch = "lpahlavi/add-js-feature-flag" }
+solana-pubkey = { git = "https://github.com/lpahlavi/solana-sdk.git", branch = "lpahlavi/add-js-feature-flag" }
+solana-signature = { git = "https://github.com/lpahlavi/solana-sdk.git", branch = "lpahlavi/add-js-feature-flag" }
+solana-signer = { git = "https://github.com/lpahlavi/solana-sdk.git", branch = "lpahlavi/add-js-feature-flag" }
+solana-sysvar = { git = "https://github.com/lpahlavi/solana-sdk.git", branch = "lpahlavi/add-js-feature-flag" }
+solana-sysvar-id = { git = "https://github.com/lpahlavi/solana-sdk.git", branch = "lpahlavi/add-js-feature-flag" }
+solana-transaction = { git = "https://github.com/lpahlavi/solana-sdk.git", branch = "lpahlavi/add-js-feature-flag" }
 solana-system-interface = { git = "https://github.com/lpahlavi/solana-program-system.git" }
