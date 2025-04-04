@@ -101,6 +101,39 @@ impl GetSlotRequest {
     }
 }
 
+pub type RawRequest = MultiRpcRequest<serde_json::Value, serde_json::Value>;
+
+impl RawRequest {
+    pub fn raw_request(
+        rpc_sources: RpcSources,
+        config: RpcConfig,
+        json_rpc_payload: String,
+    ) -> RpcResult<Self> {
+        let request: JsonRpcRequest<serde_json::Value> =
+            match serde_json::from_str(&json_rpc_payload) {
+                Ok(req) => req,
+                Err(e) => {
+                    return Err(RpcError::ValidationError(format!(
+                        "Invalid JSON RPC request: {e}"
+                    )))
+                }
+            };
+        let consensus_strategy = config.response_consensus.unwrap_or_default();
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let max_response_bytes = config
+            .response_size_estimate
+            .unwrap_or(1024 + HEADER_SIZE_LIMIT);
+
+        Ok(MultiRpcRequest::new(
+            providers,
+            request,
+            max_response_bytes,
+            ResponseTransform::Raw,
+            ReductionStrategy::from(consensus_strategy),
+        ))
+    }
+}
+
 impl<Params, Output> MultiRpcRequest<Params, Output> {
     pub async fn send_and_reduce(self) -> ReducedResult<Output>
     where
