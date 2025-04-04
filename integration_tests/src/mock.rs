@@ -3,6 +3,7 @@ use pocket_ic::common::rest::{
     CanisterHttpHeader, CanisterHttpMethod, CanisterHttpReject, CanisterHttpReply,
     CanisterHttpRequest, CanisterHttpResponse,
 };
+use serde_json::Value;
 use std::collections::BTreeSet;
 
 pub struct MockOutcallBody(pub Vec<u8>);
@@ -158,6 +159,12 @@ pub struct MockJsonRequestBody {
     pub params: Option<serde_json::Value>,
 }
 
+impl From<serde_json::Value> for MockJsonRequestBody {
+    fn from(value: Value) -> Self {
+        Self::from_value_unchecked(value)
+    }
+}
+
 impl MockJsonRequestBody {
     pub fn new(method: impl ToString) -> Self {
         Self {
@@ -175,6 +182,10 @@ impl MockJsonRequestBody {
     pub fn from_raw_request_unchecked(raw_request: &str) -> Self {
         let request: serde_json::Value =
             serde_json::from_str(raw_request).expect("BUG: failed to parse JSON request");
+        Self::from_value_unchecked(request)
+    }
+
+    pub fn from_value_unchecked(request: serde_json::Value) -> Self {
         Self {
             jsonrpc: request["jsonrpc"]
                 .as_str()

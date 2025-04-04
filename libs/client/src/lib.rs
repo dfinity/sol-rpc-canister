@@ -32,7 +32,7 @@
 //! use sol_rpc_client::SolRpcClient;
 //! let client = SolRpcClient::builder_for_ic().build();
 //!
-//! let slot = client.get_slot(None).with_cycles(42).send();
+//! let slot_fut = client.get_slot().with_cycles(42).send();
 //! ```
 
 #![forbid(unsafe_code)]
@@ -191,14 +191,13 @@ impl<R> SolRpcClient<R> {
     /// Call `getSlot` on the SOL RPC canister.
     pub fn get_slot(
         &self,
-        params: Option<GetSlotParams>,
     ) -> RequestBuilder<
         R,
         GetSlotRpcConfig,
         Option<GetSlotParams>,
         sol_rpc_types::MultiRpcResult<Slot>,
     > {
-        RequestBuilder::new(self.clone(), GetSlotRequest::from(params), 10_000_000_000)
+        RequestBuilder::new(self.clone(), GetSlotRequest::default(), 10_000_000_000)
     }
 
     /// Call `request` on the SOL RPC canister.

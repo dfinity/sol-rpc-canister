@@ -145,54 +145,78 @@ mod get_provider_tests {
 
 mod get_slot_tests {
     use super::*;
+    use sol_rpc_types::{CommitmentLevel, GetSlotParams};
+    use std::iter::zip;
+
+    #[tokio::test]
+    async fn should_get_slot_with_full_params() {
+        fn request_body(id: u8) -> serde_json::Value {
+            json!({ "jsonrpc": "2.0", "id": id, "method": "getSlot", "params": [{"commitment": "processed", "minContextSlot": 100}] })
+        }
+
+        fn response_body(id: u8) -> serde_json::Value {
+            json!({ "id": id, "jsonrpc": "2.0", "result": 1234, })
+        }
+
+        let setup = Setup::new().await.with_mock_api_keys().await;
+        let client = setup.client();
+
+        let slot = client
+            .mock_http_sequence(vec![
+                MockOutcallBuilder::new(200, response_body(0)).with_request_body(request_body(0)),
+                MockOutcallBuilder::new(200, response_body(1)).with_request_body(request_body(1)),
+                MockOutcallBuilder::new(200, response_body(2)).with_request_body(request_body(2)),
+            ])
+            .build()
+            .get_slot()
+            .with_params(GetSlotParams {
+                commitment: Some(CommitmentLevel::Processed),
+                min_context_slot: Some(100),
+            })
+            .with_rounding_error(10)
+            .send()
+            .await
+            .expect_consistent();
+
+        assert_eq!(slot, Ok(1230));
+
+        setup.drop().await;
+    }
 
     #[tokio::test]
     async fn should_get_slot_without_rounding() {
-        for sources in [
-            // Use Mainnet providers that do not require API keys
-            RpcSources::Custom(vec![
-                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
-                RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
-                RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
-            ]),
-            RpcSources::Default(SolanaCluster::Devnet),
-        ] {
-            let setup = Setup::new().await;
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
                 .mock_sequential_json_rpc_responses::<3>(
                     200,
                     json!({
-                        "id": 0,
+                        "id": first_id,
                         "jsonrpc": "2.0",
                         "result": 1234,
                     }),
                 )
                 .build()
-                .get_slot(None)
+                .get_slot()
                 .with_rounding_error(0)
                 .send()
                 .await
                 .expect_consistent();
 
             assert_eq!(results, Ok(1234));
-
-            setup.drop().await;
         }
+
+        setup.drop().await;
     }
 
     #[tokio::test]
     async fn should_get_consistent_result_with_rounding() {
-        for sources in [
-            // Use Mainnet providers that do not require API keys
-            RpcSources::Custom(vec![
-                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
-                RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
-                RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
-            ]),
-            RpcSources::Default(SolanaCluster::Devnet),
-        ] {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
             let responses = [1234, 1229, 1237]
                 .iter()
                 .enumerate()
@@ -200,41 +224,34 @@ mod get_slot_tests {
                     MockOutcallBuilder::new(
                         200,
                         json!({
-                            "id": id,
+                            "id": id + first_id as usize,
                             "jsonrpc": "2.0",
                             "result": slot,
                         }),
                     )
                 })
                 .collect();
-            let setup = Setup::new().await;
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
                 .mock_http_sequence(responses)
                 .build()
-                .get_slot(None)
+                .get_slot()
                 .send()
                 .await
                 .expect_consistent();
 
             assert_eq!(results, Ok(1220));
-
-            setup.drop().await;
         }
+
+        setup.drop().await;
     }
 
     #[tokio::test]
     async fn should_get_inconsistent_result_without_rounding() {
-        for sources in [
-            // Use Mainnet providers that do not require API keys
-            RpcSources::Custom(vec![
-                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
-                RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
-                RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
-            ]),
-            RpcSources::Default(SolanaCluster::Devnet),
-        ] {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
             let responses = [1234, 1229, 1237]
                 .iter()
                 .enumerate()
@@ -242,20 +259,19 @@ mod get_slot_tests {
                     MockOutcallBuilder::new(
                         200,
                         json!({
-                            "id": id,
+                            "id": id + first_id as usize,
                             "jsonrpc": "2.0",
                             "result": slot,
                         }),
                     )
                 })
                 .collect();
-            let setup = Setup::new().await;
             let client = setup.client().with_rpc_sources(sources);
 
             let results: Vec<RpcResult<_>> = client
                 .mock_http_sequence(responses)
                 .build()
-                .get_slot(None)
+                .get_slot()
                 .with_rounding_error(0)
                 .send()
                 .await
@@ -265,9 +281,9 @@ mod get_slot_tests {
                 .collect();
 
             assert_eq!(results, vec![Ok(1234), Ok(1229), Ok(1237)]);
-
-            setup.drop().await;
         }
+
+        setup.drop().await;
     }
 }
 
@@ -501,6 +517,18 @@ fn get_version_request() -> serde_json::Value {
     json!({"jsonrpc": "2.0", "id": 0, "method": "getVersion"})
 }
 
+fn rpc_sources() -> Vec<RpcSources> {
+    vec![
+        RpcSources::Default(SolanaCluster::Devnet),
+        RpcSources::Default(SolanaCluster::Mainnet),
+        RpcSources::Custom(vec![
+            RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
+            RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
+            RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
+        ]),
+    ]
+}
+
 #[tokio::test]
 async fn should_get_slot() {
     let setup = Setup::new().await.with_mock_api_keys().await;
@@ -522,7 +550,7 @@ async fn should_get_slot() {
         ])
         .build();
 
-    let request = client.get_slot(Some(GetSlotParams::default()));
+    let request = client.get_slot().with_params(GetSlotParams::default());
 
     let cycles_cost = request.clone().request_cost().send().await.unwrap();
     assert_eq!(cycles_cost, 1_792_548_000);
