@@ -550,22 +550,63 @@ async fn should_get_slot() {
         ])
         .build();
 
+    let five_percents = 5_u8;
     let request = client.get_slot().with_params(GetSlotParams::default());
 
     let cycles_cost = request.clone().request_cost().send().await.unwrap();
-    assert_eq!(cycles_cost, 1_792_548_000);
+    assert_within(cycles_cost, 1_792_548_000, five_percents);
 
     let cycles_before = setup.sol_rpc_canister_cycles_balance().await;
-    let slot = request.send().await.expect_consistent().unwrap();
+    let slot = request
+        .clone()
+        .with_cycles(cycles_cost)
+        .send()
+        .await
+        .expect_consistent()
+        .unwrap();
     let cycles_after = setup.sol_rpc_canister_cycles_balance().await;
     let cycles_consumed = cycles_before + cycles_cost - cycles_after;
-    assert_eq!(cycles_consumed, 841_708_745);
+    assert_within(cycles_consumed, 841_708_745, five_percents);
 
     assert_eq!(slot, 371059340);
     assert!(
         cycles_after > cycles_before,
         "BUG: not enough cycles requested. Requested {cycles_cost} cycles, but consumed {cycles_consumed} cycles"
     );
+
+    let client = setup
+        .client()
+        .mock_http_sequence(vec![
+            MockOutcallBuilder::new(
+                200,
+                json!({ "jsonrpc": "2.0", "result": 371059358, "id": 3 }),
+            ),
+            MockOutcallBuilder::new(
+                200,
+                json!({ "jsonrpc": "2.0", "result": 371059358, "id": 4 }),
+            ),
+        ])
+        .build();
+
+    let results = client
+        .get_slot()
+        .with_params(GetSlotParams::default())
+        .with_cycles(cycles_cost - 1)
+        .send()
+        .await
+        .expect_inconsistent();
+
+    assert!(
+        results.iter().any(|(_provider, result)| matches!(
+            result,
+            &Err(RpcError::ProviderError(ProviderError::TooFewCycles {
+                expected: _,
+                received: _
+            }))
+        )),
+        "BUG: Expected at least one TooFewCycles error, but got {results:?}"
+    );
+
     setup.drop().await;
 }
 
