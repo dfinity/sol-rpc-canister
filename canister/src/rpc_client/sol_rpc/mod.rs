@@ -58,8 +58,7 @@ impl ResponseTransform {
         match self {
             Self::GetAccountInfo => {
                 canonicalize_response::<Value, UiAccount>(body_bytes, |result| {
-                    let value = result["value"].clone();
-                    from_value::<UiAccount>(value)
+                    from_value::<UiAccount>(result["value"].clone())
                         .expect("BUG: Unable to deserialize account")
                 });
             }

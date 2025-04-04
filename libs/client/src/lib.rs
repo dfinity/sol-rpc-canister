@@ -157,7 +157,7 @@ impl<R: Runtime> SolRpcClient<R> {
                 Option<RpcConfig>,
                 sol_rpc_types::Pubkey,
                 Option<GetAccountInfoParams>,
-            ), sol_rpc_types::MultiRpcResult<sol_rpc_types::Account>>(
+            ), sol_rpc_types::MultiRpcResult<sol_rpc_types::AccountInfo>>(
                 self.sol_rpc_canister,
                 "getAccountInfo",
                 (

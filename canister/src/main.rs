@@ -13,8 +13,8 @@ use sol_rpc_canister::{
     types::RoundingError,
 };
 use sol_rpc_types::{
-    Account, GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, MultiRpcResult, Pubkey, RpcAccess, RpcConfig,
-    RpcError, RpcSources, Slot, SupportedRpcProvider, SupportedRpcProviderId,
+    AccountInfo, GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, MultiRpcResult, Pubkey,
+    RpcAccess, RpcConfig, RpcError, RpcSources, Slot, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use std::str::FromStr;
 
@@ -81,7 +81,7 @@ async fn get_account_info(
     config: Option<RpcConfig>,
     pubkey: Pubkey,
     params: Option<GetAccountInfoParams>,
-) -> MultiRpcResult<Account> {
+) -> MultiRpcResult<AccountInfo> {
     match CandidRpcClient::new(source, config) {
         Ok(client) => client.get_account_info(pubkey, params).await,
         Err(err) => Err(err).into(),

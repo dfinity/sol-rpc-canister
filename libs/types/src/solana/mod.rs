@@ -92,7 +92,7 @@ impl From<Pubkey> for solana_pubkey::Pubkey {
 
 /// Solana [account](https://solana.com/docs/references/terminology#account) information.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
-pub struct Account {
+pub struct AccountInfo {
     /// Number of lamports assigned to this account.
     pub lamports: u64,
     /// Data associated with the account.
@@ -102,14 +102,15 @@ pub struct Account {
     /// Boolean indicating if the account contains a program (and is strictly read-only).
     pub executable: bool,
     /// The epoch at which this account will next owe rent.
+    #[serde(rename = "rentEpoch")]
     pub rent_epoch: u64,
     /// The data size of the account.
     pub space: Option<u64>,
 }
 
-impl From<solana_account_decoder_client_types::UiAccount> for Account {
+impl From<solana_account_decoder_client_types::UiAccount> for AccountInfo {
     fn from(account: solana_account_decoder_client_types::UiAccount) -> Self {
-        Account {
+        AccountInfo {
             lamports: account.lamports,
             data: account.data.into(),
             owner: account.owner,
@@ -120,8 +121,8 @@ impl From<solana_account_decoder_client_types::UiAccount> for Account {
     }
 }
 
-impl From<Account> for solana_account_decoder_client_types::UiAccount {
-    fn from(account: Account) -> Self {
+impl From<AccountInfo> for solana_account_decoder_client_types::UiAccount {
+    fn from(account: AccountInfo) -> Self {
         solana_account_decoder_client_types::UiAccount {
             lamports: account.lamports,
             data: account.data.into(),
@@ -137,11 +138,14 @@ impl From<Account> for solana_account_decoder_client_types::UiAccount {
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub enum AccountData {
     /// The data is formatted as a binary string. This is a legacy format retained for RPC backwards compatibility
+    #[serde(rename = "legacyBinary")]
     LegacyBinary(String),
     /// The data is formatted as a JSON [`ParsedAccount`].
+    #[serde(rename = "json")]
     Json(ParsedAccount),
     /// The data is formatted as a string containing the account data encoded according to one of
     /// the [`AccountEncoding`] formats.
+    #[serde(rename = "binary")]
     Binary(String, AccountEncoding),
 }
 
@@ -208,7 +212,7 @@ pub enum AccountEncoding {
     /// The account data is formatted as a base-58 string.
     #[serde(rename = "base58")]
     Base58,
-    /// The account data is formatted as a base-58 string.
+    /// The account data is formatted as a base-64 string.
     #[serde(rename = "base64")]
     Base64,
     /// The account data was first compressed using [Zstandard](http://facebook.github.io/zstd/) and the

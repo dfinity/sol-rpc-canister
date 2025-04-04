@@ -9,7 +9,7 @@ use crate::{
 use canhttp::multi::ReductionError;
 use serde::Serialize;
 use sol_rpc_types::{
-    Account, GetAccountInfoParams, GetSlotParams, MultiRpcResult, Pubkey, RpcAccess, RpcAuth,
+    AccountInfo, GetAccountInfoParams, GetSlotParams, MultiRpcResult, Pubkey, RpcAccess, RpcAuth,
     RpcConfig, RpcResult, RpcSource, RpcSources, Slot, SupportedRpcProvider,
 };
 use std::fmt::Debug;
@@ -75,12 +75,12 @@ impl CandidRpcClient {
         &self,
         pubkey: Pubkey,
         params: Option<GetAccountInfoParams>,
-    ) -> MultiRpcResult<Account> {
+    ) -> MultiRpcResult<AccountInfo> {
         process_result(
             RpcMethod::GetAccountInfo,
             self.client.get_account_info(pubkey.into(), params).await,
         )
-        .map(Account::from)
+        .map(AccountInfo::from)
     }
 
     pub async fn get_slot(&self, params: Option<GetSlotParams>) -> MultiRpcResult<Slot> {
