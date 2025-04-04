@@ -23,21 +23,21 @@ pub trait SolRpcRequest {
 #[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub enum SolRpcEndpoint {
     GetSlot,
-    RawRequest,
+    JsonRequest,
 }
 
 impl SolRpcEndpoint {
     pub fn rpc_method(&self) -> &'static str {
         match &self {
             SolRpcEndpoint::GetSlot => "getSlot",
-            SolRpcEndpoint::RawRequest => "request",
+            SolRpcEndpoint::JsonRequest => "jsonRequest",
         }
     }
 
     pub fn cycles_cost_method(&self) -> &'static str {
         match &self {
             SolRpcEndpoint::GetSlot => "getSlotRequestCost",
-            SolRpcEndpoint::RawRequest => "requestRequestCost",
+            SolRpcEndpoint::JsonRequest => "requestRequestCost",
         }
     }
 }
@@ -59,25 +59,25 @@ impl SolRpcRequest for GetSlotRequest {
     }
 }
 
-pub struct RawRequest(String);
+pub struct RawJsonRequest(String);
 
-impl TryFrom<serde_json::Value> for RawRequest {
+impl TryFrom<serde_json::Value> for RawJsonRequest {
     type Error = String;
 
     fn try_from(value: serde_json::Value) -> Result<Self, Self::Error> {
         serde_json::to_string(&value)
-            .map(RawRequest)
+            .map(RawJsonRequest)
             .map_err(|e| e.to_string())
     }
 }
 
-impl SolRpcRequest for RawRequest {
+impl SolRpcRequest for RawJsonRequest {
     type Config = RpcConfig;
     type Params = String;
     type Output = sol_rpc_types::MultiRpcResult<String>;
 
     fn endpoint(&self) -> SolRpcEndpoint {
-        SolRpcEndpoint::RawRequest
+        SolRpcEndpoint::JsonRequest
     }
 
     fn params(self) -> Self::Params {

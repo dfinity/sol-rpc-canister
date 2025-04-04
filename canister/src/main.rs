@@ -112,9 +112,9 @@ async fn get_slot_request_cost(
     .await
 }
 
-#[update]
-#[candid_method]
-async fn request(
+#[update(name = "jsonRequest")]
+#[candid_method(rename = "jsonRequest")]
+async fn json_request(
     source: RpcSources,
     config: Option<RpcConfig>,
     json_rpc_payload: String,
