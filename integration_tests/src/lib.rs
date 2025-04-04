@@ -16,8 +16,8 @@ use sol_rpc_canister::{
     http_types::{HttpRequest, HttpResponse},
     logs::Priority,
 };
-use sol_rpc_client::{Runtime, SolRpcClient};
-use sol_rpc_types::{InstallArgs, RpcSources, SolanaCluster, SupportedRpcProviderId};
+use sol_rpc_client::{ClientBuilder, Runtime, SolRpcClient};
+use sol_rpc_types::{InstallArgs, RpcAccess, SupportedRpcProviderId};
 use std::{
     env::{set_var, var},
     path::PathBuf,
@@ -33,6 +33,7 @@ const MAX_TICKS: usize = 10;
 pub const DEFAULT_CALLER_TEST_ID: Principal =
     Principal::from_slice(&[0x0, 0x0, 0x0, 0x0, 0x3, 0x31, 0x1, 0x8, 0x2, 0x2]);
 pub const DEFAULT_CONTROLLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x02]);
+const MOCK_API_KEY: &str = "mock-api-key";
 
 pub struct Setup {
     env: PocketIc,
@@ -121,23 +122,65 @@ impl Setup {
             .unwrap_or_else(|err| panic!("Upgrade canister failed: {:?}", err));
     }
 
-    pub fn client(&self) -> SolRpcClient<PocketIcRuntime> {
-        SolRpcClient::new(
-            self.new_pocket_ic(),
-            self.sol_rpc_canister_id,
-            RpcSources::Default(SolanaCluster::Devnet),
-        )
+    pub async fn with_mock_api_keys(self) -> Self {
+        let client = self.client().build();
+        let providers = client.get_providers().await;
+        let mut api_keys = Vec::new();
+        for (id, provider) in providers {
+            match provider.access {
+                RpcAccess::Authenticated { .. } => {
+                    api_keys.push((id, Some(MOCK_API_KEY.to_string())));
+                }
+                RpcAccess::Unauthenticated { .. } => {}
+            }
+        }
+        self.env
+            .update_call(
+                self.sol_rpc_canister_id,
+                self.controller,
+                "updateApiKeys",
+                PocketIcRuntime::encode_args((api_keys,)),
+            )
+            .await
+            .expect("BUG: Failed to call updateApiKeys");
+        self
     }
 
-    pub fn client_live_mode(&self) -> SolRpcClient<PocketIcLiveModeRuntime> {
-        SolRpcClient::new(
-            self.new_live_pocket_ic(),
-            self.sol_rpc_canister_id,
-            RpcSources::Default(SolanaCluster::Devnet),
-        )
+    // TODO XC-329: remove verifyApiKey endpoint
+    pub async fn verify_api_key(&self, api_key: (SupportedRpcProviderId, Option<String>)) {
+        let runtime = self.new_pocket_ic_runtime();
+        runtime
+            .query_call(self.sol_rpc_canister_id, "verifyApiKey", (api_key,))
+            .await
+            .unwrap()
     }
 
-    fn new_pocket_ic(&self) -> PocketIcRuntime {
+    pub async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry<Priority>> {
+        let request = HttpRequest {
+            method: "POST".to_string(),
+            url: format!("/logs?priority={priority}"),
+            headers: vec![],
+            body: serde_bytes::ByteBuf::new(),
+        };
+        let runtime = self.new_pocket_ic_runtime();
+        let response: HttpResponse = runtime
+            .query_call(self.sol_rpc_canister_id, "http_request", (request,))
+            .await
+            .unwrap();
+        serde_json::from_slice::<Log<Priority>>(&response.body)
+            .expect("failed to parse SOL RPC canister log")
+            .entries
+    }
+
+    pub fn client(&self) -> ClientBuilder<PocketIcRuntime> {
+        SolRpcClient::builder(self.new_pocket_ic_runtime(), self.sol_rpc_canister_id)
+    }
+
+    pub fn client_live_mode(&self) -> ClientBuilder<PocketIcLiveModeRuntime> {
+        SolRpcClient::builder(self.new_live_pocket_ic_runtime(), self.sol_rpc_canister_id)
+    }
+
+    fn new_pocket_ic_runtime(&self) -> PocketIcRuntime {
         PocketIcRuntime {
             env: &self.env,
             caller: self.caller,
@@ -147,7 +190,7 @@ impl Setup {
         }
     }
 
-    fn new_live_pocket_ic(&self) -> PocketIcLiveModeRuntime {
+    fn new_live_pocket_ic_runtime(&self) -> PocketIcLiveModeRuntime {
         PocketIcLiveModeRuntime {
             env: &self.env,
             caller: self.caller,
@@ -467,8 +510,6 @@ impl Runtime for PocketIcLiveModeRuntime<'_> {
 
 #[async_trait]
 pub trait SolRpcTestClient<R: Runtime> {
-    async fn verify_api_key(&self, api_key: (SupportedRpcProviderId, Option<String>));
-    async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry<Priority>>;
     fn mock_http(self, mock: impl Into<MockOutcall>) -> Self;
     fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self;
     fn mock_http_sequence(self, mocks: Vec<impl Into<MockOutcall>>) -> Self;
@@ -480,54 +521,21 @@ pub trait SolRpcTestClient<R: Runtime> {
 }
 
 #[async_trait]
-impl SolRpcTestClient<PocketIcRuntime<'_>> for SolRpcClient<PocketIcRuntime<'_>> {
-    async fn verify_api_key(&self, api_key: (SupportedRpcProviderId, Option<String>)) {
-        self.runtime
-            .query_call(self.sol_rpc_canister, "verifyApiKey", (api_key,))
-            .await
-            .unwrap()
-    }
-
-    async fn retrieve_logs(&self, priority: &str) -> Vec<LogEntry<Priority>> {
-        let request = HttpRequest {
-            method: "POST".to_string(),
-            url: format!("/logs?priority={priority}"),
-            headers: vec![],
-            body: serde_bytes::ByteBuf::new(),
-        };
-        let response: HttpResponse = self
-            .runtime
-            .query_call(self.sol_rpc_canister, "http_request", (request,))
-            .await
-            .unwrap();
-        serde_json::from_slice::<Log<Priority>>(&response.body)
-            .expect("failed to parse SOL RPC canister log")
-            .entries
-    }
-
+impl SolRpcTestClient<PocketIcRuntime<'_>> for ClientBuilder<PocketIcRuntime<'_>> {
     fn mock_http(self, mock: impl Into<MockOutcall>) -> Self {
-        Self {
-            runtime: self.runtime.with_strategy(MockStrategy::Mock(mock.into())),
-            ..self
-        }
+        self.with_runtime(|r| r.with_strategy(MockStrategy::Mock(mock.into())))
     }
 
     fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self {
-        Self {
-            runtime: self
-                .runtime
-                .with_strategy(MockStrategy::MockOnce(mock.into())),
-            ..self
-        }
+        self.with_runtime(|r| r.with_strategy(MockStrategy::MockOnce(mock.into())))
     }
 
     fn mock_http_sequence(self, mocks: Vec<impl Into<MockOutcall>>) -> Self {
-        Self {
-            runtime: self.runtime.with_strategy(MockStrategy::MockSequence(
+        self.with_runtime(|r| {
+            r.with_strategy(MockStrategy::MockSequence(
                 mocks.into_iter().map(|mock| mock.into()).collect(),
-            )),
-            ..self
-        }
+            ))
+        })
     }
 
     fn mock_sequential_json_rpc_responses<const N: usize>(

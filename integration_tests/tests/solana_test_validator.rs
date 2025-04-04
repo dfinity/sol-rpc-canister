@@ -18,7 +18,7 @@ async fn should_get_slot() {
         .compare_client(
             |sol| sol.get_slot().expect("Failed to get slot"),
             |ic| async move {
-                match ic.get_slot(None, None).await {
+                match ic.get_slot().send().await {
                     MultiRpcResult::Consistent(Ok(slot)) => slot,
                     result => panic!("Failed to get slot, received: {:?}", result),
                 }
@@ -63,12 +63,14 @@ impl Setup {
                     ..Default::default()
                 },
             )
+            .await
+            .with_mock_api_keys()
             .await,
         }
     }
 
     fn icp_client(&self) -> SolRpcClient<PocketIcLiveModeRuntime> {
-        self.setup.client_live_mode()
+        self.setup.client_live_mode().build()
     }
 
     async fn compare_client<'a, Sol, SolOutput, Icp, IcpOutput, Fut>(

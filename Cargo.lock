@@ -4038,6 +4038,7 @@ dependencies = [
  "candid",
  "ic-cdk",
  "serde",
+ "serde_json",
  "sol_rpc_types",
  "solana-clock",
 ]
