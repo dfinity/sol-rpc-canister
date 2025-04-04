@@ -132,17 +132,22 @@ impl<R: Runtime> SolRpcClient<R> {
     /// use sol_rpc_client::SolRpcClient;
     /// use sol_rpc_types::{RpcSources, SolanaCluster};
     /// use std::str::FromStr;
+    /// # async fn main () {
     ///
     /// let client = SolRpcClient::new_for_ic(
     ///     Principal::from_text("tghme-zyaaa-aaaar-qarca-cai").unwrap(),
     ///     RpcSources::Default(SolanaCluster::Mainnet)
     /// );
     ///
-    /// let pubkey = solana_pubkey::Pubkey::from_str("11111111111111111111111111111111");
+    /// let pubkey = solana_pubkey::Pubkey::from_str("11111111111111111111111111111111").unwrap();
     ///
-    /// let account: solana_account::Account = client.get_account_info(pubkey.into(), None)
+    /// let account: solana_account::Account = client.get_account_info(pubkey, None)
+    ///     .await
+    ///     .expect_consistent()
+    ///     .unwrap()
     ///     .decode()
     ///     .expect("Failed to decode UiAccount");
+    /// # }
     /// ```
     /// Note, however that [`solana_account::Account`] does not include the `space` field from the
     /// response and does not support all account data encoding formats.
