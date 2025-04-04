@@ -36,7 +36,7 @@ GET_ACCOUNT_INFO_PARAMS="(
     };
     responseSizeEstimate = null;
   },
-  \"11111111111111111111111111111111\",
+  vec { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
   opt record {
     commitment = null;
     encoding = variant{ base64 };
