@@ -39,7 +39,7 @@ GET_ACCOUNT_INFO_PARAMS="(
   vec { 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0 },
   opt record {
     commitment = null;
-    encoding = variant{ base64 };
+    encoding = opt variant{ base64 };
     dataSlice = null;
     minContextSlot = null;
   },
