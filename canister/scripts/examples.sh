@@ -36,7 +36,12 @@ GET_ACCOUNT_INFO_PARAMS="(
     };
     responseSizeEstimate = null;
   },
-  '11111111111111111111111111111111',
-  opt record { TODO },
+  \"11111111111111111111111111111111\",
+  opt record {
+    commitment = null;
+    encoding: = base64;
+    dataSlice = null;
+    minContextSlot = null;
+  },
 )"
 dfx canister call sol_rpc getAccountInfo "$GET_ACCOUNT_INFO_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1

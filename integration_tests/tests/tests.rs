@@ -179,7 +179,7 @@ mod get_account_info_tests {
                         },
                     }),
                 )
-                .get_account_info(pubkey.into(), None)
+                .get_account_info(pubkey, None)
                 .await
                 .expect_consistent();
 
