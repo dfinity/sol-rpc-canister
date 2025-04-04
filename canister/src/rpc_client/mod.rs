@@ -3,6 +3,7 @@ mod sol_rpc;
 mod tests;
 pub mod types;
 
+use crate::rpc_client::types::GetAccountInfoParams;
 use crate::{
     http::http_client,
     logs::Priority,
@@ -151,12 +152,11 @@ impl SolRpcClient {
     /// Query the Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method.
     pub async fn get_account_info(
         &self,
-        pubkey: solana_pubkey::Pubkey,
-        config: Option<GetAccountInfoConfig>,
+        params: GetAccountInfoParams,
     ) -> ReducedResult<solana_account_decoder_client_types::UiAccount> {
         self.parallel_call(
             "getAccountInfo",
-            (pubkey.to_string(), config),
+            params,
             self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
             &Some(ResponseTransform::GetAccountInfo),
         )

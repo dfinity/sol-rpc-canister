@@ -1,4 +1,3 @@
-use crate::rpc_client::types::GetAccountInfoConfig;
 use crate::{
     add_metric_entry,
     metrics::RpcMethod,
@@ -76,26 +75,9 @@ impl CandidRpcClient {
         &self,
         params: GetAccountInfoParams,
     ) -> MultiRpcResult<AccountInfo> {
-        let (pubkey, config) = if params.commitment.is_none()
-            && params.encoding.is_none()
-            && params.data_slice.is_none()
-            && params.min_context_slot.is_none()
-        {
-            (params.pubkey, None)
-        } else {
-            (
-                params.pubkey,
-                Some(GetAccountInfoConfig {
-                    commitment: params.commitment,
-                    encoding: params.encoding,
-                    data_slice: params.data_slice,
-                    min_context_slot: params.min_context_slot,
-                }),
-            )
-        };
         process_result(
             RpcMethod::GetAccountInfo,
-            self.client.get_account_info(pubkey.into(), config).await,
+            self.client.get_account_info(params.into()).await,
         )
         .map(AccountInfo::from)
     }
