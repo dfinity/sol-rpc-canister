@@ -30,7 +30,7 @@ pub const MAX_PAYLOAD_SIZE: u64 = HTTP_MAX_SIZE - HEADER_SIZE_LIMIT;
 /// Describes a payload transformation to execute before passing the HTTP response to consensus.
 /// The purpose of these transformations is to ensure that the response encoding is deterministic
 /// (the field order is the same).
-#[derive(Debug, Decode, Encode)]
+#[derive(Clone, Debug, Decode, Encode)]
 pub enum ResponseTransform {
     #[n(0)]
     GetSlot(#[n(1)] RoundingError),

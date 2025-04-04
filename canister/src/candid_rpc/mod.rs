@@ -9,13 +9,13 @@ use crate::{
 use canhttp::multi::ReductionError;
 use serde::Serialize;
 use sol_rpc_types::{
-    GetSlotParams, MultiRpcResult, RpcAccess, RpcAuth, RpcConfig, RpcResult, RpcSource, RpcSources,
-    SupportedRpcProvider,
+    GetSlotParams, MultiRpcResult, RpcAccess, RpcAuth, RpcConfig, RpcError, RpcResult, RpcSource,
+    RpcSources, SupportedRpcProvider,
 };
 use solana_clock::Slot;
 use std::fmt::Debug;
 
-fn process_result<T>(method: RpcMethod, result: ReducedResult<T>) -> MultiRpcResult<T> {
+pub fn process_result<T>(method: RpcMethod, result: ReducedResult<T>) -> MultiRpcResult<T> {
     match result {
         Ok(value) => MultiRpcResult::Consistent(Ok(value)),
         Err(err) => match err {
@@ -39,6 +39,10 @@ fn process_result<T>(method: RpcMethod, result: ReducedResult<T>) -> MultiRpcRes
             }
         },
     }
+}
+
+pub fn process_error<T, E: Into<RpcError>>(error: E) -> MultiRpcResult<T> {
+    MultiRpcResult::Consistent(Err(error.into()))
 }
 
 pub fn hostname(provider: SupportedRpcProvider) -> Option<String> {

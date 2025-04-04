@@ -3,7 +3,10 @@ use canhttp::http::json::JsonRpcRequest;
 use canlog::{log, Log, Sort};
 use ic_cdk::{api::is_controller, query, update};
 use ic_metrics_encoder::MetricsEncoder;
+use sol_rpc_canister::candid_rpc::{process_error, process_result};
 use sol_rpc_canister::memory::State;
+use sol_rpc_canister::metrics::RpcMethod;
+use sol_rpc_canister::rpc_client::MultiRpcRequest;
 use sol_rpc_canister::{
     candid_rpc::CandidRpcClient,
     http_types, lifecycle,
@@ -11,7 +14,6 @@ use sol_rpc_canister::{
     memory::{mutate_state, read_state},
     metrics::encode_metrics,
     providers::{get_provider, PROVIDERS},
-    types::RoundingError,
 };
 use sol_rpc_types::{
     GetSlotParams, GetSlotRpcConfig, MultiRpcResult, RpcAccess, RpcConfig, RpcError, RpcResult,
@@ -83,17 +85,13 @@ async fn get_slot(
     config: Option<GetSlotRpcConfig>,
     params: Option<GetSlotParams>,
 ) -> MultiRpcResult<Slot> {
-    let rounding_error = config
-        .as_ref()
-        .and_then(|c| c.rounding_error)
-        .map(RoundingError::from);
-    match CandidRpcClient::new_with_rounding_error(
+    match MultiRpcRequest::get_slot(
         source,
-        config.map(RpcConfig::from),
-        rounding_error,
+        config.unwrap_or_default(),
+        params.unwrap_or_default(),
     ) {
-        Ok(client) => client.get_slot(params.unwrap_or_default()).await,
-        Err(err) => Err(err).into(),
+        Ok(request) => process_result(RpcMethod::GetSlot, request.send_and_reduce().await),
+        Err(e) => process_error(e),
     }
 }
 
@@ -107,14 +105,13 @@ async fn get_slot_request_cost(
     if read_state(State::is_demo_mode_active) {
         return Ok(0);
     }
-    let rounding_error = config
-        .as_ref()
-        .and_then(|c| c.rounding_error)
-        .map(RoundingError::from);
-    CandidRpcClient::new_with_rounding_error(source, config.map(RpcConfig::from), rounding_error)?
-        .as_ref()
-        .get_slot_request_cost(params.unwrap_or_default())
-        .await
+    MultiRpcRequest::get_slot(
+        source,
+        config.unwrap_or_default(),
+        params.unwrap_or_default(),
+    )?
+    .cycles_cost()
+    .await
 }
 
 #[update]
