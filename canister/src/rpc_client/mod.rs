@@ -8,7 +8,7 @@ use crate::{
     memory::read_state,
     metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider, Providers},
-    rpc_client::sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
+    rpc_client::sol_rpc::ResponseTransform,
     types::RoundingError,
 };
 use canhttp::{
@@ -26,9 +26,16 @@ use sol_rpc_types::{
     RpcResult, RpcSource, RpcSources,
 };
 use solana_clock::Slot;
+use std::fmt::Debug;
 use std::marker::PhantomData;
-use std::{collections::BTreeSet, fmt::Debug};
 use tower::ServiceExt;
+
+// This constant is our approximation of the expected header size.
+// The HTTP standard doesn't define any limit, and many implementations limit
+// the headers size to 8 KiB. We chose a lower limit because headers observed on most providers
+// fit in the constant defined below, and if there is a spike, then the payload size adjustment
+// should take care of that.
+pub const HEADER_SIZE_LIMIT: u64 = 2 * 1024;
 
 pub struct MultiRpcRequest<Params, Output> {
     providers: Providers,
@@ -255,222 +262,6 @@ impl<Params, Output> MultiRpcRequest<Params, Output> {
             requests.insert_once(provider.clone(), request);
         }
         requests
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SolRpcClient {
-    providers: Providers,
-    config: RpcConfig,
-    rounding_error: RoundingError,
-}
-
-impl SolRpcClient {
-    pub fn new(
-        source: RpcSources,
-        config: Option<RpcConfig>,
-        rounding_error: Option<RoundingError>,
-    ) -> Result<Self, ProviderError> {
-        let config = config.unwrap_or_default();
-        let rounding_error = rounding_error.unwrap_or_default();
-        let strategy = config.response_consensus.clone().unwrap_or_default();
-        Ok(Self {
-            providers: Providers::new(source, strategy)?,
-            config,
-            rounding_error,
-        })
-    }
-
-    fn providers(&self) -> &BTreeSet<RpcSource> {
-        &self.providers.sources
-    }
-
-    fn response_size_estimate(&self, estimate: u64) -> ResponseSizeEstimate {
-        ResponseSizeEstimate::new(self.config.response_size_estimate.unwrap_or(estimate))
-    }
-
-    fn reduction_strategy(&self) -> ReductionStrategy {
-        ReductionStrategy::from(
-            self.config
-                .response_consensus
-                .as_ref()
-                .cloned()
-                .unwrap_or_default(),
-        )
-    }
-
-    /// Query all providers in parallel and return all results.
-    /// It's up to the caller to decide how to handle the results, which could be inconsistent
-    /// (e.g., if different providers gave different responses).
-    /// This method is useful for querying data that is critical for the system to ensure that
-    /// there is no single point of failure.
-    /// Query all providers in parallel and return all results.
-    /// It's up to the caller to decide how to handle the results, which could be inconsistent
-    /// (e.g., if different providers gave different responses).
-    /// This method is useful for querying data that is critical for the system to ensure that there is no single point of failure,
-    /// e.g., ethereum logs upon which ckETH will be minted.
-    async fn parallel_call<I, O>(
-        &self,
-        method: impl Into<String>,
-        params: I,
-        response_size_estimate: ResponseSizeEstimate,
-        response_transform: &Option<ResponseTransform>,
-    ) -> MultiCallResults<O>
-    where
-        I: Serialize + Clone + Debug,
-        O: Debug + DeserializeOwned,
-    {
-        let request_body = JsonRpcRequest::new(method, params);
-        let rpc_method = MetricRpcMethod::from(request_body.method().to_string());
-        let requests =
-            self.create_json_rpc_requests(request_body, response_size_estimate, response_transform);
-
-        let client = http_client(rpc_method, true);
-
-        let (requests, errors) = requests.into_inner();
-        let (_client, mut results) = canhttp::multi::parallel_call(client, requests).await;
-        results.add_errors(errors);
-        assert_eq!(
-            results.len(),
-            self.providers().len(),
-            "BUG: expected 1 result per provider"
-        );
-        results
-    }
-
-    async fn create_requests<I>(
-        &self,
-        method: impl Into<String>,
-        params: I,
-        response_size_estimate: ResponseSizeEstimate,
-        response_transform: &Option<ResponseTransform>,
-    ) -> MultiCallResults<IcHttpRequest>
-    where
-        I: Serialize + Clone + Debug,
-    {
-        async fn extract_request(
-            request: IcHttpRequest,
-        ) -> Result<http::Response<IcHttpRequest>, HttpClientError> {
-            Ok(http::Response::new(request))
-        }
-
-        let request_body = JsonRpcRequest::new(method, params);
-        let requests =
-            self.create_json_rpc_requests(request_body, response_size_estimate, response_transform);
-
-        let client = service_request_builder()
-            .service_fn(extract_request)
-            .map_err(|e: HttpClientError| RpcError::from(e))
-            .map_response(|r| r.into_body());
-
-        let (requests, errors) = requests.into_inner();
-        let (_client, mut results) = canhttp::multi::parallel_call(client, requests).await;
-        results.add_errors(errors);
-        assert_eq!(
-            results.len(),
-            self.providers().len(),
-            "BUG: expected 1 result per provider"
-        );
-        results
-    }
-
-    fn create_json_rpc_requests<I>(
-        &self,
-        request_body: JsonRpcRequest<I>,
-        response_size_estimate: ResponseSizeEstimate,
-        response_transform: &Option<ResponseTransform>,
-    ) -> MultiCallResults<Request<JsonRpcRequest<I>>>
-    where
-        I: Clone,
-    {
-        let providers = self.providers();
-        let effective_size_estimate = response_size_estimate.get();
-        let transform_op = response_transform
-            .as_ref()
-            .map(|t| {
-                let mut buf = vec![];
-                minicbor::encode(t, &mut buf).unwrap();
-                buf
-            })
-            .unwrap_or_default();
-        let mut requests = MultiResults::default();
-        for provider in providers {
-            let request = request_builder(
-                resolve_rpc_provider(provider.clone()),
-                &read_state(|state| state.get_override_provider()),
-            )
-            .map(|builder| {
-                builder
-                    .max_response_bytes(effective_size_estimate)
-                    .transform_context(TransformContext::from_name(
-                        "cleanup_response".to_owned(),
-                        transform_op.clone(),
-                    ))
-                    .body(request_body.clone())
-                    .expect("BUG: invalid request")
-            });
-            requests.insert_once(provider.clone(), request);
-        }
-        requests
-    }
-
-    /// Query the Solana [`getSlot`](https://solana.com/docs/rpc/http/getslot) RPC method.
-    pub async fn get_slot(&self, params: GetSlotParams) -> ReducedResult<Slot> {
-        self.parallel_call(
-            "getSlot",
-            vec![params],
-            self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
-            &Some(ResponseTransform::GetSlot(self.rounding_error)),
-        )
-        .await
-        .reduce(self.reduction_strategy())
-    }
-
-    pub async fn get_slot_request_cost(&self, params: GetSlotParams) -> RpcResult<u128> {
-        self.cycles_cost(
-            self.create_requests(
-                "getSlot",
-                vec![params],
-                self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
-                &Some(ResponseTransform::GetSlot(self.rounding_error)),
-            )
-            .await,
-        )
-    }
-
-    pub async fn raw_request<I>(
-        &self,
-        request: JsonRpcRequest<I>,
-    ) -> ReducedResult<serde_json::Value>
-    where
-        I: Serialize + Clone + Debug,
-    {
-        self.parallel_call(
-            request.method(),
-            request.params(),
-            self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
-            &Some(ResponseTransform::Raw),
-        )
-        .await
-        .reduce(self.reduction_strategy())
-    }
-
-    fn cycles_cost(&self, requests: MultiCallResults<IcHttpRequest>) -> RpcResult<u128> {
-        let (requests, errors) = requests.into_inner();
-        if !errors.is_empty() {
-            return Err(errors
-                .into_values()
-                .next()
-                .expect("BUG: errors is not empty"));
-        }
-        let mut cycles_to_attach = 0_u128;
-        let estimator = CyclesCostEstimator::new(read_state(State::get_num_subnet_nodes));
-        let policy = ChargingPolicyWithCollateral::default();
-        for request in requests.into_values() {
-            cycles_to_attach +=
-                policy.cycles_to_charge(&request, estimator.cost_of_http_request(&request));
-        }
-        Ok(cycles_to_attach)
     }
 }
 
