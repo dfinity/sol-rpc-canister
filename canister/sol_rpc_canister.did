@@ -334,7 +334,7 @@ service : (InstallArgs,) -> {
   updateApiKeys : (vec record { SupportedProvider; opt text }) -> ();
 
   // Call the Solana `getAccountInfo` RPC method and return the resulting slot.
-  getAccountInfo : (RpcSources, opt RpcConfig, Pubkey, opt GetAccountInfoParams) -> (MultiGetAccountInfoResult);
+  getAccountInfo : (RpcSources, opt RpcConfig, GetAccountInfoParams) -> (MultiGetAccountInfoResult);
 
   // Call the Solana `getSlot` RPC method and return the resulting slot.
   getSlot : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (MultiGetSlotResult);
