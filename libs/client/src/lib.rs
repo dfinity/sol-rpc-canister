@@ -52,7 +52,6 @@ use sol_rpc_types::{
     SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_clock::Slot;
-use solana_pubkey::Pubkey;
 use std::sync::Arc;
 
 /// The principal identifying the productive Solana RPC canister under NNS control.
@@ -193,16 +192,16 @@ impl<R> SolRpcClient<R> {
     // TODO XC-288 This should return a UiAccount (which is not a candid type)
     pub fn get_account_info(
         &self,
-        pubkey: Pubkey,
+        params: impl Into<GetAccountInfoParams>,
     ) -> RequestBuilder<
         R,
         RpcConfig,
-        (sol_rpc_types::Pubkey, Option<GetAccountInfoParams>),
+        GetAccountInfoParams,
         sol_rpc_types::MultiRpcResult<AccountInfo>,
     > {
         RequestBuilder::new(
             self.clone(),
-            GetAccountInfoRequest::new(pubkey.into()),
+            GetAccountInfoRequest::new(params.into()),
             10_000_000_000,
         )
     }

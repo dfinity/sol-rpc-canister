@@ -1,6 +1,7 @@
 mod sol_rpc;
 #[cfg(test)]
 mod tests;
+pub mod types;
 
 use crate::{
     http::http_client,
@@ -8,7 +9,10 @@ use crate::{
     memory::read_state,
     metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider, Providers},
-    rpc_client::sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
+    rpc_client::{
+        sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
+        types::GetAccountInfoConfig,
+    },
     types::RoundingError,
 };
 use canhttp::{
@@ -20,8 +24,8 @@ use canlog::log;
 use ic_cdk::api::management_canister::http_request::TransformContext;
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
-    ConsensusStrategy, GetAccountInfoParams, GetSlotParams, JsonRpcError, ProviderError, RpcConfig,
-    RpcError, RpcSource, RpcSources,
+    ConsensusStrategy, GetSlotParams, JsonRpcError, ProviderError, RpcConfig, RpcError, RpcSource,
+    RpcSources,
 };
 use std::{collections::BTreeSet, fmt::Debug};
 use tower::ServiceExt;
@@ -148,11 +152,11 @@ impl SolRpcClient {
     pub async fn get_account_info(
         &self,
         pubkey: solana_pubkey::Pubkey,
-        params: Option<GetAccountInfoParams>,
+        config: Option<GetAccountInfoConfig>,
     ) -> ReducedResult<solana_account_decoder_client_types::UiAccount> {
         self.parallel_call(
             "getAccountInfo",
-            (pubkey.to_string(), params),
+            (pubkey.to_string(), config),
             self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
             &Some(ResponseTransform::GetAccountInfo),
         )

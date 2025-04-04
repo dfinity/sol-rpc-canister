@@ -43,17 +43,19 @@ async fn should_get_slot() {
 async fn should_get_account_info() {
     let setup = Setup::new().await;
     let pubkey = Pubkey::from_str("11111111111111111111111111111111").unwrap();
-    // TODO XC-288 Use
-    let _config = GetAccountInfoParams {
+    let params = GetAccountInfoParams {
+        pubkey: pubkey.into(),
+        commitment: None,
         encoding: Some(GetAccountInfoEncoding::Base64),
-        ..GetAccountInfoParams::default()
+        data_slice: None,
+        min_context_slot: None,
     };
 
     let (sol_res, ic_res) = setup
         .compare_client(
             |sol| sol.get_account(&pubkey).expect("Failed to get account"),
             |ic| async move {
-                ic.get_account_info(pubkey)
+                ic.get_account_info(params)
                     .send()
                     .await
                     // TODO XC-288 Remove

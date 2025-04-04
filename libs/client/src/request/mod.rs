@@ -21,17 +21,17 @@ pub trait SolRpcRequest {
 }
 
 #[derive(Debug, Clone)]
-pub struct GetAccountInfoRequest(sol_rpc_types::Pubkey, Option<GetAccountInfoParams>);
+pub struct GetAccountInfoRequest(GetAccountInfoParams);
 
 impl GetAccountInfoRequest {
-    pub fn new(pubkey: sol_rpc_types::Pubkey) -> Self {
-        Self(pubkey, None)
+    pub fn new(params: GetAccountInfoParams) -> Self {
+        Self(params)
     }
 }
 
 impl SolRpcRequest for GetAccountInfoRequest {
     type Config = RpcConfig;
-    type Params = (sol_rpc_types::Pubkey, Option<GetAccountInfoParams>);
+    type Params = GetAccountInfoParams;
     type Output = sol_rpc_types::MultiRpcResult<sol_rpc_types::AccountInfo>;
 
     fn rpc_method(&self) -> &str {
@@ -39,7 +39,7 @@ impl SolRpcRequest for GetAccountInfoRequest {
     }
 
     fn params(self) -> Self::Params {
-        (self.0, self.1)
+        self.0
     }
 }
 

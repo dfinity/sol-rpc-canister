@@ -79,11 +79,10 @@ async fn update_api_keys(api_keys: Vec<(SupportedRpcProviderId, Option<String>)>
 async fn get_account_info(
     source: RpcSources,
     config: Option<RpcConfig>,
-    pubkey: Pubkey,
-    params: Option<GetAccountInfoParams>,
+    params: GetAccountInfoParams,
 ) -> MultiRpcResult<AccountInfo> {
     match CandidRpcClient::new(source, config) {
-        Ok(client) => client.get_account_info(pubkey, params).await,
+        Ok(client) => client.get_account_info(params).await,
         Err(err) => Err(err).into(),
     }
 }

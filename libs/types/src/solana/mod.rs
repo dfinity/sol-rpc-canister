@@ -16,8 +16,10 @@ pub struct GetSlotParams {
 }
 
 /// The parameters for a Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getAccountInfo) RPC method call.
-#[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub struct GetAccountInfoParams {
+    /// The public key of the account whose info to fetch.
+    pub pubkey: Pubkey,
     /// The request returns the slot that has reached this or the default commitment level.
     pub commitment: Option<CommitmentLevel>,
     /// Encoding format for Account data.
@@ -28,6 +30,18 @@ pub struct GetAccountInfoParams {
     /// The minimum slot that the request can be evaluated at.
     #[serde(rename = "minContextSlot")]
     pub min_context_slot: Option<u64>,
+}
+
+impl<T: Into<Pubkey>> From<T> for GetAccountInfoParams {
+    fn from(pubkey: T) -> Self {
+        Self {
+            pubkey: pubkey.into(),
+            commitment: None,
+            encoding: None,
+            data_slice: None,
+            min_context_slot: None,
+        }
+    }
 }
 
 /// [Commitment levels](https://solana.com/docs/rpc#configuring-state-commitment) in Solana,

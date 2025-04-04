@@ -175,6 +175,7 @@ type DataSlice = record {
 
 // The parameters for a call to the `getAccountInfo` Solana RPC method.
 type GetAccountInfoParams = record {
+  pubkey: Pubkey;
   commitment: opt CommitmentLevel;
   encoding: opt GetAccountInfoEncoding;
   dataSlice: opt DataSlice;
