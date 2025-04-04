@@ -13,8 +13,8 @@ use sol_rpc_canister::{
     types::RoundingError,
 };
 use sol_rpc_types::{
-    AccountInfo, GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, MultiRpcResult, Pubkey,
-    RpcAccess, RpcConfig, RpcError, RpcSources, Slot, SupportedRpcProvider, SupportedRpcProviderId,
+    AccountInfo, GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, MultiRpcResult, RpcAccess,
+    RpcConfig, RpcError, RpcSources, Slot, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use std::str::FromStr;
 

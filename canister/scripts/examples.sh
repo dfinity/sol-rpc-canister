@@ -36,8 +36,8 @@ GET_ACCOUNT_INFO_PARAMS="(
     };
     responseSizeEstimate = null;
   },
-  vec { 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0 },
   opt record {
+    pubkey = vec { 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0 };
     commitment = null;
     encoding = opt variant{ base64 };
     dataSlice = null;
