@@ -9,6 +9,7 @@ use sol_rpc_int_tests::PocketIcLiveModeRuntime;
 use sol_rpc_types::{
     GetAccountInfoEncoding, GetAccountInfoParams, InstallArgs, OverrideProvider, RegexSubstitution,
 };
+use solana_account_decoder_client_types::UiAccount;
 use solana_client::rpc_client::RpcClient as SolanaRpcClient;
 use solana_pubkey::Pubkey;
 use std::{future::Future, str::FromStr};
@@ -21,7 +22,8 @@ async fn should_get_slot() {
         .compare_client(
             |sol| sol.get_slot().expect("Failed to get slot"),
             |ic| async move {
-                ic.get_slot(None, None)
+                ic.get_slot()
+                    .send()
                     .await
                     .expect_consistent()
                     .unwrap_or_else(|e| panic!("`getSlot` call failed: {e}"))
@@ -41,7 +43,8 @@ async fn should_get_slot() {
 async fn should_get_account_info() {
     let setup = Setup::new().await;
     let pubkey = Pubkey::from_str("11111111111111111111111111111111").unwrap();
-    let config = GetAccountInfoParams {
+    // TODO XC-288 Use
+    let _config = GetAccountInfoParams {
         encoding: Some(GetAccountInfoEncoding::Base64),
         ..GetAccountInfoParams::default()
     };
@@ -50,8 +53,11 @@ async fn should_get_account_info() {
         .compare_client(
             |sol| sol.get_account(&pubkey).expect("Failed to get account"),
             |ic| async move {
-                ic.get_account_info(pubkey, Some(config))
+                ic.get_account_info(pubkey)
+                    .send()
                     .await
+                    // TODO XC-288 Remove
+                    .map(UiAccount::from)
                     .expect_consistent()
                     .unwrap_or_else(|e| panic!("`getAccountInfo` call failed: {e}"))
                     .decode()
@@ -94,12 +100,14 @@ impl Setup {
                     ..Default::default()
                 },
             )
+            .await
+            .with_mock_api_keys()
             .await,
         }
     }
 
     fn icp_client(&self) -> SolRpcClient<PocketIcLiveModeRuntime> {
-        self.setup.client_live_mode()
+        self.setup.client_live_mode().build()
     }
 
     async fn compare_client<'a, Sol, SolOutput, Icp, IcpOutput, Fut>(

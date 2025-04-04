@@ -1,19 +1,69 @@
 //! Client to interact with the SOL RPC canister
+//!
+//! # Examples
+//!
+//! ## Configuring the client
+//!
+//! By default, any RPC endpoint supported by the SOL RPC canister will call 3 providers and require equality between their results.
+//! It is possible to customize the client so that another strategy, such as 3-out-of-2 in the example below, is used for all following calls.
+//!
+//! ```rust
+//! use candid::Principal;
+//! use sol_rpc_client::SolRpcClient;
+//! use sol_rpc_types::{ConsensusStrategy, RpcConfig, RpcSources, SolanaCluster};
+//!
+//! let client = SolRpcClient::builder_for_ic()
+//!     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+//!     .with_rpc_config(RpcConfig {
+//!         response_consensus: Some(ConsensusStrategy::Threshold {
+//!             total: Some(3),
+//!             min: 2,
+//!         }),
+//!         ..Default::default()
+//!     })
+//!     .build();
+//! ```
+//!
+//! ## Overriding client configuration for a specific call
+//!
+//! It is sometimes desirable to have a custom configuration for a specific call, e.g. to change the amount of cycles attached:
+//!
+//! ```rust
+//! use sol_rpc_client::SolRpcClient;
+//! let client = SolRpcClient::builder_for_ic().build();
+//!
+//! let slot_fut = client.get_slot().with_cycles(42).send();
+//! ```
 
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 
+mod request;
+
+pub use request::{Request, RequestBuilder, SolRpcRequest};
+
+use crate::request::{GetAccountInfoRequest, GetSlotRequest, RawRequest};
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources,
-    SupportedRpcProvider, SupportedRpcProviderId,
+    AccountInfo, GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources,
+    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
-use solana_account_decoder_client_types::UiAccount;
 use solana_clock::Slot;
 use solana_pubkey::Pubkey;
+use std::sync::Arc;
+
+/// The principal identifying the productive Solana RPC canister under NNS control.
+///
+/// ```rust
+/// use candid::Principal;
+/// use sol_rpc_client::SOL_RPC_CANISTER;
+///
+/// assert_eq!(SOL_RPC_CANISTER, Principal::from_text("tghme-zyaaa-aaaar-qarca-cai").unwrap())
+/// ```
+pub const SOL_RPC_CANISTER: Principal = Principal::from_slice(&[0, 0, 0, 0, 2, 48, 4, 68, 1, 1]);
 
 /// Abstract the canister runtime so that the client code can be reused:
 /// * in production using `ic_cdk`,
@@ -46,8 +96,36 @@ pub trait Runtime {
 }
 
 /// Client to interact with the SOL RPC canister.
+pub struct SolRpcClient<R> {
+    config: Arc<ClientConfig<R>>,
+}
+
+impl<R> Clone for SolRpcClient<R> {
+    fn clone(&self) -> Self {
+        Self {
+            config: self.config.clone(),
+        }
+    }
+}
+
+impl<R> SolRpcClient<R> {
+    /// Creates a [`ClientBuilder`] to configure a [`SolRpcClient`].
+    pub fn builder(runtime: R, sol_rpc_canister: Principal) -> ClientBuilder<R> {
+        ClientBuilder::new(runtime, sol_rpc_canister)
+    }
+}
+
+impl SolRpcClient<IcRuntime> {
+    /// Creates a [`ClientBuilder`] to configure a [`SolRpcClient`] targeting [`SOL_RPC_CANISTER`]
+    /// running on the Internet Computer.
+    pub fn builder_for_ic() -> ClientBuilder<IcRuntime> {
+        ClientBuilder::new(IcRuntime, SOL_RPC_CANISTER)
+    }
+}
+
+/// Client to interact with the SOL RPC canister.
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct SolRpcClient<R: Runtime> {
+pub struct ClientConfig<R> {
     /// This setup's canister [`Runtime`].
     pub runtime: R,
     /// The [`Principal`] of the SOL RPC canister.
@@ -58,62 +136,118 @@ pub struct SolRpcClient<R: Runtime> {
     pub rpc_sources: RpcSources,
 }
 
-impl SolRpcClient<IcRuntime> {
-    /// Instantiate a new client to be used by a canister on the Internet Computer.
-    ///
-    /// To use another runtime, see [`Self::new`].
-    pub fn new_for_ic(sol_rpc_canister: Principal, rpc_sources: RpcSources) -> Self {
+/// A [`ClientBuilder`] to create a [`SolRpcClient`] with custom configuration.
+#[must_use]
+pub struct ClientBuilder<R> {
+    config: ClientConfig<R>,
+}
+
+impl<R> ClientBuilder<R> {
+    fn new(runtime: R, sol_rpc_canister: Principal) -> Self {
         Self {
-            runtime: IcRuntime {},
-            sol_rpc_canister,
-            rpc_config: None,
-            rpc_sources,
+            config: ClientConfig {
+                runtime,
+                sol_rpc_canister,
+                rpc_config: None,
+                rpc_sources: RpcSources::Default(SolanaCluster::Mainnet),
+            },
+        }
+    }
+
+    /// Modify the existing runtime by applying a transformation function.
+    ///
+    /// The transformation does not necessarily produce a runtime of the same type.
+    pub fn with_runtime<S, F: FnOnce(R) -> S>(self, other_runtime: F) -> ClientBuilder<S> {
+        ClientBuilder {
+            config: ClientConfig {
+                runtime: other_runtime(self.config.runtime),
+                sol_rpc_canister: self.config.sol_rpc_canister,
+                rpc_config: self.config.rpc_config,
+                rpc_sources: self.config.rpc_sources,
+            },
+        }
+    }
+
+    /// Mutates the builder to use the given [`RpcSources`].
+    pub fn with_rpc_sources(mut self, rpc_sources: RpcSources) -> Self {
+        self.config.rpc_sources = rpc_sources;
+        self
+    }
+
+    /// Mutates the builder to use the given [`RpcConfig`].
+    pub fn with_rpc_config(mut self, rpc_config: RpcConfig) -> Self {
+        self.config.rpc_config = Some(rpc_config);
+        self
+    }
+
+    /// Creates a [`SolRpcClient`] from the configuration specified in the [`ClientBuilder`].
+    pub fn build(self) -> SolRpcClient<R> {
+        SolRpcClient {
+            config: Arc::new(self.config),
         }
     }
 }
 
+impl<R> SolRpcClient<R> {
+    /// Call `getAccountInfo` on the SOL RPC canister.
+    // TODO XC-288 This should return a UiAccount (which is not a candid type)
+    pub fn get_account_info(
+        &self,
+        pubkey: Pubkey,
+    ) -> RequestBuilder<
+        R,
+        RpcConfig,
+        (sol_rpc_types::Pubkey, Option<GetAccountInfoParams>),
+        sol_rpc_types::MultiRpcResult<AccountInfo>,
+    > {
+        RequestBuilder::new(
+            self.clone(),
+            GetAccountInfoRequest::new(pubkey.into()),
+            10_000_000_000,
+        )
+    }
+
+    /// Call `getSlot` on the SOL RPC canister.
+    pub fn get_slot(
+        &self,
+    ) -> RequestBuilder<
+        R,
+        GetSlotRpcConfig,
+        Option<GetSlotParams>,
+        sol_rpc_types::MultiRpcResult<Slot>,
+    > {
+        RequestBuilder::new(self.clone(), GetSlotRequest::default(), 10_000_000_000)
+    }
+
+    /// Call `request` on the SOL RPC canister.
+    pub fn raw_request(
+        &self,
+        json_request: serde_json::Value,
+    ) -> RequestBuilder<R, RpcConfig, String, sol_rpc_types::MultiRpcResult<String>> {
+        RequestBuilder::new(
+            self.clone(),
+            RawRequest::try_from(json_request).expect("Client error: invalid JSON request"),
+            10_000_000_000,
+        )
+    }
+}
+
 impl<R: Runtime> SolRpcClient<R> {
-    /// Instantiate a new client with a specific runtime.
-    ///
-    /// To use the client inside a canister, see [`SolRpcClient<IcRuntime>::new_for_ic`].
-    pub fn new(runtime: R, sol_rpc_canister: Principal, rpc_sources: RpcSources) -> Self {
-        Self {
-            runtime,
-            sol_rpc_canister,
-            rpc_config: None,
-            rpc_sources,
-        }
-    }
-
-    /// Returns a new client with the given [`RpcSources`].
-    pub fn with_rpc_sources(self, rpc_sources: RpcSources) -> Self {
-        SolRpcClient {
-            rpc_sources,
-            ..self
-        }
-    }
-
-    /// Returns a new client with the given [`RpcConfig`].
-    pub fn with_rpc_config(self, rpc_config: RpcConfig) -> Self {
-        SolRpcClient {
-            rpc_config: Some(rpc_config),
-            ..self
-        }
-    }
-
     /// Call `getProviders` on the SOL RPC canister.
     pub async fn get_providers(&self) -> Vec<(SupportedRpcProviderId, SupportedRpcProvider)> {
-        self.runtime
-            .query_call(self.sol_rpc_canister, "getProviders", ())
+        self.config
+            .runtime
+            .query_call(self.config.sol_rpc_canister, "getProviders", ())
             .await
             .unwrap()
     }
 
     /// Call `updateApiKeys` on the SOL RPC canister.
     pub async fn update_api_keys(&self, api_keys: &[(SupportedRpcProviderId, Option<String>)]) {
-        self.runtime
+        self.config
+            .runtime
             .update_call(
-                self.sol_rpc_canister,
+                self.config.sol_rpc_canister,
                 "updateApiKeys",
                 (api_keys.to_vec(),),
                 0,
@@ -122,100 +256,36 @@ impl<R: Runtime> SolRpcClient<R> {
             .unwrap()
     }
 
-    /// Call `getAccountInfo` on the SOL RPC canister.
-    ///
-    /// This method returns a [`UiAccount`] which contains the whole response from the Solana
-    /// `getAccountInfo` call. A [`solana_account::Account`] instance may be obtained as using
-    /// the [`UiAccount::decode`] method.
-    ///
-    /// Note, however that [`solana_account::Account`] does not include the `space` field from the
-    /// response and does not support all account data encoding formats.
-    ///
-    /// [`UiAccount`]: solana_account_decoder_client_types::UiAccount
-    pub async fn get_account_info(
+    async fn execute_request<Config, Params, Output>(
         &self,
-        pubkey: Pubkey,
-        params: Option<GetAccountInfoParams>,
-    ) -> sol_rpc_types::MultiRpcResult<UiAccount> {
-        self.runtime
-            .update_call::<(
-                RpcSources,
-                Option<RpcConfig>,
-                sol_rpc_types::Pubkey,
-                Option<GetAccountInfoParams>,
-            ), sol_rpc_types::MultiRpcResult<sol_rpc_types::AccountInfo>>(
-                self.sol_rpc_canister,
-                "getAccountInfo",
-                (
-                    self.rpc_sources.clone(),
-                    self.rpc_config.clone(),
-                    pubkey.into(),
-                    params,
-                ),
-                10_000_000_000,
+        request: Request<Config, Params, Output>,
+    ) -> Output
+    where
+        Config: CandidType + Send,
+        Params: CandidType + Send,
+        Output: CandidType + DeserializeOwned,
+    {
+        self.config
+            .runtime
+            .update_call(
+                self.config.sol_rpc_canister,
+                &request.rpc_method,
+                (request.rpc_sources, request.rpc_config, request.params),
+                request.cycles,
             )
             .await
-            .expect("Client error: failed to call `getAccountInfo`")
-            .map(UiAccount::from)
-    }
-
-    /// Call `getSlot` on the SOL RPC canister.
-    pub async fn get_slot(
-        &self,
-        params: Option<GetSlotParams>,
-        rounding_error: Option<u64>,
-    ) -> sol_rpc_types::MultiRpcResult<Slot> {
-        let rpc_config = if self.rpc_config.is_some() || rounding_error.is_some() {
-            Some(GetSlotRpcConfig {
-                rounding_error,
-                response_size_estimate: self
-                    .rpc_config
-                    .as_ref()
-                    .and_then(|c| c.response_size_estimate),
-                response_consensus: self
-                    .rpc_config
-                    .as_ref()
-                    .and_then(|c| c.response_consensus.clone()),
+            .unwrap_or_else(|e| {
+                panic!(
+                    "Client error: failed to call `{}`: {e:?}",
+                    request.rpc_method
+                )
             })
-        } else {
-            None
-        };
-        self.runtime
-            .update_call(
-                self.sol_rpc_canister,
-                "getSlot",
-                (self.rpc_sources.clone(), rpc_config, params),
-                10_000_000_000,
-            )
-            .await
-            .expect("Client error: failed to call `getSlot`")
-    }
-
-    /// Call `request` on the SOL RPC canister.
-    pub async fn request(
-        &self,
-        json_rpc_payload: &str,
-        cycles: u128,
-    ) -> sol_rpc_types::MultiRpcResult<String> {
-        self.runtime
-            .update_call(
-                self.sol_rpc_canister,
-                "request",
-                (
-                    self.rpc_sources.clone(),
-                    self.rpc_config.clone(),
-                    json_rpc_payload,
-                ),
-                cycles,
-            )
-            .await
-            .unwrap()
     }
 }
 
-/// Runtime to be used by canisters on the Internet Computer.
+/// Runtime when interacting with a canister running on the Internet Computer.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub struct IcRuntime {}
+pub struct IcRuntime;
 
 #[async_trait]
 impl Runtime for IcRuntime {

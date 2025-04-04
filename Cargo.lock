@@ -4040,6 +4040,7 @@ dependencies = [
  "candid",
  "ic-cdk",
  "serde",
+ "serde_json",
  "sol_rpc_types",
  "solana-account",
  "solana-account-decoder-client-types",
