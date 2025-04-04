@@ -127,7 +127,7 @@ impl<R: Runtime> SolRpcClient<R> {
     /// This method returns a [`UiAccount`] which contains the whole response from the Solana
     /// `getAccountInfo` call. A [`solana_account::Account`] instance may be obtained as using
     /// the [`UiAccount::decode`] method.
-    /// 
+    ///
     /// Note, however that [`solana_account::Account`] does not include the `space` field from the
     /// response and does not support all account data encoding formats.
     ///
