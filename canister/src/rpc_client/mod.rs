@@ -7,7 +7,6 @@ use crate::http::{service_request_builder, ChargingPolicyWithCollateral};
 use crate::memory::State;
 use crate::{
     http::http_client,
-    logs::Priority,
     memory::read_state,
     metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider, Providers},
@@ -20,7 +19,6 @@ use canhttp::{
     CyclesChargingPolicy, CyclesCostEstimator, MaxResponseBytesRequestExtension,
     TransformContextRequestExtension,
 };
-use canlog::log;
 use ic_cdk::api::management_canister::http_request::CanisterHttpRequestArgument as IcHttpRequest;
 use ic_cdk::api::management_canister::http_request::TransformContext;
 use serde::{de::DeserializeOwned, Serialize};
@@ -107,11 +105,6 @@ impl SolRpcClient {
             .unwrap_or_default();
         let mut requests = MultiResults::default();
         for provider in providers {
-            log!(
-                Priority::Debug,
-                "[parallel_call]: will call provider: {:?}",
-                provider
-            );
             let request = request_builder(
                 resolve_rpc_provider(provider.clone()),
                 &read_state(|state| state.get_override_provider()),
@@ -173,11 +166,6 @@ impl SolRpcClient {
             .unwrap_or_default();
         let mut requests = MultiResults::default();
         for provider in providers {
-            log!(
-                Priority::Debug,
-                "[parallel_call]: will call provider: {:?}",
-                provider
-            );
             let request = request_builder(
                 resolve_rpc_provider(provider.clone()),
                 &read_state(|state| state.get_override_provider()),
