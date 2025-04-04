@@ -246,5 +246,6 @@ service : (InstallArgs,) -> {
   getSlotCyclesCost : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (RequestCostResult) query;
 
   // Make a generic JSON RPC request that sends the given json_rpc_payload.
-  jsonRequest : (RpcSources, opt RpcConfig, json_rpc_payload: text) -> (MultiRequestResult)
+  jsonRequest : (RpcSources, opt RpcConfig, json_rpc_payload: text) -> (MultiRequestResult);
+  jsonRequestCyclesCost : (RpcSources, opt RpcConfig, json_rpc_payload: text) -> (RequestCostResult) query;
 };

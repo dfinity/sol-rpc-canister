@@ -106,10 +106,10 @@ impl GetSlotRequest {
     }
 }
 
-pub type RawRequest = MultiRpcRequest<serde_json::Value, serde_json::Value>;
+pub type RawJsonRequest = MultiRpcRequest<serde_json::Value, serde_json::Value>;
 
-impl RawRequest {
-    pub fn raw_request(
+impl RawJsonRequest {
+    pub fn raw_json_request(
         rpc_sources: RpcSources,
         config: RpcConfig,
         json_rpc_payload: String,

@@ -119,11 +119,23 @@ async fn json_request(
     config: Option<RpcConfig>,
     json_rpc_payload: String,
 ) -> MultiRpcResult<String> {
-    match MultiRpcRequest::raw_request(source, config.unwrap_or_default(), json_rpc_payload) {
+    match MultiRpcRequest::raw_json_request(source, config.unwrap_or_default(), json_rpc_payload) {
         Ok(request) => process_result(RpcMethod::Generic, request.send_and_reduce().await)
             .map(|value| value.to_string()),
         Err(e) => process_error(e),
     }
+}
+
+#[query(name = "jsonRequestCyclesCost")]
+#[candid_method(query, rename = "jsonRequestCyclesCost")]
+async fn json_request_cycles_cost(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    json_rpc_payload: String,
+) -> RpcResult<u128> {
+    MultiRpcRequest::raw_json_request(source, config.unwrap_or_default(), json_rpc_payload)?
+        .cycles_cost()
+        .await
 }
 
 #[query(hidden = true)]
