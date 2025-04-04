@@ -124,33 +124,14 @@ impl<R: Runtime> SolRpcClient<R> {
 
     /// Call `getAccountInfo` on the SOL RPC canister.
     ///
-    /// This method returns a [`solana_account_decoder_client_types::UiAccount`] which contains
-    /// the whole response from the Solana `getAccountInfo` call. A [`solana_account::Account`]
-    /// instance may be obtained as follows:
-    /// ```rust
-    /// use candid::Principal;
-    /// use sol_rpc_client::SolRpcClient;
-    /// use sol_rpc_types::{RpcSources, SolanaCluster};
-    /// use std::str::FromStr;
-    /// # async fn main () {
-    ///
-    /// let client = SolRpcClient::new_for_ic(
-    ///     Principal::from_text("tghme-zyaaa-aaaar-qarca-cai").unwrap(),
-    ///     RpcSources::Default(SolanaCluster::Mainnet)
-    /// );
-    ///
-    /// let pubkey = solana_pubkey::Pubkey::from_str("11111111111111111111111111111111").unwrap();
-    ///
-    /// let account: solana_account::Account = client.get_account_info(pubkey, None)
-    ///     .await
-    ///     .expect_consistent()
-    ///     .unwrap()
-    ///     .decode()
-    ///     .expect("Failed to decode UiAccount");
-    /// # }
-    /// ```
+    /// This method returns a [`UiAccount`] which contains the whole response from the Solana
+    /// `getAccountInfo` call. A [`solana_account::Account`] instance may be obtained as using
+    /// the [`UiAccount::decode`] method.
+    /// 
     /// Note, however that [`solana_account::Account`] does not include the `space` field from the
     /// response and does not support all account data encoding formats.
+    ///
+    /// [`UiAccount`]: solana_account_decoder_client_types::UiAccount
     pub async fn get_account_info(
         &self,
         pubkey: Pubkey,
@@ -232,8 +213,9 @@ impl<R: Runtime> SolRpcClient<R> {
     }
 }
 
+/// Runtime to be used by canisters on the Internet Computer.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-struct IcRuntime {}
+pub struct IcRuntime {}
 
 #[async_trait]
 impl Runtime for IcRuntime {
