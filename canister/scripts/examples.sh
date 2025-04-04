@@ -39,7 +39,7 @@ GET_ACCOUNT_INFO_PARAMS="(
   \"11111111111111111111111111111111\",
   opt record {
     commitment = null;
-    encoding: = base64;
+    encoding = base64;
     dataSlice = null;
     minContextSlot = null;
   },
