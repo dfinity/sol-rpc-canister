@@ -50,15 +50,21 @@ thread_local! {
         },
         SupportedRpcProviderId::DrpcMainnet => SupportedRpcProvider {
             cluster: SolanaCluster::Mainnet,
-            access: RpcAccess::Unauthenticated {
-                public_url: "https://solana.drpc.org".to_string(),
-            },
+            access: RpcAccess::Authenticated {
+            auth: RpcAuth::UrlParameter {
+                    url_pattern: "https://lb.drpc.org/ogrpc?network=solana&dkey={API_KEY}".to_string()
+                },
+                public_url: Some("https://solana.drpc.org".to_string()),
+            }
         },
         SupportedRpcProviderId::DrpcDevnet => SupportedRpcProvider {
             cluster: SolanaCluster::Devnet,
-            access: RpcAccess::Unauthenticated {
-                public_url: "https://solana-devnet.drpc.org".to_string(),
-            },
+            access: RpcAccess::Authenticated {
+            auth: RpcAuth::UrlParameter {
+                    url_pattern: "https://lb.drpc.org/ogrpc?network=solana-devnet&dkey={API_KEY}".to_string()
+                },
+                public_url: Some("https://solana-devnet.drpc.org".to_string()),
+            }
         },
         SupportedRpcProviderId::HeliusMainnet => SupportedRpcProvider {
             cluster: SolanaCluster::Mainnet,
