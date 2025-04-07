@@ -200,8 +200,8 @@ impl<R> SolRpcClient<R> {
         RequestBuilder::new(self.clone(), GetSlotRequest::default(), 10_000_000_000)
     }
 
-    /// Call `request` on the SOL RPC canister.
-    pub fn raw_request(
+    /// Call `jsonRequest` on the SOL RPC canister.
+    pub fn raw_json_request(
         &self,
         json_request: serde_json::Value,
     ) -> RequestBuilder<R, RpcConfig, String, sol_rpc_types::MultiRpcResult<String>> {

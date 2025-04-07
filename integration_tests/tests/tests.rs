@@ -49,7 +49,7 @@ mod mock_request_tests {
         assert_matches!(
             client
                 .mock_http(builder_fn(MockOutcallBuilder::new(200, MOCK_RESPONSE))).build()
-                .raw_request(get_version_request())
+                .raw_json_request(get_version_request())
                 .with_cycles(0)
                 .send()
                 .await,
@@ -296,7 +296,7 @@ mod generic_request_tests {
         let client = setup.client().build();
 
         let results = client
-            .raw_request(get_version_request())
+            .raw_json_request(get_version_request())
             .with_cycles(0)
             .send()
             .await
@@ -338,7 +338,7 @@ mod generic_request_tests {
                 }),
             )
             .build()
-            .raw_request(get_version_request())
+            .raw_json_request(get_version_request())
             .with_cycles(0)
             .send()
             .await
