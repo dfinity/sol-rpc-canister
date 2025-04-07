@@ -529,85 +529,124 @@ fn rpc_sources() -> Vec<RpcSources> {
     ]
 }
 
-#[tokio::test]
-async fn should_get_slot() {
-    let setup = Setup::new().await.with_mock_api_keys().await;
-    let client = setup
-        .client()
-        .mock_http_sequence(vec![
-            MockOutcallBuilder::new(
-                200,
-                json!({ "jsonrpc": "2.0", "result": 371059358, "id": 0 }),
-            ),
-            MockOutcallBuilder::new(
-                200,
-                json!({ "jsonrpc": "2.0", "result": 371059358, "id": 1 }),
-            ),
-            MockOutcallBuilder::new(
-                200,
-                json!({ "jsonrpc": "2.0", "result": 371059358, "id": 2 }),
-            ),
-        ])
-        .build();
+mod cycles_cost_tests {
+    use crate::{assert_within, get_version_request};
+    use candid::CandidType;
+    use serde::de::DeserializeOwned;
+    use serde_json::json;
+    use sol_rpc_client::RequestBuilder;
+    use sol_rpc_int_tests::mock::MockOutcallBuilder;
+    use sol_rpc_int_tests::{PocketIcRuntime, Setup, SolRpcTestClient};
+    use sol_rpc_types::{GetSlotParams, ProviderError, RpcError};
+    use std::fmt::Debug;
 
-    let five_percents = 5_u8;
-    let request = client.get_slot().with_params(GetSlotParams::default());
+    #[tokio::test]
+    async fn should_be_idempotent() {
+        async fn check<Config, Params, Output>(
+            request: RequestBuilder<PocketIcRuntime<'_>, Config, Params, Output>,
+        ) where
+            Config: CandidType + Clone + Send,
+            Params: CandidType + Clone + Send,
+        {
+            let cycles_cost_1 = request.clone().request_cost().send().await.unwrap();
+            let cycles_cost_2 = request.request_cost().send().await.unwrap();
+            assert_eq!(cycles_cost_1, cycles_cost_2);
+            assert!(cycles_cost_1 > 0);
+        }
 
-    let cycles_cost = request.clone().request_cost().send().await.unwrap();
-    assert_within(cycles_cost, 1_792_548_000, five_percents);
+        let setup = Setup::new().await.with_mock_api_keys().await;
+        let client = setup.client().build();
 
-    let cycles_before = setup.sol_rpc_canister_cycles_balance().await;
-    let slot = request
-        .clone()
-        .with_cycles(cycles_cost)
-        .send()
-        .await
-        .expect_consistent()
-        .unwrap();
-    let cycles_after = setup.sol_rpc_canister_cycles_balance().await;
-    let cycles_consumed = cycles_before + cycles_cost - cycles_after;
-    assert_within(cycles_consumed, 841_708_745, five_percents);
+        check(client.get_slot().with_params(GetSlotParams::default())).await;
+        check(client.raw_json_request(get_version_request())).await;
 
-    assert_eq!(slot, 371059340);
-    assert!(
-        cycles_after > cycles_before,
-        "BUG: not enough cycles requested. Requested {cycles_cost} cycles, but consumed {cycles_consumed} cycles"
-    );
+        setup.drop().await;
+    }
 
-    let client = setup
-        .client()
-        .mock_http_sequence(vec![
-            MockOutcallBuilder::new(
-                200,
-                json!({ "jsonrpc": "2.0", "result": 371059358, "id": 3 }),
-            ),
-            MockOutcallBuilder::new(
-                200,
-                json!({ "jsonrpc": "2.0", "result": 371059358, "id": 4 }),
-            ),
-        ])
-        .build();
+    #[tokio::test]
+    async fn should_get_exact_cycles_cost() {
+        async fn check<Config, Params, Output>(
+            setup: &Setup,
+            request: RequestBuilder<
+                PocketIcRuntime<'_>,
+                Config,
+                Params,
+                sol_rpc_types::MultiRpcResult<Output>,
+            >,
+            expected_cycles_cost: u128,
+        ) where
+            Config: CandidType + Clone + Send,
+            Params: CandidType + Clone + Send,
+            Output: CandidType + Debug + DeserializeOwned,
+        {
+            let five_percents = 5_u8;
 
-    let results = client
-        .get_slot()
-        .with_params(GetSlotParams::default())
-        .with_cycles(cycles_cost - 1)
-        .send()
-        .await
-        .expect_inconsistent();
+            let cycles_cost = request.clone().request_cost().send().await.unwrap();
+            assert_within(cycles_cost, expected_cycles_cost, five_percents);
 
-    assert!(
-        results.iter().any(|(_provider, result)| matches!(
-            result,
-            &Err(RpcError::ProviderError(ProviderError::TooFewCycles {
-                expected: _,
-                received: _
-            }))
-        )),
-        "BUG: Expected at least one TooFewCycles error, but got {results:?}"
-    );
+            let cycles_before = setup.sol_rpc_canister_cycles_balance().await;
+            // Request with exact cycles amount should succeed
+            let result = request
+                .clone()
+                .with_cycles(cycles_cost)
+                .send()
+                .await
+                .expect_consistent();
+            if let Err(RpcError::ProviderError(ProviderError::TooFewCycles { .. })) = result {
+                panic!("BUG: estimated cycles cost was insufficient!: {result:?}");
+            }
+            let cycles_after = setup.sol_rpc_canister_cycles_balance().await;
+            let cycles_consumed = cycles_before + cycles_cost - cycles_after;
 
-    setup.drop().await;
+            assert!(
+                cycles_after > cycles_before,
+                "BUG: not enough cycles requested. Requested {cycles_cost} cycles, but consumed {cycles_consumed} cycles"
+            );
+
+            // Same request with less cycles should fail.
+            let results = request
+                .with_cycles(cycles_cost - 1)
+                .send()
+                .await
+                .expect_inconsistent();
+
+            assert!(
+                results.iter().any(|(_provider, result)| matches!(
+                    result,
+                    &Err(RpcError::ProviderError(ProviderError::TooFewCycles {
+                        expected: _,
+                        received: _
+                    }))
+                )),
+                "BUG: Expected at least one TooFewCycles error, but got {results:?}"
+            );
+        }
+
+        let setup = Setup::new().await.with_mock_api_keys().await;
+        let client = setup
+            .client()
+            // The exact cycles cost of an HTTPs outcall is independent of the response,
+            // so we always return a dummy response so that individual responses
+            // do not need to be mocked.
+            .mock_http(MockOutcallBuilder::new(403, json!({})))
+            .build();
+
+        check(
+            &setup,
+            client.get_slot().with_params(GetSlotParams::default()),
+            1_792_548_000,
+        )
+        .await;
+
+        check(
+            &setup,
+            client.raw_json_request(get_version_request()),
+            1_790_956_800,
+        )
+        .await;
+
+        setup.drop().await;
+    }
 }
 
 fn assert_within(actual: u128, expected: u128, percentage_error: u8) {
