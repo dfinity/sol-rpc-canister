@@ -1,16 +1,18 @@
+pub mod json;
 mod sol_rpc;
 #[cfg(test)]
 mod tests;
-pub mod types;
 
-use crate::rpc_client::types::GetAccountInfoParams;
 use crate::{
     http::http_client,
     logs::Priority,
     memory::read_state,
     metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider, Providers},
-    rpc_client::sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
+    rpc_client::{
+        json::GetAccountInfoParams,
+        sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
+    },
     types::RoundingError,
 };
 use canhttp::{
@@ -150,7 +152,7 @@ impl SolRpcClient {
     pub async fn get_account_info(
         &self,
         params: GetAccountInfoParams,
-    ) -> ReducedResult<solana_account_decoder_client_types::UiAccount> {
+    ) -> ReducedResult<Option<solana_account_decoder_client_types::UiAccount>> {
         self.parallel_call(
             "getAccountInfo",
             params,

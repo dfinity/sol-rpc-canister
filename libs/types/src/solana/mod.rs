@@ -1,3 +1,4 @@
+use crate::MultiRpcResult;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
@@ -18,8 +19,8 @@ pub struct GetSlotParams {
 /// The parameters for a Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getAccountInfo) RPC method call.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub struct GetAccountInfoParams {
-    /// The public key of the account whose info to fetch.
-    pub pubkey: Pubkey,
+    /// The public key of the account whose info to fetch formatted as a base-58 string.
+    pub pubkey: String,
     /// The request returns the slot that has reached this or the default commitment level.
     pub commitment: Option<CommitmentLevel>,
     /// Encoding format for Account data.
@@ -32,10 +33,20 @@ pub struct GetAccountInfoParams {
     pub min_context_slot: Option<u64>,
 }
 
-impl<T: Into<Pubkey>> From<T> for GetAccountInfoParams {
-    fn from(pubkey: T) -> Self {
+impl GetAccountInfoParams {
+    /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
+    pub fn is_default_config(&self) -> bool {
+        self.commitment.is_none()
+            && self.encoding.is_none()
+            && self.data_slice.is_none()
+            && self.min_context_slot.is_none()
+    }
+}
+
+impl From<solana_pubkey::Pubkey> for GetAccountInfoParams {
+    fn from(pubkey: solana_pubkey::Pubkey) -> Self {
         Self {
-            pubkey: pubkey.into(),
+            pubkey: pubkey.to_string(),
             commitment: None,
             encoding: None,
             data_slice: None,
@@ -119,7 +130,15 @@ pub struct AccountInfo {
     #[serde(rename = "rentEpoch")]
     pub rent_epoch: u64,
     /// The data size of the account.
-    pub space: Option<u64>,
+    pub space: u64,
+}
+
+impl From<MultiRpcResult<Option<AccountInfo>>>
+    for MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>
+{
+    fn from(result: MultiRpcResult<Option<AccountInfo>>) -> Self {
+        result.map(|maybe_account| maybe_account.map(|account| account.into()))
+    }
 }
 
 impl From<solana_account_decoder_client_types::UiAccount> for AccountInfo {
@@ -130,7 +149,7 @@ impl From<solana_account_decoder_client_types::UiAccount> for AccountInfo {
             owner: account.owner,
             executable: account.executable,
             rent_epoch: account.rent_epoch,
-            space: account.space,
+            space: account.space.unwrap_or_default(),
         }
     }
 }
@@ -143,7 +162,7 @@ impl From<AccountInfo> for solana_account_decoder_client_types::UiAccount {
             owner: account.owner,
             executable: account.executable,
             rent_epoch: account.rent_epoch,
-            space: account.space,
+            space: Some(account.space),
         }
     }
 }

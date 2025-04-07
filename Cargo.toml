@@ -69,6 +69,7 @@ solana-signature = "2.2.0"
 solana-transaction = "2.2.0"
 solana-account = "2.2.0"
 solana-account-decoder-client-types = "2.2.0"
+solana-rpc-client-api = "2.2.0"
 strum = { version = "0.27.0", features = ["derive"] }
 thiserror = "2.0.12"
 tokio = "1.44.1"
@@ -94,4 +95,5 @@ solana-program = { git = "https://github.com/lpahlavi/agave.git" }
 solana-pubkey = { git = "https://github.com/lpahlavi/agave.git" }
 solana-signature = { git = "https://github.com/lpahlavi/agave.git" }
 solana-transaction = { git = "https://github.com/lpahlavi/agave.git" }
+solana-rpc-client-api = { git = "https://github.com/lpahlavi/agave.git" }
 solana-system-interface = { git = "https://github.com/lpahlavi/solana-program-system.git" }

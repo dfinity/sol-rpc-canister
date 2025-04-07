@@ -80,7 +80,7 @@ async fn get_account_info(
     source: RpcSources,
     config: Option<RpcConfig>,
     params: GetAccountInfoParams,
-) -> MultiRpcResult<AccountInfo> {
+) -> MultiRpcResult<Option<AccountInfo>> {
     match CandidRpcClient::new(source, config) {
         Ok(client) => client.get_account_info(params).await,
         Err(err) => Err(err).into(),

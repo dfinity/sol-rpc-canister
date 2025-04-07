@@ -57,10 +57,15 @@ impl ResponseTransform {
 
         match self {
             Self::GetAccountInfo => {
-                canonicalize_response::<Value, UiAccount>(body_bytes, |result| {
-                    from_value::<UiAccount>(result["value"].clone())
-                        .expect("BUG: Unable to deserialize account")
-                });
+                canonicalize_response::<Value, Option<UiAccount>>(
+                    body_bytes,
+                    |result| match result["value"].clone() {
+                        Value::Null => None,
+                        value => Some(
+                            from_value::<UiAccount>(value).expect("Unable to deserialize account"),
+                        ),
+                    },
+                );
             }
             Self::GetSlot(rounding_error) => {
                 canonicalize_response::<Slot, Slot>(body_bytes, |slot| rounding_error.round(slot));

@@ -3,15 +3,11 @@ use sol_rpc_types::{CommitmentLevel, DataSlice, GetAccountInfoEncoding};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(into = "(String, Option<GetAccountInfoConfig>)")]
-pub struct GetAccountInfoParams(pub solana_pubkey::Pubkey, pub Option<GetAccountInfoConfig>);
+pub struct GetAccountInfoParams(String, Option<GetAccountInfoConfig>);
 
 impl From<sol_rpc_types::GetAccountInfoParams> for GetAccountInfoParams {
     fn from(params: sol_rpc_types::GetAccountInfoParams) -> Self {
-        let config = if params.commitment.is_none()
-            && params.encoding.is_none()
-            && params.data_slice.is_none()
-            && params.min_context_slot.is_none()
-        {
+        let config = if params.is_default_config() {
             None
         } else {
             Some(GetAccountInfoConfig {
@@ -21,8 +17,7 @@ impl From<sol_rpc_types::GetAccountInfoParams> for GetAccountInfoParams {
                 min_context_slot: params.min_context_slot,
             })
         };
-        let pubkey: solana_pubkey::Pubkey = params.pubkey.into();
-        Self(pubkey, config)
+        Self(params.pubkey, config)
     }
 }
 

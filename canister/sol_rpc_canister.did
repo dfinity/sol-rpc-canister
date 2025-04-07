@@ -175,7 +175,7 @@ type DataSlice = record {
 
 // The parameters for a call to the `getAccountInfo` Solana RPC method.
 type GetAccountInfoParams = record {
-  pubkey: Pubkey;
+  pubkey: text;
   commitment: opt CommitmentLevel;
   encoding: opt GetAccountInfoEncoding;
   dataSlice: opt DataSlice;
@@ -238,7 +238,7 @@ type AccountEncoding = variant {
 };
 
 // Represents the result of a call to the `getAccountInfo` Solana RPC method.
-type GetAccountInfoResult = variant { Ok : AccountInfo; Err : RpcError };
+type GetAccountInfoResult = variant { Ok : opt AccountInfo; Err : RpcError };
 
 // Represents an aggregated result from multiple RPC calls to the `getAccountInfo` Solana RPC method.
 type MultiGetAccountInfoResult = variant {

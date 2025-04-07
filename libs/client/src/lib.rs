@@ -48,8 +48,8 @@ use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    AccountInfo, GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources,
-    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources, SolanaCluster,
+    SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_clock::Slot;
 use std::sync::Arc;
@@ -189,7 +189,6 @@ impl<R> ClientBuilder<R> {
 
 impl<R> SolRpcClient<R> {
     /// Call `getAccountInfo` on the SOL RPC canister.
-    // TODO XC-288 This should return a UiAccount (which is not a candid type)
     pub fn get_account_info(
         &self,
         params: impl Into<GetAccountInfoParams>,
@@ -197,7 +196,8 @@ impl<R> SolRpcClient<R> {
         R,
         RpcConfig,
         GetAccountInfoParams,
-        sol_rpc_types::MultiRpcResult<AccountInfo>,
+        sol_rpc_types::MultiRpcResult<Option<sol_rpc_types::AccountInfo>>,
+        sol_rpc_types::MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>,
     > {
         RequestBuilder::new(
             self.clone(),
@@ -214,6 +214,7 @@ impl<R> SolRpcClient<R> {
         GetSlotRpcConfig,
         Option<GetSlotParams>,
         sol_rpc_types::MultiRpcResult<Slot>,
+        sol_rpc_types::MultiRpcResult<Slot>,
     > {
         RequestBuilder::new(self.clone(), GetSlotRequest::default(), 10_000_000_000)
     }
@@ -222,7 +223,13 @@ impl<R> SolRpcClient<R> {
     pub fn raw_request(
         &self,
         json_request: serde_json::Value,
-    ) -> RequestBuilder<R, RpcConfig, String, sol_rpc_types::MultiRpcResult<String>> {
+    ) -> RequestBuilder<
+        R,
+        RpcConfig,
+        String,
+        sol_rpc_types::MultiRpcResult<String>,
+        sol_rpc_types::MultiRpcResult<String>,
+    > {
         RequestBuilder::new(
             self.clone(),
             RawRequest::try_from(json_request).expect("Client error: invalid JSON request"),
@@ -255,18 +262,18 @@ impl<R: Runtime> SolRpcClient<R> {
             .unwrap()
     }
 
-    async fn execute_request<Config, Params, Output>(
+    async fn execute_request<Config, Params, CandidOutput, Output>(
         &self,
-        request: Request<Config, Params, Output>,
+        request: Request<Config, Params, CandidOutput, Output>,
     ) -> Output
     where
         Config: CandidType + Send,
         Params: CandidType + Send,
-        Output: CandidType + DeserializeOwned,
+        CandidOutput: Into<Output> + CandidType + DeserializeOwned,
     {
         self.config
             .runtime
-            .update_call(
+            .update_call::<(RpcSources, Option<Config>, Params), CandidOutput>(
                 self.config.sol_rpc_canister,
                 &request.rpc_method,
                 (request.rpc_sources, request.rpc_config, request.params),
@@ -279,6 +286,7 @@ impl<R: Runtime> SolRpcClient<R> {
                     request.rpc_method
                 )
             })
+            .into()
     }
 }
 

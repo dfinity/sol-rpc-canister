@@ -4068,9 +4068,11 @@ dependencies = [
  "sol_rpc_canister",
  "sol_rpc_client",
  "sol_rpc_types",
+ "solana-account",
  "solana-account-decoder-client-types",
  "solana-client",
  "solana-pubkey",
+ "solana-rpc-client-api",
  "tokio",
 ]
 

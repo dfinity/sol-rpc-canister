@@ -74,12 +74,12 @@ impl CandidRpcClient {
     pub async fn get_account_info(
         &self,
         params: GetAccountInfoParams,
-    ) -> MultiRpcResult<AccountInfo> {
+    ) -> MultiRpcResult<Option<AccountInfo>> {
         process_result(
             RpcMethod::GetAccountInfo,
             self.client.get_account_info(params.into()).await,
         )
-        .map(AccountInfo::from)
+        .map(|maybe_account| maybe_account.map(AccountInfo::from))
     }
 
     pub async fn get_slot(&self, params: Option<GetSlotParams>) -> MultiRpcResult<Slot> {
