@@ -99,7 +99,7 @@ fn solana_rpc_client_get_account(
     sol: &RpcClient,
     config: Option<solana_rpc_client_api::config::RpcAccountInfoConfig>,
 ) -> Option<solana_account::Account> {
-    sol.get_account_with_config(&pubkey, config.unwrap_or_default())
+    sol.get_account_with_config(pubkey, config.unwrap_or_default())
         .expect("Failed to get account")
         .value
 }

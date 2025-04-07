@@ -198,7 +198,7 @@ type AccountInfo = record {
     // The epoch at which this account will next owe rent.
     rentEpoch: nat64;
     // The data size of the account.
-    space: opt nat64;
+    space: nat64;
 };
 
 // Represents Solana account data.
