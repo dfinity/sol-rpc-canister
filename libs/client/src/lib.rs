@@ -40,7 +40,7 @@
 
 mod request;
 
-pub use request::{Request, RequestBuilder, SolRpcRequest};
+pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 
 use crate::request::{GetSlotRequest, RawJsonRequest};
 use async_trait::async_trait;

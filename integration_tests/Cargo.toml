@@ -28,4 +28,5 @@ sol_rpc_types = { path = "../libs/types" }
 assert_matches = { workspace = true }
 futures = { workspace = true }
 solana-client = { workspace = true }
+strum = {workspace = true}
 tokio = { workspace = true }

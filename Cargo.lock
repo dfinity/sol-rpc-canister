@@ -4041,6 +4041,7 @@ dependencies = [
  "serde_json",
  "sol_rpc_types",
  "solana-clock",
+ "strum 0.27.1",
 ]
 
 [[package]]
@@ -4065,6 +4066,7 @@ dependencies = [
  "sol_rpc_client",
  "sol_rpc_types",
  "solana-client",
+ "strum 0.27.1",
  "tokio",
 ]
 

@@ -18,3 +18,4 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 solana-clock = { workspace = true }
 sol_rpc_types = { path = "../types" }
+strum = {workspace = true}

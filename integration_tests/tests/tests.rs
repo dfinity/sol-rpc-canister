@@ -8,9 +8,8 @@ use sol_rpc_int_tests::{
     mock::MockOutcallBuilder, Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID,
 };
 use sol_rpc_types::{
-    GetSlotParams, InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint,
-    RpcError, RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider,
-    SupportedRpcProviderId,
+    InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
+    RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use std::str::FromStr;
 
@@ -534,11 +533,12 @@ mod cycles_cost_tests {
     use candid::CandidType;
     use serde::de::DeserializeOwned;
     use serde_json::json;
-    use sol_rpc_client::RequestBuilder;
+    use sol_rpc_client::{RequestBuilder, SolRpcEndpoint};
     use sol_rpc_int_tests::mock::MockOutcallBuilder;
     use sol_rpc_int_tests::{PocketIcRuntime, Setup, SolRpcTestClient};
     use sol_rpc_types::{GetSlotParams, ProviderError, RpcError};
     use std::fmt::Debug;
+    use strum::IntoEnumIterator;
 
     #[tokio::test]
     async fn should_be_idempotent() {
@@ -557,8 +557,16 @@ mod cycles_cost_tests {
         let setup = Setup::new().await.with_mock_api_keys().await;
         let client = setup.client().build();
 
-        check(client.get_slot().with_params(GetSlotParams::default())).await;
-        check(client.raw_json_request(get_version_request())).await;
+        for endpoint in SolRpcEndpoint::iter() {
+            match endpoint {
+                SolRpcEndpoint::GetSlot => {
+                    check(client.get_slot().with_params(GetSlotParams::default())).await;
+                }
+                SolRpcEndpoint::JsonRequest => {
+                    check(client.raw_json_request(get_version_request())).await;
+                }
+            }
+        }
 
         setup.drop().await;
     }
@@ -631,19 +639,28 @@ mod cycles_cost_tests {
             .mock_http(MockOutcallBuilder::new(403, json!({})))
             .build();
 
-        check(
-            &setup,
-            client.get_slot().with_params(GetSlotParams::default()),
-            1_792_548_000,
-        )
-        .await;
-
-        check(
-            &setup,
-            client.raw_json_request(get_version_request()),
-            1_790_956_800,
-        )
-        .await;
+        for endpoint in SolRpcEndpoint::iter() {
+            // To find out the expected_cycles_cost for a new endpoint, set the amount to 0
+            // and run the test. It should fail and report the amount of cycles needed.
+            match endpoint {
+                SolRpcEndpoint::GetSlot => {
+                    check(
+                        &setup,
+                        client.get_slot().with_params(GetSlotParams::default()),
+                        1_792_548_000,
+                    )
+                    .await;
+                }
+                SolRpcEndpoint::JsonRequest => {
+                    check(
+                        &setup,
+                        client.raw_json_request(get_version_request()),
+                        1_790_956_800,
+                    )
+                    .await;
+                }
+            }
+        }
 
         setup.drop().await;
     }

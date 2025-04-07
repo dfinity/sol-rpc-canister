@@ -3,6 +3,7 @@ use candid::CandidType;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcResult, RpcSources};
 use solana_clock::Slot;
+use strum::EnumIter;
 
 /// Solana RPC endpoint supported by the SOL RPC canister.
 pub trait SolRpcRequest {
@@ -20,13 +21,17 @@ pub trait SolRpcRequest {
     fn params(self) -> Self::Params;
 }
 
-#[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
+/// Endpoint on the SOL RPC canister triggering a call to Solana providers.
+#[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, EnumIter)]
 pub enum SolRpcEndpoint {
+    /// `getSlot` endpoint.
     GetSlot,
+    /// `jsonRequest` endpoint.
     JsonRequest,
 }
 
 impl SolRpcEndpoint {
+    /// Method name on the SOL RPC canister
     pub fn rpc_method(&self) -> &'static str {
         match &self {
             SolRpcEndpoint::GetSlot => "getSlot",
@@ -34,6 +39,7 @@ impl SolRpcEndpoint {
         }
     }
 
+    /// Method name on the SOL RPC canister to estimate the amount of cycles for that request.
     pub fn cycles_cost_method(&self) -> &'static str {
         match &self {
             SolRpcEndpoint::GetSlot => "getSlotCyclesCost",
