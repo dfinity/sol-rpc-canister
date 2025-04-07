@@ -80,16 +80,16 @@ zeroize = { version = "1.8", features = ["zeroize_derive"] }
 # TODO XC-297: Currently, the solana-* crates have a dependency on wasm-bindgen
 #   when they are built for wasm32-unknown-unknown target. For this reason, we
 #   are using forked version of the relevant repositories.
+#   see [solana-sdk#117](https://github.com/anza-xyz/solana-sdk/issues/117)
 [patch.crates-io]
-solana-client = { git = "https://github.com/lpahlavi/agave.git" }
-solana-clock = { git = "https://github.com/lpahlavi/agave.git" }
-solana-hash = { git = "https://github.com/lpahlavi/agave.git" }
-solana-instruction = { git = "https://github.com/lpahlavi/agave.git" }
-solana-keypair = { git = "https://github.com/lpahlavi/agave.git" }
-solana-message = { git = "https://github.com/lpahlavi/agave.git" }
-solana-nonce = { git = "https://github.com/lpahlavi/agave.git" }
-solana-program = { git = "https://github.com/lpahlavi/agave.git" }
-solana-pubkey = { git = "https://github.com/lpahlavi/agave.git" }
-solana-signature = { git = "https://github.com/lpahlavi/agave.git" }
-solana-transaction = { git = "https://github.com/lpahlavi/agave.git" }
-solana-system-interface = { git = "https://github.com/lpahlavi/solana-program-system.git" }
+solana-client = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
+solana-clock = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
+solana-hash = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
+solana-instruction = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
+solana-keypair = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
+solana-message = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
+solana-nonce = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
+solana-program = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
+solana-pubkey = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
+solana-signature = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
+solana-transaction = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
