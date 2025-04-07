@@ -11,8 +11,6 @@ FLAGS="--network=$NETWORK --identity=$IDENTITY --wallet=$WALLET"
 dfx canister call sol_rpc getProviders $FLAGS || exit 1
 
 # Get the last finalized slot on Mainnet with a 2-out-of-3 strategy
-# TODO XC-321: get cycle cost by query method
-CYCLES="2B"
 GET_SLOT_PARAMS="(
   variant { Default = variant { Mainnet } },
   opt record {
@@ -23,4 +21,5 @@ GET_SLOT_PARAMS="(
   },
   opt record { minContextSlot = null; commitment = opt variant { finalized } },
 )"
+CYCLES=$(dfx canister call sol_rpc getSlotCyclesCost "$GET_SLOT_PARAMS" $FLAGS || exit 1)
 dfx canister call sol_rpc getSlot "$GET_SLOT_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
