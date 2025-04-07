@@ -70,7 +70,7 @@ thread_local! {
             cluster: SolanaCluster::Mainnet,
             access: RpcAccess::Authenticated {
                 auth: RpcAuth::UrlParameter {
-                    url_pattern: "https://devnet.helius-rpc.com/?api-key={API_KEY}".to_string(),
+                    url_pattern: "https://mainnet.helius-rpc.com/?api-key={API_KEY}".to_string(),
                 },
                 public_url: None,
             },
@@ -79,7 +79,7 @@ thread_local! {
             cluster: SolanaCluster::Devnet,
             access: RpcAccess::Authenticated {
                 auth: RpcAuth::UrlParameter {
-                    url_pattern: "https://mainnet.helius-rpc.com/?api-key={API_KEY}".to_string(),
+                    url_pattern: "https://devnet.helius-rpc.com/?api-key={API_KEY}".to_string(),
                 },
                 public_url: None,
             },
