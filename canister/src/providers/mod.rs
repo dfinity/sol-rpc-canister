@@ -110,21 +110,21 @@ impl Providers {
     // if the providers are not explicitly specified by the caller.
     const DEFAULT_MAINNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] = &[
         SupportedRpcProviderId::AlchemyMainnet,
-        SupportedRpcProviderId::AnkrMainnet,
+        SupportedRpcProviderId::HeliusMainnet,
         SupportedRpcProviderId::DrpcMainnet,
     ];
     const NON_DEFAULT_MAINNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] = &[
-        SupportedRpcProviderId::HeliusMainnet,
+        SupportedRpcProviderId::AnkrMainnet,
         SupportedRpcProviderId::PublicNodeMainnet,
     ];
 
     const DEFAULT_DEVNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] = &[
         SupportedRpcProviderId::AlchemyDevnet,
-        SupportedRpcProviderId::AnkrDevnet,
+        SupportedRpcProviderId::HeliusDevnet,
         SupportedRpcProviderId::DrpcDevnet,
     ];
     const NON_DEFAULT_DEVNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] =
-        &[SupportedRpcProviderId::HeliusDevnet];
+        &[SupportedRpcProviderId::AnkrDevnet];
 
     pub fn new(source: RpcSources, strategy: ConsensusStrategy) -> Result<Self, ProviderError> {
         fn get_sources(provider_ids: &[SupportedRpcProviderId]) -> Vec<RpcSource> {
