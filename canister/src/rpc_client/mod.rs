@@ -1,4 +1,3 @@
-pub mod json;
 mod sol_rpc;
 #[cfg(test)]
 mod tests;
@@ -9,10 +8,7 @@ use crate::{
     memory::read_state,
     metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider, Providers},
-    rpc_client::{
-        json::GetAccountInfoParams,
-        sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
-    },
+    rpc_client::sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
     types::RoundingError,
 };
 use canhttp::{
@@ -24,8 +20,8 @@ use canlog::log;
 use ic_cdk::api::management_canister::http_request::TransformContext;
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
-    ConsensusStrategy, GetSlotParams, JsonRpcError, ProviderError, RpcConfig, RpcError, RpcSource,
-    RpcSources,
+    ConsensusStrategy, GetAccountInfoParams, GetBlockParams, GetSlotParams, JsonRpcError,
+    ProviderError, RpcConfig, RpcError, RpcSource, RpcSources,
 };
 use std::{collections::BTreeSet, fmt::Debug};
 use tower::ServiceExt;
@@ -158,6 +154,21 @@ impl SolRpcClient {
             params,
             self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
             &Some(ResponseTransform::GetAccountInfo),
+        )
+        .await
+        .reduce(self.reduction_strategy())
+    }
+
+    /// Query the Solana [`getBlock`](https://solana.com/docs/rpc/http/getblock) RPC method.
+    pub async fn get_block(
+        &self,
+        params: GetBlockParams,
+    ) -> ReducedResult<Option<solana_transaction_status_client_types::UiConfirmedBlock>> {
+        self.parallel_call(
+            "getBlock",
+            params,
+            self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
+            &Some(ResponseTransform::GetBlock),
         )
         .await
         .reduce(self.reduction_strategy())

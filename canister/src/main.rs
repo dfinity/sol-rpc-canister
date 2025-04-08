@@ -12,10 +12,7 @@ use sol_rpc_canister::{
     providers::{get_provider, PROVIDERS},
     types::RoundingError,
 };
-use sol_rpc_types::{
-    AccountInfo, GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, MultiRpcResult, RpcAccess,
-    RpcConfig, RpcError, RpcSources, Slot, SupportedRpcProvider, SupportedRpcProviderId,
-};
+use sol_rpc_types::{AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig, MultiRpcResult, RpcAccess, RpcConfig, RpcError, RpcSources, Slot, SupportedRpcProvider, SupportedRpcProviderId};
 use std::str::FromStr;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
@@ -83,6 +80,19 @@ async fn get_account_info(
 ) -> MultiRpcResult<Option<AccountInfo>> {
     match CandidRpcClient::new(source, config) {
         Ok(client) => client.get_account_info(params).await,
+        Err(err) => Err(err).into(),
+    }
+}
+
+#[update(name = "getBlock")]
+#[candid_method(rename = "getBlock")]
+async fn get_block(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: GetBlockParams,
+) -> MultiRpcResult<Option<ConfirmedBlock>> {
+    match CandidRpcClient::new(source, config) {
+        Ok(client) => client.get_block(params).await,
         Err(err) => Err(err).into(),
     }
 }

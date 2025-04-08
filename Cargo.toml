@@ -59,8 +59,9 @@ serde_bytes = "0.11.17"
 serde_json = "1.0.140"
 solana-account = "2.2.0"
 solana-account-decoder-client-types = "2.2.0"
-solana-clock = "2.2.0"
 solana-client = "2.2.0"
+solana-clock = "2.2.0"
+solana-commitment-config = "2.2.0"
 solana-hash = "2.2.0"
 solana-instruction = "2.2.0"
 solana-message = "2.2.0"
@@ -70,6 +71,7 @@ solana-pubkey = "2.2.0"
 solana-rpc-client-api = "2.2.0"
 solana-signature = "2.2.0"
 solana-transaction = "2.2.0"
+solana-transaction-status-client-types = "2.2.0"
 strum = { version = "0.27.0", features = ["derive"] }
 thiserror = "2.0.12"
 tokio = "1.44.1"
@@ -87,6 +89,7 @@ solana-account = { git = "https://github.com/dfinity/agave", tag = "323039e-js-f
 solana-account-decoder-client-types = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-client = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-clock = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
+solana-commitment-config = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-hash = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-instruction = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-keypair = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
@@ -97,3 +100,4 @@ solana-pubkey = { git = "https://github.com/dfinity/agave", tag = "323039e-js-fe
 solana-rpc-client-api = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-signature = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-transaction = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
+solana-transaction-status-client-types = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }

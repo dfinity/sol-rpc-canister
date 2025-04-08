@@ -1,4 +1,4 @@
-use crate::{RpcResult, RpcSource};
+use crate::{AccountInfo, ConfirmedBlock, RpcResult, RpcSource};
 use candid::CandidType;
 use serde::Deserialize;
 use std::fmt::Debug;
@@ -59,5 +59,21 @@ impl<T: Debug> MultiRpcResult<T> {
             }
             MultiRpcResult::Inconsistent(results) => results,
         }
+    }
+}
+
+impl From<MultiRpcResult<Option<AccountInfo>>>
+for MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>
+{
+    fn from(result: MultiRpcResult<Option<AccountInfo>>) -> Self {
+        result.map(|maybe_account| maybe_account.map(|account| account.into()))
+    }
+}
+
+impl From<MultiRpcResult<Option<ConfirmedBlock>>>
+for MultiRpcResult<Option<solana_transaction_status_client_types::UiConfirmedBlock>>
+{
+    fn from(result: MultiRpcResult<Option<ConfirmedBlock>>) -> Self {
+        result.map(|maybe_block| maybe_block.map(|block| block.into()))
     }
 }

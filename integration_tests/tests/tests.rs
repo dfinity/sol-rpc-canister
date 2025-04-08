@@ -9,7 +9,8 @@ use sol_rpc_int_tests::{
 };
 use sol_rpc_types::{
     InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
-    RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    RpcResult, RpcSource, RpcSources, Slot, SolanaCluster, SupportedRpcProvider,
+    SupportedRpcProviderId,
 };
 use solana_account_decoder_client_types::{UiAccount, UiAccountData, UiAccountEncoding};
 use std::{iter::zip, str::FromStr};
@@ -224,6 +225,58 @@ mod get_account_info_tests {
                 .expect_consistent();
 
             assert_eq!(results, Ok(None));
+        }
+
+        setup.drop().await;
+    }
+}
+
+mod get_block_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn should_get_account_info() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
+            let client = setup.client().with_rpc_sources(sources);
+            let slot: Slot = 123;
+
+            let results = client
+                .mock_sequential_json_rpc_responses::<3>(
+                    200,
+                    json!({
+                        "id": first_id,
+                        "jsonrpc": "2.0",
+                        "result":{
+                            "blockHeight": 360854634,
+                            "blockTime": 1744122369,
+                            "parentSlot": 372877611,
+                            "blockhash": "8QeCusqSTKeC23NwjTKRBDcPuEfVLtszkxbpL6mXQEp4",
+                            "previousBlockhash": "4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3"}
+                    }),
+                )
+                .build()
+                .get_block(slot)
+                .send()
+                .await
+                .expect_consistent();
+
+            assert_eq!(
+                results,
+                Ok(solana_transaction_status_client_types::UiConfirmedBlock {
+                    previous_blockhash: "4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3".to_string(),
+                    blockhash: "8QeCusqSTKeC23NwjTKRBDcPuEfVLtszkxbpL6mXQEp4".to_string(),
+                    parent_slot: 372877611,
+                    block_time: Some(1744122369),
+                    block_height: Some(360854634),
+                    transactions: None,
+                    signatures: None,
+                    rewards: None,
+                    num_reward_partitions: None,
+                }
+                .into())
+            );
         }
 
         setup.drop().await;

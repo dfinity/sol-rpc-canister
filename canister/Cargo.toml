@@ -37,6 +37,7 @@ serde_bytes = { workspace = true }
 solana-account = { workspace = true, features = ["serde"] }
 solana-account-decoder-client-types = { workspace = true }
 solana-pubkey = { workspace = true }
+solana-transaction-status-client-types = {workspace = true}
 tower = { workspace = true }
 tower-http = { workspace = true, features = ["set-header", "util"] }
 url = { workspace = true }
