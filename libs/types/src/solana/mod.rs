@@ -94,9 +94,9 @@ pub enum GetAccountInfoEncoding {
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
 pub struct DataSlice {
     /// Number of bytes to return.
-    length: u64, // TODO XC-288: Is this correct for usize?
+    length: u32,
     /// Byte offset from which to start reading.
-    offset: u64, // TODO XC-288: Is this correct for usize?
+    offset: u32,
 }
 
 /// Solana Ed25519 [public key](`https://solana.com/docs/references/terminology#public-key-pubkey`).
@@ -149,7 +149,7 @@ impl From<solana_account_decoder_client_types::UiAccount> for AccountInfo {
             owner: account.owner,
             executable: account.executable,
             rent_epoch: account.rent_epoch,
-            space: account.space.unwrap_or_default(),
+            space: account.space.expect("'space' field should not be null"),
         }
     }
 }

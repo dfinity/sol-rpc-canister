@@ -169,21 +169,22 @@ type GetAccountInfoEncoding = variant {
 // Represents a slice of the return value of the `getAccountInfo` Solana RPC method.
 // NOTE: Data slicing is only available for base58, base64, or base64+zstd encodings.
 type DataSlice = record {
-  length: nat64;
-  offset: nat64;
+  length: nat32;
+  offset: nat32;
 };
 
 // The parameters for a call to the `getAccountInfo` Solana RPC method.
 type GetAccountInfoParams = record {
-  pubkey: text;
+  pubkey: Pubkey;
   commitment: opt CommitmentLevel;
   encoding: opt GetAccountInfoEncoding;
   dataSlice: opt DataSlice;
   minContextSlot: opt nat64;
 };
 
-// A Solana Ed25519 public key.
-type Pubkey = vec nat8;
+// Address of a Solana account as a base-58 encoded string.
+// Example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+type Pubkey = text;
 
 // Solana account info.
 type AccountInfo = record {
@@ -191,8 +192,8 @@ type AccountInfo = record {
     lamports: nat64;
     // Data associated with the account.
     data: AccountData;
-    // base-58 encoded Pubkey of the program this account has been assigned to.
-    owner: text;
+    // Pubkey of the program this account has been assigned to.
+    owner: Pubkey;
     // Boolean indicating if the account contains a program (and is strictly read-only).
     executable: bool;
     // The epoch at which this account will next owe rent.
@@ -215,8 +216,8 @@ type AccountData = variant {
 // Represents Solana account data parsed as JSON.
 type ParsedAccount = record {
     // The Solana program that interprets the data.
-    program: text;
-    // The account data parsed a JSON and formatted as a string.
+    program: Pubkey;
+    // The account data parsed as JSON and formatted as a string.
     parsed: text;
     // The data size of the account.
     space: nat64;
@@ -238,6 +239,7 @@ type AccountEncoding = variant {
 };
 
 // Represents the result of a call to the `getAccountInfo` Solana RPC method.
+// If the requested account doesn't exist, the `Ok` variant will be null.
 type GetAccountInfoResult = variant { Ok : opt AccountInfo; Err : RpcError };
 
 // Represents an aggregated result from multiple RPC calls to the `getAccountInfo` Solana RPC method.

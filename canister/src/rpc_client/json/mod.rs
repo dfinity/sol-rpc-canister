@@ -27,7 +27,7 @@ impl From<GetAccountInfoParams> for (String, Option<GetAccountInfoConfig>) {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct GetAccountInfoConfig {
     /// The request returns the slot that has reached this or the default commitment level.
     pub commitment: Option<CommitmentLevel>,
