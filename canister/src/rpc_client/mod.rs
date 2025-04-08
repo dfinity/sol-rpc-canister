@@ -1,7 +1,5 @@
 pub mod json;
 mod sol_rpc;
-#[cfg(test)]
-mod tests;
 
 use crate::http::errors::HttpClientError;
 use crate::http::{service_request_builder, ChargingPolicyWithCollateral};

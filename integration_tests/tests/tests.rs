@@ -624,14 +624,15 @@ mod cycles_cost_tests {
     use sol_rpc_client::{RequestBuilder, SolRpcEndpoint};
     use sol_rpc_int_tests::mock::MockOutcallBuilder;
     use sol_rpc_int_tests::{PocketIcRuntime, Setup, SolRpcTestClient};
-    use sol_rpc_types::{GetSlotParams, ProviderError, RpcError};
+    use sol_rpc_types::{GetAccountInfoParams, GetSlotParams, ProviderError, RpcError};
+    use solana_pubkey::Pubkey;
     use std::fmt::Debug;
     use strum::IntoEnumIterator;
 
     #[tokio::test]
     async fn should_be_idempotent() {
-        async fn check<Config, Params, Output>(
-            request: RequestBuilder<PocketIcRuntime<'_>, Config, Params, Output>,
+        async fn check<Config, Params, CandidOutput, Output>(
+            request: RequestBuilder<PocketIcRuntime<'_>, Config, Params, CandidOutput, Output>,
         ) where
             Config: CandidType + Clone + Send,
             Params: CandidType + Clone + Send,
@@ -653,6 +654,16 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::JsonRequest => {
                     check(client.raw_json_request(get_version_request())).await;
                 }
+                SolRpcEndpoint::GetAccountInfo => {
+                    check(
+                        client.get_account_info(GetAccountInfoParams::from(
+                            "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+                                .parse::<Pubkey>()
+                                .unwrap(),
+                        )),
+                    )
+                    .await;
+                }
             }
         }
 
@@ -661,19 +672,23 @@ mod cycles_cost_tests {
 
     #[tokio::test]
     async fn should_get_exact_cycles_cost() {
-        async fn check<Config, Params, Output>(
+        async fn check<Config, Params, CandidOutput, Output>(
             setup: &Setup,
             request: RequestBuilder<
                 PocketIcRuntime<'_>,
                 Config,
                 Params,
+                sol_rpc_types::MultiRpcResult<CandidOutput>,
                 sol_rpc_types::MultiRpcResult<Output>,
             >,
             expected_cycles_cost: u128,
         ) where
             Config: CandidType + Clone + Send,
             Params: CandidType + Clone + Send,
-            Output: CandidType + Debug + DeserializeOwned,
+            CandidOutput: CandidType + DeserializeOwned,
+            Output: Debug,
+            sol_rpc_types::MultiRpcResult<CandidOutput>:
+                Into<sol_rpc_types::MultiRpcResult<Output>>,
         {
             let five_percents = 5_u8;
 
@@ -744,6 +759,18 @@ mod cycles_cost_tests {
                         &setup,
                         client.raw_json_request(get_version_request()),
                         1_790_956_800,
+                    )
+                    .await;
+                }
+                SolRpcEndpoint::GetAccountInfo => {
+                    check(
+                        &setup,
+                        client.get_account_info(GetAccountInfoParams::from(
+                            "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+                                .parse::<Pubkey>()
+                                .unwrap(),
+                        )),
+                        0,
                     )
                     .await;
                 }

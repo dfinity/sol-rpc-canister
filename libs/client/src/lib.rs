@@ -296,7 +296,6 @@ impl<R: Runtime> SolRpcClient<R> {
     where
         Config: CandidType + Send,
         Params: CandidType + Send,
-        Output: CandidType + DeserializeOwned,
         CandidOutput: Into<Output> + CandidType + DeserializeOwned,
     {
         self.config
