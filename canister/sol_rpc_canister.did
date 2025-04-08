@@ -341,6 +341,7 @@ service : (InstallArgs,) -> {
 
   // Call the Solana `getAccountInfo` RPC method and return the resulting slot.
   getAccountInfo : (RpcSources, opt RpcConfig, GetAccountInfoParams) -> (MultiGetAccountInfoResult);
+  getAccountInfoCyclesCost : (RpcSources, opt RpcConfig, GetAccountInfoParams) -> (RequestCostResult) query;
 
   // Call the Solana `getSlot` RPC method and return the resulting slot.
   getSlot : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (MultiGetSlotResult);
