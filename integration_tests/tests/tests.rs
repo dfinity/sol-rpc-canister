@@ -625,7 +625,7 @@ mod cycles_cost_tests {
     use sol_rpc_int_tests::mock::MockOutcallBuilder;
     use sol_rpc_int_tests::{PocketIcRuntime, Setup, SolRpcTestClient};
     use sol_rpc_types::{
-        GetAccountInfoParams, GetSlotParams, InstallArgs, ProviderError, RpcError,
+        GetAccountInfoParams, GetSlotParams, InstallArgs, Mode, ProviderError, RpcError,
     };
     use solana_pubkey::Pubkey;
     use std::fmt::Debug;
@@ -646,6 +646,51 @@ mod cycles_cost_tests {
         }
 
         let setup = Setup::new().await.with_mock_api_keys().await;
+        let client = setup.client().build();
+
+        for endpoint in SolRpcEndpoint::iter() {
+            match endpoint {
+                SolRpcEndpoint::GetSlot => {
+                    check(client.get_slot().with_params(GetSlotParams::default())).await;
+                }
+                SolRpcEndpoint::JsonRequest => {
+                    check(client.json_request(get_version_request())).await;
+                }
+                SolRpcEndpoint::GetAccountInfo => {
+                    check(
+                        client.get_account_info(GetAccountInfoParams::from(
+                            "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+                                .parse::<Pubkey>()
+                                .unwrap(),
+                        )),
+                    )
+                    .await;
+                }
+            }
+        }
+
+        setup.drop().await;
+    }
+
+    #[tokio::test]
+    async fn should_be_zero_when_in_demo_mode() {
+        async fn check<Config, Params, CandidOutput, Output>(
+            request: RequestBuilder<PocketIcRuntime<'_>, Config, Params, CandidOutput, Output>,
+        ) where
+            Config: CandidType + Clone + Send,
+            Params: CandidType + Clone + Send,
+        {
+            let cycles_cost = request.request_cost().send().await;
+            assert_eq!(cycles_cost, Ok(0));
+        }
+
+        let setup = Setup::new().await.with_mock_api_keys().await;
+        setup
+            .upgrade_canister(InstallArgs {
+                mode: Some(Mode::Demo),
+                ..Default::default()
+            })
+            .await;
         let client = setup.client().build();
 
         for endpoint in SolRpcEndpoint::iter() {
@@ -789,7 +834,6 @@ mod cycles_cost_tests {
         setup.drop().await;
     }
 }
-
 fn assert_within(actual: u128, expected: u128, percentage_error: u8) {
     assert!(percentage_error <= 100);
     let error_margin = expected.saturating_mul(percentage_error as u128) / 100;
