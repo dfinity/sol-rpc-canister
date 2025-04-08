@@ -102,8 +102,8 @@ jobs:
       - name: 'Fund Solana accounts'
         run: |
           solana config set --url localhost
-          solana airdrop 10 $(solana-keygen pubkey $GITHUB_WORKSPACE/keypair1.json)
-          solana airdrop 10 $(solana-keygen pubkey $GITHUB_WORKSPACE/keypair2.json)
+          solana airdrop 10 $(solana-keygen pubkey $GITHUB_WORKSPACE/integration_tests/keypair1.json)
+          solana airdrop 10 $(solana-keygen pubkey $GITHUB_WORKSPACE/integration_tests/keypair2.json)
         shell: bash
 
       - name: 'Download wallet canister'

@@ -45,3 +45,5 @@ GET_ACCOUNT_INFO_PARAMS="(
   },
 )"
 dfx canister call sol_rpc getAccountInfo "$GET_ACCOUNT_INFO_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
+
+# TODO XC-339: Add end-to-end test for `sendTransaction`
