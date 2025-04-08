@@ -83,7 +83,9 @@ async fn get_account_info(
     params: GetAccountInfoParams,
 ) -> MultiRpcResult<Option<AccountInfo>> {
     match MultiRpcRequest::get_account_info(source, config.unwrap_or_default(), params) {
-        Ok(request) => process_result(RpcMethod::GetAccountInfo, request.send_and_reduce().await),
+        Ok(request) => {
+            process_result(RpcMethod::GetAccountInfo, request.send_and_reduce().await).into()
+        }
         Err(e) => process_error(e),
     }
 }

@@ -23,8 +23,8 @@ use ic_cdk::api::management_canister::http_request::CanisterHttpRequestArgument 
 use ic_cdk::api::management_canister::http_request::TransformContext;
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
-    AccountInfo, ConsensusStrategy, GetSlotParams, GetSlotRpcConfig, ProviderError, RpcConfig,
-    RpcError, RpcResult, RpcSource, RpcSources,
+    ConsensusStrategy, GetSlotParams, GetSlotRpcConfig, ProviderError, RpcConfig, RpcError,
+    RpcResult, RpcSource, RpcSources,
 };
 use solana_clock::Slot;
 use std::fmt::Debug;
@@ -79,7 +79,10 @@ impl<Params: Clone, Output> Clone for MultiRpcRequest<Params, Output> {
     }
 }
 
-pub type GetAccountInfoRequest = MultiRpcRequest<json::GetAccountInfoParams, Option<AccountInfo>>;
+pub type GetAccountInfoRequest = MultiRpcRequest<
+    json::GetAccountInfoParams,
+    Option<solana_account_decoder_client_types::UiAccount>,
+>;
 
 impl GetAccountInfoRequest {
     pub fn get_account_info<Params: Into<json::GetAccountInfoParams>>(
