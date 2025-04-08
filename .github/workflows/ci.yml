@@ -99,6 +99,13 @@ jobs:
         run: |
           solana-test-validator &
 
+      - name: 'Fund Solana accounts'
+        run: |
+          solana config set --url localhost
+          solana airdrop 10 $(solana-keygen pubkey $GITHUB_WORKSPACE/keypair1.json)
+          solana airdrop 10 $(solana-keygen pubkey $GITHUB_WORKSPACE/keypair2.json)
+        shell: bash
+
       - name: 'Download wallet canister'
         run: |
           wget https://github.com/dfinity/sdk/raw/0a82e042adec6f24ba53665312713923bf276a34/src/distributed/wallet.wasm.gz

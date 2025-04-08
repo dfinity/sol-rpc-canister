@@ -3,6 +3,7 @@ use candid::CandidType;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources,
+    SendTransactionParams, TransactionId,
 };
 use solana_clock::Slot;
 
@@ -60,6 +61,30 @@ impl SolRpcRequest for GetSlotRequest {
 
     fn rpc_method(&self) -> &str {
         "getSlot"
+    }
+
+    fn params(self) -> Self::Params {
+        self.0
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SendTransactionRequest(SendTransactionParams);
+
+impl SendTransactionRequest {
+    pub fn new(params: SendTransactionParams) -> Self {
+        Self(params)
+    }
+}
+
+impl SolRpcRequest for SendTransactionRequest {
+    type Config = RpcConfig;
+    type Params = SendTransactionParams;
+    type CandidOutput = sol_rpc_types::MultiRpcResult<TransactionId>;
+    type Output = sol_rpc_types::MultiRpcResult<solana_signature::Signature>;
+
+    fn rpc_method(&self) -> &str {
+        "sendTransaction"
     }
 
     fn params(self) -> Self::Params {

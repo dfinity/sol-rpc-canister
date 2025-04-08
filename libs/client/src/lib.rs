@@ -42,14 +42,15 @@ mod request;
 
 pub use request::{Request, RequestBuilder, SolRpcRequest};
 
-use crate::request::{GetAccountInfoRequest, GetSlotRequest, RawRequest};
+use crate::request::{GetAccountInfoRequest, GetSlotRequest, RawRequest, SendTransactionRequest};
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources, SolanaCluster,
-    SupportedRpcProvider, SupportedRpcProviderId,
+    GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources,
+    SendTransactionParams, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    TransactionId,
 };
 use solana_clock::Slot;
 use std::sync::Arc;
@@ -217,6 +218,24 @@ impl<R> SolRpcClient<R> {
         sol_rpc_types::MultiRpcResult<Slot>,
     > {
         RequestBuilder::new(self.clone(), GetSlotRequest::default(), 10_000_000_000)
+    }
+
+    /// Call `sendTransaction` on the SOL RPC canister.
+    pub fn send_transaction(
+        &self,
+        params: impl Into<SendTransactionParams>,
+    ) -> RequestBuilder<
+        R,
+        RpcConfig,
+        SendTransactionParams,
+        sol_rpc_types::MultiRpcResult<TransactionId>,
+        sol_rpc_types::MultiRpcResult<solana_signature::Signature>,
+    > {
+        RequestBuilder::new(
+            self.clone(),
+            SendTransactionRequest::new(params.into()),
+            10_000_000_000,
+        )
     }
 
     /// Call `request` on the SOL RPC canister.

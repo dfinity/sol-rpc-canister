@@ -144,6 +144,7 @@ pub enum RpcMethod {
     GetAccountInfo,
     GetSlot,
     Generic,
+    SendTransaction,
 }
 
 impl RpcMethod {
@@ -152,6 +153,7 @@ impl RpcMethod {
             RpcMethod::GetAccountInfo => "getAccountInfo",
             RpcMethod::GetSlot => "getSlot",
             RpcMethod::Generic => "generic",
+            RpcMethod::SendTransaction => "sendTransaction",
         }
     }
 }

@@ -1,10 +1,75 @@
-use crate::MultiRpcResult;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
 /// A Solana [slot](https://solana.com/docs/references/terminology#slot).
 pub type Slot = u64;
+
+/// A Solana base58-encoded [transaction ID](https://solana.com/docs/references/terminology#transaction-id).
+pub type TransactionId = String;
+
+/// The parameters for a Solana [`sendTransaction`](https://solana.com/docs/rpc/http/sendtransaction) RPC method call.
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+pub struct SendTransactionParams {
+    /// Fully-signed transaction, as encoded string.
+    pub transaction: String,
+    /// Encoding format for the transaction.
+    pub encoding: Option<SendTransactionEncoding>,
+    /// When true, skip the preflight transaction checks. Default: false.
+    #[serde(rename = "skipPreflight")]
+    pub skip_preflight: Option<bool>,
+    #[serde(rename = "preflightCommitment")]
+    /// Commitment level to use for preflight. See Configuring State Commitment. Default finalized.
+    pub preflight_commitment: Option<String>,
+    /// Maximum number of times for the RPC node to retry sending the transaction to the leader.
+    /// If this parameter not provided, the RPC node will retry the transaction until it is
+    /// finalized or until the blockhash expires.
+    #[serde(rename = "maxRetries")]
+    pub max_retries: Option<usize>, // TODO XC-294: Is this the right type here?
+    /// Set the minimum slot at which to perform preflight transaction checks
+    #[serde(rename = "minContextSlot")]
+    pub min_context_slot: Option<u64>,
+}
+
+impl SendTransactionParams {
+    /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
+    pub fn is_default_config(&self) -> bool {
+        self.encoding.is_none()
+            && self.skip_preflight.is_none()
+            && self.preflight_commitment.is_none()
+            && self.max_retries.is_none()
+            && self.min_context_slot.is_none()
+    }
+}
+
+impl From<solana_transaction::Transaction> for SendTransactionParams {
+    fn from(transaction: solana_transaction::Transaction) -> Self {
+        fn encode(transaction: solana_transaction::Transaction) -> String {
+            bs58::encode(bincode::serialize(&transaction).expect("Failed to serialize transaction"))
+                .into_string()
+        }
+        Self {
+            transaction: encode(transaction),
+            encoding: None,
+            skip_preflight: None,
+            preflight_commitment: None,
+            max_retries: None,
+            min_context_slot: None,
+        }
+    }
+}
+
+/// The encoding format for the transaction argument to the Solana
+/// [`sendTransaction`](https://solana.com/docs/rpc/http/sendtransaction) RPC method call.
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+pub enum SendTransactionEncoding {
+    /// The transaction is base-58 encoded (slow, deprecated).
+    #[serde(rename = "base58")]
+    Base58,
+    /// The transaction is base-64 encoded.
+    #[serde(rename = "base64")]
+    Base64,
+}
 
 /// The parameters for a Solana [`getSlot`](https://solana.com/docs/rpc/http/getslot) RPC method call.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
@@ -16,7 +81,7 @@ pub struct GetSlotParams {
     pub min_context_slot: Option<u64>,
 }
 
-/// The parameters for a Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getAccountInfo) RPC method call.
+/// The parameters for a Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method call.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub struct GetAccountInfoParams {
     /// The public key of the account whose info to fetch formatted as a base-58 string.
@@ -131,14 +196,6 @@ pub struct AccountInfo {
     pub rent_epoch: u64,
     /// The data size of the account.
     pub space: u64,
-}
-
-impl From<MultiRpcResult<Option<AccountInfo>>>
-    for MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>
-{
-    fn from(result: MultiRpcResult<Option<AccountInfo>>) -> Self {
-        result.map(|maybe_account| maybe_account.map(|account| account.into()))
-    }
 }
 
 impl From<solana_account_decoder_client_types::UiAccount> for AccountInfo {

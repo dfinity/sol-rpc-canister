@@ -14,7 +14,8 @@ use sol_rpc_canister::{
 };
 use sol_rpc_types::{
     AccountInfo, GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, MultiRpcResult, RpcAccess,
-    RpcConfig, RpcError, RpcSources, Slot, SupportedRpcProvider, SupportedRpcProviderId,
+    RpcConfig, RpcError, RpcSources, SendTransactionParams, Slot, SupportedRpcProvider,
+    SupportedRpcProviderId, TransactionId,
 };
 use std::str::FromStr;
 
@@ -104,6 +105,19 @@ async fn get_slot(
         rounding_error,
     ) {
         Ok(client) => client.get_slot(params).await,
+        Err(err) => Err(err).into(),
+    }
+}
+
+#[update(name = "sendTransaction")]
+#[candid_method(rename = "sendTransaction")]
+async fn send_transaction(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: SendTransactionParams,
+) -> MultiRpcResult<TransactionId> {
+    match CandidRpcClient::new(source, config) {
+        Ok(client) => client.send_transaction(params).await,
         Err(err) => Err(err).into(),
     }
 }

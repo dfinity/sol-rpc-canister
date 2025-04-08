@@ -9,9 +9,11 @@ use sol_rpc_int_tests::{
 };
 use sol_rpc_types::{
     InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
-    RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    RpcResult, RpcSource, RpcSources, SendTransactionParams, SolanaCluster, SupportedRpcProvider,
+    SupportedRpcProviderId,
 };
 use solana_account_decoder_client_types::{UiAccount, UiAccountData, UiAccountEncoding};
+use solana_signature::Signature;
 use std::{iter::zip, str::FromStr};
 
 const MOCK_REQUEST_URL: &str = "https://api.devnet.solana.com/";
@@ -368,6 +370,48 @@ mod get_slot_tests {
                 .collect();
 
             assert_eq!(results, vec![Ok(1234), Ok(1229), Ok(1237)]);
+        }
+
+        setup.drop().await;
+    }
+}
+
+mod send_transaction_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn should_send_transaction() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
+            let client = setup.client().with_rpc_sources(sources);
+
+            let results = client
+                .mock_sequential_json_rpc_responses::<3>(
+                    200,
+                    json!({
+                        "id": first_id,
+                        "jsonrpc": "2.0",
+                        "result": "2vC221MDR312jrFzh5TRnMfUCHrCiG4cBuzHmagdgrQSsdLHaq65uJVLCWmubw4FkBDUxhRpQma785MpMwRS6ob7",
+                    }),
+                )
+                .build()
+                .send_transaction(SendTransactionParams {
+                    transaction: "transaction".to_string(),
+                    encoding: None,
+                    skip_preflight: None,
+                    preflight_commitment: None,
+                    max_retries: None,
+                    min_context_slot: None,
+                })
+                .send()
+                .await
+                .expect_consistent();
+
+            assert_eq!(
+                results,
+                Ok(Signature::from_str("2vC221MDR312jrFzh5TRnMfUCHrCiG4cBuzHmagdgrQSsdLHaq65uJVLCWmubw4FkBDUxhRpQma785MpMwRS6ob7").unwrap())
+            );
         }
 
         setup.drop().await;

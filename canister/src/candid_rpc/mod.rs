@@ -10,7 +10,8 @@ use canhttp::multi::ReductionError;
 use serde::Serialize;
 use sol_rpc_types::{
     AccountInfo, GetAccountInfoParams, GetSlotParams, MultiRpcResult, RpcAccess, RpcAuth,
-    RpcConfig, RpcResult, RpcSource, RpcSources, Slot, SupportedRpcProvider,
+    RpcConfig, RpcResult, RpcSource, RpcSources, SendTransactionParams, Slot, SupportedRpcProvider,
+    TransactionId,
 };
 use std::fmt::Debug;
 
@@ -84,6 +85,16 @@ impl CandidRpcClient {
 
     pub async fn get_slot(&self, params: Option<GetSlotParams>) -> MultiRpcResult<Slot> {
         process_result(RpcMethod::GetSlot, self.client.get_slot(params).await)
+    }
+
+    pub async fn send_transaction(
+        &self,
+        params: SendTransactionParams,
+    ) -> MultiRpcResult<TransactionId> {
+        process_result(
+            RpcMethod::SendTransaction,
+            self.client.send_transaction(params.into()).await,
+        )
     }
 
     pub async fn raw_request<I>(

@@ -10,7 +10,7 @@ use crate::{
     metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider, Providers},
     rpc_client::{
-        json::GetAccountInfoParams,
+        json::{GetAccountInfoParams, SendTransactionParams},
         sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
     },
     types::RoundingError,
@@ -25,7 +25,7 @@ use ic_cdk::api::management_canister::http_request::TransformContext;
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
     ConsensusStrategy, GetSlotParams, JsonRpcError, ProviderError, RpcConfig, RpcError, RpcSource,
-    RpcSources,
+    RpcSources, TransactionId,
 };
 use std::{collections::BTreeSet, fmt::Debug};
 use tower::ServiceExt;
@@ -173,6 +173,21 @@ impl SolRpcClient {
             vec![params],
             self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
             &Some(ResponseTransform::GetSlot(self.rounding_error)),
+        )
+        .await
+        .reduce(self.reduction_strategy())
+    }
+
+    /// Query the Solana [`sendTransaction`](https://solana.com/docs/rpc/http/sendtransaction) RPC method.
+    pub async fn send_transaction(
+        &self,
+        params: SendTransactionParams,
+    ) -> ReducedResult<TransactionId> {
+        self.parallel_call(
+            "sendTransaction",
+            params,
+            self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
+            &Some(ResponseTransform::SendTransaction),
         )
         .await
         .reduce(self.reduction_strategy())
