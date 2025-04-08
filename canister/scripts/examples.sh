@@ -21,12 +21,10 @@ GET_SLOT_PARAMS="(
   },
   opt record { minContextSlot = null; commitment = opt variant { finalized } },
 )"
-CYCLES=$(dfx canister call sol_rpc getSlotCyclesCost "$GET_SLOT_PARAMS" $FLAGS || exit 1)
+CYCLES=$(dfx canister call sol_rpc getSlotCyclesCost "$GET_SLOT_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
 dfx canister call sol_rpc getSlot "$GET_SLOT_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
 
-# Get the System Program account info on Mainnet with a 2-out-of-3 strategy
-# TODO XC-321: get cycle cost by query method
-CYCLES="2B"
+# Get the USDC mint account info on Mainnet with a 2-out-of-3 strategy
 GET_ACCOUNT_INFO_PARAMS="(
   variant { Default = variant { Mainnet } },
   opt record {
@@ -43,4 +41,5 @@ GET_ACCOUNT_INFO_PARAMS="(
     minContextSlot = null;
   },
 )"
+CYCLES=$(dfx canister call sol_rpc getAccountInfoCyclesCost "$GET_ACCOUNT_INFO_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
 dfx canister call sol_rpc getAccountInfo "$GET_ACCOUNT_INFO_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
