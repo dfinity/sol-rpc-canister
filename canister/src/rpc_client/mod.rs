@@ -18,7 +18,7 @@ use canhttp::{
     CyclesChargingPolicy, CyclesCostEstimator, MaxResponseBytesRequestExtension,
     TransformContextRequestExtension,
 };
-use http::Request;
+use http::{Request, Response};
 use ic_cdk::api::management_canister::http_request::CanisterHttpRequestArgument as IcHttpRequest;
 use ic_cdk::api::management_canister::http_request::TransformContext;
 use serde::{de::DeserializeOwned, Serialize};
@@ -227,15 +227,12 @@ impl<Params, Output> MultiRpcRequest<Params, Output> {
 
         let client = service_request_builder()
             .service_fn(extract_request)
-            .map_err(|e: HttpClientError| RpcError::from(e))
-            .map_response(|r| r.into_body());
+            .map_err(RpcError::from)
+            .map_response(Response::into_body);
 
         let (requests, errors) = requests.into_inner();
-        if !errors.is_empty() {
-            return Err(errors
-                .into_values()
-                .next()
-                .expect("BUG: errors is not empty"));
+        if let Some(error) = errors.into_values().next() {
+            return Err(error);
         }
 
         let (_client, results) = canhttp::multi::parallel_call(client, requests).await;
