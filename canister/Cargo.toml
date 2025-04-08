@@ -20,7 +20,6 @@ canlog = { path = "../canlog", features = ["derive"] }
 ciborium = { workspace = true }
 const_format = { workspace = true }
 derive_more = { workspace = true }
-futures = { workspace = true }
 hex = { workspace = true }
 http = { workspace = true }
 ic-cdk = { workspace = true }
@@ -35,6 +34,9 @@ regex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_bytes = { workspace = true }
+solana-account = { workspace = true, features = ["serde"] }
+solana-account-decoder-client-types = { workspace = true }
+solana-pubkey = { workspace = true }
 tower = { workspace = true }
 tower-http = { workspace = true, features = ["set-header", "util"] }
 url = { workspace = true }
@@ -44,3 +46,10 @@ thiserror = { workspace = true }
 [dev-dependencies]
 candid_parser = { workspace = true }
 proptest = { workspace = true }
+
+[features]
+# WARNING: Disabling this feature will lead to some functionality not working anymore
+#   such as decoding of Solana account data in base64+zstd format which in turn might
+#   lead to some runtime errors.
+zstd = ["solana-account-decoder-client-types/zstd"]
+default = ["zstd"]

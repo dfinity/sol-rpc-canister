@@ -10,7 +10,8 @@ use ic_cdk::{
 };
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
-use serde_json::{from_slice, to_vec};
+use serde_json::{from_slice, from_value, to_vec, Value};
+use solana_account_decoder_client_types::UiAccount;
 use solana_clock::Slot;
 use std::{fmt, fmt::Debug};
 
@@ -33,6 +34,8 @@ pub const MAX_PAYLOAD_SIZE: u64 = HTTP_MAX_SIZE - HEADER_SIZE_LIMIT;
 #[derive(Debug, Decode, Encode)]
 pub enum ResponseTransform {
     #[n(0)]
+    GetAccountInfo,
+    #[n(1)]
     GetSlot(#[n(1)] RoundingError),
     #[n(2)]
     Raw,
@@ -40,23 +43,35 @@ pub enum ResponseTransform {
 
 impl ResponseTransform {
     fn apply(&self, body_bytes: &mut Vec<u8>) {
-        fn canonicalize<T>(body_bytes: &mut Vec<u8>, f: impl FnOnce(T) -> T)
+        fn canonicalize_response<T, R>(body_bytes: &mut Vec<u8>, f: impl FnOnce(T) -> R)
         where
             T: Serialize + DeserializeOwned,
+            R: Serialize + DeserializeOwned,
         {
-            if let Ok(Ok(bytes)) = from_slice::<T>(body_bytes).map(f).as_ref().map(to_vec) {
-                *body_bytes = bytes
+            if let Ok(response) = from_slice::<JsonRpcResponse<T>>(body_bytes) {
+                if let Ok(bytes) = to_vec(&response.map(f)) {
+                    *body_bytes = bytes
+                }
             }
         }
 
         match self {
+            Self::GetAccountInfo => {
+                canonicalize_response::<Value, Option<UiAccount>>(
+                    body_bytes,
+                    |result| match result["value"].clone() {
+                        Value::Null => None,
+                        value => Some(
+                            from_value::<UiAccount>(value).expect("Unable to deserialize account"),
+                        ),
+                    },
+                );
+            }
             Self::GetSlot(rounding_error) => {
-                canonicalize::<JsonRpcResponse<Slot>>(body_bytes, |response| {
-                    response.map(|slot| rounding_error.round(slot))
-                });
+                canonicalize_response::<Slot, Slot>(body_bytes, |slot| rounding_error.round(slot));
             }
             Self::Raw => {
-                canonicalize::<serde_json::Value>(body_bytes, std::convert::identity);
+                canonicalize_response::<Value, Value>(body_bytes, std::convert::identity);
             }
         }
     }

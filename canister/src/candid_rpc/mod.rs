@@ -9,10 +9,9 @@ use crate::{
 use canhttp::multi::ReductionError;
 use serde::Serialize;
 use sol_rpc_types::{
-    GetSlotParams, MultiRpcResult, RpcAccess, RpcAuth, RpcConfig, RpcResult, RpcSource, RpcSources,
-    SupportedRpcProvider,
+    AccountInfo, GetAccountInfoParams, GetSlotParams, MultiRpcResult, RpcAccess, RpcAuth,
+    RpcConfig, RpcResult, RpcSource, RpcSources, Slot, SupportedRpcProvider,
 };
-use solana_clock::Slot;
 use std::fmt::Debug;
 
 fn process_result<T>(method: RpcMethod, result: ReducedResult<T>) -> MultiRpcResult<T> {
@@ -52,7 +51,7 @@ pub fn hostname(provider: SupportedRpcProvider) -> Option<String> {
     hostname_from_url(url.as_str())
 }
 
-/// Adapt the `EthRpcClient` to the `Candid` interface used by the EVM-RPC canister.
+/// Adapt the `SolRpcClient` to the `Candid` interface used by the SOL-RPC canister.
 pub struct CandidRpcClient {
     client: SolRpcClient,
 }
@@ -72,17 +71,29 @@ impl CandidRpcClient {
         })
     }
 
-    pub async fn get_slot(&self, params: GetSlotParams) -> MultiRpcResult<Slot> {
+    pub async fn get_account_info(
+        &self,
+        params: GetAccountInfoParams,
+    ) -> MultiRpcResult<Option<AccountInfo>> {
+        process_result(
+            RpcMethod::GetAccountInfo,
+            self.client.get_account_info(params.into()).await,
+        )
+        .map(|maybe_account| maybe_account.map(AccountInfo::from))
+    }
+
+    pub async fn get_slot(&self, params: Option<GetSlotParams>) -> MultiRpcResult<Slot> {
         process_result(RpcMethod::GetSlot, self.client.get_slot(params).await)
     }
 
     pub async fn raw_request<I>(
         &self,
         request: canhttp::http::json::JsonRpcRequest<I>,
-    ) -> MultiRpcResult<serde_json::Value>
+    ) -> MultiRpcResult<String>
     where
         I: Serialize + Clone + Debug,
     {
         process_result(RpcMethod::Generic, self.client.raw_request(request).await)
+            .map(|value| value.to_string())
     }
 }

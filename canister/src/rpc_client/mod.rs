@@ -1,3 +1,4 @@
+pub mod json;
 mod sol_rpc;
 #[cfg(test)]
 mod tests;
@@ -8,7 +9,10 @@ use crate::{
     memory::read_state,
     metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider, Providers},
-    rpc_client::sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
+    rpc_client::{
+        json::GetAccountInfoParams,
+        sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
+    },
     types::RoundingError,
 };
 use canhttp::{
@@ -23,7 +27,6 @@ use sol_rpc_types::{
     ConsensusStrategy, GetSlotParams, JsonRpcError, ProviderError, RpcConfig, RpcError, RpcSource,
     RpcSources,
 };
-use solana_clock::Slot;
 use std::{collections::BTreeSet, fmt::Debug};
 use tower::ServiceExt;
 
@@ -145,8 +148,26 @@ impl SolRpcClient {
         results
     }
 
+    /// Query the Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method.
+    pub async fn get_account_info(
+        &self,
+        params: GetAccountInfoParams,
+    ) -> ReducedResult<Option<solana_account_decoder_client_types::UiAccount>> {
+        self.parallel_call(
+            "getAccountInfo",
+            params,
+            self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
+            &Some(ResponseTransform::GetAccountInfo),
+        )
+        .await
+        .reduce(self.reduction_strategy())
+    }
+
     /// Query the Solana [`getSlot`](https://solana.com/docs/rpc/http/getslot) RPC method.
-    pub async fn get_slot(&self, params: GetSlotParams) -> ReducedResult<Slot> {
+    pub async fn get_slot(
+        &self,
+        params: Option<GetSlotParams>,
+    ) -> ReducedResult<solana_clock::Slot> {
         self.parallel_call(
             "getSlot",
             vec![params],
@@ -166,7 +187,7 @@ impl SolRpcClient {
     {
         self.parallel_call(
             request.method(),
-            request.params(),
+            vec![request.params()],
             self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
             &Some(ResponseTransform::Raw),
         )
