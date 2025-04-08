@@ -102,3 +102,4 @@ solana-rpc-client-api = { git = "https://github.com/dfinity/agave", tag = "32303
 solana-signer = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-signature = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-transaction = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
+solana-system-interface = { git = "https://github.com/lpahlavi/solana-program-system.git" }

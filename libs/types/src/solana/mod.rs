@@ -18,14 +18,14 @@ pub struct SendTransactionParams {
     /// When true, skip the preflight transaction checks. Default: false.
     #[serde(rename = "skipPreflight")]
     pub skip_preflight: Option<bool>,
-    #[serde(rename = "preflightCommitment")]
     /// Commitment level to use for preflight. See Configuring State Commitment. Default finalized.
+    #[serde(rename = "preflightCommitment")]
     pub preflight_commitment: Option<String>,
     /// Maximum number of times for the RPC node to retry sending the transaction to the leader.
     /// If this parameter not provided, the RPC node will retry the transaction until it is
     /// finalized or until the blockhash expires.
     #[serde(rename = "maxRetries")]
-    pub max_retries: Option<usize>, // TODO XC-294: Is this the right type here?
+    pub max_retries: Option<u32>,
     /// Set the minimum slot at which to perform preflight transaction checks
     #[serde(rename = "minContextSlot")]
     pub min_context_slot: Option<u64>,
@@ -206,6 +206,8 @@ impl From<solana_account_decoder_client_types::UiAccount> for AccountInfo {
             owner: account.owner,
             executable: account.executable,
             rent_epoch: account.rent_epoch,
+            // The `space` field is optional for backwards compatibility reasons, however it should
+            // always contain a value.
             space: account.space.expect("'space' field should not be null"),
         }
     }

@@ -111,6 +111,16 @@ mod normalization_tests {
         );
     }
 
+    #[test]
+    fn should_normalize_send_transaction_response() {
+        let transaction_id = "2vC221MDR312jrFzh5TRnMfUCHrCiG4cBuzHmagdgrQSsdLHaq65uJVLCWmubw4FkBDUxhRpQma785MpMwRS6ob7";
+        assert_normalized(
+            &ResponseTransform::SendTransaction,
+            &format!("\"{transaction_id}\""),
+            transaction_id.to_string(),
+        );
+    }
+
     fn assert_normalized<T>(transform: &ResponseTransform, result: &str, expected: T)
     where
         T: Debug + Serialize + DeserializeOwned,

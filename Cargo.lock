@@ -5250,17 +5250,14 @@ dependencies = [
 [[package]]
 name = "solana-system-interface"
 version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94d7c18cb1a91c6be5f5a8ac9276a1d7c737e39a21beba9ea710ab4b9c63bc90"
+source = "git+https://github.com/lpahlavi/solana-program-system.git#6dfd02af3419fe1c3abec879a787aeb2bbbed9de"
 dependencies = [
- "js-sys",
  "num-traits",
  "serde",
  "serde_derive",
  "solana-decode-error 2.2.1",
  "solana-instruction",
  "solana-pubkey",
- "wasm-bindgen",
 ]
 
 [[package]]
