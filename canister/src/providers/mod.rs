@@ -50,21 +50,27 @@ thread_local! {
         },
         SupportedRpcProviderId::DrpcMainnet => SupportedRpcProvider {
             cluster: SolanaCluster::Mainnet,
-            access: RpcAccess::Unauthenticated {
-                public_url: "https://solana.drpc.org".to_string(),
-            },
+            access: RpcAccess::Authenticated {
+            auth: RpcAuth::UrlParameter {
+                    url_pattern: "https://lb.drpc.org/ogrpc?network=solana&dkey={API_KEY}".to_string()
+                },
+                public_url: Some("https://solana.drpc.org".to_string()),
+            }
         },
         SupportedRpcProviderId::DrpcDevnet => SupportedRpcProvider {
             cluster: SolanaCluster::Devnet,
-            access: RpcAccess::Unauthenticated {
-                public_url: "https://solana-devnet.drpc.org".to_string(),
-            },
+            access: RpcAccess::Authenticated {
+            auth: RpcAuth::UrlParameter {
+                    url_pattern: "https://lb.drpc.org/ogrpc?network=solana-devnet&dkey={API_KEY}".to_string()
+                },
+                public_url: Some("https://solana-devnet.drpc.org".to_string()),
+            }
         },
         SupportedRpcProviderId::HeliusMainnet => SupportedRpcProvider {
             cluster: SolanaCluster::Mainnet,
             access: RpcAccess::Authenticated {
                 auth: RpcAuth::UrlParameter {
-                    url_pattern: "https://devnet.helius-rpc.com/?api-key={API_KEY}".to_string(),
+                    url_pattern: "https://mainnet.helius-rpc.com/?api-key={API_KEY}".to_string(),
                 },
                 public_url: None,
             },
@@ -73,7 +79,7 @@ thread_local! {
             cluster: SolanaCluster::Devnet,
             access: RpcAccess::Authenticated {
                 auth: RpcAuth::UrlParameter {
-                    url_pattern: "https://mainnet.helius-rpc.com/?api-key={API_KEY}".to_string(),
+                    url_pattern: "https://devnet.helius-rpc.com/?api-key={API_KEY}".to_string(),
                 },
                 public_url: None,
             },
@@ -104,21 +110,21 @@ impl Providers {
     // if the providers are not explicitly specified by the caller.
     const DEFAULT_MAINNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] = &[
         SupportedRpcProviderId::AlchemyMainnet,
-        SupportedRpcProviderId::AnkrMainnet,
+        SupportedRpcProviderId::HeliusMainnet,
         SupportedRpcProviderId::DrpcMainnet,
     ];
     const NON_DEFAULT_MAINNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] = &[
-        SupportedRpcProviderId::HeliusMainnet,
+        SupportedRpcProviderId::AnkrMainnet,
         SupportedRpcProviderId::PublicNodeMainnet,
     ];
 
     const DEFAULT_DEVNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] = &[
         SupportedRpcProviderId::AlchemyDevnet,
-        SupportedRpcProviderId::AnkrDevnet,
+        SupportedRpcProviderId::HeliusDevnet,
         SupportedRpcProviderId::DrpcDevnet,
     ];
     const NON_DEFAULT_DEVNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] =
-        &[SupportedRpcProviderId::HeliusDevnet];
+        &[SupportedRpcProviderId::AnkrDevnet];
 
     pub fn new(source: RpcSources, strategy: ConsensusStrategy) -> Result<Self, ProviderError> {
         fn get_sources(provider_ids: &[SupportedRpcProviderId]) -> Vec<RpcSource> {
