@@ -42,7 +42,7 @@ mod request;
 
 pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 
-use crate::request::{GetAccountInfoRequest, GetSlotRequest, RawJsonRequest};
+use crate::request::{GetAccountInfoRequest, GetSlotRequest, JsonRequest};
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
@@ -220,7 +220,7 @@ impl<R> SolRpcClient<R> {
     }
 
     /// Call `jsonRequest` on the SOL RPC canister.
-    pub fn raw_json_request(
+    pub fn json_request(
         &self,
         json_request: serde_json::Value,
     ) -> RequestBuilder<
@@ -232,7 +232,7 @@ impl<R> SolRpcClient<R> {
     > {
         RequestBuilder::new(
             self.clone(),
-            RawJsonRequest::try_from(json_request).expect("Client error: invalid JSON request"),
+            JsonRequest::try_from(json_request).expect("Client error: invalid JSON request"),
             10_000_000_000,
         )
     }

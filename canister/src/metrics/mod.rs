@@ -143,7 +143,7 @@ pub struct Metrics {
 pub enum RpcMethod {
     GetAccountInfo,
     GetSlot,
-    Generic,
+    JsonRequest,
 }
 
 impl RpcMethod {
@@ -151,7 +151,7 @@ impl RpcMethod {
         match self {
             RpcMethod::GetAccountInfo => "getAccountInfo",
             RpcMethod::GetSlot => "getSlot",
-            RpcMethod::Generic => "generic",
+            RpcMethod::JsonRequest => "jsonRequest",
         }
     }
 }

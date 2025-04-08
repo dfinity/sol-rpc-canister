@@ -49,7 +49,7 @@ mod mock_request_tests {
         assert_matches!(
             client
                 .mock_http(builder_fn(MockOutcallBuilder::new(200, MOCK_RESPONSE))).build()
-                .raw_json_request(get_version_request())
+                .json_request(get_version_request())
                 .with_cycles(0)
                 .send()
                 .await,
@@ -383,7 +383,7 @@ mod generic_request_tests {
         let client = setup.client().build();
 
         let results = client
-            .raw_json_request(get_version_request())
+            .json_request(get_version_request())
             .with_cycles(0)
             .send()
             .await
@@ -425,7 +425,7 @@ mod generic_request_tests {
                 }),
             )
             .build()
-            .raw_json_request(get_version_request())
+            .json_request(get_version_request())
             .with_cycles(0)
             .send()
             .await
@@ -654,7 +654,7 @@ mod cycles_cost_tests {
                     check(client.get_slot().with_params(GetSlotParams::default())).await;
                 }
                 SolRpcEndpoint::JsonRequest => {
-                    check(client.raw_json_request(get_version_request())).await;
+                    check(client.json_request(get_version_request())).await;
                 }
                 SolRpcEndpoint::GetAccountInfo => {
                     check(
@@ -766,7 +766,7 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::JsonRequest => {
                     check(
                         &setup,
-                        client.raw_json_request(get_version_request()),
+                        client.json_request(get_version_request()),
                         1_790_956_800,
                     )
                     .await;

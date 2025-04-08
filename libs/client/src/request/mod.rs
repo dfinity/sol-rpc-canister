@@ -100,19 +100,19 @@ impl SolRpcRequest for GetSlotRequest {
     }
 }
 
-pub struct RawJsonRequest(String);
+pub struct JsonRequest(String);
 
-impl TryFrom<serde_json::Value> for RawJsonRequest {
+impl TryFrom<serde_json::Value> for JsonRequest {
     type Error = String;
 
     fn try_from(value: serde_json::Value) -> Result<Self, Self::Error> {
         serde_json::to_string(&value)
-            .map(RawJsonRequest)
+            .map(JsonRequest)
             .map_err(|e| e.to_string())
     }
 }
 
-impl SolRpcRequest for RawJsonRequest {
+impl SolRpcRequest for JsonRequest {
     type Config = RpcConfig;
     type Params = String;
     type CandidOutput = sol_rpc_types::MultiRpcResult<String>;

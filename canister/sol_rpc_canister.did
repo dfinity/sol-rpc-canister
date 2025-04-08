@@ -277,10 +277,10 @@ type GetSlotParams = record {
   minContextSlot: opt nat64;
 };
 
-// Represents the result of a generic RPC request.
+// Represents the result of a raw JSON-RPC request.
 type RequestResult = variant { Ok : text; Err : RpcError };
 
-// Represents an aggregated result from multiple RPC calls for a generic RPC request.
+// Represents an aggregated result from multiple RPC calls for a raw JSON-RPC request.
 type MultiRequestResult = variant {
     Consistent : RequestResult;
     Inconsistent : vec record { RpcSource; RequestResult };
@@ -347,7 +347,7 @@ service : (InstallArgs,) -> {
   getSlot : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (MultiGetSlotResult);
   getSlotCyclesCost : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (RequestCostResult) query;
 
-  // Make a generic JSON RPC request that sends the given json_rpc_payload.
+  // Make a raw JSON-RPC request that sends the given json_rpc_payload.
   jsonRequest : (RpcSources, opt RpcConfig, json_rpc_payload: text) -> (MultiRequestResult);
   jsonRequestCyclesCost : (RpcSources, opt RpcConfig, json_rpc_payload: text) -> (RequestCostResult) query;
 };
