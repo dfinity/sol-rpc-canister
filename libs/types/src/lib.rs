@@ -16,4 +16,7 @@ pub use rpc_client::{
     RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider,
     SupportedRpcProviderId,
 };
-pub use solana::{CommitmentLevel, GetSlotParams};
+pub use solana::{
+    AccountData, AccountEncoding, AccountInfo, CommitmentLevel, DataSlice, GetAccountInfoEncoding,
+    GetAccountInfoParams, GetSlotParams, ParsedAccount, Pubkey, Slot,
+};

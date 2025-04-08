@@ -2,22 +2,21 @@ use candid::candid_method;
 use canlog::{log, Log, Sort};
 use ic_cdk::{api::is_controller, query, update};
 use ic_metrics_encoder::MetricsEncoder;
-use sol_rpc_canister::candid_rpc::{process_error, process_result};
-use sol_rpc_canister::memory::State;
-use sol_rpc_canister::metrics::RpcMethod;
-use sol_rpc_canister::rpc_client::MultiRpcRequest;
 use sol_rpc_canister::{
+    candid_rpc::{process_error, process_result},
     http_types, lifecycle,
     logs::Priority,
+    memory::State,
     memory::{mutate_state, read_state},
     metrics::encode_metrics,
+    metrics::RpcMethod,
     providers::{get_provider, PROVIDERS},
+    rpc_client::MultiRpcRequest,
 };
 use sol_rpc_types::{
-    GetSlotParams, GetSlotRpcConfig, MultiRpcResult, RpcAccess, RpcConfig, RpcResult, RpcSources,
-    SupportedRpcProvider, SupportedRpcProviderId,
+    AccountInfo, GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, MultiRpcResult, RpcAccess,
+    RpcConfig, RpcError, RpcResult, RpcSources, Slot, SupportedRpcProvider, SupportedRpcProviderId,
 };
-use solana_clock::Slot;
 use std::str::FromStr;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
@@ -73,6 +72,19 @@ async fn update_api_keys(api_keys: Vec<(SupportedRpcProviderId, Option<String>)>
             }),
             None => mutate_state(|state| state.remove_api_key(&provider)),
         }
+    }
+}
+
+#[update(name = "getAccountInfo")]
+#[candid_method(rename = "getAccountInfo")]
+async fn get_account_info(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: GetAccountInfoParams,
+) -> MultiRpcResult<Option<AccountInfo>> {
+    match CandidRpcClient::new(source, config) {
+        Ok(client) => client.get_account_info(params).await,
+        Err(err) => Err(err).into(),
     }
 }
 

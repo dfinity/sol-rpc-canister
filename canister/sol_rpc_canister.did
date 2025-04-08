@@ -154,6 +154,104 @@ type RejectionCode = variant {
 // E.g., the cycle cost for `getSlot` can be retrieved by calling `getSlotCyclesCost`.
 type RequestCostResult = variant { Ok : nat; Err : RpcError };
 
+// Represents the encoding of the return value of the `getAccountInfo` Solana RPC method.
+type GetAccountInfoEncoding = variant {
+  // Return the account data encoded in base-58. This is slow and limited to less than 129 bytes of account data.
+  base58;
+  // Return the account data encoded in base-64. This works for account data of any size.
+  base64;
+  // Compress the account data using the Zstandard library and return the base64-encoded result.
+  "base64+zstd";
+  // Return the data as a JSON string.
+  // * jsonParsed encoding attempts to use program-specific state parsers to return more human-readable and explicit
+  //   account state data.
+  // * If jsonParsed is requested but a parser cannot be found, the field falls back to base64 encoding, detectable
+  //   when the data field is type string.
+  jsonParsed;
+};
+
+// Represents a slice of the return value of the `getAccountInfo` Solana RPC method.
+// NOTE: Data slicing is only available for base58, base64, or base64+zstd encodings.
+type DataSlice = record {
+  length: nat32;
+  offset: nat32;
+};
+
+// The parameters for a call to the `getAccountInfo` Solana RPC method.
+type GetAccountInfoParams = record {
+  pubkey: Pubkey;
+  commitment: opt CommitmentLevel;
+  encoding: opt GetAccountInfoEncoding;
+  dataSlice: opt DataSlice;
+  minContextSlot: opt nat64;
+};
+
+// Address of a Solana account as a base-58 encoded string.
+// Example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+type Pubkey = text;
+
+// Solana account info.
+type AccountInfo = record {
+    // Number of lamports assigned to this account.
+    lamports: nat64;
+    // Data associated with the account.
+    data: AccountData;
+    // Pubkey of the program this account has been assigned to.
+    owner: Pubkey;
+    // Boolean indicating if the account contains a program (and is strictly read-only).
+    executable: bool;
+    // The epoch at which this account will next owe rent.
+    rentEpoch: nat64;
+    // The data size of the account.
+    space: nat64;
+};
+
+// Represents Solana account data.
+type AccountData = variant {
+  // The data is formatted as a binary string. This is a legacy format retained for RPC backwards compatibility
+  legacyBinary: text;
+  // The data is formatted as a JSON `ParsedAccount`.
+  json: ParsedAccount;
+  // The data is formatted as a string containing the account data encoded according to one of
+  // the `AccountEncoding` formats.
+  binary: record { text; AccountEncoding };
+};
+
+// Represents Solana account data parsed as JSON.
+type ParsedAccount = record {
+    // The Solana program that interprets the data.
+    program: Pubkey;
+    // The account data parsed as JSON and formatted as a string.
+    parsed: text;
+    // The data size of the account.
+    space: nat64;
+};
+
+// Represents an encoding format for Solana account data.
+type AccountEncoding = variant {
+    // The account data is formatted as a binary string. Legacy. Retained for RPC backwards compatibility.
+    binary;
+    // The account data is formatted as a base-58 string.
+    base58;
+    // The account data is formatted as a base-64 string.
+    base64;
+    // The account data was first compressed using Zstandard and the
+    // result was then formatted as a base-64 string.
+    "base64+zstd";
+    // The account data is formatted as a JSON string.
+    jsonParsed;
+};
+
+// Represents the result of a call to the `getAccountInfo` Solana RPC method.
+// If the requested account doesn't exist, the `Ok` variant will be null.
+type GetAccountInfoResult = variant { Ok : opt AccountInfo; Err : RpcError };
+
+// Represents an aggregated result from multiple RPC calls to the `getAccountInfo` Solana RPC method.
+type MultiGetAccountInfoResult = variant {
+    Consistent : GetAccountInfoResult;
+    Inconsistent : vec record { RpcSource; GetAccountInfoResult };
+};
+
 // Represents a Solana slot
 type Slot = nat64;
 
@@ -240,6 +338,9 @@ service : (InstallArgs,) -> {
   //
   // The caller is the controller or a principal specified in `InstallArgs::manage_api_keys`.
   updateApiKeys : (vec record { SupportedProvider; opt text }) -> ();
+
+  // Call the Solana `getAccountInfo` RPC method and return the resulting slot.
+  getAccountInfo : (RpcSources, opt RpcConfig, GetAccountInfoParams) -> (MultiGetAccountInfoResult);
 
   // Call the Solana `getSlot` RPC method and return the resulting slot.
   getSlot : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (MultiGetSlotResult);

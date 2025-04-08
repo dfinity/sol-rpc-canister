@@ -23,3 +23,24 @@ GET_SLOT_PARAMS="(
 )"
 CYCLES=$(dfx canister call sol_rpc getSlotCyclesCost "$GET_SLOT_PARAMS" $FLAGS || exit 1)
 dfx canister call sol_rpc getSlot "$GET_SLOT_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
+
+# Get the System Program account info on Mainnet with a 2-out-of-3 strategy
+# TODO XC-321: get cycle cost by query method
+CYCLES="2B"
+GET_ACCOUNT_INFO_PARAMS="(
+  variant { Default = variant { Mainnet } },
+  opt record {
+    responseConsensus = opt variant {
+      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+    };
+    responseSizeEstimate = null;
+  },
+  record {
+    pubkey = \"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v\";
+    commitment = null;
+    encoding = opt variant{ base64 };
+    dataSlice = null;
+    minContextSlot = null;
+  },
+)"
+dfx canister call sol_rpc getAccountInfo "$GET_ACCOUNT_INFO_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1

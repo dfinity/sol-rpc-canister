@@ -1,7 +1,10 @@
 use crate::{Runtime, SolRpcClient};
 use candid::CandidType;
 use serde::de::DeserializeOwned;
-use sol_rpc_types::{GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcResult, RpcSources};
+use sol_rpc_types::{
+    AccountInfo, GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcResult,
+    RpcSources,
+};
 use solana_clock::Slot;
 use strum::EnumIter;
 
@@ -11,6 +14,8 @@ pub trait SolRpcRequest {
     type Config;
     /// The type of parameters taken by this endpoint.
     type Params;
+    /// The Candid type returned when executing this request which is then converted to [`Self::Output`].
+    type CandidOutput;
     /// The type returned by this endpoint.
     type Output;
 
@@ -48,12 +53,38 @@ impl SolRpcEndpoint {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct GetAccountInfoRequest(GetAccountInfoParams);
+
+impl GetAccountInfoRequest {
+    pub fn new(params: GetAccountInfoParams) -> Self {
+        Self(params)
+    }
+}
+
+impl SolRpcRequest for GetAccountInfoRequest {
+    type Config = RpcConfig;
+    type Params = GetAccountInfoParams;
+    type CandidOutput = sol_rpc_types::MultiRpcResult<Option<AccountInfo>>;
+    type Output =
+        sol_rpc_types::MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>;
+
+    fn rpc_method(&self) -> &str {
+        "getAccountInfo"
+    }
+
+    fn params(self) -> Self::Params {
+        self.0
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct GetSlotRequest(Option<GetSlotParams>);
 
 impl SolRpcRequest for GetSlotRequest {
     type Config = GetSlotRpcConfig;
     type Params = Option<GetSlotParams>;
+    type CandidOutput = Self::Output;
     type Output = sol_rpc_types::MultiRpcResult<Slot>;
 
     fn endpoint(&self) -> SolRpcEndpoint {
@@ -80,6 +111,7 @@ impl TryFrom<serde_json::Value> for RawJsonRequest {
 impl SolRpcRequest for RawJsonRequest {
     type Config = RpcConfig;
     type Params = String;
+    type CandidOutput = sol_rpc_types::MultiRpcResult<String>;
     type Output = sol_rpc_types::MultiRpcResult<String>;
 
     fn endpoint(&self) -> SolRpcEndpoint {
@@ -95,13 +127,13 @@ impl SolRpcRequest for RawJsonRequest {
 ///
 /// To construct a [`RequestBuilder`], refer to the [`SolRpcClient`] documentation.
 #[must_use = "RequestBuilder does nothing until you 'send' it"]
-pub struct RequestBuilder<Runtime, Config, Params, Output> {
+pub struct RequestBuilder<Runtime, Config, Params, CandidOutput, Output> {
     client: SolRpcClient<Runtime>,
-    request: Request<Config, Params, Output>,
+    request: Request<Config, Params, CandidOutput, Output>,
 }
 
-impl<Runtime, Config: Clone, Params: Clone, Output> Clone
-    for RequestBuilder<Runtime, Config, Params, Output>
+impl<Runtime, Config: Clone, Params: Clone, CandidOutput, Output> Clone
+    for RequestBuilder<Runtime, Config, Params, CandidOutput, Output>
 {
     fn clone(&self) -> Self {
         Self {
@@ -111,14 +143,21 @@ impl<Runtime, Config: Clone, Params: Clone, Output> Clone
     }
 }
 
-impl<Runtime, Config, Params, Output> RequestBuilder<Runtime, Config, Params, Output> {
+impl<Runtime, Config, Params, CandidOutput, Output>
+    RequestBuilder<Runtime, Config, Params, CandidOutput, Output>
+{
     pub(super) fn new<RpcRequest>(
         client: SolRpcClient<Runtime>,
         rpc_request: RpcRequest,
         cycles: u128,
     ) -> Self
     where
-        RpcRequest: SolRpcRequest<Config = Config, Params = Params, Output = Output>,
+        RpcRequest: SolRpcRequest<
+            Config = Config,
+            Params = Params,
+            CandidOutput = CandidOutput,
+            Output = Output,
+        >,
         Config: From<RpcConfig>,
     {
         let request = Request {
@@ -127,9 +166,10 @@ impl<Runtime, Config, Params, Output> RequestBuilder<Runtime, Config, Params, Ou
             rpc_config: client.config.rpc_config.clone().map(Config::from),
             params: rpc_request.params(),
             cycles,
-            _marker: Default::default(),
+            _candid_marker: Default::default(),
+            _output_marker: Default::default(),
         };
-        RequestBuilder { client, request }
+        RequestBuilder::<Runtime, Config, Params, CandidOutput, Output> { client, request }
     }
 
     /// Query the cycles cost for that request
@@ -160,19 +200,25 @@ impl<Runtime, Config, Params, Output> RequestBuilder<Runtime, Config, Params, Ou
     }
 }
 
-impl<R: Runtime, Config, Params, Output> RequestBuilder<R, Config, Params, Output> {
+impl<R: Runtime, Config, Params, CandidOutput, Output>
+    RequestBuilder<R, Config, Params, CandidOutput, Output>
+{
     /// Constructs the [`Request`] and send it using the [`SolRpcClient`].
     pub async fn send(self) -> Output
     where
         Config: CandidType + Send,
         Params: CandidType + Send,
-        Output: CandidType + DeserializeOwned,
+        CandidOutput: Into<Output> + CandidType + DeserializeOwned,
     {
-        self.client.execute_request(self.request).await
+        self.client
+            .execute_request::<Config, Params, CandidOutput, Output>(self.request)
+            .await
     }
 }
 
-impl<Runtime, Params, Output> RequestBuilder<Runtime, GetSlotRpcConfig, Params, Output> {
+impl<Runtime, Params, CandidOutput, Output>
+    RequestBuilder<Runtime, GetSlotRpcConfig, Params, CandidOutput, Output>
+{
     /// Change the rounding error for `getSlot` request.
     pub fn with_rounding_error(mut self, rounding_error: u64) -> Self {
         if let Some(config) = self.request.rpc_config_mut() {
@@ -189,16 +235,19 @@ impl<Runtime, Params, Output> RequestBuilder<Runtime, GetSlotRpcConfig, Params, 
 }
 
 /// A request which can be executed with `SolRpcClient::execute_request` or `SolRpcClient::execute_query_request`.
-pub struct Request<Config, Params, Output> {
+pub struct Request<Config, Params, CandidOutput, Output> {
     pub(super) endpoint: SolRpcEndpoint,
     pub(super) rpc_sources: RpcSources,
     pub(super) rpc_config: Option<Config>,
     pub(super) params: Params,
     pub(super) cycles: u128,
-    pub(super) _marker: std::marker::PhantomData<Output>,
+    pub(super) _candid_marker: std::marker::PhantomData<CandidOutput>,
+    pub(super) _output_marker: std::marker::PhantomData<Output>,
 }
 
-impl<Config: Clone, Params: Clone, Output> Clone for Request<Config, Params, Output> {
+impl<Config: Clone, Params: Clone, CandidOutput, Output> Clone
+    for Request<Config, Params, CandidOutput, Output>
+{
     fn clone(&self) -> Self {
         Self {
             endpoint: self.endpoint.clone(),
@@ -206,12 +255,13 @@ impl<Config: Clone, Params: Clone, Output> Clone for Request<Config, Params, Out
             rpc_config: self.rpc_config.clone(),
             params: self.params.clone(),
             cycles: self.cycles,
-            _marker: self._marker,
+            _candid_marker: self._candid_marker,
+            _output_marker: self._output_marker,
         }
     }
 }
 
-impl<Config, Params, Output> Request<Config, Params, Output> {
+impl<Config, Params, CandidOutput, Output> Request<Config, Params, CandidOutput, Output> {
     /// Get a mutable reference to the cycles.
     #[inline]
     pub fn cycles_mut(&mut self) -> &mut u128 {

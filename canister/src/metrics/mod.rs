@@ -141,6 +141,7 @@ pub struct Metrics {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RpcMethod {
+    GetAccountInfo,
     GetSlot,
     Generic,
 }
@@ -148,6 +149,7 @@ pub enum RpcMethod {
 impl RpcMethod {
     fn name(self) -> &'static str {
         match self {
+            RpcMethod::GetAccountInfo => "getAccountInfo",
             RpcMethod::GetSlot => "getSlot",
             RpcMethod::Generic => "generic",
         }
