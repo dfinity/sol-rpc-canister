@@ -286,20 +286,22 @@ impl<R: Runtime> SolRpcClient<R> {
                     request.endpoint.rpc_method()
                 )
             })
+            .into()
     }
 
-    async fn execute_cycles_cost_request<Config, Params, Output>(
+    async fn execute_cycles_cost_request<Config, Params, CandidOutput, Output>(
         &self,
-        request: Request<Config, Params, Output>,
+        request: Request<Config, Params, CandidOutput, Output>,
     ) -> Output
     where
         Config: CandidType + Send,
         Params: CandidType + Send,
         Output: CandidType + DeserializeOwned,
+        CandidOutput: Into<Output> + CandidType + DeserializeOwned,
     {
         self.config
             .runtime
-            .query_call(
+            .query_call::<(RpcSources, Option<Config>, Params), CandidOutput>(
                 self.config.sol_rpc_canister,
                 request.endpoint.cycles_cost_method(),
                 (request.rpc_sources, request.rpc_config, request.params),

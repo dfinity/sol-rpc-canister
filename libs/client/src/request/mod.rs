@@ -29,6 +29,8 @@ pub trait SolRpcRequest {
 /// Endpoint on the SOL RPC canister triggering a call to Solana providers.
 #[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, EnumIter)]
 pub enum SolRpcEndpoint {
+    /// `getAccountInfo` endpoint.
+    GetAccountInfo,
     /// `getSlot` endpoint.
     GetSlot,
     /// `jsonRequest` endpoint.
@@ -39,6 +41,7 @@ impl SolRpcEndpoint {
     /// Method name on the SOL RPC canister
     pub fn rpc_method(&self) -> &'static str {
         match &self {
+            SolRpcEndpoint::GetAccountInfo => "getAccountInfo",
             SolRpcEndpoint::GetSlot => "getSlot",
             SolRpcEndpoint::JsonRequest => "jsonRequest",
         }
@@ -47,6 +50,7 @@ impl SolRpcEndpoint {
     /// Method name on the SOL RPC canister to estimate the amount of cycles for that request.
     pub fn cycles_cost_method(&self) -> &'static str {
         match &self {
+            SolRpcEndpoint::GetAccountInfo => "getAccountInfoCyclesCost",
             SolRpcEndpoint::GetSlot => "getSlotCyclesCost",
             SolRpcEndpoint::JsonRequest => "jsonRequestCyclesCost",
         }
@@ -69,8 +73,8 @@ impl SolRpcRequest for GetAccountInfoRequest {
     type Output =
         sol_rpc_types::MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>;
 
-    fn rpc_method(&self) -> &str {
-        "getAccountInfo"
+    fn endpoint(&self) -> SolRpcEndpoint {
+        SolRpcEndpoint::GetAccountInfo
     }
 
     fn params(self) -> Self::Params {
@@ -182,7 +186,8 @@ impl<Runtime, Config, Params, CandidOutput, Output>
                 rpc_config: self.request.rpc_config,
                 params: self.request.params,
                 cycles: 0,
-                _marker: Default::default(),
+                _candid_marker: Default::default(),
+                _output_marker: Default::default(),
             },
         }
     }
@@ -281,7 +286,7 @@ impl<Config, Params, CandidOutput, Output> Request<Config, Params, CandidOutput,
     }
 }
 
-pub type RequestCost<Config, Params> = Request<Config, Params, RpcResult<u128>>;
+pub type RequestCost<Config, Params> = Request<Config, Params, RpcResult<u128>, RpcResult<u128>>;
 
 #[must_use = "RequestCostBuilder does nothing until you 'send' it"]
 pub struct RequestCostBuilder<Runtime, Config, Params> {

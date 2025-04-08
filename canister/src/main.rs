@@ -15,7 +15,7 @@ use sol_rpc_canister::{
 };
 use sol_rpc_types::{
     AccountInfo, GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, MultiRpcResult, RpcAccess,
-    RpcConfig, RpcError, RpcResult, RpcSources, Slot, SupportedRpcProvider, SupportedRpcProviderId,
+    RpcConfig, RpcResult, RpcSources, Slot, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use std::str::FromStr;
 
@@ -82,10 +82,25 @@ async fn get_account_info(
     config: Option<RpcConfig>,
     params: GetAccountInfoParams,
 ) -> MultiRpcResult<Option<AccountInfo>> {
-    match CandidRpcClient::new(source, config) {
-        Ok(client) => client.get_account_info(params).await,
-        Err(err) => Err(err).into(),
+    match MultiRpcRequest::get_account_info(source, config.unwrap_or_default(), params) {
+        Ok(request) => process_result(RpcMethod::GetAccountInfo, request.send_and_reduce().await),
+        Err(e) => process_error(e),
     }
+}
+
+#[query(name = "getAccountInfoCyclesCost")]
+#[candid_method(query, rename = "getAccountInfoCyclesCost")]
+async fn get_account_info_cycles_cost(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: GetAccountInfoParams,
+) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
+    MultiRpcRequest::get_account_info(source, config.unwrap_or_default(), params)?
+        .cycles_cost()
+        .await
 }
 
 #[update(name = "getSlot")]

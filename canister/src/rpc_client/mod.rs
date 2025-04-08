@@ -25,8 +25,8 @@ use ic_cdk::api::management_canister::http_request::CanisterHttpRequestArgument 
 use ic_cdk::api::management_canister::http_request::TransformContext;
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
-    ConsensusStrategy, GetSlotParams, GetSlotRpcConfig, ProviderError, RpcConfig, RpcError,
-    RpcResult, RpcSource, RpcSources,
+    AccountInfo, ConsensusStrategy, GetSlotParams, GetSlotRpcConfig, ProviderError, RpcConfig,
+    RpcError, RpcResult, RpcSource, RpcSources,
 };
 use solana_clock::Slot;
 use std::fmt::Debug;
@@ -78,6 +78,30 @@ impl<Params: Clone, Output> Clone for MultiRpcRequest<Params, Output> {
             reduction_strategy: self.reduction_strategy.clone(),
             _marker: self._marker,
         }
+    }
+}
+
+pub type GetAccountInfoRequest = MultiRpcRequest<json::GetAccountInfoParams, Option<AccountInfo>>;
+
+impl GetAccountInfoRequest {
+    pub fn get_account_info<Params: Into<json::GetAccountInfoParams>>(
+        rpc_sources: RpcSources,
+        config: RpcConfig,
+        params: Params,
+    ) -> Result<Self, ProviderError> {
+        let consensus_strategy = config.response_consensus.unwrap_or_default();
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let max_response_bytes = config
+            .response_size_estimate
+            .unwrap_or(1024 + HEADER_SIZE_LIMIT);
+
+        Ok(MultiRpcRequest::new(
+            providers,
+            JsonRpcRequest::new("getAccountInfo", params.into()),
+            max_response_bytes,
+            ResponseTransform::GetAccountInfo,
+            ReductionStrategy::from(consensus_strategy),
+        ))
     }
 }
 
