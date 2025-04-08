@@ -624,7 +624,9 @@ mod cycles_cost_tests {
     use sol_rpc_client::{RequestBuilder, SolRpcEndpoint};
     use sol_rpc_int_tests::mock::MockOutcallBuilder;
     use sol_rpc_int_tests::{PocketIcRuntime, Setup, SolRpcTestClient};
-    use sol_rpc_types::{GetAccountInfoParams, GetSlotParams, ProviderError, RpcError};
+    use sol_rpc_types::{
+        GetAccountInfoParams, GetSlotParams, InstallArgs, ProviderError, RpcError,
+    };
     use solana_pubkey::Pubkey;
     use std::fmt::Debug;
     use strum::IntoEnumIterator;
@@ -731,6 +733,13 @@ mod cycles_cost_tests {
                 )),
                 "BUG: Expected at least one TooFewCycles error, but got {results:?}"
             );
+
+            // TODO XC-321: ID in JSON-RPC requests should have a constant byte size.
+            // JSON-RPC requests for estimating the cycles cost use `0` as an ID
+            // while the actual requests will use a unique incremental ID, which after a few requests
+            // will have a bigger binary representation leading to an increase cycles cost for the actual HTTPs outcall.
+            // As a workaround, we upgrade the SOL RPC canister to reset the requests counter to zero since it's stored on the heap.
+            setup.upgrade_canister(InstallArgs::default()).await;
         }
 
         let setup = Setup::new().await.with_mock_api_keys().await;
@@ -770,7 +779,7 @@ mod cycles_cost_tests {
                                 .parse::<Pubkey>()
                                 .unwrap(),
                         )),
-                        0,
+                        1_793_744_800,
                     )
                     .await;
                 }
