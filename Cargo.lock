@@ -4085,7 +4085,7 @@ dependencies = [
 [[package]]
 name = "solana-account"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bincode",
  "serde",
@@ -4102,7 +4102,7 @@ dependencies = [
 [[package]]
 name = "solana-account-decoder-client-types"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "base64 0.22.1",
  "bs58",
@@ -4117,7 +4117,7 @@ dependencies = [
 [[package]]
 name = "solana-account-info"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bincode",
  "serde",
@@ -4129,7 +4129,7 @@ dependencies = [
 [[package]]
 name = "solana-address-lookup-table-interface"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bincode",
  "bytemuck",
@@ -4145,7 +4145,7 @@ dependencies = [
 [[package]]
 name = "solana-atomic-u64"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "parking_lot",
 ]
@@ -4153,7 +4153,7 @@ dependencies = [
 [[package]]
 name = "solana-big-mod-exp"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "num-bigint 0.4.6",
  "num-traits",
@@ -4163,7 +4163,7 @@ dependencies = [
 [[package]]
 name = "solana-bincode"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bincode",
  "serde",
@@ -4173,7 +4173,7 @@ dependencies = [
 [[package]]
 name = "solana-blake3-hasher"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "blake3",
  "solana-define-syscall",
@@ -4184,7 +4184,7 @@ dependencies = [
 [[package]]
 name = "solana-borsh"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "borsh 0.10.4",
  "borsh 1.5.7",
@@ -4193,7 +4193,7 @@ dependencies = [
 [[package]]
 name = "solana-client"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "async-trait",
  "bincode",
@@ -4238,7 +4238,7 @@ dependencies = [
 [[package]]
 name = "solana-client-traits"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "solana-account",
  "solana-commitment-config",
@@ -4258,7 +4258,7 @@ dependencies = [
 [[package]]
 name = "solana-clock"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4270,7 +4270,7 @@ dependencies = [
 [[package]]
 name = "solana-cluster-type"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "solana-hash",
 ]
@@ -4278,7 +4278,7 @@ dependencies = [
 [[package]]
 name = "solana-commitment-config"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4287,7 +4287,7 @@ dependencies = [
 [[package]]
 name = "solana-connection-cache"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "async-trait",
  "bincode",
@@ -4310,7 +4310,7 @@ dependencies = [
 [[package]]
 name = "solana-cpi"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "solana-account-info",
  "solana-define-syscall",
@@ -4323,7 +4323,7 @@ dependencies = [
 [[package]]
 name = "solana-decode-error"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "num-traits",
 ]
@@ -4340,12 +4340,12 @@ dependencies = [
 [[package]]
 name = "solana-define-syscall"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 
 [[package]]
 name = "solana-epoch-info"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4354,7 +4354,7 @@ dependencies = [
 [[package]]
 name = "solana-epoch-rewards"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4367,7 +4367,7 @@ dependencies = [
 [[package]]
 name = "solana-epoch-schedule"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4379,7 +4379,7 @@ dependencies = [
 [[package]]
 name = "solana-example-mocks"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4399,7 +4399,7 @@ dependencies = [
 [[package]]
 name = "solana-feature-gate-interface"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bincode",
  "serde",
@@ -4417,7 +4417,7 @@ dependencies = [
 [[package]]
 name = "solana-feature-set"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "ahash",
  "lazy_static",
@@ -4430,7 +4430,7 @@ dependencies = [
 [[package]]
 name = "solana-fee-calculator"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "log",
  "serde",
@@ -4440,7 +4440,7 @@ dependencies = [
 [[package]]
 name = "solana-hash"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "borsh 1.5.7",
  "bs58",
@@ -4455,12 +4455,12 @@ dependencies = [
 [[package]]
 name = "solana-inflation"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 
 [[package]]
 name = "solana-inline-spl"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bytemuck",
  "solana-pubkey",
@@ -4469,7 +4469,7 @@ dependencies = [
 [[package]]
 name = "solana-instruction"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bincode",
  "borsh 1.5.7",
@@ -4483,7 +4483,7 @@ dependencies = [
 [[package]]
 name = "solana-instructions-sysvar"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bitflags 2.9.0",
  "solana-account-info",
@@ -4499,7 +4499,7 @@ dependencies = [
 [[package]]
 name = "solana-keccak-hasher"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "sha3",
  "solana-define-syscall",
@@ -4510,7 +4510,7 @@ dependencies = [
 [[package]]
 name = "solana-keypair"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bs58",
  "ed25519-dalek 1.0.1",
@@ -4524,7 +4524,7 @@ dependencies = [
 [[package]]
 name = "solana-last-restart-slot"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4536,7 +4536,7 @@ dependencies = [
 [[package]]
 name = "solana-loader-v2-interface"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
  "serde_bytes",
@@ -4549,7 +4549,7 @@ dependencies = [
 [[package]]
 name = "solana-loader-v3-interface"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
  "serde_bytes",
@@ -4563,7 +4563,7 @@ dependencies = [
 [[package]]
 name = "solana-loader-v4-interface"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
  "serde_bytes",
@@ -4577,12 +4577,12 @@ dependencies = [
 [[package]]
 name = "solana-measure"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 
 [[package]]
 name = "solana-message"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bincode",
  "blake3",
@@ -4603,7 +4603,7 @@ dependencies = [
 [[package]]
 name = "solana-metrics"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "crossbeam-channel",
  "gethostname",
@@ -4620,7 +4620,7 @@ dependencies = [
 [[package]]
 name = "solana-msg"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "solana-define-syscall",
 ]
@@ -4628,12 +4628,12 @@ dependencies = [
 [[package]]
 name = "solana-native-token"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 
 [[package]]
 name = "solana-net-utils"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "anyhow",
  "bincode",
@@ -4654,7 +4654,7 @@ dependencies = [
 [[package]]
 name = "solana-nonce"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4667,7 +4667,7 @@ dependencies = [
 [[package]]
 name = "solana-packet"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bincode",
  "bitflags 2.9.0",
@@ -4680,7 +4680,7 @@ dependencies = [
 [[package]]
 name = "solana-perf"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "ahash",
  "bincode",
@@ -4711,7 +4711,7 @@ dependencies = [
 [[package]]
 name = "solana-program"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bincode",
  "blake3",
@@ -4788,7 +4788,7 @@ dependencies = [
 [[package]]
 name = "solana-program-entrypoint"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "solana-account-info",
  "solana-msg",
@@ -4799,7 +4799,7 @@ dependencies = [
 [[package]]
 name = "solana-program-error"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "borsh 1.5.7",
  "num-traits",
@@ -4814,7 +4814,7 @@ dependencies = [
 [[package]]
 name = "solana-program-memory"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "num-traits",
  "solana-define-syscall",
@@ -4823,12 +4823,12 @@ dependencies = [
 [[package]]
 name = "solana-program-option"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 
 [[package]]
 name = "solana-program-pack"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "solana-program-error",
 ]
@@ -4836,7 +4836,7 @@ dependencies = [
 [[package]]
 name = "solana-pubkey"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "borsh 0.10.4",
  "borsh 1.5.7",
@@ -4858,7 +4858,7 @@ dependencies = [
 [[package]]
 name = "solana-pubsub-client"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "crossbeam-channel",
  "futures-util",
@@ -4884,7 +4884,7 @@ dependencies = [
 [[package]]
 name = "solana-quic-client"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "async-lock",
  "async-trait",
@@ -4914,7 +4914,7 @@ dependencies = [
 [[package]]
 name = "solana-quic-definitions"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "solana-keypair",
 ]
@@ -4922,7 +4922,7 @@ dependencies = [
 [[package]]
 name = "solana-rayon-threadlimit"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "lazy_static",
  "num_cpus",
@@ -4931,7 +4931,7 @@ dependencies = [
 [[package]]
 name = "solana-rent"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4943,7 +4943,7 @@ dependencies = [
 [[package]]
 name = "solana-reward-info"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4952,7 +4952,7 @@ dependencies = [
 [[package]]
 name = "solana-rpc-client"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -4989,7 +4989,7 @@ dependencies = [
 [[package]]
 name = "solana-rpc-client-api"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -5019,7 +5019,7 @@ dependencies = [
 [[package]]
 name = "solana-rpc-client-nonce-utils"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "solana-account",
  "solana-commitment-config",
@@ -5035,12 +5035,12 @@ dependencies = [
 [[package]]
 name = "solana-sanitize"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 
 [[package]]
 name = "solana-sdk-ids"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "solana-pubkey",
 ]
@@ -5048,7 +5048,7 @@ dependencies = [
 [[package]]
 name = "solana-sdk-macro"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bs58",
  "proc-macro2",
@@ -5059,7 +5059,7 @@ dependencies = [
 [[package]]
 name = "solana-secp256k1-recover"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "libsecp256k1",
  "solana-define-syscall",
@@ -5069,7 +5069,7 @@ dependencies = [
 [[package]]
 name = "solana-seed-phrase"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "hmac",
  "pbkdf2",
@@ -5079,7 +5079,7 @@ dependencies = [
 [[package]]
 name = "solana-serde"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
 ]
@@ -5087,7 +5087,7 @@ dependencies = [
 [[package]]
 name = "solana-serde-varint"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
 ]
@@ -5095,7 +5095,7 @@ dependencies = [
 [[package]]
 name = "solana-serialize-utils"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "solana-instruction",
  "solana-pubkey",
@@ -5105,7 +5105,7 @@ dependencies = [
 [[package]]
 name = "solana-sha256-hasher"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "sha2 0.10.8",
  "solana-define-syscall",
@@ -5115,7 +5115,7 @@ dependencies = [
 [[package]]
 name = "solana-short-vec"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
 ]
@@ -5123,7 +5123,7 @@ dependencies = [
 [[package]]
 name = "solana-signature"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bs58",
  "ed25519-dalek 1.0.1",
@@ -5136,7 +5136,7 @@ dependencies = [
 [[package]]
 name = "solana-signer"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "solana-pubkey",
  "solana-signature",
@@ -5146,7 +5146,7 @@ dependencies = [
 [[package]]
 name = "solana-slot-hashes"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
  "serde_derive",
@@ -5158,7 +5158,7 @@ dependencies = [
 [[package]]
 name = "solana-slot-history"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bv",
  "serde",
@@ -5170,7 +5170,7 @@ dependencies = [
 [[package]]
 name = "solana-stable-layout"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "solana-instruction",
  "solana-pubkey",
@@ -5179,7 +5179,7 @@ dependencies = [
 [[package]]
 name = "solana-streamer"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "async-channel",
  "bytes",
@@ -5225,20 +5225,23 @@ dependencies = [
 [[package]]
 name = "solana-system-interface"
 version = "1.0.0"
-source = "git+https://github.com/lpahlavi/solana-program-system.git#6dfd02af3419fe1c3abec879a787aeb2bbbed9de"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "94d7c18cb1a91c6be5f5a8ac9276a1d7c737e39a21beba9ea710ab4b9c63bc90"
 dependencies = [
+ "js-sys",
  "num-traits",
  "serde",
  "serde_derive",
  "solana-decode-error 2.2.1",
  "solana-instruction",
  "solana-pubkey",
+ "wasm-bindgen",
 ]
 
 [[package]]
 name = "solana-sysvar"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "base64 0.22.1",
  "bincode",
@@ -5273,7 +5276,7 @@ dependencies = [
 [[package]]
 name = "solana-sysvar-id"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "solana-pubkey",
  "solana-sdk-ids",
@@ -5282,7 +5285,7 @@ dependencies = [
 [[package]]
 name = "solana-thin-client"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bincode",
  "log",
@@ -5310,12 +5313,12 @@ dependencies = [
 [[package]]
 name = "solana-time-utils"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 
 [[package]]
 name = "solana-tls-utils"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "rustls 0.23.25",
  "solana-keypair",
@@ -5327,7 +5330,7 @@ dependencies = [
 [[package]]
 name = "solana-tpu-client"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "async-trait",
  "bincode",
@@ -5360,7 +5363,7 @@ dependencies = [
 [[package]]
 name = "solana-transaction"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bincode",
  "serde",
@@ -5383,7 +5386,7 @@ dependencies = [
 [[package]]
 name = "solana-transaction-context"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "solana-account",
  "solana-instruction",
@@ -5394,7 +5397,7 @@ dependencies = [
 [[package]]
 name = "solana-transaction-error"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "serde",
  "serde_derive",
@@ -5405,7 +5408,7 @@ dependencies = [
 [[package]]
 name = "solana-transaction-metrics-tracker"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "base64 0.22.1",
  "bincode",
@@ -5421,7 +5424,7 @@ dependencies = [
 [[package]]
 name = "solana-transaction-status-client-types"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "base64 0.22.1",
  "bincode",
@@ -5443,7 +5446,7 @@ dependencies = [
 [[package]]
 name = "solana-udp-client"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "async-trait",
  "solana-connection-cache",
@@ -5458,7 +5461,7 @@ dependencies = [
 [[package]]
 name = "solana-version"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "semver",
  "serde",
@@ -5471,7 +5474,7 @@ dependencies = [
 [[package]]
 name = "solana-vote-interface"
 version = "2.2.0"
-source = "git+https://github.com/lpahlavi/agave.git#fa0bacd5508c1e443db79a67d470c537fa558de0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
 dependencies = [
  "bincode",
  "num-derive",
