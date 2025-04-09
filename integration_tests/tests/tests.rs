@@ -380,6 +380,7 @@ mod get_slot_tests {
 
 mod generic_request_tests {
     use super::*;
+    use canhttp::http::json::Id;
 
     #[tokio::test]
     async fn request_should_require_cycles() {
@@ -423,7 +424,7 @@ mod generic_request_tests {
             .mock_sequential_json_rpc_responses::<3>(
                 200,
                 json!({
-                    "id": 0,
+                    "id": Id::from(ConstantSizeId::ZERO),
                     "jsonrpc": "2.0",
                     "result": serde_json::Value::from_str(MOCK_RESPONSE_RESULT).unwrap()
                 }),
