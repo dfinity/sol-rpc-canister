@@ -1,6 +1,8 @@
 use crate::{AccountInfo, ConfirmedBlock, RpcResult, RpcSource};
 use candid::CandidType;
 use serde::Deserialize;
+use solana_account_decoder_client_types::UiAccount;
+use solana_transaction_status_client_types::UiConfirmedBlock;
 use std::fmt::Debug;
 
 /// Represents an aggregated result from multiple RPC calls to different RPC providers.
@@ -62,18 +64,26 @@ impl<T: Debug> MultiRpcResult<T> {
     }
 }
 
-impl From<MultiRpcResult<Option<AccountInfo>>>
-    for MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>
-{
+impl From<MultiRpcResult<Option<AccountInfo>>> for MultiRpcResult<Option<UiAccount>> {
     fn from(result: MultiRpcResult<Option<AccountInfo>>) -> Self {
         result.map(|maybe_account| maybe_account.map(|account| account.into()))
     }
 }
 
-impl From<MultiRpcResult<Option<ConfirmedBlock>>>
-    for MultiRpcResult<Option<solana_transaction_status_client_types::UiConfirmedBlock>>
-{
+impl From<MultiRpcResult<Option<UiAccount>>> for MultiRpcResult<Option<AccountInfo>> {
+    fn from(result: MultiRpcResult<Option<UiAccount>>) -> Self {
+        result.map(|maybe_account| maybe_account.map(|account| account.into()))
+    }
+}
+
+impl From<MultiRpcResult<Option<ConfirmedBlock>>> for MultiRpcResult<Option<UiConfirmedBlock>> {
     fn from(result: MultiRpcResult<Option<ConfirmedBlock>>) -> Self {
+        result.map(|maybe_block| maybe_block.map(|block| block.into()))
+    }
+}
+
+impl From<MultiRpcResult<Option<UiConfirmedBlock>>> for MultiRpcResult<Option<ConfirmedBlock>> {
+    fn from(result: MultiRpcResult<Option<UiConfirmedBlock>>) -> Self {
         result.map(|maybe_block| maybe_block.map(|block| block.into()))
     }
 }

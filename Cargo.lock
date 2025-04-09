@@ -894,9 +894,9 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-channel"
-version = "0.5.14"
+version = "0.5.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06ba6d68e24814cb8de6bb986db8222d3a027d15872cabc0d18817bc3c0e4471"
+checksum = "82b8f8f868b36967f9606790d1903570de9ceaf870a7bf9fbbd3016d636a2cb2"
 dependencies = [
  "crossbeam-utils",
 ]
@@ -2515,9 +2515,9 @@ checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
 
 [[package]]
 name = "miniz_oxide"
-version = "0.8.7"
+version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff70ce3e48ae43fa075863cef62e8b43b71a4f2382229920e0df362592919430"
+checksum = "3be647b768db090acb35d5ec5db2b0e1f1de11133ca123b9eacf5137868f892a"
 dependencies = [
  "adler2",
 ]
@@ -4049,6 +4049,7 @@ dependencies = [
  "solana-clock",
  "solana-pubkey",
  "solana-transaction-status-client-types",
+ "strum 0.27.1",
 ]
 
 [[package]]
@@ -4063,6 +4064,7 @@ dependencies = [
  "futures",
  "ic-cdk",
  "ic-test-utilities-load-wasm",
+ "num-traits",
  "pocket-ic",
  "regex",
  "serde",
@@ -4078,6 +4080,7 @@ dependencies = [
  "solana-pubkey",
  "solana-rpc-client-api",
  "solana-transaction-status-client-types",
+ "strum 0.27.1",
  "tokio",
 ]
 
@@ -5246,17 +5249,14 @@ dependencies = [
 [[package]]
 name = "solana-system-interface"
 version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94d7c18cb1a91c6be5f5a8ac9276a1d7c737e39a21beba9ea710ab4b9c63bc90"
+source = "git+https://github.com/lpahlavi/solana-program-system.git#6dfd02af3419fe1c3abec879a787aeb2bbbed9de"
 dependencies = [
- "js-sys",
  "num-traits",
  "serde",
  "serde_derive",
  "solana-decode-error 2.2.1",
  "solana-instruction",
  "solana-pubkey",
- "wasm-bindgen",
 ]
 
 [[package]]

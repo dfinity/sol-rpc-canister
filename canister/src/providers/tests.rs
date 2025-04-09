@@ -50,3 +50,53 @@ fn should_have_consistent_name_for_cluster() {
         }
     })
 }
+
+mod providers_new {
+    use crate::providers::Providers;
+    use assert_matches::assert_matches;
+    use maplit::btreeset;
+    use sol_rpc_types::{
+        ConsensusStrategy, ProviderError, RpcSource, RpcSources, SolanaCluster,
+        SupportedRpcProviderId,
+    };
+
+    #[test]
+    fn should_fail_when_providers_explicitly_set_to_empty() {
+        assert_matches!(
+            Providers::new(RpcSources::Custom(vec![]), ConsensusStrategy::default()),
+            Err(ProviderError::InvalidRpcConfig(_))
+        );
+    }
+
+    #[test]
+    fn should_use_default_providers() {
+        for cluster in [SolanaCluster::Mainnet, SolanaCluster::Devnet] {
+            let providers =
+                Providers::new(RpcSources::Default(cluster), ConsensusStrategy::default()).unwrap();
+            assert!(!providers.sources.is_empty());
+        }
+    }
+
+    #[test]
+    fn should_use_specified_provider() {
+        let provider1 = SupportedRpcProviderId::AlchemyMainnet;
+        let provider2 = SupportedRpcProviderId::PublicNodeMainnet;
+
+        let providers = Providers::new(
+            RpcSources::Custom(vec![
+                RpcSource::Supported(provider1),
+                RpcSource::Supported(provider2),
+            ]),
+            ConsensusStrategy::default(),
+        )
+        .unwrap();
+
+        assert_eq!(
+            providers.sources,
+            btreeset! {
+                RpcSource::Supported(provider1),
+                RpcSource::Supported(provider2),
+            }
+        );
+    }
+}

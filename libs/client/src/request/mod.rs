@@ -3,9 +3,10 @@ use candid::CandidType;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBlockParams, GetSlotParams,
-    GetSlotRpcConfig, RpcConfig, RpcSources,
+    GetSlotRpcConfig, RpcConfig, RpcResult, RpcSources,
 };
 use solana_clock::Slot;
+use strum::EnumIter;
 
 /// Solana RPC endpoint supported by the SOL RPC canister.
 pub trait SolRpcRequest {
@@ -19,10 +20,45 @@ pub trait SolRpcRequest {
     type Output;
 
     /// The name of the endpoint on the SOL RPC canister.
-    fn rpc_method(&self) -> &str;
+    fn endpoint(&self) -> SolRpcEndpoint;
 
     /// Return the request parameters.
     fn params(self) -> Self::Params;
+}
+
+/// Endpoint on the SOL RPC canister triggering a call to Solana providers.
+#[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, EnumIter)]
+pub enum SolRpcEndpoint {
+    /// `getAccountInfo` endpoint.
+    GetAccountInfo,
+    /// `getBlock` endpoint.
+    GetBlock,
+    /// `getSlot` endpoint.
+    GetSlot,
+    /// `jsonRequest` endpoint.
+    JsonRequest,
+}
+
+impl SolRpcEndpoint {
+    /// Method name on the SOL RPC canister
+    pub fn rpc_method(&self) -> &'static str {
+        match &self {
+            SolRpcEndpoint::GetAccountInfo => "getAccountInfo",
+            SolRpcEndpoint::GetBlock => "getBlock",
+            SolRpcEndpoint::GetSlot => "getSlot",
+            SolRpcEndpoint::JsonRequest => "jsonRequest",
+        }
+    }
+
+    /// Method name on the SOL RPC canister to estimate the amount of cycles for that request.
+    pub fn cycles_cost_method(&self) -> &'static str {
+        match &self {
+            SolRpcEndpoint::GetAccountInfo => "getAccountInfoCyclesCost",
+            SolRpcEndpoint::GetBlock => "getBlockCyclesCost",
+            SolRpcEndpoint::GetSlot => "getSlotCyclesCost",
+            SolRpcEndpoint::JsonRequest => "jsonRequestCyclesCost",
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -41,8 +77,8 @@ impl SolRpcRequest for GetAccountInfoRequest {
     type Output =
         sol_rpc_types::MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>;
 
-    fn rpc_method(&self) -> &str {
-        "getAccountInfo"
+    fn endpoint(&self) -> SolRpcEndpoint {
+        SolRpcEndpoint::GetAccountInfo
     }
 
     fn params(self) -> Self::Params {
@@ -67,8 +103,8 @@ impl SolRpcRequest for GetBlockRequest {
         Option<solana_transaction_status_client_types::UiConfirmedBlock>,
     >;
 
-    fn rpc_method(&self) -> &str {
-        "getBlock"
+    fn endpoint(&self) -> SolRpcEndpoint {
+        SolRpcEndpoint::GetBlock
     }
 
     fn params(self) -> Self::Params {
@@ -85,8 +121,8 @@ impl SolRpcRequest for GetSlotRequest {
     type CandidOutput = Self::Output;
     type Output = sol_rpc_types::MultiRpcResult<Slot>;
 
-    fn rpc_method(&self) -> &str {
-        "getSlot"
+    fn endpoint(&self) -> SolRpcEndpoint {
+        SolRpcEndpoint::GetSlot
     }
 
     fn params(self) -> Self::Params {
@@ -94,26 +130,26 @@ impl SolRpcRequest for GetSlotRequest {
     }
 }
 
-pub struct RawRequest(String);
+pub struct JsonRequest(String);
 
-impl TryFrom<serde_json::Value> for RawRequest {
+impl TryFrom<serde_json::Value> for JsonRequest {
     type Error = String;
 
     fn try_from(value: serde_json::Value) -> Result<Self, Self::Error> {
         serde_json::to_string(&value)
-            .map(RawRequest)
+            .map(JsonRequest)
             .map_err(|e| e.to_string())
     }
 }
 
-impl SolRpcRequest for RawRequest {
+impl SolRpcRequest for JsonRequest {
     type Config = RpcConfig;
     type Params = String;
     type CandidOutput = sol_rpc_types::MultiRpcResult<String>;
     type Output = sol_rpc_types::MultiRpcResult<String>;
 
-    fn rpc_method(&self) -> &str {
-        "request"
+    fn endpoint(&self) -> SolRpcEndpoint {
+        SolRpcEndpoint::JsonRequest
     }
 
     fn params(self) -> Self::Params {
@@ -128,6 +164,17 @@ impl SolRpcRequest for RawRequest {
 pub struct RequestBuilder<Runtime, Config, Params, CandidOutput, Output> {
     client: SolRpcClient<Runtime>,
     request: Request<Config, Params, CandidOutput, Output>,
+}
+
+impl<Runtime, Config: Clone, Params: Clone, CandidOutput, Output> Clone
+    for RequestBuilder<Runtime, Config, Params, CandidOutput, Output>
+{
+    fn clone(&self) -> Self {
+        Self {
+            client: self.client.clone(),
+            request: self.request.clone(),
+        }
+    }
 }
 
 impl<Runtime, Config, Params, CandidOutput, Output>
@@ -148,7 +195,7 @@ impl<Runtime, Config, Params, CandidOutput, Output>
         Config: From<RpcConfig>,
     {
         let request = Request {
-            rpc_method: rpc_request.rpc_method().to_string(),
+            endpoint: rpc_request.endpoint(),
             rpc_sources: client.config.rpc_sources.clone(),
             rpc_config: client.config.rpc_config.clone().map(Config::from),
             params: rpc_request.params(),
@@ -157,6 +204,22 @@ impl<Runtime, Config, Params, CandidOutput, Output>
             _output_marker: Default::default(),
         };
         RequestBuilder::<Runtime, Config, Params, CandidOutput, Output> { client, request }
+    }
+
+    /// Query the cycles cost for that request
+    pub fn request_cost(self) -> RequestCostBuilder<Runtime, Config, Params> {
+        RequestCostBuilder {
+            client: self.client,
+            request: RequestCost {
+                endpoint: self.request.endpoint,
+                rpc_sources: self.request.rpc_sources,
+                rpc_config: self.request.rpc_config,
+                params: self.request.params,
+                cycles: 0,
+                _candid_marker: Default::default(),
+                _output_marker: Default::default(),
+            },
+        }
     }
 
     /// Change the amount of cycles to send for that request.
@@ -206,15 +269,31 @@ impl<Runtime, Params, CandidOutput, Output>
     }
 }
 
-/// A request which can be executed with `SolRpcClient::execute_request`.
+/// A request which can be executed with `SolRpcClient::execute_request` or `SolRpcClient::execute_query_request`.
 pub struct Request<Config, Params, CandidOutput, Output> {
-    pub(super) rpc_method: String,
+    pub(super) endpoint: SolRpcEndpoint,
     pub(super) rpc_sources: RpcSources,
     pub(super) rpc_config: Option<Config>,
     pub(super) params: Params,
     pub(super) cycles: u128,
     pub(super) _candid_marker: std::marker::PhantomData<CandidOutput>,
     pub(super) _output_marker: std::marker::PhantomData<Output>,
+}
+
+impl<Config: Clone, Params: Clone, CandidOutput, Output> Clone
+    for Request<Config, Params, CandidOutput, Output>
+{
+    fn clone(&self) -> Self {
+        Self {
+            endpoint: self.endpoint.clone(),
+            rpc_sources: self.rpc_sources.clone(),
+            rpc_config: self.rpc_config.clone(),
+            params: self.params.clone(),
+            cycles: self.cycles,
+            _candid_marker: self._candid_marker,
+            _output_marker: self._output_marker,
+        }
+    }
 }
 
 impl<Config, Params, CandidOutput, Output> Request<Config, Params, CandidOutput, Output> {
@@ -234,5 +313,24 @@ impl<Config, Params, CandidOutput, Output> Request<Config, Params, CandidOutput,
     #[inline]
     pub fn params_mut(&mut self) -> &mut Params {
         &mut self.params
+    }
+}
+
+pub type RequestCost<Config, Params> = Request<Config, Params, RpcResult<u128>, RpcResult<u128>>;
+
+#[must_use = "RequestCostBuilder does nothing until you 'send' it"]
+pub struct RequestCostBuilder<Runtime, Config, Params> {
+    client: SolRpcClient<Runtime>,
+    request: RequestCost<Config, Params>,
+}
+
+impl<R: Runtime, Config, Params> RequestCostBuilder<R, Config, Params> {
+    /// Constructs the [`Request`] and send it using the [`SolRpcClient`].
+    pub async fn send(self) -> RpcResult<u128>
+    where
+        Config: CandidType + Send,
+        Params: CandidType + Send,
+    {
+        self.client.execute_cycles_cost_request(self.request).await
     }
 }

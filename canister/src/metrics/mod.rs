@@ -144,7 +144,7 @@ pub enum RpcMethod {
     GetAccountInfo,
     GetBlock,
     GetSlot,
-    Generic,
+    JsonRequest,
 }
 
 impl RpcMethod {
@@ -153,7 +153,7 @@ impl RpcMethod {
             RpcMethod::GetAccountInfo => "getAccountInfo",
             RpcMethod::GetBlock => "getBlock",
             RpcMethod::GetSlot => "getSlot",
-            RpcMethod::Generic => "generic",
+            RpcMethod::JsonRequest => "jsonRequest",
         }
     }
 }

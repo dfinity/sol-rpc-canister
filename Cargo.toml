@@ -36,7 +36,7 @@ ciborium = "0.2.2"
 const_format = "0.2.34"
 derive_more = { version = "2.0.1", features = ["from", "into"] }
 futures = "0.3.31"
-# Transitive dependency of ic-ed25519
+# Transitive dependency
 # See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
 getrandom = { version = "*", default-features = false, features = ["custom"] }
 hex = "0.4.3"
@@ -101,3 +101,4 @@ solana-rpc-client-api = { git = "https://github.com/dfinity/agave", tag = "32303
 solana-signature = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-transaction = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-transaction-status-client-types = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
+solana-system-interface = { git = "https://github.com/lpahlavi/solana-program-system.git" }
