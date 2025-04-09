@@ -12,7 +12,11 @@ use sol_rpc_canister::{
     providers::{get_provider, PROVIDERS},
     types::RoundingError,
 };
-use sol_rpc_types::{AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig, MultiRpcResult, RpcAccess, RpcConfig, RpcError, RpcSources, Slot, SupportedRpcProvider, SupportedRpcProviderId};
+use sol_rpc_types::{
+    AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBlockParams, GetSlotParams,
+    GetSlotRpcConfig, MultiRpcResult, RpcAccess, RpcConfig, RpcError, RpcSources, Slot,
+    SupportedRpcProvider, SupportedRpcProviderId,
+};
 use std::str::FromStr;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {

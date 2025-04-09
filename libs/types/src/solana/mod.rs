@@ -97,9 +97,9 @@ pub struct GetBlockParams {
     pub commitment: Option<GetBlockCommitmentLevel>,
     /// The max transaction version to return in responses.
     /// * If the requested block contains a transaction with a higher version,
-    /// an error will be returned.
+    ///   an error will be returned.
     /// * If this parameter is omitted, only legacy transactions will be returned, and a block
-    /// containing any versioned transaction will prompt the error.
+    ///   containing any versioned transaction will prompt the error.
     #[serde(rename = "maxSupportedTransactionVersion")]
     pub max_supported_transaction_version: Option<u8>,
 }
@@ -130,14 +130,8 @@ impl From<GetBlockParams> for (Slot, Option<RpcBlockConfig>) {
                 encoding: None,
                 transaction_details: Some(TransactionDetails::None),
                 rewards: Some(false),
-                commitment: params.commitment.map(|commitment_level| {
-                    solana_commitment_config::CommitmentConfig {
-                        commitment: CommitmentLevel::from(commitment_level).into(),
-                    }
-                }),
-                max_supported_transaction_version: params
-                    .max_supported_transaction_version
-                    .map(Into::into),
+                commitment: params.commitment.map(Into::into),
+                max_supported_transaction_version: params.max_supported_transaction_version,
             })
         };
         (params.slot, config)
@@ -160,19 +154,13 @@ pub enum CommitmentLevel {
 }
 
 impl From<CommitmentLevel> for CommitmentConfig {
-    fn from(commitment: CommitmentLevel) -> Self {
-        CommitmentConfig {
-            commitment: commitment.into(),
-        }
-    }
-}
-
-impl From<CommitmentLevel> for solana_commitment_config::CommitmentLevel {
     fn from(commitment_level: CommitmentLevel) -> Self {
-        match commitment_level {
-            CommitmentLevel::Processed => Self::Processed,
-            CommitmentLevel::Confirmed => Self::Confirmed,
-            CommitmentLevel::Finalized => Self::Finalized,
+        Self {
+            commitment: match commitment_level {
+                CommitmentLevel::Processed => solana_commitment_config::CommitmentLevel::Processed,
+                CommitmentLevel::Confirmed => solana_commitment_config::CommitmentLevel::Confirmed,
+                CommitmentLevel::Finalized => solana_commitment_config::CommitmentLevel::Finalized,
+            },
         }
     }
 }
@@ -189,11 +177,14 @@ pub enum GetBlockCommitmentLevel {
     Finalized,
 }
 
-impl From<GetBlockCommitmentLevel> for CommitmentLevel {
+impl From<GetBlockCommitmentLevel> for CommitmentConfig {
     fn from(commitment_level: GetBlockCommitmentLevel) -> Self {
-        match commitment_level {
-            GetBlockCommitmentLevel::Confirmed => Self::Confirmed,
-            GetBlockCommitmentLevel::Finalized => Self::Finalized,
+        use solana_commitment_config::CommitmentLevel;
+        Self {
+            commitment: match commitment_level {
+                GetBlockCommitmentLevel::Confirmed => CommitmentLevel::Confirmed,
+                GetBlockCommitmentLevel::Finalized => CommitmentLevel::Finalized,
+            },
         }
     }
 }
@@ -417,14 +408,18 @@ impl From<AccountEncoding> for UiAccountEncoding {
 pub struct ConfirmedBlock {
     /// The blockhash of this block's parent, as base-58 encoded string; if the parent block is not
     /// available due to ledger cleanup, this field will return "11111111111111111111111111111111".
+    #[serde(rename = "previousBlockhash")]
     pub previous_blockhash: String,
     /// The blockhash of this block, as base-58 encoded string.
     pub blockhash: String,
     /// The slot index of this block's parent.
+    #[serde(rename = "parentSlot")]
     pub parent_slot: u64,
     /// Estimated production time, as Unix timestamp (seconds since the Unix epoch).
+    #[serde(rename = "blockTime")]
     pub block_time: Option<i64>,
     /// The number of blocks beneath this block.
+    #[serde(rename = "blockHeight")]
     pub block_height: Option<u64>,
 }
 

@@ -1,7 +1,10 @@
 use crate::{Runtime, SolRpcClient};
 use candid::CandidType;
 use serde::de::DeserializeOwned;
-use sol_rpc_types::{AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources};
+use sol_rpc_types::{
+    AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBlockParams, GetSlotParams,
+    GetSlotRpcConfig, RpcConfig, RpcSources,
+};
 use solana_clock::Slot;
 
 /// Solana RPC endpoint supported by the SOL RPC canister.
@@ -36,7 +39,7 @@ impl SolRpcRequest for GetAccountInfoRequest {
     type Params = GetAccountInfoParams;
     type CandidOutput = sol_rpc_types::MultiRpcResult<Option<AccountInfo>>;
     type Output =
-    sol_rpc_types::MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>;
+        sol_rpc_types::MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>;
 
     fn rpc_method(&self) -> &str {
         "getAccountInfo"
@@ -60,8 +63,9 @@ impl SolRpcRequest for GetBlockRequest {
     type Config = RpcConfig;
     type Params = GetBlockParams;
     type CandidOutput = sol_rpc_types::MultiRpcResult<Option<ConfirmedBlock>>;
-    type Output =
-    sol_rpc_types::MultiRpcResult<Option<solana_transaction_status_client_types::UiConfirmedBlock>>;
+    type Output = sol_rpc_types::MultiRpcResult<
+        Option<solana_transaction_status_client_types::UiConfirmedBlock>,
+    >;
 
     fn rpc_method(&self) -> &str {
         "getBlock"

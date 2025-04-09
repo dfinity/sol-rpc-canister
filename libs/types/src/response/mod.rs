@@ -63,7 +63,7 @@ impl<T: Debug> MultiRpcResult<T> {
 }
 
 impl From<MultiRpcResult<Option<AccountInfo>>>
-for MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>
+    for MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>
 {
     fn from(result: MultiRpcResult<Option<AccountInfo>>) -> Self {
         result.map(|maybe_account| maybe_account.map(|account| account.into()))
@@ -71,7 +71,7 @@ for MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>
 }
 
 impl From<MultiRpcResult<Option<ConfirmedBlock>>>
-for MultiRpcResult<Option<solana_transaction_status_client_types::UiConfirmedBlock>>
+    for MultiRpcResult<Option<solana_transaction_status_client_types::UiConfirmedBlock>>
 {
     fn from(result: MultiRpcResult<Option<ConfirmedBlock>>) -> Self {
         result.map(|maybe_block| maybe_block.map(|block| block.into()))
