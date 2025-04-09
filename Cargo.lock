@@ -4057,6 +4057,7 @@ dependencies = [
  "assert_matches",
  "async-trait",
  "candid",
+ "canhttp",
  "canlog",
  "const_format",
  "futures",

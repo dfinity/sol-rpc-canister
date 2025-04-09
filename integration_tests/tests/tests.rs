@@ -1,4 +1,5 @@
 use assert_matches::*;
+use canhttp::http::json::ConstantSizeId;
 use const_format::formatcp;
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use pocket_ic::common::rest::CanisterHttpMethod;
@@ -601,7 +602,7 @@ mod canister_upgrade_tests {
 }
 
 fn get_version_request() -> serde_json::Value {
-    json!({"jsonrpc": "2.0", "id": 0, "method": "getVersion"})
+    json!({"jsonrpc": "2.0", "id": ConstantSizeId::ZERO.to_string(), "method": "getVersion"})
 }
 
 fn rpc_sources() -> Vec<RpcSources> {
@@ -778,13 +779,6 @@ mod cycles_cost_tests {
                 )),
                 "BUG: Expected at least one TooFewCycles error, but got {results:?}"
             );
-
-            // TODO XC-321: ID in JSON-RPC requests should have a constant byte size.
-            // JSON-RPC requests for estimating the cycles cost use `0` as an ID
-            // while the actual requests will use a unique incremental ID, which after a few requests
-            // will have a bigger binary representation leading to an increase cycles cost for the actual HTTPs outcall.
-            // As a workaround, we upgrade the SOL RPC canister to reset the requests counter to zero since it's stored on the heap.
-            setup.upgrade_canister(InstallArgs::default()).await;
         }
 
         let setup = Setup::new().await.with_mock_api_keys().await;

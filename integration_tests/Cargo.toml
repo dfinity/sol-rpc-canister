@@ -30,6 +30,7 @@ solana-rpc-client-api = { workspace = true }
 
 [dev-dependencies]
 assert_matches = { workspace = true }
+canhttp = { workspace = true }
 futures = { workspace = true }
 solana-client = { workspace = true }
 strum = {workspace = true}
