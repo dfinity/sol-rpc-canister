@@ -146,6 +146,7 @@ mod get_provider_tests {
 
 mod get_account_info_tests {
     use super::*;
+    use canhttp::http::json::Id;
 
     #[tokio::test]
     async fn should_get_account_info() {
@@ -160,7 +161,7 @@ mod get_account_info_tests {
                 .mock_sequential_json_rpc_responses::<3>(
                     200,
                     json!({
-                        "id": first_id,
+                        "id": Id::from(ConstantSizeId::from(first_id)),
                         "jsonrpc": "2.0",
                         "result": {
                             "context": { "apiVersion": "2.0.15", "slot": 341197053 },
@@ -211,7 +212,7 @@ mod get_account_info_tests {
                 .mock_sequential_json_rpc_responses::<3>(
                     200,
                     json!({
-                        "id": first_id,
+                        "id": Id::from(ConstantSizeId::from(first_id)),
                         "jsonrpc": "2.0",
                         "result": {
                             "context": { "apiVersion": "2.0.15", "slot": 341197053 }
