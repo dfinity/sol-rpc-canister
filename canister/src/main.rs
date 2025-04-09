@@ -143,9 +143,7 @@ async fn json_request(
 ) -> MultiRpcResult<String> {
     let request =
         MultiRpcRequest::json_request(source, config.unwrap_or_default(), json_rpc_payload);
-    send_multi(request)
-        .await
-        .map(|value| value.to_string())
+    send_multi(request).await.map(|value| value.to_string())
 }
 
 #[query(name = "jsonRequestCyclesCost")]
