@@ -602,7 +602,7 @@ dependencies = [
 [[package]]
 name = "canhttp"
 version = "0.1.0"
-source = "git+https://github.com/dfinity/evm-rpc-canister#6cade0c6167da858b8d45700db7de44bf627b207"
+source = "git+https://github.com/dfinity/evm-rpc-canister?branch=gdemay%2FXC-321-constant-binary-size-id#f06ac1a6845eb5f9b41f8572ee2a6155ebdad617"
 dependencies = [
  "assert_matches",
  "ciborium",
@@ -6447,7 +6447,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
