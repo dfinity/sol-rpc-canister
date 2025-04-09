@@ -1,3 +1,4 @@
+use canhttp::http::json::JsonRpcRequest;
 use ic_cdk::api::call::RejectionCode;
 use pocket_ic::common::rest::{
     CanisterHttpHeader, CanisterHttpMethod, CanisterHttpReject, CanisterHttpReply,
@@ -91,11 +92,11 @@ impl MockOutcallBuilder {
     }
 
     pub fn with_raw_request_body(self, body: &str) -> Self {
-        self.with_request_body(MockJsonRequestBody::from_raw_request_unchecked(body))
+        self.with_request_body(serde_json::from_str(body).unwrap())
     }
 
-    pub fn with_request_body(mut self, body: impl Into<MockJsonRequestBody>) -> Self {
-        self.0.request_body = Some(body.into());
+    pub fn with_request_body(mut self, body: serde_json::Value) -> Self {
+        self.0.request_body = Some(serde_json::from_value(body).unwrap());
         self
     }
 
@@ -120,7 +121,7 @@ pub struct MockOutcall {
     pub method: Option<CanisterHttpMethod>,
     pub url: Option<String>,
     pub request_headers: Option<Vec<CanisterHttpHeader>>,
-    pub request_body: Option<MockJsonRequestBody>,
+    pub request_body: Option<JsonRpcRequest<Value>>,
     pub max_response_bytes: Option<u64>,
     pub response: CanisterHttpResponse,
 }
@@ -140,9 +141,9 @@ impl MockOutcall {
             );
         }
         if let Some(ref expected_body) = self.request_body {
-            let actual_body: serde_json::Value = serde_json::from_slice(&request.body)
+            let actual_body: JsonRpcRequest<Value> = serde_json::from_slice(&request.body)
                 .expect("BUG: failed to parse JSON request body");
-            expected_body.assert_matches(&actual_body);
+            assert_eq!(expected_body, &actual_body);
         }
         if let Some(max_response_bytes) = self.max_response_bytes {
             assert_eq!(Some(max_response_bytes), request.max_response_bytes);

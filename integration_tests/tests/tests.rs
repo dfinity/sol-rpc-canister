@@ -233,16 +233,19 @@ mod get_account_info_tests {
 
 mod get_slot_tests {
     use super::*;
+    use canhttp::http::json::Id;
     use sol_rpc_types::{CommitmentLevel, GetSlotParams};
     use std::iter::zip;
 
     #[tokio::test]
     async fn should_get_slot_with_full_params() {
         fn request_body(id: u8) -> serde_json::Value {
+            let id = ConstantSizeId::from(id).to_string();
             json!({ "jsonrpc": "2.0", "id": id, "method": "getSlot", "params": [{"commitment": "processed", "minContextSlot": 100}] })
         }
 
         fn response_body(id: u8) -> serde_json::Value {
+            let id = ConstantSizeId::from(id).to_string();
             json!({ "id": id, "jsonrpc": "2.0", "result": 1234, })
         }
 
@@ -282,7 +285,7 @@ mod get_slot_tests {
                 .mock_sequential_json_rpc_responses::<3>(
                     200,
                     json!({
-                        "id": first_id,
+                        "id": Id::from(ConstantSizeId::from(first_id)),
                         "jsonrpc": "2.0",
                         "result": 1234,
                     }),
@@ -312,7 +315,7 @@ mod get_slot_tests {
                     MockOutcallBuilder::new(
                         200,
                         json!({
-                            "id": id + first_id as usize,
+                            "id": Id::from(ConstantSizeId::from(id as u64 + first_id as u64)),
                             "jsonrpc": "2.0",
                             "result": slot,
                         }),
@@ -347,7 +350,7 @@ mod get_slot_tests {
                     MockOutcallBuilder::new(
                         200,
                         json!({
-                            "id": id + first_id as usize,
+                            "id": Id::from(ConstantSizeId::from(id as u64 + first_id as u64)),
                             "jsonrpc": "2.0",
                             "result": slot,
                         }),

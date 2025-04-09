@@ -10,6 +10,7 @@ license.workspace = true
 [dependencies]
 async-trait = { workspace = true }
 candid = { workspace = true }
+canhttp = { workspace = true }
 canlog = { path = "../canlog" }
 const_format = { workspace = true }
 ic-cdk = { workspace = true }
@@ -30,7 +31,6 @@ solana-rpc-client-api = { workspace = true }
 
 [dev-dependencies]
 assert_matches = { workspace = true }
-canhttp = { workspace = true }
 futures = { workspace = true }
 solana-client = { workspace = true }
 strum = {workspace = true}
