@@ -11,7 +11,7 @@ use sol_rpc_types::{
 };
 use std::fmt::Debug;
 
-pub async fn process_request<Params, Output, Error>(
+pub async fn send_multi<Params, Output, Error>(
     request: Result<MultiRpcRequest<Params, Output>, Error>,
 ) -> MultiRpcResult<Output>
 where

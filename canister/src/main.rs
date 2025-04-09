@@ -2,7 +2,7 @@ use candid::candid_method;
 use canlog::{log, Log, Sort};
 use ic_cdk::{api::is_controller, query, update};
 use ic_metrics_encoder::MetricsEncoder;
-use sol_rpc_canister::candid_rpc::process_request;
+use sol_rpc_canister::candid_rpc::send_multi;
 use sol_rpc_canister::{
     http_types, lifecycle,
     logs::Priority,
@@ -82,7 +82,7 @@ async fn get_account_info(
     params: GetAccountInfoParams,
 ) -> MultiRpcResult<Option<AccountInfo>> {
     let request = MultiRpcRequest::get_account_info(source, config.unwrap_or_default(), params);
-    process_request(request).await.into()
+    send_multi(request).await.into()
 }
 
 #[query(name = "getAccountInfoCyclesCost")]
@@ -112,7 +112,7 @@ async fn get_slot(
         config.unwrap_or_default(),
         params.unwrap_or_default(),
     );
-    process_request(request).await
+    send_multi(request).await
 }
 
 #[query(name = "getSlotCyclesCost")]
@@ -143,7 +143,7 @@ async fn json_request(
 ) -> MultiRpcResult<String> {
     let request =
         MultiRpcRequest::json_request(source, config.unwrap_or_default(), json_rpc_payload);
-    process_request(request)
+    send_multi(request)
         .await
         .map(|value| value.to_string())
 }
