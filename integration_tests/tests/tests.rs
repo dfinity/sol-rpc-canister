@@ -1,5 +1,5 @@
 use assert_matches::*;
-use canhttp::http::json::ConstantSizeId;
+use canhttp::http::json::{ConstantSizeId, Id};
 use const_format::formatcp;
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use pocket_ic::common::rest::CanisterHttpMethod;
@@ -16,10 +16,9 @@ use solana_account_decoder_client_types::{UiAccount, UiAccountData, UiAccountEnc
 use std::{iter::zip, str::FromStr};
 
 const MOCK_REQUEST_URL: &str = "https://api.devnet.solana.com/";
-const MOCK_REQUEST_PAYLOAD: &str = r#"{"jsonrpc":"2.0","id":0,"method":"getVersion"}"#;
 const MOCK_RESPONSE_RESULT: &str = r#"{"feature-set":2891131721,"solana-core":"1.16.7"}"#;
 const MOCK_RESPONSE: &str = formatcp!(
-    "{{\"jsonrpc\":\"2.0\",\"id\":0,\"result\":{}}}",
+    "{{\"jsonrpc\":\"2.0\",\"id\":\"00000000000000000000\",\"result\":{}}}",
     MOCK_RESPONSE_RESULT
 );
 const MOCK_REQUEST_MAX_RESPONSE_BYTES: u64 = 1000;
@@ -86,7 +85,7 @@ mod mock_request_tests {
 
     #[tokio::test]
     async fn mock_request_should_succeed_with_request_body() {
-        mock_request(|builder| builder.with_raw_request_body(MOCK_REQUEST_PAYLOAD)).await
+        mock_request(|builder| builder.with_request_body(get_version_request())).await
     }
 
     #[tokio::test]
@@ -105,7 +104,7 @@ mod mock_request_tests {
                     (CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE),
                     ("custom", "Value"),
                 ])
-                .with_raw_request_body(MOCK_REQUEST_PAYLOAD)
+                .with_request_body(get_version_request())
         })
         .await
     }
@@ -607,7 +606,7 @@ mod canister_upgrade_tests {
 }
 
 fn get_version_request() -> serde_json::Value {
-    json!({"jsonrpc": "2.0", "id": ConstantSizeId::ZERO.to_string(), "method": "getVersion"})
+    json!({"jsonrpc": "2.0", "id": Id::from(ConstantSizeId::ZERO), "method": "getVersion"})
 }
 
 fn rpc_sources() -> Vec<RpcSources> {
