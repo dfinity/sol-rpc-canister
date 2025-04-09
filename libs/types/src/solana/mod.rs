@@ -167,6 +167,16 @@ impl From<AccountInfo> for solana_account_decoder_client_types::UiAccount {
     }
 }
 
+impl From<MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>>
+    for MultiRpcResult<Option<AccountInfo>>
+{
+    fn from(
+        result: MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>,
+    ) -> Self {
+        result.map(|maybe_account| maybe_account.map(AccountInfo::from))
+    }
+}
+
 /// Represents the data stored in a Solana [account](https://solana.com/docs/references/terminology#account).
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub enum AccountData {

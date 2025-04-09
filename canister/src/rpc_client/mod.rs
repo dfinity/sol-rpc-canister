@@ -1,74 +1,180 @@
 pub mod json;
 mod sol_rpc;
-#[cfg(test)]
-mod tests;
 
+use crate::http::errors::HttpClientError;
+use crate::http::{service_request_builder, ChargingPolicyWithCollateral};
+use crate::memory::State;
 use crate::{
     http::http_client,
-    logs::Priority,
     memory::read_state,
     metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider, Providers},
-    rpc_client::{
-        json::GetAccountInfoParams,
-        sol_rpc::{ResponseSizeEstimate, ResponseTransform, HEADER_SIZE_LIMIT},
-    },
+    rpc_client::sol_rpc::ResponseTransform,
     types::RoundingError,
 };
 use canhttp::{
     http::json::JsonRpcRequest,
     multi::{MultiResults, Reduce, ReduceWithEquality, ReduceWithThreshold},
-    MaxResponseBytesRequestExtension, TransformContextRequestExtension,
+    CyclesChargingPolicy, CyclesCostEstimator, MaxResponseBytesRequestExtension,
+    TransformContextRequestExtension,
 };
-use canlog::log;
+use http::{Request, Response};
+use ic_cdk::api::management_canister::http_request::CanisterHttpRequestArgument as IcHttpRequest;
 use ic_cdk::api::management_canister::http_request::TransformContext;
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
-    ConsensusStrategy, GetSlotParams, JsonRpcError, ProviderError, RpcConfig, RpcError, RpcSource,
-    RpcSources,
+    ConsensusStrategy, GetSlotParams, GetSlotRpcConfig, ProviderError, RpcConfig, RpcError,
+    RpcResult, RpcSource, RpcSources,
 };
-use std::{collections::BTreeSet, fmt::Debug};
+use solana_clock::Slot;
+use std::fmt::Debug;
+use std::marker::PhantomData;
 use tower::ServiceExt;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SolRpcClient {
+// This constant is our approximation of the expected header size.
+// The HTTP standard doesn't define any limit, and many implementations limit
+// the headers size to 8 KiB. We chose a lower limit because headers observed on most providers
+// fit in the constant defined below, and if there is a spike, then the payload size adjustment
+// should take care of that.
+pub const HEADER_SIZE_LIMIT: u64 = 2 * 1024;
+
+pub struct MultiRpcRequest<Params, Output> {
     providers: Providers,
-    config: RpcConfig,
-    rounding_error: RoundingError,
+    request: JsonRpcRequest<Params>,
+    max_response_bytes: u64,
+    transform: ResponseTransform,
+    reduction_strategy: ReductionStrategy,
+    _marker: PhantomData<Output>,
 }
 
-impl SolRpcClient {
-    pub fn new(
-        source: RpcSources,
-        config: Option<RpcConfig>,
-        rounding_error: Option<RoundingError>,
+impl<Params, Output> MultiRpcRequest<Params, Output> {
+    fn new(
+        providers: Providers,
+        request: JsonRpcRequest<Params>,
+        max_response_bytes: u64,
+        transform: ResponseTransform,
+        reduction_strategy: ReductionStrategy,
+    ) -> Self {
+        Self {
+            providers,
+            request,
+            max_response_bytes,
+            transform,
+            reduction_strategy,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<Params: Clone, Output> Clone for MultiRpcRequest<Params, Output> {
+    fn clone(&self) -> Self {
+        Self {
+            providers: self.providers.clone(),
+            request: self.request.clone(),
+            max_response_bytes: self.max_response_bytes,
+            transform: self.transform.clone(),
+            reduction_strategy: self.reduction_strategy.clone(),
+            _marker: self._marker,
+        }
+    }
+}
+
+pub type GetAccountInfoRequest = MultiRpcRequest<
+    json::GetAccountInfoParams,
+    Option<solana_account_decoder_client_types::UiAccount>,
+>;
+
+impl GetAccountInfoRequest {
+    pub fn get_account_info<Params: Into<json::GetAccountInfoParams>>(
+        rpc_sources: RpcSources,
+        config: RpcConfig,
+        params: Params,
     ) -> Result<Self, ProviderError> {
-        let config = config.unwrap_or_default();
-        let rounding_error = rounding_error.unwrap_or_default();
-        let strategy = config.response_consensus.clone().unwrap_or_default();
-        Ok(Self {
-            providers: Providers::new(source, strategy)?,
-            config,
-            rounding_error,
-        })
-    }
+        let consensus_strategy = config.response_consensus.unwrap_or_default();
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let max_response_bytes = config
+            .response_size_estimate
+            .unwrap_or(1024 + HEADER_SIZE_LIMIT);
 
-    fn providers(&self) -> &BTreeSet<RpcSource> {
-        &self.providers.sources
+        Ok(MultiRpcRequest::new(
+            providers,
+            JsonRpcRequest::new("getAccountInfo", params.into()),
+            max_response_bytes,
+            ResponseTransform::GetAccountInfo,
+            ReductionStrategy::from(consensus_strategy),
+        ))
     }
+}
 
-    fn response_size_estimate(&self, estimate: u64) -> ResponseSizeEstimate {
-        ResponseSizeEstimate::new(self.config.response_size_estimate.unwrap_or(estimate))
+pub type GetSlotRequest = MultiRpcRequest<Vec<GetSlotParams>, Slot>;
+
+impl GetSlotRequest {
+    pub fn get_slot(
+        rpc_sources: RpcSources,
+        config: GetSlotRpcConfig,
+        params: GetSlotParams,
+    ) -> Result<Self, ProviderError> {
+        let consensus_strategy = config.response_consensus.unwrap_or_default();
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let max_response_bytes = config
+            .response_size_estimate
+            .unwrap_or(1024 + HEADER_SIZE_LIMIT);
+        let rounding_error = config
+            .rounding_error
+            .map(RoundingError::from)
+            .unwrap_or_default();
+
+        Ok(MultiRpcRequest::new(
+            providers,
+            JsonRpcRequest::new("getSlot", vec![params]),
+            max_response_bytes,
+            ResponseTransform::GetSlot(rounding_error),
+            ReductionStrategy::from(consensus_strategy),
+        ))
     }
+}
 
-    fn reduction_strategy(&self) -> ReductionStrategy {
-        ReductionStrategy::from(
-            self.config
-                .response_consensus
-                .as_ref()
-                .cloned()
-                .unwrap_or_default(),
-        )
+pub type JsonRequest = MultiRpcRequest<serde_json::Value, serde_json::Value>;
+
+impl JsonRequest {
+    pub fn json_request(
+        rpc_sources: RpcSources,
+        config: RpcConfig,
+        json_rpc_payload: String,
+    ) -> RpcResult<Self> {
+        let request: JsonRpcRequest<serde_json::Value> =
+            match serde_json::from_str(&json_rpc_payload) {
+                Ok(req) => req,
+                Err(e) => {
+                    return Err(RpcError::ValidationError(format!(
+                        "Invalid JSON RPC request: {e}"
+                    )))
+                }
+            };
+        let consensus_strategy = config.response_consensus.unwrap_or_default();
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let max_response_bytes = config
+            .response_size_estimate
+            .unwrap_or(1024 + HEADER_SIZE_LIMIT);
+
+        Ok(MultiRpcRequest::new(
+            providers,
+            request,
+            max_response_bytes,
+            ResponseTransform::Raw,
+            ReductionStrategy::from(consensus_strategy),
+        ))
+    }
+}
+
+impl<Params, Output> MultiRpcRequest<Params, Output> {
+    pub async fn send_and_reduce(self) -> ReducedResult<Output>
+    where
+        Params: Serialize + Clone + Debug,
+        Output: Debug + DeserializeOwned + PartialEq + Serialize,
+    {
+        let strategy = self.reduction_strategy.clone();
+        self.parallel_call().await.reduce(strategy)
     }
 
     /// Query all providers in parallel and return all results.
@@ -81,121 +187,110 @@ impl SolRpcClient {
     /// (e.g., if different providers gave different responses).
     /// This method is useful for querying data that is critical for the system to ensure that there is no single point of failure,
     /// e.g., ethereum logs upon which ckETH will be minted.
-    async fn parallel_call<I, O>(
-        &self,
-        method: impl Into<String>,
-        params: I,
-        response_size_estimate: ResponseSizeEstimate,
-        response_transform: &Option<ResponseTransform>,
-    ) -> MultiCallResults<O>
+    async fn parallel_call(self) -> MultiCallResults<Output>
     where
-        I: Serialize + Clone + Debug,
-        O: Debug + DeserializeOwned,
+        Params: Serialize + Clone + Debug,
+        Output: Debug + DeserializeOwned,
     {
-        let providers = self.providers();
-        let request_body = JsonRpcRequest::new(method, params);
-        let effective_size_estimate = response_size_estimate.get();
-        let transform_op = response_transform
-            .as_ref()
-            .map(|t| {
-                let mut buf = vec![];
-                minicbor::encode(t, &mut buf).unwrap();
-                buf
-            })
-            .unwrap_or_default();
-        let mut requests = MultiResults::default();
-        for provider in providers {
-            log!(
-                Priority::Debug,
-                "[parallel_call]: will call provider: {:?}",
-                provider
-            );
-            let request = request_builder(
-                resolve_rpc_provider(provider.clone()),
-                &read_state(|state| state.get_override_provider()),
-            )
-            .map(|builder| {
-                builder
-                    .max_response_bytes(effective_size_estimate)
-                    .transform_context(TransformContext::from_name(
-                        "cleanup_response".to_owned(),
-                        transform_op.clone(),
-                    ))
-                    .body(request_body.clone())
-                    .expect("BUG: invalid request")
-            });
-            requests.insert_once(provider.clone(), request);
-        }
+        let num_providers = self.providers.sources.len();
+        let rpc_method = MetricRpcMethod::from(self.request.method().to_string());
+        let requests = self.create_json_rpc_requests();
 
-        let rpc_method = MetricRpcMethod::from(request_body.method().to_string());
-        let client =
-            http_client(rpc_method, true).map_result(|r| match r?.into_body().into_result() {
-                Ok(value) => Ok(value),
-                Err(json_rpc_error) => Err(RpcError::JsonRpcError(JsonRpcError {
-                    code: json_rpc_error.code,
-                    message: json_rpc_error.message,
-                })),
-            });
+        let client = http_client(rpc_method, true);
 
         let (requests, errors) = requests.into_inner();
         let (_client, mut results) = canhttp::multi::parallel_call(client, requests).await;
         results.add_errors(errors);
         assert_eq!(
             results.len(),
-            providers.len(),
+            num_providers,
             "BUG: expected 1 result per provider"
         );
         results
     }
 
-    /// Query the Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method.
-    pub async fn get_account_info(
-        &self,
-        params: GetAccountInfoParams,
-    ) -> ReducedResult<Option<solana_account_decoder_client_types::UiAccount>> {
-        self.parallel_call(
-            "getAccountInfo",
-            params,
-            self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
-            &Some(ResponseTransform::GetAccountInfo),
-        )
-        .await
-        .reduce(self.reduction_strategy())
-    }
-
-    /// Query the Solana [`getSlot`](https://solana.com/docs/rpc/http/getslot) RPC method.
-    pub async fn get_slot(
-        &self,
-        params: Option<GetSlotParams>,
-    ) -> ReducedResult<solana_clock::Slot> {
-        self.parallel_call(
-            "getSlot",
-            vec![params],
-            self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
-            &Some(ResponseTransform::GetSlot(self.rounding_error)),
-        )
-        .await
-        .reduce(self.reduction_strategy())
-    }
-
-    pub async fn raw_request<I>(
-        &self,
-        request: JsonRpcRequest<I>,
-    ) -> ReducedResult<serde_json::Value>
+    /// Estimate the exact cycles cost for the given request.
+    ///
+    /// *IMPORTANT*: the method is *synchronous* in a canister environment.
+    pub async fn cycles_cost(self) -> RpcResult<u128>
     where
-        I: Serialize + Clone + Debug,
+        Params: Serialize + Clone + Debug,
     {
-        self.parallel_call(
-            request.method(),
-            vec![request.params()],
-            self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
-            &Some(ResponseTransform::Raw),
-        )
-        .await
-        .reduce(self.reduction_strategy())
+        async fn extract_request(
+            request: IcHttpRequest,
+        ) -> Result<http::Response<IcHttpRequest>, HttpClientError> {
+            Ok(http::Response::new(request))
+        }
+
+        let num_providers = self.providers.sources.len();
+        let requests = self.create_json_rpc_requests();
+
+        let client = service_request_builder()
+            .service_fn(extract_request)
+            .map_err(RpcError::from)
+            .map_response(Response::into_body);
+
+        let (requests, errors) = requests.into_inner();
+        if let Some(error) = errors.into_values().next() {
+            return Err(error);
+        }
+
+        let (_client, results) = canhttp::multi::parallel_call(client, requests).await;
+        let (requests, errors) = results.into_inner();
+        if !errors.is_empty() {
+            return Err(errors
+                .into_values()
+                .next()
+                .expect("BUG: errors is not empty"));
+        }
+        assert_eq!(
+            requests.len(),
+            num_providers,
+            "BUG: expected 1 result per provider"
+        );
+
+        let mut cycles_to_attach = 0_u128;
+        let estimator = CyclesCostEstimator::new(read_state(State::get_num_subnet_nodes));
+        let policy = ChargingPolicyWithCollateral::default();
+        for request in requests.into_values() {
+            cycles_to_attach +=
+                policy.cycles_to_charge(&request, estimator.cost_of_http_request(&request));
+        }
+        Ok(cycles_to_attach)
+    }
+
+    fn create_json_rpc_requests(self) -> MultiCallResults<Request<JsonRpcRequest<Params>>>
+    where
+        Params: Clone,
+    {
+        let transform_op = {
+            let mut buf = vec![];
+            minicbor::encode(&self.transform, &mut buf).unwrap();
+            buf
+        };
+        let mut requests = MultiResults::default();
+        for provider in self.providers.sources {
+            let request = request_builder(
+                resolve_rpc_provider(provider.clone()),
+                &read_state(|state| state.get_override_provider()),
+            )
+            .map(|builder| {
+                builder
+                    .max_response_bytes(self.max_response_bytes)
+                    .transform_context(TransformContext::from_name(
+                        "cleanup_response".to_owned(),
+                        transform_op.clone(),
+                    ))
+                    .body(self.request.clone())
+                    .expect("BUG: invalid request")
+            });
+            requests.insert_once(provider.clone(), request);
+        }
+        requests
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ReductionStrategy {
     ByEquality(ReduceWithEquality),
     ByThreshold(ReduceWithThreshold),

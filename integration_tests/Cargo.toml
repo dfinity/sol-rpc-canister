@@ -14,6 +14,7 @@ canlog = { path = "../canlog" }
 const_format = { workspace = true }
 ic-cdk = { workspace = true }
 ic-test-utilities-load-wasm = { workspace = true }
+num-traits = {workspace = true}
 pocket-ic = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true }
@@ -31,4 +32,5 @@ solana-rpc-client-api = { workspace = true }
 assert_matches = { workspace = true }
 futures = { workspace = true }
 solana-client = { workspace = true }
+strum = {workspace = true}
 tokio = { workspace = true }

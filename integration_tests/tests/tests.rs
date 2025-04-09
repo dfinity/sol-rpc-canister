@@ -49,7 +49,7 @@ mod mock_request_tests {
         assert_matches!(
             client
                 .mock_http(builder_fn(MockOutcallBuilder::new(200, MOCK_RESPONSE))).build()
-                .raw_request(get_version_request())
+                .json_request(get_version_request())
                 .with_cycles(0)
                 .send()
                 .await,
@@ -383,7 +383,7 @@ mod generic_request_tests {
         let client = setup.client().build();
 
         let results = client
-            .raw_request(get_version_request())
+            .json_request(get_version_request())
             .with_cycles(0)
             .send()
             .await
@@ -425,7 +425,7 @@ mod generic_request_tests {
                 }),
             )
             .build()
-            .raw_request(get_version_request())
+            .json_request(get_version_request())
             .with_cycles(0)
             .send()
             .await
@@ -614,4 +614,236 @@ fn rpc_sources() -> Vec<RpcSources> {
             RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
         ]),
     ]
+}
+
+mod cycles_cost_tests {
+    use crate::{assert_within, get_version_request};
+    use candid::CandidType;
+    use serde::de::DeserializeOwned;
+    use serde_json::json;
+    use sol_rpc_client::{RequestBuilder, SolRpcEndpoint};
+    use sol_rpc_int_tests::mock::MockOutcallBuilder;
+    use sol_rpc_int_tests::{PocketIcRuntime, Setup, SolRpcTestClient};
+    use sol_rpc_types::{
+        GetAccountInfoParams, GetSlotParams, InstallArgs, Mode, ProviderError, RpcError,
+    };
+    use solana_pubkey::Pubkey;
+    use std::fmt::Debug;
+    use strum::IntoEnumIterator;
+
+    #[tokio::test]
+    async fn should_be_idempotent() {
+        async fn check<Config, Params, CandidOutput, Output>(
+            request: RequestBuilder<PocketIcRuntime<'_>, Config, Params, CandidOutput, Output>,
+        ) where
+            Config: CandidType + Clone + Send,
+            Params: CandidType + Clone + Send,
+        {
+            let cycles_cost_1 = request.clone().request_cost().send().await.unwrap();
+            let cycles_cost_2 = request.request_cost().send().await.unwrap();
+            assert_eq!(cycles_cost_1, cycles_cost_2);
+            assert!(cycles_cost_1 > 0);
+        }
+
+        let setup = Setup::new().await.with_mock_api_keys().await;
+        let client = setup.client().build();
+
+        for endpoint in SolRpcEndpoint::iter() {
+            match endpoint {
+                SolRpcEndpoint::GetSlot => {
+                    check(client.get_slot().with_params(GetSlotParams::default())).await;
+                }
+                SolRpcEndpoint::JsonRequest => {
+                    check(client.json_request(get_version_request())).await;
+                }
+                SolRpcEndpoint::GetAccountInfo => {
+                    check(
+                        client.get_account_info(GetAccountInfoParams::from(
+                            "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+                                .parse::<Pubkey>()
+                                .unwrap(),
+                        )),
+                    )
+                    .await;
+                }
+            }
+        }
+
+        setup.drop().await;
+    }
+
+    #[tokio::test]
+    async fn should_be_zero_when_in_demo_mode() {
+        async fn check<Config, Params, CandidOutput, Output>(
+            request: RequestBuilder<PocketIcRuntime<'_>, Config, Params, CandidOutput, Output>,
+        ) where
+            Config: CandidType + Clone + Send,
+            Params: CandidType + Clone + Send,
+        {
+            let cycles_cost = request.request_cost().send().await;
+            assert_eq!(cycles_cost, Ok(0));
+        }
+
+        let setup = Setup::new().await.with_mock_api_keys().await;
+        setup
+            .upgrade_canister(InstallArgs {
+                mode: Some(Mode::Demo),
+                ..Default::default()
+            })
+            .await;
+        let client = setup.client().build();
+
+        for endpoint in SolRpcEndpoint::iter() {
+            match endpoint {
+                SolRpcEndpoint::GetSlot => {
+                    check(client.get_slot().with_params(GetSlotParams::default())).await;
+                }
+                SolRpcEndpoint::JsonRequest => {
+                    check(client.json_request(get_version_request())).await;
+                }
+                SolRpcEndpoint::GetAccountInfo => {
+                    check(
+                        client.get_account_info(GetAccountInfoParams::from(
+                            "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+                                .parse::<Pubkey>()
+                                .unwrap(),
+                        )),
+                    )
+                    .await;
+                }
+            }
+        }
+
+        setup.drop().await;
+    }
+
+    #[tokio::test]
+    async fn should_get_exact_cycles_cost() {
+        async fn check<Config, Params, CandidOutput, Output>(
+            setup: &Setup,
+            request: RequestBuilder<
+                PocketIcRuntime<'_>,
+                Config,
+                Params,
+                sol_rpc_types::MultiRpcResult<CandidOutput>,
+                sol_rpc_types::MultiRpcResult<Output>,
+            >,
+            expected_cycles_cost: u128,
+        ) where
+            Config: CandidType + Clone + Send,
+            Params: CandidType + Clone + Send,
+            CandidOutput: CandidType + DeserializeOwned,
+            Output: Debug,
+            sol_rpc_types::MultiRpcResult<CandidOutput>:
+                Into<sol_rpc_types::MultiRpcResult<Output>>,
+        {
+            let five_percents = 5_u8;
+
+            let cycles_cost = request.clone().request_cost().send().await.unwrap();
+            assert_within(cycles_cost, expected_cycles_cost, five_percents);
+
+            let cycles_before = setup.sol_rpc_canister_cycles_balance().await;
+            // Request with exact cycles amount should succeed
+            let result = request
+                .clone()
+                .with_cycles(cycles_cost)
+                .send()
+                .await
+                .expect_consistent();
+            if let Err(RpcError::ProviderError(ProviderError::TooFewCycles { .. })) = result {
+                panic!("BUG: estimated cycles cost was insufficient!: {result:?}");
+            }
+            let cycles_after = setup.sol_rpc_canister_cycles_balance().await;
+            let cycles_consumed = cycles_before + cycles_cost - cycles_after;
+
+            assert!(
+                cycles_after > cycles_before,
+                "BUG: not enough cycles requested. Requested {cycles_cost} cycles, but consumed {cycles_consumed} cycles"
+            );
+
+            // Same request with less cycles should fail.
+            let results = request
+                .with_cycles(cycles_cost - 1)
+                .send()
+                .await
+                .expect_inconsistent();
+
+            assert!(
+                results.iter().any(|(_provider, result)| matches!(
+                    result,
+                    &Err(RpcError::ProviderError(ProviderError::TooFewCycles {
+                        expected: _,
+                        received: _
+                    }))
+                )),
+                "BUG: Expected at least one TooFewCycles error, but got {results:?}"
+            );
+
+            // TODO XC-321: ID in JSON-RPC requests should have a constant byte size.
+            // JSON-RPC requests for estimating the cycles cost use `0` as an ID
+            // while the actual requests will use a unique incremental ID, which after a few requests
+            // will have a bigger binary representation leading to an increase cycles cost for the actual HTTPs outcall.
+            // As a workaround, we upgrade the SOL RPC canister to reset the requests counter to zero since it's stored on the heap.
+            setup.upgrade_canister(InstallArgs::default()).await;
+        }
+
+        let setup = Setup::new().await.with_mock_api_keys().await;
+        let client = setup
+            .client()
+            // The exact cycles cost of an HTTPs outcall is independent of the response,
+            // so we always return a dummy response so that individual responses
+            // do not need to be mocked.
+            .mock_http(MockOutcallBuilder::new(403, json!({})))
+            .build();
+
+        for endpoint in SolRpcEndpoint::iter() {
+            // To find out the expected_cycles_cost for a new endpoint, set the amount to 0
+            // and run the test. It should fail and report the amount of cycles needed.
+            match endpoint {
+                SolRpcEndpoint::GetSlot => {
+                    check(
+                        &setup,
+                        client.get_slot().with_params(GetSlotParams::default()),
+                        1_792_548_000,
+                    )
+                    .await;
+                }
+                SolRpcEndpoint::JsonRequest => {
+                    check(
+                        &setup,
+                        client.json_request(get_version_request()),
+                        1_790_956_800,
+                    )
+                    .await;
+                }
+                SolRpcEndpoint::GetAccountInfo => {
+                    check(
+                        &setup,
+                        client.get_account_info(GetAccountInfoParams::from(
+                            "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+                                .parse::<Pubkey>()
+                                .unwrap(),
+                        )),
+                        1_793_744_800,
+                    )
+                    .await;
+                }
+            }
+        }
+
+        setup.drop().await;
+    }
+}
+fn assert_within(actual: u128, expected: u128, percentage_error: u8) {
+    assert!(percentage_error <= 100);
+    let error_margin = expected.saturating_mul(percentage_error as u128) / 100;
+    let lower_bound = expected.saturating_sub(error_margin);
+    let upper_bound = expected.saturating_add(error_margin);
+    assert!(
+        lower_bound <= actual && actual <= upper_bound,
+        "Expected {} <= {} <= {}",
+        lower_bound,
+        actual,
+        upper_bound
+    );
 }

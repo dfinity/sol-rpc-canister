@@ -40,9 +40,9 @@
 
 mod request;
 
-pub use request::{Request, RequestBuilder, SolRpcRequest};
+pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 
-use crate::request::{GetAccountInfoRequest, GetSlotRequest, RawRequest};
+use crate::request::{GetAccountInfoRequest, GetSlotRequest, JsonRequest};
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
@@ -219,8 +219,8 @@ impl<R> SolRpcClient<R> {
         RequestBuilder::new(self.clone(), GetSlotRequest::default(), 10_000_000_000)
     }
 
-    /// Call `request` on the SOL RPC canister.
-    pub fn raw_request(
+    /// Call `jsonRequest` on the SOL RPC canister.
+    pub fn json_request(
         &self,
         json_request: serde_json::Value,
     ) -> RequestBuilder<
@@ -232,7 +232,7 @@ impl<R> SolRpcClient<R> {
     > {
         RequestBuilder::new(
             self.clone(),
-            RawRequest::try_from(json_request).expect("Client error: invalid JSON request"),
+            JsonRequest::try_from(json_request).expect("Client error: invalid JSON request"),
             10_000_000_000,
         )
     }
@@ -275,7 +275,7 @@ impl<R: Runtime> SolRpcClient<R> {
             .runtime
             .update_call::<(RpcSources, Option<Config>, Params), CandidOutput>(
                 self.config.sol_rpc_canister,
-                &request.rpc_method,
+                request.endpoint.rpc_method(),
                 (request.rpc_sources, request.rpc_config, request.params),
                 request.cycles,
             )
@@ -283,7 +283,33 @@ impl<R: Runtime> SolRpcClient<R> {
             .unwrap_or_else(|e| {
                 panic!(
                     "Client error: failed to call `{}`: {e:?}",
-                    request.rpc_method
+                    request.endpoint.rpc_method()
+                )
+            })
+            .into()
+    }
+
+    async fn execute_cycles_cost_request<Config, Params, CandidOutput, Output>(
+        &self,
+        request: Request<Config, Params, CandidOutput, Output>,
+    ) -> Output
+    where
+        Config: CandidType + Send,
+        Params: CandidType + Send,
+        CandidOutput: Into<Output> + CandidType + DeserializeOwned,
+    {
+        self.config
+            .runtime
+            .query_call::<(RpcSources, Option<Config>, Params), CandidOutput>(
+                self.config.sol_rpc_canister,
+                request.endpoint.cycles_cost_method(),
+                (request.rpc_sources, request.rpc_config, request.params),
+            )
+            .await
+            .unwrap_or_else(|e| {
+                panic!(
+                    "Client error: failed to call `{}`: {e:?}",
+                    request.endpoint.cycles_cost_method()
                 )
             })
             .into()

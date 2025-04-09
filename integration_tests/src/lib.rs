@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use candid::{decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encode, Principal};
 use canlog::{Log, LogEntry};
 use ic_cdk::api::call::RejectionCode;
+use num_traits::ToPrimitive;
 use pocket_ic::{
     common::rest::{
         CanisterHttpReject, CanisterHttpRequest, CanisterHttpResponse, MockCanisterHttpResponse,
@@ -178,6 +179,17 @@ impl Setup {
 
     pub fn client_live_mode(&self) -> ClientBuilder<PocketIcLiveModeRuntime> {
         SolRpcClient::builder(self.new_live_pocket_ic_runtime(), self.sol_rpc_canister_id)
+    }
+
+    pub async fn sol_rpc_canister_cycles_balance(&self) -> u128 {
+        self.env
+            .canister_status(self.sol_rpc_canister_id, Some(self.controller))
+            .await
+            .unwrap()
+            .cycles
+            .0
+            .to_u128()
+            .unwrap()
     }
 
     fn new_pocket_ic_runtime(&self) -> PocketIcRuntime {

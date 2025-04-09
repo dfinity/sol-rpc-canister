@@ -4047,6 +4047,7 @@ dependencies = [
  "solana-account-decoder-client-types",
  "solana-clock",
  "solana-pubkey",
+ "strum 0.27.1",
 ]
 
 [[package]]
@@ -4061,6 +4062,7 @@ dependencies = [
  "futures",
  "ic-cdk",
  "ic-test-utilities-load-wasm",
+ "num-traits",
  "pocket-ic",
  "regex",
  "serde",
@@ -4074,6 +4076,7 @@ dependencies = [
  "solana-client",
  "solana-pubkey",
  "solana-rpc-client-api",
+ "strum 0.27.1",
  "tokio",
 ]
 
