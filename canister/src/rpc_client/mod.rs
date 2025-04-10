@@ -64,6 +64,9 @@ impl<Params, Output> MultiRpcRequest<Params, Output> {
             _marker: PhantomData,
         }
     }
+    pub fn method(&self) -> &str {
+        self.request.method()
+    }
 }
 
 impl<Params: Clone, Output> Clone for MultiRpcRequest<Params, Output> {
