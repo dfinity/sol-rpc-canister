@@ -207,6 +207,20 @@ impl<R> SolRpcClient<R> {
     }
 
     /// Call `getSlot` on the SOL RPC canister.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{CommitmentLevel, GetSlotParams, RpcSources, SolanaCluster};
+    /// let client = SolRpcClient::builder_for_ic().with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet)).build();
+    ///
+    /// let slot_fut = client.get_slot().with_params(GetSlotParams {
+    /// commitment: Some(CommitmentLevel::Finalized),
+    /// ..Default::default()
+    /// })
+    /// .send();
+    /// ```
     pub fn get_slot(
         &self,
     ) -> RequestBuilder<
@@ -351,5 +365,28 @@ impl Runtime for IcRuntime {
         ic_cdk::api::call::call(id, method, args)
             .await
             .map(|(res,)| res)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[tokio::test]
+    async fn should() {
+        use crate::SolRpcClient;
+        use sol_rpc_types::{CommitmentLevel, GetSlotParams, RpcSources, SolanaCluster};
+
+        let client = SolRpcClient::builder_for_ic()
+            .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+            .build();
+
+        let slot = client
+            .get_slot()
+            .with_params(GetSlotParams {
+                commitment: Some(CommitmentLevel::Finalized),
+                ..Default::default()
+            })
+            .send()
+            .await;
     }
 }
