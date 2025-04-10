@@ -59,7 +59,7 @@ impl ResponseTransform {
             }
             Self::GetBlock => {
                 canonicalize_response::<Value, Option<UiConfirmedBlock>>(body_bytes, |result| {
-                    match result["value"].clone() {
+                    match result {
                         Value::Null => None,
                         value => Some(
                             from_value::<UiConfirmedBlock>(value)

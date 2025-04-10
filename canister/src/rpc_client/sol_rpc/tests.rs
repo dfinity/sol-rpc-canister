@@ -1,11 +1,11 @@
 use super::*;
 use canhttp::http::json::Id;
+use proptest::proptest;
+use serde_json::json;
 use solana_account_decoder_client_types::{UiAccountData, UiAccountEncoding};
 
 mod normalization_tests {
     use super::*;
-    use proptest::proptest;
-    use serde_json::json;
 
     #[test]
     fn should_normalize_raw_response() {
@@ -111,13 +111,53 @@ mod normalization_tests {
         );
     }
 
+    #[test]
+    fn should_normalize_get_block_response() {
+        assert_normalized(
+            &ResponseTransform::GetBlock,
+            r#"{
+                "previousBlockhash": "4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3",
+                "blockhash": "8QeCusqSTKeC23NwjTKRBDcPuEfVLtszkxbpL6mXQEp4",
+                "parentSlot": 372877611,
+                "blockTime": 1744122369,
+                "blockHeight": 360854634
+            }"#,
+            Some(UiConfirmedBlock {
+                previous_blockhash: "4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3".to_string(),
+                blockhash: "8QeCusqSTKeC23NwjTKRBDcPuEfVLtszkxbpL6mXQEp4".to_string(),
+                parent_slot: 372877611,
+                transactions: None,
+                signatures: None,
+                rewards: None,
+                num_reward_partitions: None,
+                block_time: Some(1744122369),
+                block_height: Some(360854634),
+            }),
+        );
+    }
+
+    #[test]
+    fn should_normalize_empty_get_block_response() {
+        assert_normalized(
+            &ResponseTransform::GetBlock,
+            "null",
+            None::<UiConfirmedBlock>,
+        );
+    }
+
     fn assert_normalized<T>(transform: &ResponseTransform, result: &str, expected: T)
     where
         T: Debug + Serialize + DeserializeOwned,
     {
         let expected_response = to_vec(&JsonRpcResponse::from_ok(Id::Number(1), expected)).unwrap();
         let normalized_response = normalize_result(transform, result);
-        assert_eq!(expected_response, normalized_response);
+        assert_eq!(
+            expected_response,
+            normalized_response,
+            "expected {:?}, actual: {:?}",
+            from_slice::<Value>(&expected_response),
+            from_slice::<Value>(&normalized_response)
+        );
     }
 
     fn normalize_result(transform: &ResponseTransform, result: &str) -> Vec<u8> {

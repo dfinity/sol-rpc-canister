@@ -6,10 +6,8 @@ use sol_rpc_canister::{
     candid_rpc::{process_error, process_result},
     http_types, lifecycle,
     logs::Priority,
-    memory::State,
-    memory::{mutate_state, read_state},
-    metrics::encode_metrics,
-    metrics::RpcMethod,
+    memory::{mutate_state, read_state, State},
+    metrics::{encode_metrics, RpcMethod},
     providers::{get_provider, PROVIDERS},
     rpc_client::MultiRpcRequest,
 };

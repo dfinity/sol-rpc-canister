@@ -12,6 +12,8 @@ use sol_rpc_types::{
 use solana_account_decoder_client_types::UiAccount;
 use solana_client::rpc_client::{RpcClient as SolanaRpcClient, RpcClient};
 use solana_commitment_config::CommitmentConfig;
+use solana_rpc_client_api::config::RpcBlockConfig;
+use solana_transaction_status_client_types::TransactionDetails;
 use std::{future::Future, str::FromStr};
 
 #[tokio::test(flavor = "multi_thread")]
@@ -100,25 +102,36 @@ async fn should_get_block() {
     let setup = Setup::new().await;
     let slot = setup
         .solana_client
-        .get_slot_with_commitment(CommitmentConfig::confirmed())
-        .expect("Failed to get slot")
-        - 100; // TODO XC-289
+        .get_slot_with_commitment(CommitmentConfig::finalized())
+        .expect("Failed to get slot");
 
     let (sol_res, ic_res) = setup
         .compare_client(
-            |sol| sol.get_block(slot).expect("Failed to get block"),
+            |sol| {
+                sol.get_block_with_config(
+                    slot,
+                    RpcBlockConfig {
+                        encoding: None,
+                        transaction_details: Some(TransactionDetails::None),
+                        rewards: Some(false),
+                        commitment: None,
+                        max_supported_transaction_version: None,
+                    },
+                )
+                .expect("Failed to get block")
+            },
             |ic| async move {
                 ic.get_block(slot)
                     .send()
                     .await
                     .expect_consistent()
                     .unwrap_or_else(|e| panic!("`getBlock` call failed: {e}"))
-                    .unwrap_or_else(|| panic!("Block for slot {slot} is not confirmed"))
+                    .unwrap_or_else(|| panic!("No block for slot {slot}"))
             },
         )
         .await;
 
-    assert_eq!(sol_res, ic_res.into());
+    assert_eq!(sol_res, ic_res);
 
     setup.setup.drop().await;
 }

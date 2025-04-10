@@ -8,9 +8,9 @@ use sol_rpc_int_tests::{
     mock::MockOutcallBuilder, Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID,
 };
 use sol_rpc_types::{
-    InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
-    RpcResult, RpcSource, RpcSources, Slot, SolanaCluster, SupportedRpcProvider,
-    SupportedRpcProviderId,
+    CommitmentLevel, GetSlotParams, InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth,
+    RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster,
+    SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_account_decoder_client_types::{UiAccount, UiAccountData, UiAccountEncoding};
 use std::{iter::zip, str::FromStr};
@@ -312,8 +312,6 @@ mod get_block_tests {
 
 mod get_slot_tests {
     use super::*;
-    use sol_rpc_types::{CommitmentLevel, GetSlotParams};
-    use std::iter::zip;
 
     #[tokio::test]
     async fn should_get_slot_with_full_params() {
@@ -702,8 +700,7 @@ mod cycles_cost_tests {
     use serde::de::DeserializeOwned;
     use serde_json::json;
     use sol_rpc_client::{RequestBuilder, SolRpcEndpoint};
-    use sol_rpc_int_tests::mock::MockOutcallBuilder;
-    use sol_rpc_int_tests::{PocketIcRuntime, Setup, SolRpcTestClient};
+    use sol_rpc_int_tests::{mock::MockOutcallBuilder, PocketIcRuntime, Setup, SolRpcTestClient};
     use sol_rpc_types::{
         GetAccountInfoParams, GetBlockParams, GetSlotParams, InstallArgs, Mode, ProviderError,
         RpcError,
@@ -903,7 +900,7 @@ mod cycles_cost_tests {
                     check(
                         &setup,
                         client.get_block(GetBlockParams::from(577996)),
-                        0,
+                        1_791_868_000,
                     )
                     .await;
                 }

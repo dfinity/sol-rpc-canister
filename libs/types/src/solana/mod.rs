@@ -2,8 +2,6 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use solana_account_decoder_client_types::{UiAccountEncoding, UiDataSliceConfig};
 use solana_commitment_config::CommitmentConfig;
-use solana_rpc_client_api::config::{RpcAccountInfoConfig, RpcBlockConfig};
-use solana_transaction_status_client_types::TransactionDetails;
 use std::fmt::Debug;
 
 /// A Solana [slot](https://solana.com/docs/references/terminology#slot).
@@ -21,7 +19,6 @@ pub struct GetSlotParams {
 
 /// The parameters for a Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getAccountInfo) RPC method call.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
-#[serde(into = "(String, Option<RpcAccountInfoConfig>)")]
 pub struct GetAccountInfoParams {
     /// The public key of the account whose info to fetch formatted as a base-58 string.
     pub pubkey: String,
@@ -59,37 +56,9 @@ impl From<solana_pubkey::Pubkey> for GetAccountInfoParams {
     }
 }
 
-impl From<GetAccountInfoParams> for (String, Option<RpcAccountInfoConfig>) {
-    fn from(params: GetAccountInfoParams) -> Self {
-        let config = if params.is_default_config() {
-            None
-        } else {
-            Some(RpcAccountInfoConfig {
-                encoding: params.encoding.map(Into::into),
-                data_slice: params.data_slice.map(Into::into),
-                commitment: params.commitment.map(Into::into),
-                min_context_slot: params.min_context_slot,
-            })
-        };
-        (params.pubkey, config)
-    }
-}
-
-impl From<GetAccountInfoEncoding> for UiAccountEncoding {
-    fn from(encoding: GetAccountInfoEncoding) -> Self {
-        match encoding {
-            GetAccountInfoEncoding::Base58 => Self::Base58,
-            GetAccountInfoEncoding::Base64 => Self::Base64,
-            GetAccountInfoEncoding::Base64ZStd => Self::Base64Zstd,
-            GetAccountInfoEncoding::JsonParsed => Self::JsonParsed,
-        }
-    }
-}
-
 /// The parameters for a Solana [`getBlock`](https://solana.com/docs/rpc/http/getblock) RPC method call.
 // TODO XC-289: Add `rewards`, `encoding` and `transactionDetails` fields.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
-#[serde(into = "(Slot, Option<RpcBlockConfig>)")]
 pub struct GetBlockParams {
     /// Slot number of the block to fetch.
     pub slot: Slot,
@@ -118,23 +87,6 @@ impl From<Slot> for GetBlockParams {
             commitment: None,
             max_supported_transaction_version: None,
         }
-    }
-}
-
-impl From<GetBlockParams> for (Slot, Option<RpcBlockConfig>) {
-    fn from(params: GetBlockParams) -> Self {
-        let config = if params.is_default_config() {
-            None
-        } else {
-            Some(RpcBlockConfig {
-                encoding: None,
-                transaction_details: Some(TransactionDetails::None),
-                rewards: Some(false),
-                commitment: params.commitment.map(Into::into),
-                max_supported_transaction_version: params.max_supported_transaction_version,
-            })
-        };
-        (params.slot, config)
     }
 }
 

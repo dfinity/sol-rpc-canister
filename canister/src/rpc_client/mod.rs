@@ -1,11 +1,11 @@
+pub mod json;
 mod sol_rpc;
 
-use crate::http::errors::HttpClientError;
-use crate::http::{service_request_builder, ChargingPolicyWithCollateral};
-use crate::memory::State;
 use crate::{
-    http::http_client,
-    memory::read_state,
+    http::{
+        errors::HttpClientError, http_client, service_request_builder, ChargingPolicyWithCollateral,
+    },
+    memory::{read_state, State},
     metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider, Providers},
     rpc_client::sol_rpc::ResponseTransform,
@@ -18,16 +18,16 @@ use canhttp::{
     TransformContextRequestExtension,
 };
 use http::{Request, Response};
-use ic_cdk::api::management_canister::http_request::CanisterHttpRequestArgument as IcHttpRequest;
-use ic_cdk::api::management_canister::http_request::TransformContext;
+use ic_cdk::api::management_canister::http_request::{
+    CanisterHttpRequestArgument as IcHttpRequest, TransformContext,
+};
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
-    ConsensusStrategy, GetAccountInfoParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig,
-    ProviderError, RpcConfig, RpcError, RpcResult, RpcSource, RpcSources,
+    ConsensusStrategy, GetSlotParams, GetSlotRpcConfig, ProviderError, RpcConfig, RpcError,
+    RpcResult, RpcSource, RpcSources,
 };
 use solana_clock::Slot;
-use std::fmt::Debug;
-use std::marker::PhantomData;
+use std::{fmt::Debug, marker::PhantomData};
 use tower::ServiceExt;
 
 // This constant is our approximation of the expected header size.
@@ -78,11 +78,13 @@ impl<Params: Clone, Output> Clone for MultiRpcRequest<Params, Output> {
     }
 }
 
-pub type GetAccountInfoRequest =
-    MultiRpcRequest<GetAccountInfoParams, Option<solana_account_decoder_client_types::UiAccount>>;
+pub type GetAccountInfoRequest = MultiRpcRequest<
+    json::GetAccountInfoParams,
+    Option<solana_account_decoder_client_types::UiAccount>,
+>;
 
 impl GetAccountInfoRequest {
-    pub fn get_account_info<Params: Into<GetAccountInfoParams>>(
+    pub fn get_account_info<Params: Into<json::GetAccountInfoParams>>(
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
@@ -104,12 +106,12 @@ impl GetAccountInfoRequest {
 }
 
 pub type GetBlockRequest = MultiRpcRequest<
-    GetBlockParams,
+    json::GetBlockParams,
     Option<solana_transaction_status_client_types::UiConfirmedBlock>,
 >;
 
 impl GetBlockRequest {
-    pub fn get_block<Params: Into<GetBlockParams>>(
+    pub fn get_block<Params: Into<json::GetBlockParams>>(
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
