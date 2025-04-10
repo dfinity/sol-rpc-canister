@@ -62,19 +62,29 @@ impl<T: Debug> MultiRpcResult<T> {
     }
 }
 
+impl From<MultiRpcResult<Option<AccountInfo>>>
+    for MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>
+{
+    fn from(result: MultiRpcResult<Option<AccountInfo>>) -> Self {
+        result.map(|maybe_account| maybe_account.map(|account| account.into()))
+    }
+}
+
+impl From<MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>>
+    for MultiRpcResult<Option<AccountInfo>>
+{
+    fn from(
+        result: MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>,
+    ) -> Self {
+        result.map(|maybe_account| maybe_account.map(|account| account.into()))
+    }
+}
+
 impl From<MultiRpcResult<TransactionId>> for MultiRpcResult<solana_signature::Signature> {
     fn from(result: MultiRpcResult<TransactionId>) -> Self {
         result.map(|transaction_id| {
             solana_signature::Signature::from_str(&transaction_id)
                 .expect("Unable to parse signature")
         })
-    }
-}
-
-impl From<MultiRpcResult<Option<AccountInfo>>>
-    for MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>
-{
-    fn from(result: MultiRpcResult<Option<AccountInfo>>) -> Self {
-        result.map(|maybe_account| maybe_account.map(|account| account.into()))
     }
 }

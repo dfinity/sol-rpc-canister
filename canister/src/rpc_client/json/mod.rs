@@ -77,7 +77,7 @@ pub struct SendTransactionConfig {
     pub skip_preflight: Option<bool>,
     /// Commitment level to use for preflight. See Configuring State Commitment. Default finalized.
     #[serde(rename = "preflightCommitment")]
-    pub preflight_commitment: Option<String>,
+    pub preflight_commitment: Option<CommitmentLevel>,
     /// Maximum number of times for the RPC node to retry sending the transaction to the leader.
     /// If this parameter not provided, the RPC node will retry the transaction until it is
     /// finalized or until the blockhash expires.

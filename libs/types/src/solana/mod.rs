@@ -20,7 +20,7 @@ pub struct SendTransactionParams {
     pub skip_preflight: Option<bool>,
     /// Commitment level to use for preflight. See Configuring State Commitment. Default finalized.
     #[serde(rename = "preflightCommitment")]
-    pub preflight_commitment: Option<String>,
+    pub preflight_commitment: Option<CommitmentLevel>,
     /// Maximum number of times for the RPC node to retry sending the transaction to the leader.
     /// If this parameter not provided, the RPC node will retry the transaction until it is
     /// finalized or until the blockhash expires.
@@ -34,11 +34,19 @@ pub struct SendTransactionParams {
 impl SendTransactionParams {
     /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
     pub fn is_default_config(&self) -> bool {
-        self.encoding.is_none()
-            && self.skip_preflight.is_none()
-            && self.preflight_commitment.is_none()
-            && self.max_retries.is_none()
-            && self.min_context_slot.is_none()
+        let SendTransactionParams {
+            transaction: _,
+            encoding,
+            skip_preflight,
+            preflight_commitment,
+            max_retries,
+            min_context_slot,
+        } = &self;
+        encoding.is_none()
+            && skip_preflight.is_none()
+            && preflight_commitment.is_none()
+            && max_retries.is_none()
+            && min_context_slot.is_none()
     }
 }
 
@@ -101,10 +109,17 @@ pub struct GetAccountInfoParams {
 impl GetAccountInfoParams {
     /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
     pub fn is_default_config(&self) -> bool {
-        self.commitment.is_none()
-            && self.encoding.is_none()
-            && self.data_slice.is_none()
-            && self.min_context_slot.is_none()
+        let GetAccountInfoParams {
+            pubkey: _,
+            commitment,
+            encoding,
+            data_slice,
+            min_context_slot,
+        } = &self;
+        commitment.is_none()
+            && encoding.is_none()
+            && data_slice.is_none()
+            && min_context_slot.is_none()
     }
 }
 

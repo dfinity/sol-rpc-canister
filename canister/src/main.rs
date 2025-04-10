@@ -1,20 +1,19 @@
 use candid::candid_method;
-use canhttp::http::json::JsonRpcRequest;
 use canlog::{log, Log, Sort};
 use ic_cdk::{api::is_controller, query, update};
 use ic_metrics_encoder::MetricsEncoder;
 use sol_rpc_canister::{
-    candid_rpc::CandidRpcClient,
+    candid_rpc::{process_error, process_result},
     http_types, lifecycle,
     logs::Priority,
-    memory::{mutate_state, read_state},
-    metrics::encode_metrics,
+    memory::{mutate_state, read_state, State},
+    metrics::{encode_metrics, RpcMethod},
     providers::{get_provider, PROVIDERS},
-    types::RoundingError,
+    rpc_client::MultiRpcRequest,
 };
 use sol_rpc_types::{
     AccountInfo, GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, MultiRpcResult, RpcAccess,
-    RpcConfig, RpcError, RpcSources, SendTransactionParams, Slot, SupportedRpcProvider,
+    RpcConfig, RpcResult, RpcSources, SendTransactionParams, Slot, SupportedRpcProvider,
     SupportedRpcProviderId, TransactionId,
 };
 use std::str::FromStr;
@@ -82,10 +81,27 @@ async fn get_account_info(
     config: Option<RpcConfig>,
     params: GetAccountInfoParams,
 ) -> MultiRpcResult<Option<AccountInfo>> {
-    match CandidRpcClient::new(source, config) {
-        Ok(client) => client.get_account_info(params).await,
-        Err(err) => Err(err).into(),
+    match MultiRpcRequest::get_account_info(source, config.unwrap_or_default(), params) {
+        Ok(request) => {
+            process_result(RpcMethod::GetAccountInfo, request.send_and_reduce().await).into()
+        }
+        Err(e) => process_error(e),
     }
+}
+
+#[query(name = "getAccountInfoCyclesCost")]
+#[candid_method(query, rename = "getAccountInfoCyclesCost")]
+async fn get_account_info_cycles_cost(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: GetAccountInfoParams,
+) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
+    MultiRpcRequest::get_account_info(source, config.unwrap_or_default(), params)?
+        .cycles_cost()
+        .await
 }
 
 #[update(name = "getSlot")]
@@ -95,18 +111,33 @@ async fn get_slot(
     config: Option<GetSlotRpcConfig>,
     params: Option<GetSlotParams>,
 ) -> MultiRpcResult<Slot> {
-    let rounding_error = config
-        .as_ref()
-        .and_then(|c| c.rounding_error)
-        .map(RoundingError::from);
-    match CandidRpcClient::new_with_rounding_error(
+    match MultiRpcRequest::get_slot(
         source,
-        config.map(RpcConfig::from),
-        rounding_error,
+        config.unwrap_or_default(),
+        params.unwrap_or_default(),
     ) {
-        Ok(client) => client.get_slot(params).await,
-        Err(err) => Err(err).into(),
+        Ok(request) => process_result(RpcMethod::GetSlot, request.send_and_reduce().await),
+        Err(e) => process_error(e),
     }
+}
+
+#[query(name = "getSlotCyclesCost")]
+#[candid_method(query, rename = "getSlotCyclesCost")]
+async fn get_slot_cycles_cost(
+    source: RpcSources,
+    config: Option<GetSlotRpcConfig>,
+    params: Option<GetSlotParams>,
+) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
+    MultiRpcRequest::get_slot(
+        source,
+        config.unwrap_or_default(),
+        params.unwrap_or_default(),
+    )?
+    .cycles_cost()
+    .await
 }
 
 #[update(name = "sendTransaction")]
@@ -116,32 +147,54 @@ async fn send_transaction(
     config: Option<RpcConfig>,
     params: SendTransactionParams,
 ) -> MultiRpcResult<TransactionId> {
-    match CandidRpcClient::new(source, config) {
-        Ok(client) => client.send_transaction(params).await,
-        Err(err) => Err(err).into(),
+    match MultiRpcRequest::send_transaction(source, config.unwrap_or_default(), params) {
+        Ok(request) => process_result(RpcMethod::GetSlot, request.send_and_reduce().await).into(),
+        Err(e) => process_error(e),
     }
 }
 
-#[update]
-#[candid_method]
-async fn request(
+#[query(name = "sendTransactionCyclesCost")]
+#[candid_method(query, rename = "sendTransactionCyclesCost")]
+async fn send_transaction_cycles_cost(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: SendTransactionParams,
+) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
+    MultiRpcRequest::send_transaction(source, config.unwrap_or_default(), params)?
+        .cycles_cost()
+        .await
+}
+
+#[update(name = "jsonRequest")]
+#[candid_method(rename = "jsonRequest")]
+async fn json_request(
     source: RpcSources,
     config: Option<RpcConfig>,
     json_rpc_payload: String,
 ) -> MultiRpcResult<String> {
-    let request: JsonRpcRequest<serde_json::Value> = match serde_json::from_str(&json_rpc_payload) {
-        Ok(req) => req,
-        Err(e) => {
-            return Err(RpcError::ValidationError(format!(
-                "Invalid JSON RPC request: {e}"
-            )))
-            .into()
-        }
-    };
-    match CandidRpcClient::new(source, config) {
-        Ok(client) => client.raw_request(request).await,
-        Err(err) => Err(err).into(),
+    match MultiRpcRequest::json_request(source, config.unwrap_or_default(), json_rpc_payload) {
+        Ok(request) => process_result(RpcMethod::JsonRequest, request.send_and_reduce().await)
+            .map(|value| value.to_string()),
+        Err(e) => process_error(e),
     }
+}
+
+#[query(name = "jsonRequestCyclesCost")]
+#[candid_method(query, rename = "jsonRequestCyclesCost")]
+async fn json_request_cycles_cost(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    json_rpc_payload: String,
+) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
+    MultiRpcRequest::json_request(source, config.unwrap_or_default(), json_rpc_payload)?
+        .cycles_cost()
+        .await
 }
 
 #[query(hidden = true)]

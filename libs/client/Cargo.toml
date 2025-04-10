@@ -22,3 +22,4 @@ solana-clock = { workspace = true }
 solana-pubkey = { workspace = true }
 solana-signature = { workspace = true }
 sol_rpc_types = { path = "../types" }
+strum = {workspace = true}

@@ -4026,6 +4026,7 @@ dependencies = [
  "solana-account-decoder-client-types",
  "solana-clock",
  "solana-pubkey",
+ "solana-signature",
  "thiserror 2.0.12",
  "tower",
  "tower-http",
@@ -4048,6 +4049,7 @@ dependencies = [
  "solana-clock",
  "solana-pubkey",
  "solana-signature",
+ "strum 0.27.1",
 ]
 
 [[package]]
@@ -4062,6 +4064,7 @@ dependencies = [
  "futures",
  "ic-cdk",
  "ic-test-utilities-load-wasm",
+ "num-traits",
  "pocket-ic",
  "regex",
  "serde",
@@ -4073,6 +4076,7 @@ dependencies = [
  "solana-account",
  "solana-account-decoder-client-types",
  "solana-client",
+ "solana-hash",
  "solana-keypair",
  "solana-message",
  "solana-program",
@@ -4081,6 +4085,7 @@ dependencies = [
  "solana-signature",
  "solana-signer",
  "solana-transaction",
+ "strum 0.27.1",
  "tokio",
 ]
 
