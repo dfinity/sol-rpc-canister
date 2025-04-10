@@ -48,8 +48,8 @@ use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources, SolanaCluster,
-    SupportedRpcProvider, SupportedRpcProviderId,
+    GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, MultiRpcResult, RpcConfig, RpcSources,
+    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_clock::Slot;
 use std::sync::Arc;
@@ -167,6 +167,16 @@ impl<R> ClientBuilder<R> {
         }
     }
 
+    /// Change the runtime to return a mocked response.
+    ///
+    /// *IMPORTANT*: This method should only be used for testing purposes.
+    pub fn with_mocked_response<Out: CandidType>(
+        self,
+        mocked_response: Out,
+    ) -> ClientBuilder<MockRuntime> {
+        self.with_runtime(|_runtime| MockRuntime::new(mocked_response))
+    }
+
     /// Mutates the builder to use the given [`RpcSources`].
     pub fn with_rpc_sources(mut self, rpc_sources: RpcSources) -> Self {
         self.config.rpc_sources = rpc_sources;
@@ -212,14 +222,28 @@ impl<R> SolRpcClient<R> {
     ///
     /// ```rust
     /// use sol_rpc_client::SolRpcClient;
-    /// use sol_rpc_types::{CommitmentLevel, GetSlotParams, RpcSources, SolanaCluster};
-    /// let client = SolRpcClient::builder_for_ic().with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet)).build();
+    /// use sol_rpc_types::{CommitmentLevel, GetSlotParams, MultiRpcResult, RpcSources, SolanaCluster};
     ///
-    /// let slot_fut = client.get_slot().with_params(GetSlotParams {
-    /// commitment: Some(CommitmentLevel::Finalized),
-    /// ..Default::default()
-    /// })
-    /// .send();
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let slot = client
+    ///     .get_slot()
+    ///     .with_params(GetSlotParams {
+    ///         commitment: Some(CommitmentLevel::Finalized),
+    ///         ..Default::default()
+    ///     })
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent();
+    ///
+    /// assert_eq!(slot, Ok(332_577_897_u64));
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn get_slot(
         &self,
@@ -368,25 +392,49 @@ impl Runtime for IcRuntime {
     }
 }
 
-#[cfg(test)]
-mod tests {
+/// A dummy implementation of [`Runtime`] that always return the same response.
+pub struct MockRuntime(Vec<u8>);
 
-    #[tokio::test]
-    async fn should() {
-        use crate::SolRpcClient;
-        use sol_rpc_types::{CommitmentLevel, GetSlotParams, RpcSources, SolanaCluster};
+impl MockRuntime {
+    /// Create a new [`MockRuntime`] to always return the given parameter.
+    pub fn new<Out: CandidType>(mocked_response: Out) -> Self {
+        Self(
+            candid::encode_args((&mocked_response,))
+                .expect("Failed to encode Candid mocked response"),
+        )
+    }
+}
 
-        let client = SolRpcClient::builder_for_ic()
-            .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
-            .build();
+#[async_trait]
+impl Runtime for MockRuntime {
+    async fn update_call<In, Out>(
+        &self,
+        id: Principal,
+        method: &str,
+        args: In,
+        cycles: u128,
+    ) -> Result<Out, (RejectionCode, String)>
+    where
+        In: ArgumentEncoder + Send,
+        Out: CandidType + DeserializeOwned,
+    {
+        Ok(candid::decode_args(&self.0)
+            .map(|(r,)| r)
+            .expect("Failed to decode Candid mocked response"))
+    }
 
-        let slot = client
-            .get_slot()
-            .with_params(GetSlotParams {
-                commitment: Some(CommitmentLevel::Finalized),
-                ..Default::default()
-            })
-            .send()
-            .await;
+    async fn query_call<In, Out>(
+        &self,
+        id: Principal,
+        method: &str,
+        args: In,
+    ) -> Result<Out, (RejectionCode, String)>
+    where
+        In: ArgumentEncoder + Send,
+        Out: CandidType + DeserializeOwned,
+    {
+        Ok(candid::decode_args(&self.0)
+            .map(|(r,)| r)
+            .expect("Failed to decode Candid mocked response"))
     }
 }

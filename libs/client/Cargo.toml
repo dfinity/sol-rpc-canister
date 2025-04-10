@@ -24,4 +24,4 @@ sol_rpc_types = { path = "../types" }
 strum = {workspace = true}
 
 [dev-dependencies]
-tokio = {workspace = true}
+tokio = {workspace = true, features = ["full"]}
