@@ -148,7 +148,7 @@ async fn send_transaction(
     params: SendTransactionParams,
 ) -> MultiRpcResult<TransactionId> {
     match MultiRpcRequest::send_transaction(source, config.unwrap_or_default(), params) {
-        Ok(request) => process_result(RpcMethod::GetSlot, request.send_and_reduce().await).into(),
+        Ok(request) => process_result(RpcMethod::GetSlot, request.send_and_reduce().await),
         Err(e) => process_error(e),
     }
 }
