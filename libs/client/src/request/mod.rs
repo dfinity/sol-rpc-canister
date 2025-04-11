@@ -2,8 +2,8 @@ use crate::{Runtime, SolRpcClient};
 use candid::CandidType;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    AccountInfo, GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcResult,
-    RpcSources, SendTransactionParams, TransactionId,
+    AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBlockParams, GetSlotParams,
+    GetSlotRpcConfig, RpcConfig, RpcResult, RpcSources, SendTransactionParams, TransactionId,
 };
 use solana_clock::Slot;
 use strum::EnumIter;
@@ -31,6 +31,8 @@ pub trait SolRpcRequest {
 pub enum SolRpcEndpoint {
     /// `getAccountInfo` endpoint.
     GetAccountInfo,
+    /// `getBlock` endpoint.
+    GetBlock,
     /// `getSlot` endpoint.
     GetSlot,
     /// `jsonRequest` endpoint.
@@ -44,6 +46,7 @@ impl SolRpcEndpoint {
     pub fn rpc_method(&self) -> &'static str {
         match &self {
             SolRpcEndpoint::GetAccountInfo => "getAccountInfo",
+            SolRpcEndpoint::GetBlock => "getBlock",
             SolRpcEndpoint::GetSlot => "getSlot",
             SolRpcEndpoint::JsonRequest => "jsonRequest",
             SolRpcEndpoint::SendTransaction => "sendTransaction",
@@ -54,6 +57,7 @@ impl SolRpcEndpoint {
     pub fn cycles_cost_method(&self) -> &'static str {
         match &self {
             SolRpcEndpoint::GetAccountInfo => "getAccountInfoCyclesCost",
+            SolRpcEndpoint::GetBlock => "getBlockCyclesCost",
             SolRpcEndpoint::GetSlot => "getSlotCyclesCost",
             SolRpcEndpoint::JsonRequest => "jsonRequestCyclesCost",
             SolRpcEndpoint::SendTransaction => "sendTransactionCyclesCost",
@@ -79,6 +83,32 @@ impl SolRpcRequest for GetAccountInfoRequest {
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetAccountInfo
+    }
+
+    fn params(self) -> Self::Params {
+        self.0
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct GetBlockRequest(GetBlockParams);
+
+impl GetBlockRequest {
+    pub fn new(params: GetBlockParams) -> Self {
+        Self(params)
+    }
+}
+
+impl SolRpcRequest for GetBlockRequest {
+    type Config = RpcConfig;
+    type Params = GetBlockParams;
+    type CandidOutput = sol_rpc_types::MultiRpcResult<Option<ConfirmedBlock>>;
+    type Output = sol_rpc_types::MultiRpcResult<
+        Option<solana_transaction_status_client_types::UiConfirmedBlock>,
+    >;
+
+    fn endpoint(&self) -> SolRpcEndpoint {
+        SolRpcEndpoint::GetBlock
     }
 
     fn params(self) -> Self::Params {

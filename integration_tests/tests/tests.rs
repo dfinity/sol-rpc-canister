@@ -12,9 +12,9 @@ use sol_rpc_int_tests::{
     mock::MockOutcallBuilder, PocketIcRuntime, Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID,
 };
 use sol_rpc_types::{
-    CommitmentLevel, GetAccountInfoParams, GetSlotParams, InstallArgs, Mode, ProviderError,
-    RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources,
-    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    CommitmentLevel, GetSlotParams, InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth,
+    RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster,
+    SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_account_decoder_client_types::{UiAccount, UiAccountData, UiAccountEncoding};
 use solana_signature::Signature;
@@ -152,7 +152,6 @@ mod get_provider_tests {
 
 mod get_account_info_tests {
     use super::*;
-    use canhttp::http::json::Id;
 
     #[tokio::test]
     async fn should_get_account_info() {
@@ -227,6 +226,89 @@ mod get_account_info_tests {
                 )
                 .build()
                 .get_account_info(pubkey)
+                .send()
+                .await
+                .expect_consistent();
+
+            assert_eq!(results, Ok(None));
+        }
+
+        setup.drop().await;
+    }
+}
+
+mod get_block_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn should_get_block() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
+            let client = setup.client().with_rpc_sources(sources);
+            let slot: Slot = 123;
+
+            let results = client
+                .mock_sequential_json_rpc_responses::<3>(
+                    200,
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(first_id)),
+                        "jsonrpc": "2.0",
+                        "result":{
+                            "blockHeight": 360854634,
+                            "blockTime": 1744122369,
+                            "parentSlot": 372877611,
+                            "blockhash": "8QeCusqSTKeC23NwjTKRBDcPuEfVLtszkxbpL6mXQEp4",
+                            "previousBlockhash": "4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3"}
+                    }),
+                )
+                .build()
+                .get_block(slot)
+                .send()
+                .await
+                .expect_consistent();
+
+            assert_eq!(
+                results,
+                Ok(Some(
+                    solana_transaction_status_client_types::UiConfirmedBlock {
+                        previous_blockhash: "4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3"
+                            .to_string(),
+                        blockhash: "8QeCusqSTKeC23NwjTKRBDcPuEfVLtszkxbpL6mXQEp4".to_string(),
+                        parent_slot: 372877611,
+                        block_time: Some(1744122369),
+                        block_height: Some(360854634),
+                        transactions: None,
+                        signatures: None,
+                        rewards: None,
+                        num_reward_partitions: None,
+                    }
+                ))
+            );
+        }
+
+        setup.drop().await;
+    }
+
+    #[tokio::test]
+    async fn should_not_get_block() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
+            let client = setup.client().with_rpc_sources(sources);
+            let slot: Slot = 123;
+
+            let results = client
+                .mock_sequential_json_rpc_responses::<3>(
+                    200,
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(first_id)),
+                        "jsonrpc": "2.0",
+                        "result": null
+                    }),
+                )
+                .build()
+                .get_block(slot)
                 .send()
                 .await
                 .expect_consistent();
@@ -417,7 +499,6 @@ mod send_transaction_tests {
 
 mod generic_request_tests {
     use super::*;
-    use canhttp::http::json::Id;
 
     #[tokio::test]
     async fn request_should_require_cycles() {
@@ -680,14 +761,17 @@ mod cycles_cost_tests {
 
         for endpoint in SolRpcEndpoint::iter() {
             match endpoint {
-                SolRpcEndpoint::GetAccountInfo => {
-                    check(client.get_account_info(GetAccountInfoParams::from(some_pubkey()))).await;
-                }
                 SolRpcEndpoint::GetSlot => {
                     check(client.get_slot().with_params(GetSlotParams::default())).await;
                 }
                 SolRpcEndpoint::JsonRequest => {
                     check(client.json_request(get_version_request())).await;
+                }
+                SolRpcEndpoint::GetAccountInfo => {
+                    check(client.get_account_info(some_pubkey())).await;
+                }
+                SolRpcEndpoint::GetBlock => {
+                    check(client.get_block(577996)).await;
                 }
                 SolRpcEndpoint::SendTransaction => {
                     check(client.send_transaction(some_transaction())).await;
@@ -721,11 +805,14 @@ mod cycles_cost_tests {
 
         for endpoint in SolRpcEndpoint::iter() {
             match endpoint {
-                SolRpcEndpoint::GetAccountInfo => {
-                    check(client.get_account_info(GetAccountInfoParams::from(some_pubkey()))).await;
-                }
                 SolRpcEndpoint::GetSlot => {
                     check(client.get_slot().with_params(GetSlotParams::default())).await;
+                }
+                SolRpcEndpoint::GetAccountInfo => {
+                    check(client.get_account_info(some_pubkey())).await;
+                }
+                SolRpcEndpoint::GetBlock => {
+                    check(client.get_block(577996)).await;
                 }
                 SolRpcEndpoint::JsonRequest => {
                     check(client.json_request(get_version_request())).await;
@@ -818,10 +905,13 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::GetAccountInfo => {
                     check(
                         &setup,
-                        client.get_account_info(GetAccountInfoParams::from(some_pubkey())),
+                        client.get_account_info(some_pubkey()),
                         1_793_744_800,
                     )
                     .await;
+                }
+                SolRpcEndpoint::GetBlock => {
+                    check(&setup, client.get_block(577996), 1_791_868_000).await;
                 }
                 SolRpcEndpoint::GetSlot => {
                     check(
@@ -845,7 +935,7 @@ mod cycles_cost_tests {
                         client.send_transaction(some_transaction()),
                         1_799_416_000,
                     )
-                    .await;
+                    .await
                 }
             }
         }
