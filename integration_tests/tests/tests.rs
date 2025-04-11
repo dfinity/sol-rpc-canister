@@ -14,7 +14,7 @@ use sol_rpc_int_tests::{
 use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoParams, GetSlotParams, InstallArgs, Mode, ProviderError,
     RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources,
-    SendTransactionParams, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_account_decoder_client_types::{UiAccount, UiAccountData, UiAccountEncoding};
 use solana_signature::Signature;
@@ -731,8 +731,7 @@ mod cycles_cost_tests {
                     check(client.json_request(get_version_request())).await;
                 }
                 SolRpcEndpoint::SendTransaction => {
-                    check(client.send_transaction(SendTransactionParams::from(some_transaction())))
-                        .await;
+                    check(client.send_transaction(some_transaction())).await;
                 }
             }
         }
@@ -843,7 +842,7 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::SendTransaction => {
                     check(
                         &setup,
-                        client.send_transaction(SendTransactionParams::from(some_transaction())),
+                        client.send_transaction(some_transaction()),
                         1_799_416_000,
                     )
                     .await;

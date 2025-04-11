@@ -33,16 +33,12 @@ impl From<GetAccountInfoParams> for (String, Option<GetAccountInfoConfig>) {
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct GetAccountInfoConfig {
     /// The request returns the slot that has reached this or the default commitment level.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub commitment: Option<CommitmentLevel>,
     /// Encoding format for Account data.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub encoding: Option<GetAccountInfoEncoding>,
     /// Request a slice of the account's data.
-    #[serde(rename = "dataSlice", skip_serializing_if = "Option::is_none")]
     pub data_slice: Option<DataSlice>,
     /// The minimum slot that the request can be evaluated at.
-    #[serde(rename = "minContextSlot", skip_serializing_if = "Option::is_none")]
     pub min_context_slot: Option<u64>,
 }
 
@@ -53,12 +49,12 @@ pub struct SendTransactionParams(String, Option<SendTransactionConfig>);
 
 impl From<sol_rpc_types::SendTransactionParams> for SendTransactionParams {
     fn from(params: sol_rpc_types::SendTransactionParams) -> Self {
-        let transaction = params.get_transaction();
+        let transaction = params.get_transaction().to_string();
         let config = if params.is_default_config() {
             None
         } else {
             Some(SendTransactionConfig {
-                encoding: params.get_encoding(),
+                encoding: params.get_encoding().cloned(),
                 skip_preflight: params.skip_preflight,
                 preflight_commitment: params.preflight_commitment,
                 max_retries: params.max_retries,

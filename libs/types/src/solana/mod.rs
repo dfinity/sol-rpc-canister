@@ -1,3 +1,4 @@
+use crate::RpcError;
 use base64::{prelude::BASE64_STANDARD, Engine};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -67,23 +68,27 @@ impl SendTransactionParams {
     }
 
     /// The transaction being sent as an encoded string.
-    pub fn get_transaction(&self) -> String {
-        self.transaction.clone()
+    pub fn get_transaction(&self) -> &str {
+        &self.transaction
     }
 
     /// The encoding format for the transaction in the `sendTransaction` request.
-    pub fn get_encoding(&self) -> Option<SendTransactionEncoding> {
-        self.encoding.clone()
+    pub fn get_encoding(&self) -> Option<&SendTransactionEncoding> {
+        self.encoding.as_ref()
     }
 }
 
-impl From<solana_transaction::Transaction> for SendTransactionParams {
-    fn from(transaction: solana_transaction::Transaction) -> Self {
-        Self::from_encoded_transaction(
-            BASE64_STANDARD
-                .encode(bincode::serialize(&transaction).expect("Failed to serialize transaction")),
+impl TryFrom<solana_transaction::Transaction> for SendTransactionParams {
+    type Error = RpcError;
+
+    fn try_from(transaction: solana_transaction::Transaction) -> Result<Self, RpcError> {
+        let serialized = bincode::serialize(&transaction).map_err(|e| {
+            RpcError::ValidationError(format!("Transaction serialization failed: {e}"))
+        })?;
+        Ok(Self::from_encoded_transaction(
+            BASE64_STANDARD.encode(serialized),
             SendTransactionEncoding::Base64,
-        )
+        ))
     }
 }
 

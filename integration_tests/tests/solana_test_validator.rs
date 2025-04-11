@@ -121,6 +121,7 @@ async fn should_send_transaction() {
     let transaction_amount = 1_000;
     let instruction =
         system_instruction::transfer(&sender.pubkey(), &recipient.pubkey(), transaction_amount);
+    // TODO XC-289: get the block hash via `getSlot` + `getBlock`
     let transaction = Transaction::new_signed_with_payer(
         &[instruction],
         Some(&sender.pubkey()),
@@ -128,7 +129,7 @@ async fn should_send_transaction() {
         setup.get_latest_blockhash(),
     );
 
-    let mut params: SendTransactionParams = transaction.clone().into();
+    let mut params: SendTransactionParams = transaction.clone().try_into().unwrap();
     params.preflight_commitment = Some(CommitmentLevel::Confirmed);
 
     // Don't compare the result to the Solana validator since a transaction can only be submitted once.
@@ -144,8 +145,11 @@ async fn should_send_transaction() {
     let sender_balance_after = setup.get_account_balance(&sender.pubkey());
     let recipient_balance_after = setup.get_account_balance(&recipient.pubkey());
 
-    assert!(recipient_balance_after >= recipient_balance_before + transaction_amount);
-    assert!(sender_balance_after + transaction_amount <= sender_balance_before, "sender_balance_before={sender_balance_before}, sender_balance_after={sender_balance_after}, transaction_amount={transaction_amount}");
+    assert_eq!(
+        recipient_balance_after,
+        recipient_balance_before + transaction_amount
+    );
+    assert!(sender_balance_after + transaction_amount <= sender_balance_before);
 
     // Make sure the transaction whose ID was returned is indeed confirmed
     assert!(setup.confirm_transaction(&transaction_id));
@@ -175,7 +179,7 @@ pub struct Setup {
 }
 
 impl Setup {
-    const SOLANA_VALIDATOR_URL: &str = "http://localhost:8899";
+    const SOLANA_VALIDATOR_URL: &'static str = "http://localhost:8899";
 
     pub async fn new() -> Self {
         let mut pic = PocketIcBuilder::new()

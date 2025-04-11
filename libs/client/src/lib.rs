@@ -41,6 +41,7 @@
 mod request;
 
 pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
+use std::fmt::Debug;
 
 use crate::request::{GetAccountInfoRequest, GetSlotRequest, JsonRequest, SendTransactionRequest};
 use async_trait::async_trait;
@@ -221,19 +222,26 @@ impl<R> SolRpcClient<R> {
     }
 
     /// Call `sendTransaction` on the SOL RPC canister.
-    pub fn send_transaction(
+    pub fn send_transaction<T>(
         &self,
-        params: impl Into<SendTransactionParams>,
+        params: T,
     ) -> RequestBuilder<
         R,
         RpcConfig,
         SendTransactionParams,
         sol_rpc_types::MultiRpcResult<TransactionId>,
         sol_rpc_types::MultiRpcResult<solana_signature::Signature>,
-    > {
+    >
+    where
+        T: TryInto<SendTransactionParams>,
+        <T as TryInto<SendTransactionParams>>::Error: Debug,
+    {
+        let params = params
+            .try_into()
+            .expect("Unable to build request parameters");
         RequestBuilder::new(
             self.clone(),
-            SendTransactionRequest::new(params.into()),
+            SendTransactionRequest::new(params),
             10_000_000_000,
         )
     }
