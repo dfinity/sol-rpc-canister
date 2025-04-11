@@ -4,4 +4,5 @@
 
 # Crate `sol_rpc_types`
 
-This crate defines types for interacting with the SOL RPC canister. See the crate documentation for more details.
+Library defining the types for interacting with the [SOL RPC canister](https://github.com/dfinity/sol-rpc-canister/).
+See the Rust [documentation](https://docs.rs/sol_rpc_types) for more details.

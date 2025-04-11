@@ -4,4 +4,6 @@
 
 # Crate `sol_rpc_client`
 
-Rust library to interact with the SOL RPC canister from a canister. See the crate documentation for more details.
+Library to interact with the [SOL RPC canister](https://github.com/dfinity/sol-rpc-canister/) from a canister running on
+the Internet Computer.
+See the Rust [documentation](https://docs.rs/sol_rpc_client) for more details.
