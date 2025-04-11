@@ -112,6 +112,9 @@ The SOL RPC canister reaches the Solana JSON-RPC providers using [HTTPS outcalls
    to canonicalize the response seen by each node before doing consensus may alleviate the problem.
    For example, `getSlot` rounds by default the received slot by 20, therefore artificially increasing the slot time seen by each node to 8s to allow them reaching consensus with some significantly higher probability.
    The reason why such a canonicalization strategy does not work for [`getLatestBlockhash`](https://solana.com/de/docs/rpc/http/getlatestblockhash) is that the result is basically a random-looking string of fixed length.
+4. There are therefore two options to send a transaction on Solana using the SOL RPC canister
+   1. Use a [durable nonce](https://solana.com/de/developers/guides/advanced/introduction-to-durable-nonces) instead of a blockhash.
+   2. Retrieve a recent blockhash by first retrieving a recent slot with `getSlot` and then getting the block (which includes the blockhash) with `getBlock`.
 
 ## Reproducible Build
 
