@@ -1,12 +1,11 @@
 pub mod json;
 mod sol_rpc;
 
-use crate::http::errors::HttpClientError;
-use crate::http::{service_request_builder, ChargingPolicyWithCollateral};
-use crate::memory::State;
 use crate::{
-    http::http_client,
-    memory::read_state,
+    http::{
+        errors::HttpClientError, http_client, service_request_builder, ChargingPolicyWithCollateral,
+    },
+    memory::{read_state, State},
     metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider, Providers},
     rpc_client::sol_rpc::ResponseTransform,
@@ -19,16 +18,16 @@ use canhttp::{
     TransformContextRequestExtension,
 };
 use http::{Request, Response};
-use ic_cdk::api::management_canister::http_request::CanisterHttpRequestArgument as IcHttpRequest;
-use ic_cdk::api::management_canister::http_request::TransformContext;
+use ic_cdk::api::management_canister::http_request::{
+    CanisterHttpRequestArgument as IcHttpRequest, TransformContext,
+};
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
     ConsensusStrategy, GetSlotParams, GetSlotRpcConfig, ProviderError, RpcConfig, RpcError,
-    RpcResult, RpcSource, RpcSources,
+    RpcResult, RpcSource, RpcSources, TransactionId,
 };
 use solana_clock::Slot;
-use std::fmt::Debug;
-use std::marker::PhantomData;
+use std::{fmt::Debug, marker::PhantomData};
 use tower::ServiceExt;
 
 // This constant is our approximation of the expected header size.
@@ -132,6 +131,30 @@ impl GetSlotRequest {
             JsonRpcRequest::new("getSlot", vec![params]),
             max_response_bytes,
             ResponseTransform::GetSlot(rounding_error),
+            ReductionStrategy::from(consensus_strategy),
+        ))
+    }
+}
+
+pub type SendTransactionRequest = MultiRpcRequest<json::SendTransactionParams, TransactionId>;
+
+impl SendTransactionRequest {
+    pub fn send_transaction<Params: Into<json::SendTransactionParams>>(
+        rpc_sources: RpcSources,
+        config: RpcConfig,
+        params: Params,
+    ) -> Result<Self, ProviderError> {
+        let consensus_strategy = config.response_consensus.unwrap_or_default();
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let max_response_bytes = config
+            .response_size_estimate
+            .unwrap_or(128 + HEADER_SIZE_LIMIT);
+
+        Ok(MultiRpcRequest::new(
+            providers,
+            JsonRpcRequest::new("sendTransaction", params.into()),
+            max_response_bytes,
+            ResponseTransform::SendTransaction,
             ReductionStrategy::from(consensus_strategy),
         ))
     }

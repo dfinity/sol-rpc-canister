@@ -2,19 +2,19 @@ use candid::candid_method;
 use canlog::{log, Log, Sort};
 use ic_cdk::{api::is_controller, query, update};
 use ic_metrics_encoder::MetricsEncoder;
-use sol_rpc_canister::candid_rpc::send_multi;
 use sol_rpc_canister::{
+    candid_rpc::send_multi,
     http_types, lifecycle,
     logs::Priority,
-    memory::State,
-    memory::{mutate_state, read_state},
+    memory::{mutate_state, read_state, State},
     metrics::encode_metrics,
     providers::{get_provider, PROVIDERS},
     rpc_client::MultiRpcRequest,
 };
 use sol_rpc_types::{
     AccountInfo, GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, MultiRpcResult, RpcAccess,
-    RpcConfig, RpcResult, RpcSources, Slot, SupportedRpcProvider, SupportedRpcProviderId,
+    RpcConfig, RpcResult, RpcSources, SendTransactionParams, Slot, SupportedRpcProvider,
+    SupportedRpcProviderId, TransactionId,
 };
 use std::str::FromStr;
 
@@ -134,6 +134,32 @@ async fn get_slot_cycles_cost(
     .await
 }
 
+#[update(name = "sendTransaction")]
+#[candid_method(rename = "sendTransaction")]
+async fn send_transaction(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: SendTransactionParams,
+) -> MultiRpcResult<TransactionId> {
+    let request = MultiRpcRequest::send_transaction(source, config.unwrap_or_default(), params);
+    send_multi(request).await
+}
+
+#[query(name = "sendTransactionCyclesCost")]
+#[candid_method(query, rename = "sendTransactionCyclesCost")]
+async fn send_transaction_cycles_cost(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: SendTransactionParams,
+) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
+    MultiRpcRequest::send_transaction(source, config.unwrap_or_default(), params)?
+        .cycles_cost()
+        .await
+}
+
 #[update(name = "jsonRequest")]
 #[candid_method(rename = "jsonRequest")]
 async fn json_request(
@@ -153,6 +179,9 @@ async fn json_request_cycles_cost(
     config: Option<RpcConfig>,
     json_rpc_payload: String,
 ) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
     MultiRpcRequest::json_request(source, config.unwrap_or_default(), json_rpc_payload)?
         .cycles_cost()
         .await

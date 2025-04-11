@@ -1,19 +1,26 @@
 use assert_matches::*;
+use candid::CandidType;
 use canhttp::http::json::{ConstantSizeId, Id};
 use const_format::formatcp;
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use pocket_ic::common::rest::CanisterHttpMethod;
+use serde::de::DeserializeOwned;
 use serde_json::json;
 use sol_rpc_canister::constants::*;
+use sol_rpc_client::{RequestBuilder, SolRpcEndpoint};
 use sol_rpc_int_tests::{
-    mock::MockOutcallBuilder, Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID,
+    mock::MockOutcallBuilder, PocketIcRuntime, Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID,
 };
 use sol_rpc_types::{
-    InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
-    RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    CommitmentLevel, GetAccountInfoParams, GetSlotParams, InstallArgs, Mode, ProviderError,
+    RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources,
+    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_account_decoder_client_types::{UiAccount, UiAccountData, UiAccountEncoding};
-use std::{iter::zip, str::FromStr};
+use solana_signature::Signature;
+use solana_signer::Signer;
+use std::{fmt::Debug, iter::zip, str::FromStr};
+use strum::IntoEnumIterator;
 
 const MOCK_REQUEST_URL: &str = "https://api.devnet.solana.com/";
 const MOCK_RESPONSE_RESULT: &str = r#"{"feature-set":2891131721,"solana-core":"1.16.7"}"#;
@@ -233,9 +240,6 @@ mod get_account_info_tests {
 
 mod get_slot_tests {
     use super::*;
-    use canhttp::http::json::Id;
-    use sol_rpc_types::{CommitmentLevel, GetSlotParams};
-    use std::iter::zip;
 
     #[tokio::test]
     async fn should_get_slot_with_full_params() {
@@ -372,6 +376,39 @@ mod get_slot_tests {
                 .collect();
 
             assert_eq!(results, vec![Ok(1234), Ok(1229), Ok(1237)]);
+        }
+
+        setup.drop().await;
+    }
+}
+
+mod send_transaction_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn should_send_transaction() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+        let signature = "2vC221MDR312jrFzh5TRnMfUCHrCiG4cBuzHmagdgrQSsdLHaq65uJVLCWmubw4FkBDUxhRpQma785MpMwRS6ob7";
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
+            let client = setup.client().with_rpc_sources(sources);
+
+            let results = client
+                .mock_sequential_json_rpc_responses::<3>(
+                    200,
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(first_id)),
+                        "jsonrpc": "2.0",
+                        "result": signature
+                    }),
+                )
+                .build()
+                .send_transaction(some_transaction())
+                .send()
+                .await
+                .expect_consistent();
+
+            assert_eq!(results, Ok(Signature::from_str(signature).unwrap()));
         }
 
         setup.drop().await;
@@ -622,19 +659,7 @@ fn rpc_sources() -> Vec<RpcSources> {
 }
 
 mod cycles_cost_tests {
-    use crate::{assert_within, get_version_request};
-    use candid::CandidType;
-    use serde::de::DeserializeOwned;
-    use serde_json::json;
-    use sol_rpc_client::{RequestBuilder, SolRpcEndpoint};
-    use sol_rpc_int_tests::mock::MockOutcallBuilder;
-    use sol_rpc_int_tests::{PocketIcRuntime, Setup, SolRpcTestClient};
-    use sol_rpc_types::{
-        GetAccountInfoParams, GetSlotParams, InstallArgs, Mode, ProviderError, RpcError,
-    };
-    use solana_pubkey::Pubkey;
-    use std::fmt::Debug;
-    use strum::IntoEnumIterator;
+    use super::*;
 
     #[tokio::test]
     async fn should_be_idempotent() {
@@ -655,21 +680,17 @@ mod cycles_cost_tests {
 
         for endpoint in SolRpcEndpoint::iter() {
             match endpoint {
+                SolRpcEndpoint::GetAccountInfo => {
+                    check(client.get_account_info(GetAccountInfoParams::from(some_pubkey()))).await;
+                }
                 SolRpcEndpoint::GetSlot => {
                     check(client.get_slot().with_params(GetSlotParams::default())).await;
                 }
                 SolRpcEndpoint::JsonRequest => {
                     check(client.json_request(get_version_request())).await;
                 }
-                SolRpcEndpoint::GetAccountInfo => {
-                    check(
-                        client.get_account_info(GetAccountInfoParams::from(
-                            "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-                                .parse::<Pubkey>()
-                                .unwrap(),
-                        )),
-                    )
-                    .await;
+                SolRpcEndpoint::SendTransaction => {
+                    check(client.send_transaction(some_transaction())).await;
                 }
             }
         }
@@ -700,21 +721,17 @@ mod cycles_cost_tests {
 
         for endpoint in SolRpcEndpoint::iter() {
             match endpoint {
+                SolRpcEndpoint::GetAccountInfo => {
+                    check(client.get_account_info(GetAccountInfoParams::from(some_pubkey()))).await;
+                }
                 SolRpcEndpoint::GetSlot => {
                     check(client.get_slot().with_params(GetSlotParams::default())).await;
                 }
                 SolRpcEndpoint::JsonRequest => {
                     check(client.json_request(get_version_request())).await;
                 }
-                SolRpcEndpoint::GetAccountInfo => {
-                    check(
-                        client.get_account_info(GetAccountInfoParams::from(
-                            "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-                                .parse::<Pubkey>()
-                                .unwrap(),
-                        )),
-                    )
-                    .await;
+                SolRpcEndpoint::SendTransaction => {
+                    check(client.send_transaction(some_transaction())).await;
                 }
             }
         }
@@ -798,6 +815,14 @@ mod cycles_cost_tests {
             // To find out the expected_cycles_cost for a new endpoint, set the amount to 0
             // and run the test. It should fail and report the amount of cycles needed.
             match endpoint {
+                SolRpcEndpoint::GetAccountInfo => {
+                    check(
+                        &setup,
+                        client.get_account_info(GetAccountInfoParams::from(some_pubkey())),
+                        1_793_744_800,
+                    )
+                    .await;
+                }
                 SolRpcEndpoint::GetSlot => {
                     check(
                         &setup,
@@ -814,15 +839,11 @@ mod cycles_cost_tests {
                     )
                     .await;
                 }
-                SolRpcEndpoint::GetAccountInfo => {
+                SolRpcEndpoint::SendTransaction => {
                     check(
                         &setup,
-                        client.get_account_info(GetAccountInfoParams::from(
-                            "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-                                .parse::<Pubkey>()
-                                .unwrap(),
-                        )),
-                        1_793_744_800,
+                        client.send_transaction(some_transaction()),
+                        1_799_416_000,
                     )
                     .await;
                 }
@@ -832,6 +853,7 @@ mod cycles_cost_tests {
         setup.drop().await;
     }
 }
+
 fn assert_within(actual: u128, expected: u128, percentage_error: u8) {
     assert!(percentage_error <= 100);
     let error_margin = expected.saturating_mul(percentage_error as u128) / 100;
@@ -844,4 +866,20 @@ fn assert_within(actual: u128, expected: u128, percentage_error: u8) {
         actual,
         upper_bound
     );
+}
+
+fn some_pubkey() -> solana_pubkey::Pubkey {
+    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+        .parse::<solana_pubkey::Pubkey>()
+        .unwrap()
+}
+
+fn some_transaction() -> solana_transaction::Transaction {
+    let keypair = solana_keypair::Keypair::new();
+    solana_transaction::Transaction::new_signed_with_payer(
+        &[],
+        Some(&keypair.pubkey()),
+        &[keypair],
+        solana_hash::Hash::from_str("4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3").unwrap(),
+    )
 }

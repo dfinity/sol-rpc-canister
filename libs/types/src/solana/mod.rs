@@ -1,10 +1,108 @@
-use crate::MultiRpcResult;
+use crate::RpcError;
+use base64::{prelude::BASE64_STANDARD, Engine};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
 /// A Solana [slot](https://solana.com/docs/references/terminology#slot).
 pub type Slot = u64;
+
+/// A Solana base58-encoded [transaction ID](https://solana.com/docs/references/terminology#transaction-id).
+pub type TransactionId = String;
+
+/// The parameters for a Solana [`sendTransaction`](https://solana.com/docs/rpc/http/sendtransaction) RPC method call.
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+pub struct SendTransactionParams {
+    /// Fully-signed transaction, as encoded string.
+    transaction: String,
+    /// Encoding format for the transaction.
+    encoding: Option<SendTransactionEncoding>,
+    /// When true, skip the preflight transaction checks. Default: false.
+    #[serde(rename = "skipPreflight")]
+    pub skip_preflight: Option<bool>,
+    /// Commitment level to use for preflight. See Configuring State Commitment. Default finalized.
+    #[serde(rename = "preflightCommitment")]
+    pub preflight_commitment: Option<CommitmentLevel>,
+    /// Maximum number of times for the RPC node to retry sending the transaction to the leader.
+    /// If this parameter not provided, the RPC node will retry the transaction until it is
+    /// finalized or until the blockhash expires.
+    #[serde(rename = "maxRetries")]
+    pub max_retries: Option<u32>,
+    /// Set the minimum slot at which to perform preflight transaction checks
+    #[serde(rename = "minContextSlot")]
+    pub min_context_slot: Option<u64>,
+}
+
+impl SendTransactionParams {
+    /// Parameters for a `sendTransaction` request with the given transaction already encoded wit
+    /// the given encoding.
+    pub fn from_encoded_transaction(
+        transaction: String,
+        encoding: SendTransactionEncoding,
+    ) -> Self {
+        Self {
+            transaction,
+            encoding: Some(encoding),
+            skip_preflight: None,
+            preflight_commitment: None,
+            max_retries: None,
+            min_context_slot: None,
+        }
+    }
+
+    /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
+    pub fn is_default_config(&self) -> bool {
+        let SendTransactionParams {
+            transaction: _,
+            encoding,
+            skip_preflight,
+            preflight_commitment,
+            max_retries,
+            min_context_slot,
+        } = &self;
+        encoding.is_none()
+            && skip_preflight.is_none()
+            && preflight_commitment.is_none()
+            && max_retries.is_none()
+            && min_context_slot.is_none()
+    }
+
+    /// The transaction being sent as an encoded string.
+    pub fn get_transaction(&self) -> &str {
+        &self.transaction
+    }
+
+    /// The encoding format for the transaction in the `sendTransaction` request.
+    pub fn get_encoding(&self) -> Option<&SendTransactionEncoding> {
+        self.encoding.as_ref()
+    }
+}
+
+impl TryFrom<solana_transaction::Transaction> for SendTransactionParams {
+    type Error = RpcError;
+
+    fn try_from(transaction: solana_transaction::Transaction) -> Result<Self, RpcError> {
+        let serialized = bincode::serialize(&transaction).map_err(|e| {
+            RpcError::ValidationError(format!("Transaction serialization failed: {e}"))
+        })?;
+        Ok(Self::from_encoded_transaction(
+            BASE64_STANDARD.encode(serialized),
+            SendTransactionEncoding::Base64,
+        ))
+    }
+}
+
+/// The encoding format for the transaction argument to the Solana
+/// [`sendTransaction`](https://solana.com/docs/rpc/http/sendtransaction) RPC method call.
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+pub enum SendTransactionEncoding {
+    /// The transaction is base-58 encoded (slow, deprecated).
+    #[serde(rename = "base58")]
+    Base58,
+    /// The transaction is base-64 encoded.
+    #[serde(rename = "base64")]
+    Base64,
+}
 
 /// The parameters for a Solana [`getSlot`](https://solana.com/docs/rpc/http/getslot) RPC method call.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
@@ -16,7 +114,7 @@ pub struct GetSlotParams {
     pub min_context_slot: Option<u64>,
 }
 
-/// The parameters for a Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getAccountInfo) RPC method call.
+/// The parameters for a Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method call.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub struct GetAccountInfoParams {
     /// The public key of the account whose info to fetch formatted as a base-58 string.
@@ -36,10 +134,17 @@ pub struct GetAccountInfoParams {
 impl GetAccountInfoParams {
     /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
     pub fn is_default_config(&self) -> bool {
-        self.commitment.is_none()
-            && self.encoding.is_none()
-            && self.data_slice.is_none()
-            && self.min_context_slot.is_none()
+        let GetAccountInfoParams {
+            pubkey: _,
+            commitment,
+            encoding,
+            data_slice,
+            min_context_slot,
+        } = &self;
+        commitment.is_none()
+            && encoding.is_none()
+            && data_slice.is_none()
+            && min_context_slot.is_none()
     }
 }
 
@@ -133,14 +238,6 @@ pub struct AccountInfo {
     pub space: u64,
 }
 
-impl From<MultiRpcResult<Option<AccountInfo>>>
-    for MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>
-{
-    fn from(result: MultiRpcResult<Option<AccountInfo>>) -> Self {
-        result.map(|maybe_account| maybe_account.map(|account| account.into()))
-    }
-}
-
 impl From<solana_account_decoder_client_types::UiAccount> for AccountInfo {
     fn from(account: solana_account_decoder_client_types::UiAccount) -> Self {
         AccountInfo {
@@ -149,6 +246,8 @@ impl From<solana_account_decoder_client_types::UiAccount> for AccountInfo {
             owner: account.owner,
             executable: account.executable,
             rent_epoch: account.rent_epoch,
+            // The `space` field is optional for backwards compatibility reasons, however it should
+            // always contain a value.
             space: account.space.expect("'space' field should not be null"),
         }
     }
@@ -164,16 +263,6 @@ impl From<AccountInfo> for solana_account_decoder_client_types::UiAccount {
             rent_epoch: account.rent_epoch,
             space: Some(account.space),
         }
-    }
-}
-
-impl From<MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>>
-    for MultiRpcResult<Option<AccountInfo>>
-{
-    fn from(
-        result: MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>,
-    ) -> Self {
-        result.map(|maybe_account| maybe_account.map(AccountInfo::from))
     }
 }
 

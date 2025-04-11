@@ -1,11 +1,12 @@
-use crate::metrics::MetricRpcMethod;
-use crate::rpc_client::MultiRpcRequest;
 use crate::{
-    add_metric_entry, providers::get_provider, rpc_client::ReducedResult, util::hostname_from_url,
+    add_metric_entry,
+    metrics::MetricRpcMethod,
+    providers::get_provider,
+    rpc_client::{MultiRpcRequest, ReducedResult},
+    util::hostname_from_url,
 };
 use canhttp::multi::ReductionError;
-use serde::de::DeserializeOwned;
-use serde::Serialize;
+use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
     MultiRpcResult, RpcAccess, RpcAuth, RpcError, RpcSource, SupportedRpcProvider,
 };
