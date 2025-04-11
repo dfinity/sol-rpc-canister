@@ -14,6 +14,16 @@ Interact with the [Solana](https://solana.com/) blockchain from the [Internet Co
 
 ## Table of Contents
 
+* [Features](#features)
+* [Usage](#usage)
+    * [From the command line](#from-the-command-line)
+    * [From within a Rust canister](#from-within-a-rust-canister)
+* [Limitations](#limitations)
+* [Reproducible build](#reproducible-build)
+* [Related projects](#related-projects)
+* [Contributing](#contributing)
+* [License](#license)
+
 ## Features
 
 * **No single point of failure**:  Each request will by default query 3 distinct Solana JSON-RPC providers and aggregate their results.
