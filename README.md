@@ -92,7 +92,7 @@ let slot = client
     .await;
 ```
 
-More examples are available in the [`sol_rpc_client`](libs/client/README.md) crate.
+Full examples are available in the [examples](examples) folder and additional code snippets are also available in the [`sol_rpc_client`](libs/client/README.md) crate.
 
 ## Limitations
 
