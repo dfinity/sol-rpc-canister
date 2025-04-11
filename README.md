@@ -76,10 +76,16 @@ To get the last `finalized` slot on Solana Mainnet:
 
 ```rust,ignore
 use sol_rpc_client::SolRpcClient;
-use sol_rpc_types::{CommitmentLevel, GetSlotParams, RpcSources, SolanaCluster};
+use sol_rpc_types::{
+    CommitmentLevel, ConsensusStrategy, GetSlotParams, RpcConfig, RpcSources, SolanaCluster,
+};
 
 let client = SolRpcClient::builder_for_ic()
     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    .with_rpc_config(RpcConfig {
+        response_consensus: Some(ConsensusStrategy::Equality),
+        ..Default::default()
+    })
     .build();
 
 let slot = client
