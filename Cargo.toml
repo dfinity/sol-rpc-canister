@@ -31,8 +31,7 @@ assert_matches = "1.5.0"
 async-trait = "0.1.88"
 candid = "0.10.13"
 candid_parser = "0.1.4"
-# TODO XC-321: switch to master when merged
-canhttp = { git = "https://github.com/dfinity/evm-rpc-canister", branch = "gdemay/XC-321-constant-binary-size-id"}
+canhttp = { git = "https://github.com/dfinity/evm-rpc-canister", rev = "d5e377b272cf4b8236169613090a99d39223d91c" }
 ciborium = "0.2.2"
 const_format = "0.2.34"
 derive_more = { version = "2.0.1", features = ["from", "into"] }

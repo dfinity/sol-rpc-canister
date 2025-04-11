@@ -602,7 +602,7 @@ dependencies = [
 [[package]]
 name = "canhttp"
 version = "0.1.0"
-source = "git+https://github.com/dfinity/evm-rpc-canister?branch=gdemay%2FXC-321-constant-binary-size-id#60ef55349a6ea13f0ebcbfe95f3fb5292f3f202b"
+source = "git+https://github.com/dfinity/evm-rpc-canister?rev=d5e377b272cf4b8236169613090a99d39223d91c#d5e377b272cf4b8236169613090a99d39223d91c"
 dependencies = [
  "assert_matches",
  "ciborium",
