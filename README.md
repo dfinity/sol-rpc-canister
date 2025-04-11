@@ -106,7 +106,12 @@ The SOL RPC canister reaches the Solana JSON-RPC providers using [HTTPS outcalls
 1. The contacted providers must support IPv6.
 2. Some Solana RPC endpoint cannot be supported. This is the case for example for [`getLatestBlockhash`](https://solana.com/de/docs/rpc/http/getlatestblockhash).
    The reason is that an HTTPs outcalls involves an HTTP request from each node in the subnet and has therefore a latency in the order of a few seconds. 
-   This can be problematic for endpoints with fast changing responses, such as [`getLatestBlockhash`](https://solana.com/de/docs/rpc/http/getlatestblockhash), since in this case nodes will not be able to reach a consensus.
+   This can be problematic for endpoints with fast changing responses, such as [`getLatestBlockhash`](https://solana.com/de/docs/rpc/http/getlatestblockhash) (which changes roughly every 400ms),
+   since in this case nodes will not be able to reach a consensus.
+3. Note that in some cases, the use of a [response transformation](https://internetcomputer.org/docs/building-apps/network-features/using-http/https-outcalls/overview)
+   to canonicalize the response seen by each node before doing consensus may alleviate the problem.
+   For example, `getSlot` rounds by default the received slot by 20, therefore artificially increasing the slot time seen by each node to 8s to allow them reaching consensus with some significantly higher probability.
+   The reason why such a canonicalization strategy does not work for [`getLatestBlockhash`](https://solana.com/de/docs/rpc/http/getlatestblockhash) is that the result is basically a random-looking string of fixed length.
 
 ## Reproducible Build
 
