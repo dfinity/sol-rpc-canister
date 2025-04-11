@@ -10,6 +10,7 @@ license.workspace = true
 [dependencies]
 async-trait = { workspace = true }
 candid = { workspace = true }
+canhttp = { workspace = true }
 canlog = { path = "../canlog" }
 const_format = { workspace = true }
 ic-cdk = { workspace = true }
