@@ -17,8 +17,8 @@ use sol_rpc_types::{
 };
 use solana_account_decoder_client_types::{UiAccount, UiAccountData, UiAccountEncoding};
 use solana_signature::Signature;
-use solana_signer::{EncodableKey, Signer};
-use std::{env::var, fmt::Debug, iter::zip, path::PathBuf, str::FromStr};
+use solana_signer::Signer;
+use std::{fmt::Debug, iter::zip, str::FromStr};
 use strum::IntoEnumIterator;
 
 const MOCK_REQUEST_URL: &str = "https://api.devnet.solana.com/";
@@ -396,7 +396,7 @@ mod send_transaction_tests {
                     json!({"id": first_id, "jsonrpc": "2.0", "result": signature}),
                 )
                 .build()
-                .send_transaction(solana_transaction::Transaction::default())
+                .send_transaction(some_transaction())
                 .send()
                 .await
                 .expect_consistent();
@@ -875,10 +875,7 @@ fn some_pubkey() -> solana_pubkey::Pubkey {
 }
 
 fn some_transaction() -> solana_transaction::Transaction {
-    let keypair = solana_keypair::Keypair::read_from_file(
-        PathBuf::from(var("CARGO_MANIFEST_DIR").unwrap()).join("keypair1.json"),
-    )
-    .unwrap();
+    let keypair = solana_keypair::Keypair::new();
     solana_transaction::Transaction::new_signed_with_payer(
         &[],
         Some(&keypair.pubkey()),

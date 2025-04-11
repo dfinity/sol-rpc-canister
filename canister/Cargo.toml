@@ -43,6 +43,7 @@ tower-http = { workspace = true, features = ["set-header", "util"] }
 url = { workspace = true }
 zeroize = { workspace = true }
 thiserror = { workspace = true }
+serde_with = { workspace = true }
 
 [dev-dependencies]
 candid_parser = { workspace = true }

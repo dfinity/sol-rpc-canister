@@ -12,7 +12,7 @@ include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
 
 [dependencies]
 bincode = { workspace = true }
-bs58 = { workspace = true }
+base64 = { workspace = true }
 candid = { workspace = true }
 canlog = { path = "../../canlog" }
 derive_more = { workspace = true }

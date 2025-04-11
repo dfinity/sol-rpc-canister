@@ -25,6 +25,7 @@ sol_rpc_client = { path = "../libs/client" }
 sol_rpc_types = { path = "../libs/types" }
 solana-account = { workspace = true }
 solana-account-decoder-client-types = { workspace = true }
+solana-commitment-config = { workspace = true }
 solana-hash = { workspace = true }
 solana-keypair = { workspace = true }
 solana-message = { workspace = true }

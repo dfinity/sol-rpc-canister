@@ -1,3 +1,4 @@
+use base64::{prelude::BASE64_STANDARD, Engine};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
@@ -12,9 +13,9 @@ pub type TransactionId = String;
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub struct SendTransactionParams {
     /// Fully-signed transaction, as encoded string.
-    pub transaction: String,
+    transaction: String,
     /// Encoding format for the transaction.
-    pub encoding: Option<SendTransactionEncoding>,
+    encoding: Option<SendTransactionEncoding>,
     /// When true, skip the preflight transaction checks. Default: false.
     #[serde(rename = "skipPreflight")]
     pub skip_preflight: Option<bool>,
@@ -32,6 +33,22 @@ pub struct SendTransactionParams {
 }
 
 impl SendTransactionParams {
+    /// Parameters for a `sendTransaction` request with the given transaction already encoded wit
+    /// the given encoding.
+    pub fn from_encoded_transaction(
+        transaction: String,
+        encoding: SendTransactionEncoding,
+    ) -> Self {
+        Self {
+            transaction,
+            encoding: Some(encoding),
+            skip_preflight: None,
+            preflight_commitment: None,
+            max_retries: None,
+            min_context_slot: None,
+        }
+    }
+
     /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
     pub fn is_default_config(&self) -> bool {
         let SendTransactionParams {
@@ -48,22 +65,25 @@ impl SendTransactionParams {
             && max_retries.is_none()
             && min_context_slot.is_none()
     }
+
+    /// The transaction being sent as an encoded string.
+    pub fn get_transaction(&self) -> String {
+        self.transaction.clone()
+    }
+
+    /// The encoding format for the transaction in the `sendTransaction` request.
+    pub fn get_encoding(&self) -> Option<SendTransactionEncoding> {
+        self.encoding.clone()
+    }
 }
 
 impl From<solana_transaction::Transaction> for SendTransactionParams {
     fn from(transaction: solana_transaction::Transaction) -> Self {
-        fn encode(transaction: solana_transaction::Transaction) -> String {
-            bs58::encode(bincode::serialize(&transaction).expect("Failed to serialize transaction"))
-                .into_string()
-        }
-        Self {
-            transaction: encode(transaction),
-            encoding: None,
-            skip_preflight: None,
-            preflight_commitment: None,
-            max_retries: None,
-            min_context_slot: None,
-        }
+        Self::from_encoded_transaction(
+            BASE64_STANDARD
+                .encode(bincode::serialize(&transaction).expect("Failed to serialize transaction")),
+            SendTransactionEncoding::Base64,
+        )
     }
 }
 

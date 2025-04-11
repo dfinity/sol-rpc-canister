@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 use sol_rpc_types::{CommitmentLevel, DataSlice, GetAccountInfoEncoding, SendTransactionEncoding};
 
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(into = "(String, Option<GetAccountInfoConfig>)")]
 pub struct GetAccountInfoParams(String, Option<GetAccountInfoConfig>);
@@ -27,38 +29,43 @@ impl From<GetAccountInfoParams> for (String, Option<GetAccountInfoConfig>) {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct GetAccountInfoConfig {
     /// The request returns the slot that has reached this or the default commitment level.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub commitment: Option<CommitmentLevel>,
     /// Encoding format for Account data.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub encoding: Option<GetAccountInfoEncoding>,
     /// Request a slice of the account's data.
-    #[serde(rename = "dataSlice")]
+    #[serde(rename = "dataSlice", skip_serializing_if = "Option::is_none")]
     pub data_slice: Option<DataSlice>,
     /// The minimum slot that the request can be evaluated at.
-    #[serde(rename = "minContextSlot")]
+    #[serde(rename = "minContextSlot", skip_serializing_if = "Option::is_none")]
     pub min_context_slot: Option<u64>,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(into = "(String, Option<SendTransactionConfig>)")]
 pub struct SendTransactionParams(String, Option<SendTransactionConfig>);
 
 impl From<sol_rpc_types::SendTransactionParams> for SendTransactionParams {
     fn from(params: sol_rpc_types::SendTransactionParams) -> Self {
+        let transaction = params.get_transaction();
         let config = if params.is_default_config() {
             None
         } else {
             Some(SendTransactionConfig {
-                encoding: params.encoding,
+                encoding: params.get_encoding(),
                 skip_preflight: params.skip_preflight,
                 preflight_commitment: params.preflight_commitment,
                 max_retries: params.max_retries,
                 min_context_slot: params.min_context_slot,
             })
         };
-        Self(params.transaction, config)
+        Self(transaction, config)
     }
 }
 
@@ -68,6 +75,7 @@ impl From<SendTransactionParams> for (String, Option<SendTransactionConfig>) {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SendTransactionConfig {
     /// Encoding format for the transaction.
