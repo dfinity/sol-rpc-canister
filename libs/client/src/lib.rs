@@ -38,6 +38,8 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 
+#[cfg(not(target_arch = "wasm32"))]
+pub mod fixtures;
 mod request;
 
 pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
@@ -189,6 +191,34 @@ impl<R> ClientBuilder<R> {
 
 impl<R> SolRpcClient<R> {
     /// Call `getAccountInfo` on the SOL RPC canister.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster};
+    /// use solana_pubkey::pubkey;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use sol_rpc_client::fixtures::usdc_account;
+    /// # use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo, MultiRpcResult};
+    /// let client = SolRpcClient::builder_for_ic()
+    ///     .with_mocked_response(MultiRpcResult::Consistent(Ok(Some(usdc_account()))))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let usdc_account = client
+    ///     .get_account_info(pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"))
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent()
+    ///     .unwrap()
+    ///     .unwrap();
+    ///
+    /// assert_eq!(usdc_account.owner, "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA".to_string());
+    /// # Ok(())
+    /// # }
     pub fn get_account_info(
         &self,
         params: impl Into<GetAccountInfoParams>,
@@ -207,6 +237,34 @@ impl<R> SolRpcClient<R> {
     }
 
     /// Call `getSlot` on the SOL RPC canister.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{CommitmentLevel, GetSlotParams, MultiRpcResult, RpcSources, SolanaCluster};
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let slot = client
+    ///     .get_slot()
+    ///     .with_params(GetSlotParams {
+    ///         commitment: Some(CommitmentLevel::Finalized),
+    ///         ..Default::default()
+    ///     })
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent();
+    ///
+    /// assert_eq!(slot, Ok(332_577_897_u64));
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn get_slot(
         &self,
     ) -> RequestBuilder<
