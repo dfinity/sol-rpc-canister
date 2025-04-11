@@ -1,11 +1,15 @@
 use assert_matches::*;
+use candid::CandidType;
+use canhttp::http::json::{ConstantSizeId, Id};
 use const_format::formatcp;
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use pocket_ic::common::rest::CanisterHttpMethod;
+use serde::de::DeserializeOwned;
 use serde_json::json;
 use sol_rpc_canister::constants::*;
+use sol_rpc_client::{RequestBuilder, SolRpcEndpoint};
 use sol_rpc_int_tests::{
-    mock::MockOutcallBuilder, Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID,
+    mock::MockOutcallBuilder, PocketIcRuntime, Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID,
 };
 use sol_rpc_types::{
     CommitmentLevel, GetSlotParams, InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth,
@@ -13,13 +17,15 @@ use sol_rpc_types::{
     SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_account_decoder_client_types::{UiAccount, UiAccountData, UiAccountEncoding};
-use std::{iter::zip, str::FromStr};
+use solana_signature::Signature;
+use solana_signer::Signer;
+use std::{fmt::Debug, iter::zip, str::FromStr};
+use strum::IntoEnumIterator;
 
 const MOCK_REQUEST_URL: &str = "https://api.devnet.solana.com/";
-const MOCK_REQUEST_PAYLOAD: &str = r#"{"jsonrpc":"2.0","id":0,"method":"getVersion"}"#;
 const MOCK_RESPONSE_RESULT: &str = r#"{"feature-set":2891131721,"solana-core":"1.16.7"}"#;
 const MOCK_RESPONSE: &str = formatcp!(
-    "{{\"jsonrpc\":\"2.0\",\"id\":0,\"result\":{}}}",
+    "{{\"jsonrpc\":\"2.0\",\"id\":\"00000000000000000000\",\"result\":{}}}",
     MOCK_RESPONSE_RESULT
 );
 const MOCK_REQUEST_MAX_RESPONSE_BYTES: u64 = 1000;
@@ -86,7 +92,7 @@ mod mock_request_tests {
 
     #[tokio::test]
     async fn mock_request_should_succeed_with_request_body() {
-        mock_request(|builder| builder.with_raw_request_body(MOCK_REQUEST_PAYLOAD)).await
+        mock_request(|builder| builder.with_request_body(get_version_request())).await
     }
 
     #[tokio::test]
@@ -105,7 +111,7 @@ mod mock_request_tests {
                     (CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE),
                     ("custom", "Value"),
                 ])
-                .with_raw_request_body(MOCK_REQUEST_PAYLOAD)
+                .with_request_body(get_version_request())
         })
         .await
     }
@@ -160,7 +166,7 @@ mod get_account_info_tests {
                 .mock_sequential_json_rpc_responses::<3>(
                     200,
                     json!({
-                        "id": first_id,
+                        "id": Id::from(ConstantSizeId::from(first_id)),
                         "jsonrpc": "2.0",
                         "result": {
                             "context": { "apiVersion": "2.0.15", "slot": 341197053 },
@@ -211,7 +217,7 @@ mod get_account_info_tests {
                 .mock_sequential_json_rpc_responses::<3>(
                     200,
                     json!({
-                        "id": first_id,
+                        "id": Id::from(ConstantSizeId::from(first_id)),
                         "jsonrpc": "2.0",
                         "result": {
                             "context": { "apiVersion": "2.0.15", "slot": 341197053 }
@@ -235,7 +241,7 @@ mod get_block_tests {
     use super::*;
 
     #[tokio::test]
-    async fn should_get_account_info() {
+    async fn should_get_block() {
         let setup = Setup::new().await.with_mock_api_keys().await;
 
         for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
@@ -246,7 +252,7 @@ mod get_block_tests {
                 .mock_sequential_json_rpc_responses::<3>(
                     200,
                     json!({
-                        "id": first_id,
+                        "id": Id::from(ConstantSizeId::from(first_id)),
                         "jsonrpc": "2.0",
                         "result":{
                             "blockHeight": 360854634,
@@ -285,7 +291,7 @@ mod get_block_tests {
     }
 
     #[tokio::test]
-    async fn should_not_get_account_info() {
+    async fn should_not_get_block() {
         let setup = Setup::new().await.with_mock_api_keys().await;
 
         for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
@@ -295,7 +301,11 @@ mod get_block_tests {
             let results = client
                 .mock_sequential_json_rpc_responses::<3>(
                     200,
-                    json!({"id": first_id, "jsonrpc": "2.0", "result": null}),
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(first_id)),
+                        "jsonrpc": "2.0",
+                        "result": null
+                    }),
                 )
                 .build()
                 .get_block(slot)
@@ -316,10 +326,12 @@ mod get_slot_tests {
     #[tokio::test]
     async fn should_get_slot_with_full_params() {
         fn request_body(id: u8) -> serde_json::Value {
+            let id = ConstantSizeId::from(id).to_string();
             json!({ "jsonrpc": "2.0", "id": id, "method": "getSlot", "params": [{"commitment": "processed", "minContextSlot": 100}] })
         }
 
         fn response_body(id: u8) -> serde_json::Value {
+            let id = ConstantSizeId::from(id).to_string();
             json!({ "id": id, "jsonrpc": "2.0", "result": 1234, })
         }
 
@@ -359,7 +371,7 @@ mod get_slot_tests {
                 .mock_sequential_json_rpc_responses::<3>(
                     200,
                     json!({
-                        "id": first_id,
+                        "id": Id::from(ConstantSizeId::from(first_id)),
                         "jsonrpc": "2.0",
                         "result": 1234,
                     }),
@@ -389,7 +401,7 @@ mod get_slot_tests {
                     MockOutcallBuilder::new(
                         200,
                         json!({
-                            "id": id + first_id as usize,
+                            "id": Id::from(ConstantSizeId::from(id as u64 + first_id as u64)),
                             "jsonrpc": "2.0",
                             "result": slot,
                         }),
@@ -424,7 +436,7 @@ mod get_slot_tests {
                     MockOutcallBuilder::new(
                         200,
                         json!({
-                            "id": id + first_id as usize,
+                            "id": Id::from(ConstantSizeId::from(id as u64 + first_id as u64)),
                             "jsonrpc": "2.0",
                             "result": slot,
                         }),
@@ -446,6 +458,39 @@ mod get_slot_tests {
                 .collect();
 
             assert_eq!(results, vec![Ok(1234), Ok(1229), Ok(1237)]);
+        }
+
+        setup.drop().await;
+    }
+}
+
+mod send_transaction_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn should_send_transaction() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+        let signature = "2vC221MDR312jrFzh5TRnMfUCHrCiG4cBuzHmagdgrQSsdLHaq65uJVLCWmubw4FkBDUxhRpQma785MpMwRS6ob7";
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
+            let client = setup.client().with_rpc_sources(sources);
+
+            let results = client
+                .mock_sequential_json_rpc_responses::<3>(
+                    200,
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(first_id)),
+                        "jsonrpc": "2.0",
+                        "result": signature
+                    }),
+                )
+                .build()
+                .send_transaction(some_transaction())
+                .send()
+                .await
+                .expect_consistent();
+
+            assert_eq!(results, Ok(Signature::from_str(signature).unwrap()));
         }
 
         setup.drop().await;
@@ -497,7 +542,7 @@ mod generic_request_tests {
             .mock_sequential_json_rpc_responses::<3>(
                 200,
                 json!({
-                    "id": 0,
+                    "id": Id::from(ConstantSizeId::ZERO),
                     "jsonrpc": "2.0",
                     "result": serde_json::Value::from_str(MOCK_RESPONSE_RESULT).unwrap()
                 }),
@@ -679,7 +724,7 @@ mod canister_upgrade_tests {
 }
 
 fn get_version_request() -> serde_json::Value {
-    json!({"jsonrpc": "2.0", "id": 0, "method": "getVersion"})
+    json!({"jsonrpc": "2.0", "id": Id::from(ConstantSizeId::ZERO), "method": "getVersion"})
 }
 
 fn rpc_sources() -> Vec<RpcSources> {
@@ -695,19 +740,7 @@ fn rpc_sources() -> Vec<RpcSources> {
 }
 
 mod cycles_cost_tests {
-    use crate::{assert_within, get_version_request};
-    use candid::CandidType;
-    use serde::de::DeserializeOwned;
-    use serde_json::json;
-    use sol_rpc_client::{RequestBuilder, SolRpcEndpoint};
-    use sol_rpc_int_tests::{mock::MockOutcallBuilder, PocketIcRuntime, Setup, SolRpcTestClient};
-    use sol_rpc_types::{
-        GetAccountInfoParams, GetBlockParams, GetSlotParams, InstallArgs, Mode, ProviderError,
-        RpcError,
-    };
-    use solana_pubkey::Pubkey;
-    use std::fmt::Debug;
-    use strum::IntoEnumIterator;
+    use super::*;
 
     #[tokio::test]
     async fn should_be_idempotent() {
@@ -728,24 +761,20 @@ mod cycles_cost_tests {
 
         for endpoint in SolRpcEndpoint::iter() {
             match endpoint {
-                SolRpcEndpoint::GetAccountInfo => {
-                    check(
-                        client.get_account_info(GetAccountInfoParams::from(
-                            "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-                                .parse::<Pubkey>()
-                                .unwrap(),
-                        )),
-                    )
-                    .await;
-                }
-                SolRpcEndpoint::GetBlock => {
-                    check(client.get_block(GetBlockParams::from(577996))).await;
-                }
                 SolRpcEndpoint::GetSlot => {
                     check(client.get_slot().with_params(GetSlotParams::default())).await;
                 }
                 SolRpcEndpoint::JsonRequest => {
                     check(client.json_request(get_version_request())).await;
+                }
+                SolRpcEndpoint::GetAccountInfo => {
+                    check(client.get_account_info(some_pubkey())).await;
+                }
+                SolRpcEndpoint::GetBlock => {
+                    check(client.get_block(577996)).await;
+                }
+                SolRpcEndpoint::SendTransaction => {
+                    check(client.send_transaction(some_transaction())).await;
                 }
             }
         }
@@ -776,24 +805,20 @@ mod cycles_cost_tests {
 
         for endpoint in SolRpcEndpoint::iter() {
             match endpoint {
-                SolRpcEndpoint::GetAccountInfo => {
-                    check(
-                        client.get_account_info(GetAccountInfoParams::from(
-                            "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-                                .parse::<Pubkey>()
-                                .unwrap(),
-                        )),
-                    )
-                    .await;
-                }
-                SolRpcEndpoint::GetBlock => {
-                    check(client.get_block(GetBlockParams::from(577996))).await;
-                }
                 SolRpcEndpoint::GetSlot => {
                     check(client.get_slot().with_params(GetSlotParams::default())).await;
                 }
+                SolRpcEndpoint::GetAccountInfo => {
+                    check(client.get_account_info(some_pubkey())).await;
+                }
+                SolRpcEndpoint::GetBlock => {
+                    check(client.get_block(577996)).await;
+                }
                 SolRpcEndpoint::JsonRequest => {
                     check(client.json_request(get_version_request())).await;
+                }
+                SolRpcEndpoint::SendTransaction => {
+                    check(client.send_transaction(some_transaction())).await;
                 }
             }
         }
@@ -862,13 +887,6 @@ mod cycles_cost_tests {
                 )),
                 "BUG: Expected at least one TooFewCycles error, but got {results:?}"
             );
-
-            // TODO XC-321: ID in JSON-RPC requests should have a constant byte size.
-            // JSON-RPC requests for estimating the cycles cost use `0` as an ID
-            // while the actual requests will use a unique incremental ID, which after a few requests
-            // will have a bigger binary representation leading to an increase cycles cost for the actual HTTPs outcall.
-            // As a workaround, we upgrade the SOL RPC canister to reset the requests counter to zero since it's stored on the heap.
-            setup.upgrade_canister(InstallArgs::default()).await;
         }
 
         let setup = Setup::new().await.with_mock_api_keys().await;
@@ -887,22 +905,13 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::GetAccountInfo => {
                     check(
                         &setup,
-                        client.get_account_info(GetAccountInfoParams::from(
-                            "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-                                .parse::<Pubkey>()
-                                .unwrap(),
-                        )),
+                        client.get_account_info(some_pubkey()),
                         1_793_744_800,
                     )
                     .await;
                 }
                 SolRpcEndpoint::GetBlock => {
-                    check(
-                        &setup,
-                        client.get_block(GetBlockParams::from(577996)),
-                        1_791_868_000,
-                    )
-                    .await;
+                    check(&setup, client.get_block(577996), 1_791_868_000).await;
                 }
                 SolRpcEndpoint::GetSlot => {
                     check(
@@ -920,12 +929,21 @@ mod cycles_cost_tests {
                     )
                     .await;
                 }
+                SolRpcEndpoint::SendTransaction => {
+                    check(
+                        &setup,
+                        client.send_transaction(some_transaction()),
+                        1_799_416_000,
+                    )
+                    .await
+                }
             }
         }
 
         setup.drop().await;
     }
 }
+
 fn assert_within(actual: u128, expected: u128, percentage_error: u8) {
     assert!(percentage_error <= 100);
     let error_margin = expected.saturating_mul(percentage_error as u128) / 100;
@@ -938,4 +956,20 @@ fn assert_within(actual: u128, expected: u128, percentage_error: u8) {
         actual,
         upper_bound
     );
+}
+
+fn some_pubkey() -> solana_pubkey::Pubkey {
+    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+        .parse::<solana_pubkey::Pubkey>()
+        .unwrap()
+}
+
+fn some_transaction() -> solana_transaction::Transaction {
+    let keypair = solana_keypair::Keypair::new();
+    solana_transaction::Transaction::new_signed_with_payer(
+        &[],
+        Some(&keypair.pubkey()),
+        &[keypair],
+        solana_hash::Hash::from_str("4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3").unwrap(),
+    )
 }

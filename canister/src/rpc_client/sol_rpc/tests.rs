@@ -111,6 +111,17 @@ mod normalization_tests {
         );
     }
 
+    proptest! {
+        #[test]
+        fn should_normalize_send_transaction_response(transaction_id in "[1-9A-HJ-NP-Za-km-z]+") {
+            assert_normalized(
+                &ResponseTransform::SendTransaction,
+                &format!("\"{transaction_id}\""),
+                transaction_id.to_string(),
+            );
+        }
+    }
+
     #[test]
     fn should_normalize_get_block_response() {
         assert_normalized(

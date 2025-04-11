@@ -3,7 +3,7 @@ use candid::CandidType;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBlockParams, GetSlotParams,
-    GetSlotRpcConfig, RpcConfig, RpcResult, RpcSources,
+    GetSlotRpcConfig, RpcConfig, RpcResult, RpcSources, SendTransactionParams, TransactionId,
 };
 use solana_clock::Slot;
 use strum::EnumIter;
@@ -37,6 +37,8 @@ pub enum SolRpcEndpoint {
     GetSlot,
     /// `jsonRequest` endpoint.
     JsonRequest,
+    /// `sendTransaction` endpoint.
+    SendTransaction,
 }
 
 impl SolRpcEndpoint {
@@ -47,6 +49,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetBlock => "getBlock",
             SolRpcEndpoint::GetSlot => "getSlot",
             SolRpcEndpoint::JsonRequest => "jsonRequest",
+            SolRpcEndpoint::SendTransaction => "sendTransaction",
         }
     }
 
@@ -57,6 +60,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetBlock => "getBlockCyclesCost",
             SolRpcEndpoint::GetSlot => "getSlotCyclesCost",
             SolRpcEndpoint::JsonRequest => "jsonRequestCyclesCost",
+            SolRpcEndpoint::SendTransaction => "sendTransactionCyclesCost",
         }
     }
 }
@@ -123,6 +127,30 @@ impl SolRpcRequest for GetSlotRequest {
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetSlot
+    }
+
+    fn params(self) -> Self::Params {
+        self.0
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SendTransactionRequest(SendTransactionParams);
+
+impl SendTransactionRequest {
+    pub fn new(params: SendTransactionParams) -> Self {
+        Self(params)
+    }
+}
+
+impl SolRpcRequest for SendTransactionRequest {
+    type Config = RpcConfig;
+    type Params = SendTransactionParams;
+    type CandidOutput = sol_rpc_types::MultiRpcResult<TransactionId>;
+    type Output = sol_rpc_types::MultiRpcResult<solana_signature::Signature>;
+
+    fn endpoint(&self) -> SolRpcEndpoint {
+        SolRpcEndpoint::SendTransaction
     }
 
     fn params(self) -> Self::Params {

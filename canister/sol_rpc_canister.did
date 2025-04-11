@@ -242,6 +242,33 @@ type AccountEncoding = variant {
     jsonParsed;
 };
 
+// The parameters for a Solana `sendTransaction` RPC method call.
+type SendTransactionParams = record {
+    // Fully-signed transaction, as encoded string.
+    transaction: text;
+    // Encoding format for the transaction.
+    encoding: opt SendTransactionEncoding;
+    // When true, skip the preflight transaction checks. Default: false.
+    skipPreflight: opt bool;
+    // Commitment level to use for preflight. See Configuring State Commitment. Default finalized.
+    preflightCommitment: opt CommitmentLevel;
+    // Maximum number of times for the RPC node to retry sending the transaction to the leader.
+    // If this parameter not provided, the RPC node will retry the transaction until it is
+    // finalized or until the blockhash expires.
+    maxRetries: opt nat32;
+    // Set the minimum slot at which to perform preflight transaction checks
+    minContextSlot: opt nat64;
+};
+
+// The encoding format for the transaction argument to the Solana `sendTransaction` RPC method call.
+type SendTransactionEncoding = variant {
+    // DEPRECATED: The transaction is base-58 encoded.
+    base58;
+    // The transaction is base-64 encoded.
+    base64;
+};
+
+
 // Represents the result of a call to the `getAccountInfo` Solana RPC method.
 // If the requested account doesn't exist, the `Ok` variant will be null.
 type GetAccountInfoResult = variant { Ok : opt AccountInfo; Err : RpcError };
@@ -303,6 +330,18 @@ type GetSlotResult = variant { Ok : Slot; Err : RpcError };
 type MultiGetSlotResult = variant {
     Consistent : GetSlotResult;
     Inconsistent : vec record { RpcSource; GetSlotResult };
+};
+
+// First transaction signature embedded in the transaction, as base-58 encoded string.
+type TransactionId = text;
+
+// Represents the result of a call to the `sendTransaction` Solana RPC method.
+type SendTransactionResult = variant { Ok : TransactionId; Err : RpcError };
+
+// Represents an aggregated result from multiple RPC calls to the `sendTransaction` Solana RPC method.
+type MultiSendTransactionResult = variant {
+    Consistent : SendTransactionResult;
+    Inconsistent : vec record { RpcSource; SendTransactionResult };
 };
 
 // Commitment levels in Solana, representing finality guarantees of transactions and state queries.
@@ -391,6 +430,10 @@ service : (InstallArgs,) -> {
   // Call the Solana `getSlot` RPC method and return the resulting slot.
   getSlot : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (MultiGetSlotResult);
   getSlotCyclesCost : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (RequestCostResult) query;
+
+  // Call the Solana `sendTransaction` RPC method and return the resulting transaction ID.
+  sendTransaction : (RpcSources, opt RpcConfig, SendTransactionParams) -> (MultiSendTransactionResult);
+  sendTransactionCyclesCost : (RpcSources, opt RpcConfig, SendTransactionParams) -> (RequestCostResult) query;
 
   // Make a raw JSON-RPC request that sends the given json_rpc_payload.
   jsonRequest : (RpcSources, opt RpcConfig, json_rpc_payload: text) -> (MultiRequestResult);

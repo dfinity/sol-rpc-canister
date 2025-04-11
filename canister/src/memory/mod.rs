@@ -6,7 +6,7 @@ use crate::{
     types::{ApiKey, OverrideProvider},
 };
 use candid::{Deserialize, Principal};
-use canhttp::http::json::Id;
+use canhttp::http::json::{ConstantSizeId, Id};
 use canlog::LogFilter;
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
@@ -24,7 +24,7 @@ type StableMemory = VirtualMemory<DefaultMemoryImpl>;
 thread_local! {
     // Unstable static data: these are reset when the canister is upgraded.
     pub static UNSTABLE_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
-    static UNSTABLE_HTTP_REQUEST_COUNTER: RefCell<u64> = const {RefCell::new(0)};
+    static UNSTABLE_HTTP_REQUEST_COUNTER: RefCell<ConstantSizeId> = const {RefCell::new(ConstantSizeId::ZERO)};
 
     // Stable static data: these are preserved when the canister is upgraded.
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
@@ -222,10 +222,7 @@ pub fn reset_state() {
 
 pub fn next_request_id() -> Id {
     UNSTABLE_HTTP_REQUEST_COUNTER.with_borrow_mut(|counter| {
-        let current_request_id = *counter;
-        // overflow is not an issue here because we only use `next_request_id` to correlate
-        // requests and responses in logs.
-        *counter = counter.wrapping_add(1);
+        let current_request_id = counter.get_and_increment();
         Id::from(current_request_id)
     })
 }

@@ -41,15 +41,19 @@
 mod request;
 
 pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
+use std::fmt::Debug;
 
-use crate::request::{GetAccountInfoRequest, GetBlockRequest, GetSlotRequest, JsonRequest};
+use crate::request::{
+    GetAccountInfoRequest, GetBlockRequest, GetSlotRequest, JsonRequest, SendTransactionRequest,
+};
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     GetAccountInfoParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources,
-    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    SendTransactionParams, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    TransactionId,
 };
 use solana_clock::Slot;
 use std::sync::Arc;
@@ -237,6 +241,31 @@ impl<R> SolRpcClient<R> {
         sol_rpc_types::MultiRpcResult<Slot>,
     > {
         RequestBuilder::new(self.clone(), GetSlotRequest::default(), 10_000_000_000)
+    }
+
+    /// Call `sendTransaction` on the SOL RPC canister.
+    pub fn send_transaction<T>(
+        &self,
+        params: T,
+    ) -> RequestBuilder<
+        R,
+        RpcConfig,
+        SendTransactionParams,
+        sol_rpc_types::MultiRpcResult<TransactionId>,
+        sol_rpc_types::MultiRpcResult<solana_signature::Signature>,
+    >
+    where
+        T: TryInto<SendTransactionParams>,
+        <T as TryInto<SendTransactionParams>>::Error: Debug,
+    {
+        let params = params
+            .try_into()
+            .expect("Unable to build request parameters");
+        RequestBuilder::new(
+            self.clone(),
+            SendTransactionRequest::new(params),
+            10_000_000_000,
+        )
     }
 
     /// Call `jsonRequest` on the SOL RPC canister.

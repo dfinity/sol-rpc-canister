@@ -1,9 +1,12 @@
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 use sol_rpc_types::{
-    CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetBlockCommitmentLevel, Slot,
+    CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetBlockCommitmentLevel,
+    SendTransactionEncoding, Slot,
 };
 use solana_transaction_status_client_types::{TransactionDetails, UiTransactionEncoding};
 
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(into = "(String, Option<GetAccountInfoConfig>)")]
 pub struct GetAccountInfoParams(String, Option<GetAccountInfoConfig>);
@@ -30,6 +33,7 @@ impl From<GetAccountInfoParams> for (String, Option<GetAccountInfoConfig>) {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct GetAccountInfoConfig {
     pub commitment: Option<CommitmentLevel>,
@@ -40,6 +44,7 @@ pub struct GetAccountInfoConfig {
     pub min_context_slot: Option<u64>,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(into = "(Slot, Option<GetBlockConfig>)")]
 pub struct GetBlockParams(Slot, Option<GetBlockConfig>);
@@ -66,6 +71,7 @@ impl From<GetBlockParams> for (Slot, Option<GetBlockConfig>) {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 // TODO XC-289: Use values for `rewards`, `encoding` and `transactionDetails` fields.
 pub struct GetBlockConfig {
@@ -76,4 +82,47 @@ pub struct GetBlockConfig {
     pub commitment: Option<GetBlockCommitmentLevel>,
     #[serde(rename = "maxSupportedTransactionVersion")]
     pub max_supported_transaction_version: Option<u8>,
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(into = "(String, Option<SendTransactionConfig>)")]
+pub struct SendTransactionParams(String, Option<SendTransactionConfig>);
+
+impl From<sol_rpc_types::SendTransactionParams> for SendTransactionParams {
+    fn from(params: sol_rpc_types::SendTransactionParams) -> Self {
+        let transaction = params.get_transaction().to_string();
+        let config = if params.is_default_config() {
+            None
+        } else {
+            Some(SendTransactionConfig {
+                encoding: params.get_encoding().cloned(),
+                skip_preflight: params.skip_preflight,
+                preflight_commitment: params.preflight_commitment,
+                max_retries: params.max_retries,
+                min_context_slot: params.min_context_slot,
+            })
+        };
+        Self(transaction, config)
+    }
+}
+
+impl From<SendTransactionParams> for (String, Option<SendTransactionConfig>) {
+    fn from(params: SendTransactionParams) -> Self {
+        (params.0.to_string(), params.1)
+    }
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SendTransactionConfig {
+    pub encoding: Option<SendTransactionEncoding>,
+    #[serde(rename = "skipPreflight")]
+    pub skip_preflight: Option<bool>,
+    #[serde(rename = "preflightCommitment")]
+    pub preflight_commitment: Option<CommitmentLevel>,
+    #[serde(rename = "maxRetries")]
+    pub max_retries: Option<u32>,
+    #[serde(rename = "minContextSlot")]
+    pub min_context_slot: Option<u64>,
 }

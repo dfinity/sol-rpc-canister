@@ -1,9 +1,9 @@
-use crate::{AccountInfo, ConfirmedBlock, RpcResult, RpcSource};
+use crate::{AccountInfo, ConfirmedBlock, RpcResult, RpcSource, TransactionId};
 use candid::CandidType;
 use serde::Deserialize;
 use solana_account_decoder_client_types::UiAccount;
 use solana_transaction_status_client_types::UiConfirmedBlock;
-use std::fmt::Debug;
+use std::{fmt::Debug, str::FromStr};
 
 /// Represents an aggregated result from multiple RPC calls to different RPC providers.
 /// The results are aggregated using a [`crate::ConsensusStrategy`].
@@ -61,6 +61,15 @@ impl<T: Debug> MultiRpcResult<T> {
             }
             MultiRpcResult::Inconsistent(results) => results,
         }
+    }
+}
+
+impl From<MultiRpcResult<TransactionId>> for MultiRpcResult<solana_signature::Signature> {
+    fn from(result: MultiRpcResult<TransactionId>) -> Self {
+        result.map(|transaction_id| {
+            solana_signature::Signature::from_str(&transaction_id)
+                .expect("Unable to parse signature")
+        })
     }
 }
 

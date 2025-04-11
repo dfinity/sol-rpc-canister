@@ -19,5 +19,6 @@ pub use rpc_client::{
 pub use solana::{
     AccountData, AccountEncoding, AccountInfo, CommitmentLevel, ConfirmedBlock, DataSlice,
     GetAccountInfoEncoding, GetAccountInfoParams, GetBlockCommitmentLevel, GetBlockParams,
-    GetSlotParams, ParsedAccount, Pubkey, Slot,
+    GetSlotParams, ParsedAccount, Pubkey, SendTransactionEncoding, SendTransactionParams, Slot,
+    TransactionId,
 };

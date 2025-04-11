@@ -72,12 +72,6 @@ impl<A: MetricLabels, B: MetricLabels, C: MetricLabels> MetricLabels for (A, B, 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize, From)]
 pub struct MetricRpcMethod(pub String);
 
-impl From<RpcMethod> for MetricRpcMethod {
-    fn from(method: RpcMethod) -> Self {
-        MetricRpcMethod(method.name().to_string())
-    }
-}
-
 impl MetricLabels for MetricRpcMethod {
     fn metric_labels(&self) -> Vec<(&str, &str)> {
         vec![("method", &self.0)]
@@ -137,25 +131,6 @@ pub struct Metrics {
     pub inconsistent_responses: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
     #[serde(rename = "errHttpOutcall")]
     pub err_http_outcall: HashMap<(MetricRpcMethod, MetricRpcHost, RejectionCode), u64>,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum RpcMethod {
-    GetAccountInfo,
-    GetBlock,
-    GetSlot,
-    JsonRequest,
-}
-
-impl RpcMethod {
-    fn name(self) -> &'static str {
-        match self {
-            RpcMethod::GetAccountInfo => "getAccountInfo",
-            RpcMethod::GetBlock => "getBlock",
-            RpcMethod::GetSlot => "getSlot",
-            RpcMethod::JsonRequest => "jsonRequest",
-        }
-    }
 }
 
 trait EncoderExtensions {

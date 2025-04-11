@@ -3,18 +3,18 @@ use canlog::{log, Log, Sort};
 use ic_cdk::{api::is_controller, query, update};
 use ic_metrics_encoder::MetricsEncoder;
 use sol_rpc_canister::{
-    candid_rpc::{process_error, process_result},
+    candid_rpc::send_multi,
     http_types, lifecycle,
     logs::Priority,
     memory::{mutate_state, read_state, State},
-    metrics::{encode_metrics, RpcMethod},
+    metrics::encode_metrics,
     providers::{get_provider, PROVIDERS},
     rpc_client::MultiRpcRequest,
 };
 use sol_rpc_types::{
     AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBlockParams, GetSlotParams,
-    GetSlotRpcConfig, MultiRpcResult, RpcAccess, RpcConfig, RpcResult, RpcSources, Slot,
-    SupportedRpcProvider, SupportedRpcProviderId,
+    GetSlotRpcConfig, MultiRpcResult, RpcAccess, RpcConfig, RpcResult, RpcSources,
+    SendTransactionParams, Slot, SupportedRpcProvider, SupportedRpcProviderId, TransactionId,
 };
 use std::str::FromStr;
 
@@ -81,12 +81,8 @@ async fn get_account_info(
     config: Option<RpcConfig>,
     params: GetAccountInfoParams,
 ) -> MultiRpcResult<Option<AccountInfo>> {
-    match MultiRpcRequest::get_account_info(source, config.unwrap_or_default(), params) {
-        Ok(request) => {
-            process_result(RpcMethod::GetAccountInfo, request.send_and_reduce().await).into()
-        }
-        Err(e) => process_error(e),
-    }
+    let request = MultiRpcRequest::get_account_info(source, config.unwrap_or_default(), params);
+    send_multi(request).await.into()
 }
 
 #[query(name = "getAccountInfoCyclesCost")]
@@ -111,10 +107,8 @@ async fn get_block(
     config: Option<RpcConfig>,
     params: GetBlockParams,
 ) -> MultiRpcResult<Option<ConfirmedBlock>> {
-    match MultiRpcRequest::get_block(source, config.unwrap_or_default(), params) {
-        Ok(request) => process_result(RpcMethod::GetBlock, request.send_and_reduce().await).into(),
-        Err(e) => process_error(e),
-    }
+    let request = MultiRpcRequest::get_block(source, config.unwrap_or_default(), params);
+    send_multi(request).await.into()
 }
 
 #[query(name = "getBlockCyclesCost")]
@@ -139,14 +133,12 @@ async fn get_slot(
     config: Option<GetSlotRpcConfig>,
     params: Option<GetSlotParams>,
 ) -> MultiRpcResult<Slot> {
-    match MultiRpcRequest::get_slot(
+    let request = MultiRpcRequest::get_slot(
         source,
         config.unwrap_or_default(),
         params.unwrap_or_default(),
-    ) {
-        Ok(request) => process_result(RpcMethod::GetSlot, request.send_and_reduce().await),
-        Err(e) => process_error(e),
-    }
+    );
+    send_multi(request).await
 }
 
 #[query(name = "getSlotCyclesCost")]
@@ -168,6 +160,32 @@ async fn get_slot_cycles_cost(
     .await
 }
 
+#[update(name = "sendTransaction")]
+#[candid_method(rename = "sendTransaction")]
+async fn send_transaction(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: SendTransactionParams,
+) -> MultiRpcResult<TransactionId> {
+    let request = MultiRpcRequest::send_transaction(source, config.unwrap_or_default(), params);
+    send_multi(request).await
+}
+
+#[query(name = "sendTransactionCyclesCost")]
+#[candid_method(query, rename = "sendTransactionCyclesCost")]
+async fn send_transaction_cycles_cost(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: SendTransactionParams,
+) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
+    MultiRpcRequest::send_transaction(source, config.unwrap_or_default(), params)?
+        .cycles_cost()
+        .await
+}
+
 #[update(name = "jsonRequest")]
 #[candid_method(rename = "jsonRequest")]
 async fn json_request(
@@ -175,11 +193,9 @@ async fn json_request(
     config: Option<RpcConfig>,
     json_rpc_payload: String,
 ) -> MultiRpcResult<String> {
-    match MultiRpcRequest::json_request(source, config.unwrap_or_default(), json_rpc_payload) {
-        Ok(request) => process_result(RpcMethod::JsonRequest, request.send_and_reduce().await)
-            .map(|value| value.to_string()),
-        Err(e) => process_error(e),
-    }
+    let request =
+        MultiRpcRequest::json_request(source, config.unwrap_or_default(), json_rpc_payload);
+    send_multi(request).await.map(|value| value.to_string())
 }
 
 #[query(name = "jsonRequestCyclesCost")]
@@ -189,6 +205,9 @@ async fn json_request_cycles_cost(
     config: Option<RpcConfig>,
     json_rpc_payload: String,
 ) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
     MultiRpcRequest::json_request(source, config.unwrap_or_default(), json_rpc_payload)?
         .cycles_cost()
         .await
