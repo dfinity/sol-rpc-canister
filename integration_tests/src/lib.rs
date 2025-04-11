@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use candid::{decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encode, Principal};
+use canhttp::http::json::ConstantSizeId;
 use canlog::{Log, LogEntry};
 use ic_cdk::api::call::RejectionCode;
 use num_traits::ToPrimitive;
@@ -566,13 +567,16 @@ impl SolRpcTestClient<PocketIcRuntime<'_>> for ClientBuilder<PocketIcRuntime<'_>
 pub fn json_rpc_sequential_id<const N: usize>(
     response: serde_json::Value,
 ) -> [serde_json::Value; N] {
-    let first_id = response["id"].as_u64().expect("missing request ID");
+    let mut first_id: ConstantSizeId = response["id"]
+        .as_str()
+        .expect("missing request ID")
+        .parse()
+        .expect("invalid request ID");
     let mut requests = Vec::with_capacity(N);
-    requests.push(response.clone());
-    for i in 1..N {
+    for _ in 0..N {
         let mut next_request = response.clone();
-        let new_id = first_id + i as u64;
-        *next_request.get_mut("id").unwrap() = serde_json::Value::Number(new_id.into());
+        let new_id = first_id.get_and_increment();
+        *next_request.get_mut("id").unwrap() = serde_json::Value::String(new_id.to_string());
         requests.push(next_request);
     }
     requests.try_into().unwrap()
