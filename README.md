@@ -30,12 +30,12 @@ Interact with the [Solana](https://solana.com/) blockchain from the [Internet Co
 * **Configurable consensus strategy**: Choose how responses from multiple providers are aggregated depending on the needs of your application, e.g., 3-out-of-5 meaning that 5 providers will be queried and the overall response will be successful if at least 3 do agree (equality).
 * **Pay directly in cycles**: No need to take care of API keys, each request can be paid for by attaching cycles.
 * **Bring your own**: 
-    * A Solana RPC method is not supported? There is an endpoint to send any JSON-RPC request.
-    * Missing your favorite Solana JSON-RPC provider? You can specify your own providers.
+    * A Solana RPC method is not supported? There is an endpoint (`jsonRequest`) to send any JSON-RPC request.
+    * Missing your favorite Solana JSON-RPC provider? You can specify your own providers (`RpcSources::Custom`).
 
 ## Usage
 
-The SOL RPC canister runs on the [fiduciary subnet](https://internetcomputer.org/docs/current/concepts/subnet-types#fiduciary-subnets) with the following principal: [`tghme-zyaaa-aaaar-qarca-cai`](https://dashboard.internetcomputer.org/canister/tghme-zyaaa-aaaar-qarca-cai).
+The SOL RPC canister runs on the [fiduciary subnet](https://internetcomputer.org/docs/building-apps/developing-canisters/deploy-specific-subnet#fiduciary-subnets) with the following principal: [`tghme-zyaaa-aaaar-qarca-cai`](https://dashboard.internetcomputer.org/canister/tghme-zyaaa-aaaar-qarca-cai).
 
 Refer to the [Reproducible Build](#reproducible-build) section for information on how to verify the hash of the deployed WebAssembly module.
 
