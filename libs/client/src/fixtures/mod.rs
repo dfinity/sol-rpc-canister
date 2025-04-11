@@ -6,6 +6,7 @@ use candid::utils::ArgumentEncoder;
 use candid::{CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
+use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo};
 
 impl<R> ClientBuilder<R> {
     /// Change the runtime to return a mocked response.
@@ -61,5 +62,20 @@ impl Runtime for MockRuntime {
         Ok(candid::decode_args(&self.0)
             .map(|(r,)| r)
             .expect("Failed to decode Candid mocked response"))
+    }
+}
+
+/// USDC token account [`EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`](https://solscan.io/token/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v) on Solana Mainnet.
+pub fn usdc_account() -> AccountInfo {
+    AccountInfo {
+        lamports: 388_127_047_454,
+        data: AccountData::Binary(
+            "KLUv/QBYkQIAAQAAAJj+huiNm+Lqi8HMpIeLKYjCQPUrhCS/tA7Rot3LXhmbQLUAvmbxIwAGAQEAAABicKqKWcWUBbRShshncubNEm6bil06OFNtN/e0FOi2Zw==".to_string(),
+            AccountEncoding::Base64Zstd,
+        ),
+        owner: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA".to_string(),
+        executable: false,
+        rent_epoch: 18_446_744_073_709_551_615,
+        space: 82,
     }
 }
