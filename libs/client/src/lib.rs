@@ -312,6 +312,7 @@ impl<R> SolRpcClient<R> {
     /// );
     /// # Ok(())
     /// # }
+    /// ```
     pub fn send_transaction<T>(
         &self,
         params: T,
@@ -337,6 +338,60 @@ impl<R> SolRpcClient<R> {
     }
 
     /// Call `jsonRequest` on the SOL RPC canister.
+    ///
+    /// This method is useful to send any JSON-RPC request in case the SOL RPC canister
+    /// does not offer a Candid API for the requested JSON-RPC method.
+    ///
+    /// # Examples
+    ///
+    /// The following example calls `getVersion`:
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use serde_json::json;
+    /// use sol_rpc_types::{MultiRpcResult, RpcSources, SolanaCluster};
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #    .with_mocked_response(MultiRpcResult::Consistent(Ok(json!({
+    /// #            "jsonrpc": "2.0",
+    /// #            "result": {
+    /// #                "feature-set": 3271415109_u32,
+    /// #                "solana-core": "2.1.16"
+    /// #            },
+    /// #            "id": 1
+    /// #        })
+    /// #    .to_string())))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let version: serde_json::Value = client
+    ///     .json_request(json!({
+    ///             "jsonrpc": "2.0",
+    ///             "id": 1,
+    ///             "method": "getVersion"
+    ///         }))
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent()
+    ///     .map(|s| serde_json::from_str(&s).unwrap())
+    ///     .unwrap();
+    ///
+    /// assert_eq!(
+    ///     version,
+    ///     json!({
+    ///         "jsonrpc": "2.0",
+    ///         "result": {
+    ///             "feature-set": 3271415109_u32,
+    ///             "solana-core": "2.1.16"
+    ///         },
+    ///         "id": 1
+    ///     })
+    /// );
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn json_request(
         &self,
         json_request: serde_json::Value,
