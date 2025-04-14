@@ -14,18 +14,28 @@ Interact with the [Solana](https://solana.com/) blockchain from the [Internet Co
 
 ## Table of Contents
 
+* [Features](#features)
+* [Usage](#usage)
+    * [From the command line](#from-the-command-line)
+    * [From within a Rust canister](#from-within-a-rust-canister)
+* [Limitations](#limitations)
+* [Reproducible build](#reproducible-build)
+* [Related projects](#related-projects)
+* [Contributing](#contributing)
+* [License](#license)
+
 ## Features
 
 * **No single point of failure**:  Each request will by default query 3 distinct Solana JSON-RPC providers and aggregate their results.
 * **Configurable consensus strategy**: Choose how responses from multiple providers are aggregated depending on the needs of your application, e.g., 3-out-of-5 meaning that 5 providers will be queried and the overall response will be successful if at least 3 do agree (equality).
 * **Pay directly in cycles**: No need to take care of API keys, each request can be paid for by attaching cycles.
 * **Bring your own**: 
-    * A Solana RPC method is not supported? There is an endpoint to send any JSON-RPC request.
-    * Missing your favorite Solana JSON-RPC provider? You can specify your own providers.
+    * A Solana RPC method is not supported? There is an endpoint (`jsonRequest`) to send any JSON-RPC request.
+    * Missing your favorite Solana JSON-RPC provider? You can specify your own providers (`RpcSources::Custom`).
 
 ## Usage
 
-The SOL RPC canister runs on the [fiduciary subnet](https://internetcomputer.org/docs/current/concepts/subnet-types#fiduciary-subnets) with the following principal: [`tghme-zyaaa-aaaar-qarca-cai`](https://dashboard.internetcomputer.org/canister/tghme-zyaaa-aaaar-qarca-cai).
+The SOL RPC canister runs on the [fiduciary subnet](https://internetcomputer.org/docs/building-apps/developing-canisters/deploy-specific-subnet#fiduciary-subnets) with the following principal: [`tghme-zyaaa-aaaar-qarca-cai`](https://dashboard.internetcomputer.org/canister/tghme-zyaaa-aaaar-qarca-cai).
 
 Refer to the [Reproducible Build](#reproducible-build) section for information on how to verify the hash of the deployed WebAssembly module.
 
@@ -35,6 +45,7 @@ Refer to the [Reproducible Build](#reproducible-build) section for information o
 
 * [Install](https://internetcomputer.org/docs/building-apps/developer-tools/dev-tools-overview#dfx) `dfx`.
 * [Cycles wallet](https://internetcomputer.org/docs/building-apps/canister-management/cycles-wallet) with some cycles to pay for requests.
+* Commands are executed in [`canister/prod`](canister/prod).
 
 #### Example with [`getSlot`](https://solana.com/de/docs/rpc/http/getslot)
 
@@ -66,10 +77,16 @@ To get the last `finalized` slot on Solana Mainnet:
 
 ```rust,ignore
 use sol_rpc_client::SolRpcClient;
-use sol_rpc_types::{CommitmentLevel, GetSlotParams, RpcSources, SolanaCluster};
+use sol_rpc_types::{
+    CommitmentLevel, ConsensusStrategy, GetSlotParams, RpcConfig, RpcSources, SolanaCluster,
+};
 
 let client = SolRpcClient::builder_for_ic()
     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    .with_rpc_config(RpcConfig {
+        response_consensus: Some(ConsensusStrategy::Equality),
+        ..Default::default()
+    })
     .build();
 
 let slot = client
@@ -82,7 +99,7 @@ let slot = client
     .await;
 ```
 
-More examples are available in the [`sol_rpc_client`](libs/client/README.md) crate.
+Full examples are available in the [examples](examples) folder and additional code snippets are also available in the [`sol_rpc_client`](libs/client/README.md) crate.
 
 ## Limitations
 
@@ -90,7 +107,15 @@ The SOL RPC canister reaches the Solana JSON-RPC providers using [HTTPS outcalls
 1. The contacted providers must support IPv6.
 2. Some Solana RPC endpoint cannot be supported. This is the case for example for [`getLatestBlockhash`](https://solana.com/de/docs/rpc/http/getlatestblockhash).
    The reason is that an HTTPs outcalls involves an HTTP request from each node in the subnet and has therefore a latency in the order of a few seconds. 
-   This can be problematic for endpoints with fast changing responses, such as [`getLatestBlockhash`](https://solana.com/de/docs/rpc/http/getlatestblockhash), since in this case nodes will not be able to reach a consensus.
+   This can be problematic for endpoints with fast changing responses, such as [`getLatestBlockhash`](https://solana.com/de/docs/rpc/http/getlatestblockhash) (which changes roughly every 400ms),
+   since in this case nodes will not be able to reach a consensus.
+3. Note that in some cases, the use of a [response transformation](https://internetcomputer.org/docs/building-apps/network-features/using-http/https-outcalls/overview)
+   to canonicalize the response seen by each node before doing consensus may alleviate the problem.
+   For example, `getSlot` rounds by default the received slot by 20, therefore artificially increasing the slot time seen by each node to 8s to allow them reaching consensus with some significantly higher probability.
+   The reason why such a canonicalization strategy does not work for [`getLatestBlockhash`](https://solana.com/de/docs/rpc/http/getlatestblockhash) is that the result is basically a random-looking string of fixed length.
+4. There are therefore two options to send a transaction on Solana using the SOL RPC canister
+   1. Use a [durable nonce](https://solana.com/de/developers/guides/advanced/introduction-to-durable-nonces) instead of a blockhash.
+   2. Retrieve a recent blockhash by first retrieving a recent slot with `getSlot` and then getting the block (which includes the blockhash) with `getBlock`.
 
 ## Reproducible Build
 

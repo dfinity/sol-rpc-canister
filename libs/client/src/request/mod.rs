@@ -3,7 +3,7 @@ use candid::CandidType;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcResult,
-    RpcSources,
+    RpcSources, SendTransactionParams, TransactionId,
 };
 use solana_clock::Slot;
 use strum::EnumIter;
@@ -35,6 +35,8 @@ pub enum SolRpcEndpoint {
     GetSlot,
     /// `jsonRequest` endpoint.
     JsonRequest,
+    /// `sendTransaction` endpoint.
+    SendTransaction,
 }
 
 impl SolRpcEndpoint {
@@ -44,6 +46,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetAccountInfo => "getAccountInfo",
             SolRpcEndpoint::GetSlot => "getSlot",
             SolRpcEndpoint::JsonRequest => "jsonRequest",
+            SolRpcEndpoint::SendTransaction => "sendTransaction",
         }
     }
 
@@ -53,6 +56,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetAccountInfo => "getAccountInfoCyclesCost",
             SolRpcEndpoint::GetSlot => "getSlotCyclesCost",
             SolRpcEndpoint::JsonRequest => "jsonRequestCyclesCost",
+            SolRpcEndpoint::SendTransaction => "sendTransactionCyclesCost",
         }
     }
 }
@@ -93,6 +97,30 @@ impl SolRpcRequest for GetSlotRequest {
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetSlot
+    }
+
+    fn params(self) -> Self::Params {
+        self.0
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SendTransactionRequest(SendTransactionParams);
+
+impl SendTransactionRequest {
+    pub fn new(params: SendTransactionParams) -> Self {
+        Self(params)
+    }
+}
+
+impl SolRpcRequest for SendTransactionRequest {
+    type Config = RpcConfig;
+    type Params = SendTransactionParams;
+    type CandidOutput = sol_rpc_types::MultiRpcResult<TransactionId>;
+    type Output = sol_rpc_types::MultiRpcResult<solana_signature::Signature>;
+
+    fn endpoint(&self) -> SolRpcEndpoint {
+        SolRpcEndpoint::SendTransaction
     }
 
     fn params(self) -> Self::Params {
@@ -203,6 +231,12 @@ impl<Runtime, Config, Params, CandidOutput, Output>
         *self.request.params_mut() = params.into();
         self
     }
+
+    /// Change the RPC configuration to use for that request.
+    pub fn with_rpc_config(mut self, rpc_config: impl Into<Option<Config>>) -> Self {
+        *self.request.rpc_config_mut() = rpc_config.into();
+        self
+    }
 }
 
 impl<R: Runtime, Config, Params, CandidOutput, Output>
@@ -230,12 +264,10 @@ impl<Runtime, Params, CandidOutput, Output>
             config.rounding_error = Some(rounding_error);
             return self;
         }
-        let config = GetSlotRpcConfig {
+        self.with_rpc_config(GetSlotRpcConfig {
             rounding_error: Some(rounding_error),
             ..Default::default()
-        };
-        *self.request.rpc_config_mut() = Some(config);
-        self
+        })
     }
 }
 

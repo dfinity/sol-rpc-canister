@@ -25,6 +25,8 @@ pub enum ResponseTransform {
     #[n(1)]
     GetSlot(#[n(1)] RoundingError),
     #[n(2)]
+    SendTransaction,
+    #[n(3)]
     Raw,
 }
 
@@ -56,6 +58,9 @@ impl ResponseTransform {
             }
             Self::GetSlot(rounding_error) => {
                 canonicalize_response::<Slot, Slot>(body_bytes, |slot| rounding_error.round(slot));
+            }
+            Self::SendTransaction => {
+                canonicalize_response::<String, String>(body_bytes, std::convert::identity);
             }
             Self::Raw => {
                 canonicalize_response::<Value, Value>(body_bytes, std::convert::identity);
