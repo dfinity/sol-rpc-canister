@@ -45,6 +45,7 @@ Refer to the [Reproducible Build](#reproducible-build) section for information o
 
 * [Install](https://internetcomputer.org/docs/building-apps/developer-tools/dev-tools-overview#dfx) `dfx`.
 * [Cycles wallet](https://internetcomputer.org/docs/building-apps/canister-management/cycles-wallet) with some cycles to pay for requests.
+* Commands are executed in [`canister/prod`](canister/prod).
 
 #### Example with [`getSlot`](https://solana.com/de/docs/rpc/http/getslot)
 
