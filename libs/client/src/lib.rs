@@ -24,15 +24,95 @@
 //!     .build();
 //! ```
 //!
-//! ## Overriding client configuration for a specific call
+//! ## Estimating the amount of cycles to send
 //!
-//! It is sometimes desirable to have a custom configuration for a specific call, e.g. to change the amount of cycles attached:
+//! Every call made to the SOL RPC canister that triggers HTTPs outcalls (e.g., `getSlot`)
+//! needs to attach some cycles to pay for the call.
+//! By default, the client will attach some amount of cycles that should be sufficient for most cases.
+//!
+//! If this is not the case, the amount of cycles to be sent can be changed as follows:
+//! 1. Determine the required amount of cycles to send for a particular request.
+//!    The SOL RPC canister offers some query endpoints (e.g., `getSlotCyclesCost`) for that purpose.
+//!    This could help establishing a baseline so that the estimated cycles cost for similar requests
+//!    can be extrapolated from it instead of making additional queries to the SOL RPC canister.
+//! 2. Override the amount of cycles to send for that particular request.
+//!    It's advisable to actually send *more* cycles than required, since *unused cycles will be refunded*.
 //!
 //! ```rust
 //! use sol_rpc_client::SolRpcClient;
-//! let client = SolRpcClient::builder_for_ic().build();
+//! use sol_rpc_types::MultiRpcResult;
 //!
-//! let slot_fut = client.get_slot().with_cycles(42).send();
+//! # #[tokio::main]
+//! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! # use sol_rpc_types::RpcError;
+//! let client = SolRpcClient::builder_for_ic()
+//! #   .with_mocked_responses(
+//! #        MultiRpcResult::Consistent(Ok(332_577_897_u64)),
+//! #        Ok::<u128, RpcError>(100_000_000_000),
+//! #    )
+//!     .build();
+//!
+//! let request = client.get_slot();
+//!
+//! let minimum_required_cycles_amount = request.clone().request_cost().send().await.unwrap();
+//!
+//! let slot = request
+//!     .with_cycles(minimum_required_cycles_amount)
+//!     .send()
+//!     .await
+//!     .expect_consistent();
+//!
+//! assert_eq!(slot, Ok(332_577_897_u64));
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! ## Overriding client configuration for a specific call
+//!
+//! Besides changing the amount of cycles for a particular call as described above,
+//! it is sometimes desirable to have a custom configuration for a specific
+//! call that is different from the one used by the client for all the other calls.
+//!
+//! For example, maybe for most calls a 2 out-of 3 strategy is good enough, but for `getSlot`
+//! your application requires a higher threshold and more robustness with a 3 out-of 5 :
+//!
+//! ```rust
+//! use sol_rpc_client::SolRpcClient;
+//! use sol_rpc_types::{
+//!     ConsensusStrategy, GetSlotRpcConfig, MultiRpcResult, RpcConfig, RpcSources,
+//!     SolanaCluster,
+//! };
+//!
+//! # #[tokio::main]
+//! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! let client = SolRpcClient::builder_for_ic()
+//! #   .with_mocked_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+//!     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+//!     .with_rpc_config(RpcConfig {
+//!         response_consensus: Some(ConsensusStrategy::Threshold {
+//!             total: Some(3),
+//!             min: 2,
+//!         }),
+//!     ..Default::default()
+//!     })
+//!     .build();
+//!
+//! let slot = client
+//!     .get_slot()
+//!     .with_rpc_config(GetSlotRpcConfig {
+//!         response_consensus: Some(ConsensusStrategy::Threshold {
+//!             total: Some(5),
+//!             min: 3,
+//!         }),
+//!         ..Default::default()
+//!     })
+//!     .send()
+//!     .await
+//!     .expect_consistent();
+//!
+//! assert_eq!(slot, Ok(332_577_897_u64));
+//! # Ok(())
+//! # }
 //! ```
 
 #![forbid(unsafe_code)]
