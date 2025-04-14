@@ -174,7 +174,7 @@ impl From<solana_pubkey::Pubkey> for GetAccountInfoParams {
 }
 
 /// The parameters for a Solana [`getBlock`](https://solana.com/docs/rpc/http/getblock) RPC method call.
-// TODO XC-289: Add `rewards`, `encoding` and `transactionDetails` fields.
+// TODO XC-342: Add `rewards`, `encoding` and `transactionDetails` fields.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
 pub struct GetBlockParams {
     /// Slot number of the block to fetch.
@@ -474,7 +474,7 @@ impl From<AccountEncoding> for UiAccountEncoding {
 }
 
 /// The result of a Solana `getBlock` RPC method call.
-// TODO XC-289: Add `transactions`, `signatures`, `rewards` and `num_reward_partitions` fields.
+// TODO XC-342: Add `transactions`, `signatures`, `rewards` and `num_reward_partitions` fields.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct ConfirmedBlock {
     /// The blockhash of this block's parent, as base-58 encoded string; if the parent block is not

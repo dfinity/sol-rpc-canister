@@ -7,8 +7,9 @@ use pocket_ic::PocketIcBuilder;
 use sol_rpc_client::SolRpcClient;
 use sol_rpc_int_tests::PocketIcLiveModeRuntime;
 use sol_rpc_types::{
-    CommitmentLevel, GetAccountInfoEncoding, GetAccountInfoParams, GetSlotParams, InstallArgs,
-    OverrideProvider, RegexSubstitution, SendTransactionParams,
+    CommitmentLevel, GetAccountInfoEncoding, GetAccountInfoParams, GetBlockCommitmentLevel,
+    GetBlockParams, GetSlotParams, InstallArgs, OverrideProvider, RegexSubstitution,
+    SendTransactionParams,
 };
 use solana_account_decoder_client_types::UiAccount;
 use solana_client::rpc_client::{RpcClient as SolanaRpcClient, RpcClient};
@@ -116,38 +117,49 @@ async fn should_not_get_account_info() {
 #[tokio::test(flavor = "multi_thread")]
 async fn should_get_block() {
     let setup = Setup::new().await;
-    let slot = setup
-        .solana_client
-        .get_slot_with_commitment(CommitmentConfig::finalized())
-        .expect("Failed to get slot");
 
-    let (sol_res, ic_res) = setup
-        .compare_client(
-            |sol| {
-                sol.get_block_with_config(
-                    slot,
-                    RpcBlockConfig {
-                        encoding: None,
-                        transaction_details: Some(TransactionDetails::None),
-                        rewards: Some(false),
-                        commitment: None,
+    for commitment in [
+        GetBlockCommitmentLevel::Confirmed,
+        GetBlockCommitmentLevel::Finalized,
+    ] {
+        let commitment_config: CommitmentConfig = commitment.clone().into();
+        let slot = setup
+            .solana_client
+            .get_slot_with_commitment(commitment_config.clone())
+            .expect("Failed to get slot");
+
+        let (sol_res, ic_res) = setup
+            .compare_client(
+                |sol| {
+                    sol.get_block_with_config(
+                        slot,
+                        RpcBlockConfig {
+                            encoding: None,
+                            transaction_details: Some(TransactionDetails::None),
+                            rewards: Some(false),
+                            commitment: Some(commitment_config),
+                            max_supported_transaction_version: None,
+                        },
+                    )
+                    .expect("Failed to get block")
+                },
+                |ic| async move {
+                    ic.get_block(GetBlockParams {
+                        slot,
+                        commitment: Some(commitment),
                         max_supported_transaction_version: None,
-                    },
-                )
-                .expect("Failed to get block")
-            },
-            |ic| async move {
-                ic.get_block(slot)
+                    })
                     .send()
                     .await
                     .expect_consistent()
                     .unwrap_or_else(|e| panic!("`getBlock` call failed: {e}"))
                     .unwrap_or_else(|| panic!("No block for slot {slot}"))
-            },
-        )
-        .await;
+                },
+            )
+            .await;
 
-    assert_eq!(sol_res, ic_res);
+        assert_eq!(sol_res, ic_res);
+    }
 
     setup.setup.drop().await;
 }

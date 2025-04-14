@@ -125,7 +125,7 @@ impl GetBlockRequest {
         let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
         let max_response_bytes = config
             .response_size_estimate
-            // TODO XC-289: Revisit this when we add support for more values of `transactionDetails`
+            // TODO XC-342: Revisit this when we add support for more values of `transactionDetails`
             .unwrap_or(1024 + HEADER_SIZE_LIMIT);
 
         Ok(MultiRpcRequest::new(

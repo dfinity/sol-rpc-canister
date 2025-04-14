@@ -33,7 +33,6 @@ type RpcConfig = record {
   responseConsensus : opt ConsensusStrategy;
 };
 
-
 // Rounding error for fetching the current slot from Solana using the JSON-RPC interface, meaning slots will be rounded
 // down to the nearest multiple of this error when being fetched.
 //
@@ -280,7 +279,7 @@ type MultiGetAccountInfoResult = variant {
 };
 
 // The parameters for a Solana `getBlock` RPC method call.
-// TODO XC-289: Add `rewards`, `encoding` and `transactionDetails` fields.
+// TODO XC-342: Add `rewards`, `encoding` and `transactionDetails` fields.
 type GetBlockParams = record {
     // Slot number of the block to fetch.
     slot: Slot;
@@ -294,8 +293,13 @@ type GetBlockParams = record {
     maxSupportedTransactionVersion: opt nat8;
 };
 
+// Unix timestamp (seconds since the Unix epoch).
+// NOTE: This type is defined as an unsigned integer to align with the Solana JSON-RPC interface,
+// although in practice, an unsigned integer type would be functionally equivalent.
+type Timestamp = int64;
+
 // The result of a Solana `getBlock` RPC method call.
-// TODO XC-289: Add `transactions`, `signatures`, `rewards` and `num_reward_partitions` fields.
+// TODO XC-342: Add `transactions`, `signatures`, `rewards` and `num_reward_partitions` fields.
 type ConfirmedBlock = record {
     // The blockhash of this block's parent, as base-58 encoded string; if the parent block is not
     // available due to ledger cleanup, this field will return "11111111111111111111111111111111".
@@ -304,8 +308,8 @@ type ConfirmedBlock = record {
     blockhash: text;
     // The slot index of this block's parent.
     parentSlot: nat64;
-    // Estimated production time, as Unix timestamp (seconds since the Unix epoch).
-    blockTime: opt int64;
+    // Estimated production time.
+    blockTime: opt Timestamp;
     // The number of blocks beneath this block.
     blockHeight: opt nat64;
 };

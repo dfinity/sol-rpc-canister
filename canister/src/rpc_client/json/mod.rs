@@ -84,8 +84,8 @@ pub struct GetBlockParams(Slot, Option<GetBlockConfig>);
 
 impl From<sol_rpc_types::GetBlockParams> for GetBlockParams {
     fn from(params: sol_rpc_types::GetBlockParams) -> Self {
-        // TODO XC-289: Check if all config fields are null, and if so, serialize it as null.
-        //  Currently, we do not want it to be null since e.g. `"transaction_Details": "none"`
+        // TODO XC-342: Check if all config fields are null, and if so, serialize it as null.
+        //  Currently, we do not want it to be null since e.g. `"transactionDetails": "none"`
         //  is not the default value.
         let config = Some(GetBlockConfig {
             encoding: None,
@@ -106,7 +106,7 @@ impl From<GetBlockParams> for (Slot, Option<GetBlockConfig>) {
 
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Debug)]
-// TODO XC-289: Use values for `rewards`, `encoding` and `transactionDetails` fields.
+// TODO XC-342: Use values for `rewards`, `encoding` and `transactionDetails` fields.
 pub struct GetBlockConfig {
     pub encoding: Option<UiTransactionEncoding>,
     #[serde(rename = "transactionDetails")]
