@@ -1,5 +1,7 @@
 pub mod json;
 mod sol_rpc;
+#[cfg(test)]
+mod tests;
 
 use crate::{
     http::{

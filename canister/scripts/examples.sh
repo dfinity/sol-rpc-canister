@@ -22,7 +22,7 @@ GET_SLOT_PARAMS="(
   opt record { minContextSlot = null; commitment = opt variant { finalized } },
 )"
 CYCLES=$(dfx canister call sol_rpc getSlotCyclesCost "$GET_SLOT_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
-SLOT=$(dfx canister call sol_rpc getSlot "$GET_SLOT_PARAMS" $FLAGS --with-cycles "$CYCLES" --output json | jq '.Ok' --raw-output || exit 1)
+SLOT=$(dfx canister call sol_rpc getSlot "$GET_SLOT_PARAMS" $FLAGS --with-cycles "$CYCLES" --output json | jq '.Consistent.Ok' --raw-output || exit 1)
 
 # Fetch the latest finalized block
 GET_BLOCK_PARAMS="(

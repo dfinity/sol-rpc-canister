@@ -4104,7 +4104,7 @@ dependencies = [
  "solana-account",
  "solana-account-decoder-client-types",
  "solana-clock",
- "solana-signature",
+ "solana-rpc-client-api",
  "solana-transaction-status-client-types",
  "thiserror 2.0.12",
  "tower",
