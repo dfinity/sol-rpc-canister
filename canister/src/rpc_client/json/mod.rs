@@ -8,6 +8,39 @@ use solana_transaction_status_client_types::{TransactionDetails, UiTransactionEn
 
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(into = "(Option<GetSlotConfig>,)")]
+pub struct GetSlotParams(Option<GetSlotConfig>);
+
+impl From<sol_rpc_types::GetSlotParams> for GetSlotParams {
+    fn from(params: sol_rpc_types::GetSlotParams) -> Self {
+        let config = if params.is_default_config() {
+            None
+        } else {
+            Some(GetSlotConfig {
+                commitment: params.commitment,
+                min_context_slot: params.min_context_slot,
+            })
+        };
+        Self(config)
+    }
+}
+
+impl From<GetSlotParams> for (Option<GetSlotConfig>,) {
+    fn from(params: GetSlotParams) -> Self {
+        (params.0,)
+    }
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct GetSlotConfig {
+    pub commitment: Option<CommitmentLevel>,
+    #[serde(rename = "minContextSlot")]
+    pub min_context_slot: Option<u64>,
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(into = "(String, Option<GetAccountInfoConfig>)")]
 pub struct GetAccountInfoParams(String, Option<GetAccountInfoConfig>);
 

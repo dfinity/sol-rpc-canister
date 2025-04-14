@@ -47,6 +47,7 @@ serde_with = { workspace = true }
 [dev-dependencies]
 candid_parser = { workspace = true }
 proptest = { workspace = true }
+solana-pubkey = { workspace = true }
 solana-rpc-client-api = { workspace = true }
 
 [features]

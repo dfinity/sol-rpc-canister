@@ -116,6 +116,17 @@ pub struct GetSlotParams {
     pub min_context_slot: Option<u64>,
 }
 
+impl GetSlotParams {
+    /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
+    pub fn is_default_config(&self) -> bool {
+        let GetSlotParams {
+            commitment,
+            min_context_slot,
+        } = &self;
+        commitment.is_none() && min_context_slot.is_none()
+    }
+}
+
 /// The parameters for a Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method call.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub struct GetAccountInfoParams {
@@ -271,9 +282,9 @@ pub enum GetAccountInfoEncoding {
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
 pub struct DataSlice {
     /// Number of bytes to return.
-    length: u32,
+    pub length: u32,
     /// Byte offset from which to start reading.
-    offset: u32,
+    pub offset: u32,
 }
 
 impl From<DataSlice> for UiDataSliceConfig {
