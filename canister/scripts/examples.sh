@@ -22,7 +22,27 @@ GET_SLOT_PARAMS="(
   opt record { minContextSlot = null; commitment = opt variant { finalized } },
 )"
 CYCLES=$(dfx canister call sol_rpc getSlotCyclesCost "$GET_SLOT_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
-dfx canister call sol_rpc getSlot "$GET_SLOT_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
+SLOT=$(dfx canister call sol_rpc getSlot "$GET_SLOT_PARAMS" $FLAGS --with-cycles "$CYCLES" --output json | jq '.Ok' --raw-output || exit 1)
+
+# Fetch the latest finalized block
+GET_BLOCK_PARAMS="(
+  variant { Default = variant { Mainnet } },
+  opt record {
+    responseConsensus = opt variant {
+      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+    };
+    responseSizeEstimate = null;
+  },
+  record {
+    slot = ${SLOT};
+    commitment = opt variant { finalized };
+    maxSupportedTransactionVersion = null;
+  },
+)"
+CYCLES=$(dfx canister call sol_rpc getBlockCyclesCost "$GET_BLOCK_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
+dfx canister call sol_rpc getBlock "$GET_BLOCK_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
+
+# TODO XC-339: Add end-to-end test for `sendTransaction` using `getSlot` and `getBlock`
 
 # Get the USDC mint account info on Mainnet with a 2-out-of-3 strategy
 GET_ACCOUNT_INFO_PARAMS="(
@@ -43,5 +63,3 @@ GET_ACCOUNT_INFO_PARAMS="(
 )"
 CYCLES=$(dfx canister call sol_rpc getAccountInfoCyclesCost "$GET_ACCOUNT_INFO_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
 dfx canister call sol_rpc getAccountInfo "$GET_ACCOUNT_INFO_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
-
-# TODO XC-339: Add end-to-end test for `sendTransaction`
