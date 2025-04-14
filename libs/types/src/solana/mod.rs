@@ -2,6 +2,8 @@ use crate::RpcError;
 use base64::{prelude::BASE64_STANDARD, Engine};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use solana_account_decoder_client_types::{UiAccountEncoding, UiDataSliceConfig};
+use solana_commitment_config::CommitmentConfig;
 use std::fmt::Debug;
 
 /// A Solana [slot](https://solana.com/docs/references/terminology#slot).
@@ -114,6 +116,17 @@ pub struct GetSlotParams {
     pub min_context_slot: Option<u64>,
 }
 
+impl GetSlotParams {
+    /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
+    pub fn is_default_config(&self) -> bool {
+        let GetSlotParams {
+            commitment,
+            min_context_slot,
+        } = &self;
+        commitment.is_none() && min_context_slot.is_none()
+    }
+}
+
 /// The parameters for a Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method call.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub struct GetAccountInfoParams {
@@ -160,6 +173,40 @@ impl From<solana_pubkey::Pubkey> for GetAccountInfoParams {
     }
 }
 
+/// The parameters for a Solana [`getBlock`](https://solana.com/docs/rpc/http/getblock) RPC method call.
+// TODO XC-342: Add `rewards`, `encoding` and `transactionDetails` fields.
+#[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
+pub struct GetBlockParams {
+    /// Slot number of the block to fetch.
+    pub slot: Slot,
+    /// The commitment describes how finalized a block is at that point in time.
+    pub commitment: Option<GetBlockCommitmentLevel>,
+    /// The max transaction version to return in responses.
+    /// * If the requested block contains a transaction with a higher version,
+    ///   an error will be returned.
+    /// * If this parameter is omitted, only legacy transactions will be returned, and a block
+    ///   containing any versioned transaction will prompt the error.
+    #[serde(rename = "maxSupportedTransactionVersion")]
+    pub max_supported_transaction_version: Option<u8>,
+}
+
+impl GetBlockParams {
+    /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
+    pub fn is_default_config(&self) -> bool {
+        self.commitment.is_none() && self.max_supported_transaction_version.is_none()
+    }
+}
+
+impl From<Slot> for GetBlockParams {
+    fn from(slot: Slot) -> Self {
+        Self {
+            slot,
+            commitment: None,
+            max_supported_transaction_version: None,
+        }
+    }
+}
+
 /// [Commitment levels](https://solana.com/docs/rpc#configuring-state-commitment) in Solana,
 /// representing finality guarantees of transactions and memory queries.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
@@ -173,6 +220,42 @@ pub enum CommitmentLevel {
     /// The transaction is finalized and cannot be rolled back.
     #[serde(rename = "finalized")]
     Finalized,
+}
+
+impl From<CommitmentLevel> for CommitmentConfig {
+    fn from(commitment_level: CommitmentLevel) -> Self {
+        Self {
+            commitment: match commitment_level {
+                CommitmentLevel::Processed => solana_commitment_config::CommitmentLevel::Processed,
+                CommitmentLevel::Confirmed => solana_commitment_config::CommitmentLevel::Confirmed,
+                CommitmentLevel::Finalized => solana_commitment_config::CommitmentLevel::Finalized,
+            },
+        }
+    }
+}
+
+/// Subset of [`CommitmentLevel`] whose variants are allowed values for the `encoding`
+/// field of [`GetBlockParams`].
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+pub enum GetBlockCommitmentLevel {
+    /// See [`CommitmentLevel::Confirmed`].
+    #[serde(rename = "confirmed")]
+    Confirmed,
+    /// See [`CommitmentLevel::Finalized`].
+    #[serde(rename = "finalized")]
+    Finalized,
+}
+
+impl From<GetBlockCommitmentLevel> for CommitmentConfig {
+    fn from(commitment_level: GetBlockCommitmentLevel) -> Self {
+        use solana_commitment_config::CommitmentLevel;
+        Self {
+            commitment: match commitment_level {
+                GetBlockCommitmentLevel::Confirmed => CommitmentLevel::Confirmed,
+                GetBlockCommitmentLevel::Finalized => CommitmentLevel::Finalized,
+            },
+        }
+    }
 }
 
 /// Encoding for the return value of the Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method.
@@ -199,9 +282,18 @@ pub enum GetAccountInfoEncoding {
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
 pub struct DataSlice {
     /// Number of bytes to return.
-    length: u32,
+    pub length: u32,
     /// Byte offset from which to start reading.
-    offset: u32,
+    pub offset: u32,
+}
+
+impl From<DataSlice> for UiDataSliceConfig {
+    fn from(data: DataSlice) -> Self {
+        Self {
+            offset: data.offset as usize,
+            length: data.length as usize,
+        }
+    }
 }
 
 /// Solana Ed25519 [public key](`https://solana.com/docs/references/terminology#public-key-pubkey`).
@@ -356,8 +448,8 @@ pub enum AccountEncoding {
     JsonParsed,
 }
 
-impl From<solana_account_decoder_client_types::UiAccountEncoding> for AccountEncoding {
-    fn from(encoding: solana_account_decoder_client_types::UiAccountEncoding) -> Self {
+impl From<UiAccountEncoding> for AccountEncoding {
+    fn from(encoding: UiAccountEncoding) -> Self {
         use solana_account_decoder_client_types::UiAccountEncoding;
         match encoding {
             UiAccountEncoding::Binary => Self::Binary,
@@ -369,7 +461,7 @@ impl From<solana_account_decoder_client_types::UiAccountEncoding> for AccountEnc
     }
 }
 
-impl From<AccountEncoding> for solana_account_decoder_client_types::UiAccountEncoding {
+impl From<AccountEncoding> for UiAccountEncoding {
     fn from(encoding: AccountEncoding) -> Self {
         match encoding {
             AccountEncoding::Binary => Self::Binary,
@@ -377,6 +469,55 @@ impl From<AccountEncoding> for solana_account_decoder_client_types::UiAccountEnc
             AccountEncoding::Base64 => Self::Base64,
             AccountEncoding::JsonParsed => Self::JsonParsed,
             AccountEncoding::Base64Zstd => Self::Base64Zstd,
+        }
+    }
+}
+
+/// The result of a Solana `getBlock` RPC method call.
+// TODO XC-342: Add `transactions`, `signatures`, `rewards` and `num_reward_partitions` fields.
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
+pub struct ConfirmedBlock {
+    /// The blockhash of this block's parent, as base-58 encoded string; if the parent block is not
+    /// available due to ledger cleanup, this field will return "11111111111111111111111111111111".
+    #[serde(rename = "previousBlockhash")]
+    pub previous_blockhash: String,
+    /// The blockhash of this block, as base-58 encoded string.
+    pub blockhash: String,
+    /// The slot index of this block's parent.
+    #[serde(rename = "parentSlot")]
+    pub parent_slot: u64,
+    /// Estimated production time, as Unix timestamp (seconds since the Unix epoch).
+    #[serde(rename = "blockTime")]
+    pub block_time: Option<i64>,
+    /// The number of blocks beneath this block.
+    #[serde(rename = "blockHeight")]
+    pub block_height: Option<u64>,
+}
+
+impl From<solana_transaction_status_client_types::UiConfirmedBlock> for ConfirmedBlock {
+    fn from(block: solana_transaction_status_client_types::UiConfirmedBlock) -> Self {
+        Self {
+            previous_blockhash: block.previous_blockhash,
+            blockhash: block.blockhash,
+            parent_slot: block.parent_slot,
+            block_time: block.block_time,
+            block_height: block.block_height,
+        }
+    }
+}
+
+impl From<ConfirmedBlock> for solana_transaction_status_client_types::UiConfirmedBlock {
+    fn from(block: ConfirmedBlock) -> Self {
+        Self {
+            previous_blockhash: block.previous_blockhash,
+            blockhash: block.blockhash,
+            parent_slot: block.parent_slot,
+            transactions: None,
+            signatures: None,
+            rewards: None,
+            num_reward_partitions: None,
+            block_time: block.block_time,
+            block_height: block.block_height,
         }
     }
 }

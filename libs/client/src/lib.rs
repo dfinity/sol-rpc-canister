@@ -43,13 +43,15 @@ mod request;
 pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 use std::fmt::Debug;
 
-use crate::request::{GetAccountInfoRequest, GetSlotRequest, JsonRequest, SendTransactionRequest};
+use crate::request::{
+    GetAccountInfoRequest, GetBlockRequest, GetSlotRequest, JsonRequest, SendTransactionRequest,
+};
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    GetAccountInfoParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources,
+    GetAccountInfoParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources,
     SendTransactionParams, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
     TransactionId,
 };
@@ -204,6 +206,26 @@ impl<R> SolRpcClient<R> {
         RequestBuilder::new(
             self.clone(),
             GetAccountInfoRequest::new(params.into()),
+            10_000_000_000,
+        )
+    }
+
+    /// Call `getBlock` on the SOL RPC canister.
+    pub fn get_block(
+        &self,
+        params: impl Into<GetBlockParams>,
+    ) -> RequestBuilder<
+        R,
+        RpcConfig,
+        GetBlockParams,
+        sol_rpc_types::MultiRpcResult<Option<sol_rpc_types::ConfirmedBlock>>,
+        sol_rpc_types::MultiRpcResult<
+            Option<solana_transaction_status_client_types::UiConfirmedBlock>,
+        >,
+    > {
+        RequestBuilder::new(
+            self.clone(),
+            GetBlockRequest::new(params.into()),
             10_000_000_000,
         )
     }

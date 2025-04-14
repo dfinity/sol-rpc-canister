@@ -33,9 +33,10 @@ solana-message = { workspace = true }
 solana-pubkey = { workspace = true }
 solana-program = { workspace = true }
 solana-rpc-client-api = { workspace = true }
+solana-signature = { workspace = true }
 solana-signer = { workspace = true }
 solana-transaction = { workspace = true }
-solana-signature = { workspace = true }
+solana-transaction-status-client-types = { workspace = true }
 
 [dev-dependencies]
 assert_matches = { workspace = true }

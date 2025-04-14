@@ -1,6 +1,43 @@
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use sol_rpc_types::{CommitmentLevel, DataSlice, GetAccountInfoEncoding, SendTransactionEncoding};
+use sol_rpc_types::{
+    CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetBlockCommitmentLevel,
+    SendTransactionEncoding, Slot,
+};
+use solana_transaction_status_client_types::{TransactionDetails, UiTransactionEncoding};
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(into = "(Option<GetSlotConfig>,)")]
+pub struct GetSlotParams(Option<GetSlotConfig>);
+
+impl From<sol_rpc_types::GetSlotParams> for GetSlotParams {
+    fn from(params: sol_rpc_types::GetSlotParams) -> Self {
+        let config = if params.is_default_config() {
+            None
+        } else {
+            Some(GetSlotConfig {
+                commitment: params.commitment,
+                min_context_slot: params.min_context_slot,
+            })
+        };
+        Self(config)
+    }
+}
+
+impl From<GetSlotParams> for (Option<GetSlotConfig>,) {
+    fn from(params: GetSlotParams) -> Self {
+        (params.0,)
+    }
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct GetSlotConfig {
+    pub commitment: Option<CommitmentLevel>,
+    #[serde(rename = "minContextSlot")]
+    pub min_context_slot: Option<u64>,
+}
 
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -32,14 +69,52 @@ impl From<GetAccountInfoParams> for (String, Option<GetAccountInfoConfig>) {
 #[skip_serializing_none]
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct GetAccountInfoConfig {
-    /// The request returns the slot that has reached this or the default commitment level.
     pub commitment: Option<CommitmentLevel>,
-    /// Encoding format for Account data.
     pub encoding: Option<GetAccountInfoEncoding>,
-    /// Request a slice of the account's data.
+    #[serde(rename = "dataSlice")]
     pub data_slice: Option<DataSlice>,
-    /// The minimum slot that the request can be evaluated at.
+    #[serde(rename = "minContextSlot")]
     pub min_context_slot: Option<u64>,
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(into = "(Slot, Option<GetBlockConfig>)")]
+pub struct GetBlockParams(Slot, Option<GetBlockConfig>);
+
+impl From<sol_rpc_types::GetBlockParams> for GetBlockParams {
+    fn from(params: sol_rpc_types::GetBlockParams) -> Self {
+        // TODO XC-342: Check if all config fields are null, and if so, serialize it as null.
+        //  Currently, we do not want it to be null since e.g. `"transactionDetails": "none"`
+        //  is not the default value.
+        let config = Some(GetBlockConfig {
+            encoding: None,
+            transaction_details: Some(TransactionDetails::None),
+            rewards: Some(false),
+            commitment: params.commitment,
+            max_supported_transaction_version: params.max_supported_transaction_version,
+        });
+        Self(params.slot, config)
+    }
+}
+
+impl From<GetBlockParams> for (Slot, Option<GetBlockConfig>) {
+    fn from(params: GetBlockParams) -> Self {
+        (params.0, params.1)
+    }
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+// TODO XC-342: Use values for `rewards`, `encoding` and `transactionDetails` fields.
+pub struct GetBlockConfig {
+    pub encoding: Option<UiTransactionEncoding>,
+    #[serde(rename = "transactionDetails")]
+    pub transaction_details: Option<TransactionDetails>,
+    pub rewards: Option<bool>,
+    pub commitment: Option<GetBlockCommitmentLevel>,
+    #[serde(rename = "maxSupportedTransactionVersion")]
+    pub max_supported_transaction_version: Option<u8>,
 }
 
 #[skip_serializing_none]
@@ -74,20 +149,13 @@ impl From<SendTransactionParams> for (String, Option<SendTransactionConfig>) {
 #[skip_serializing_none]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SendTransactionConfig {
-    /// Encoding format for the transaction.
     pub encoding: Option<SendTransactionEncoding>,
-    /// When true, skip the preflight transaction checks. Default: false.
     #[serde(rename = "skipPreflight")]
     pub skip_preflight: Option<bool>,
-    /// Commitment level to use for preflight. See Configuring State Commitment. Default finalized.
     #[serde(rename = "preflightCommitment")]
     pub preflight_commitment: Option<CommitmentLevel>,
-    /// Maximum number of times for the RPC node to retry sending the transaction to the leader.
-    /// If this parameter not provided, the RPC node will retry the transaction until it is
-    /// finalized or until the blockhash expires.
     #[serde(rename = "maxRetries")]
     pub max_retries: Option<u32>,
-    /// Set the minimum slot at which to perform preflight transaction checks
     #[serde(rename = "minContextSlot")]
     pub min_context_slot: Option<u64>,
 }

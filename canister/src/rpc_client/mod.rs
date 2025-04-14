@@ -1,5 +1,7 @@
 pub mod json;
 mod sol_rpc;
+#[cfg(test)]
+mod tests;
 
 use crate::{
     http::{
@@ -23,8 +25,8 @@ use ic_cdk::api::management_canister::http_request::{
 };
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
-    ConsensusStrategy, GetSlotParams, GetSlotRpcConfig, ProviderError, RpcConfig, RpcError,
-    RpcResult, RpcSource, RpcSources, TransactionId,
+    ConsensusStrategy, GetSlotRpcConfig, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource,
+    RpcSources, TransactionId,
 };
 use solana_clock::Slot;
 use std::{fmt::Debug, marker::PhantomData};
@@ -108,13 +110,41 @@ impl GetAccountInfoRequest {
     }
 }
 
-pub type GetSlotRequest = MultiRpcRequest<Vec<GetSlotParams>, Slot>;
+pub type GetBlockRequest = MultiRpcRequest<
+    json::GetBlockParams,
+    Option<solana_transaction_status_client_types::UiConfirmedBlock>,
+>;
+
+impl GetBlockRequest {
+    pub fn get_block<Params: Into<json::GetBlockParams>>(
+        rpc_sources: RpcSources,
+        config: RpcConfig,
+        params: Params,
+    ) -> Result<Self, ProviderError> {
+        let consensus_strategy = config.response_consensus.unwrap_or_default();
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let max_response_bytes = config
+            .response_size_estimate
+            // TODO XC-342: Revisit this when we add support for more values of `transactionDetails`
+            .unwrap_or(1024 + HEADER_SIZE_LIMIT);
+
+        Ok(MultiRpcRequest::new(
+            providers,
+            JsonRpcRequest::new("getBlock", params.into()),
+            max_response_bytes,
+            ResponseTransform::GetBlock,
+            ReductionStrategy::from(consensus_strategy),
+        ))
+    }
+}
+
+pub type GetSlotRequest = MultiRpcRequest<json::GetSlotParams, Slot>;
 
 impl GetSlotRequest {
-    pub fn get_slot(
+    pub fn get_slot<Params: Into<json::GetSlotParams>>(
         rpc_sources: RpcSources,
         config: GetSlotRpcConfig,
-        params: GetSlotParams,
+        params: Params,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
         let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
@@ -128,7 +158,7 @@ impl GetSlotRequest {
 
         Ok(MultiRpcRequest::new(
             providers,
-            JsonRpcRequest::new("getSlot", vec![params]),
+            JsonRpcRequest::new("getSlot", params.into()),
             max_response_bytes,
             ResponseTransform::GetSlot(rounding_error),
             ReductionStrategy::from(consensus_strategy),

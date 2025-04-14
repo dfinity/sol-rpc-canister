@@ -1,6 +1,8 @@
-use crate::{AccountInfo, RpcResult, RpcSource, TransactionId};
+use crate::{AccountInfo, ConfirmedBlock, RpcResult, RpcSource, TransactionId};
 use candid::CandidType;
 use serde::Deserialize;
+use solana_account_decoder_client_types::UiAccount;
+use solana_transaction_status_client_types::UiConfirmedBlock;
 use std::{fmt::Debug, str::FromStr};
 
 /// Represents an aggregated result from multiple RPC calls to different RPC providers.
@@ -62,29 +64,35 @@ impl<T: Debug> MultiRpcResult<T> {
     }
 }
 
-impl From<MultiRpcResult<Option<AccountInfo>>>
-    for MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>
-{
-    fn from(result: MultiRpcResult<Option<AccountInfo>>) -> Self {
-        result.map(|maybe_account| maybe_account.map(|account| account.into()))
-    }
-}
-
-impl From<MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>>
-    for MultiRpcResult<Option<AccountInfo>>
-{
-    fn from(
-        result: MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>,
-    ) -> Self {
-        result.map(|maybe_account| maybe_account.map(|account| account.into()))
-    }
-}
-
 impl From<MultiRpcResult<TransactionId>> for MultiRpcResult<solana_signature::Signature> {
     fn from(result: MultiRpcResult<TransactionId>) -> Self {
         result.map(|transaction_id| {
             solana_signature::Signature::from_str(&transaction_id)
                 .expect("Unable to parse signature")
         })
+    }
+}
+
+impl From<MultiRpcResult<Option<AccountInfo>>> for MultiRpcResult<Option<UiAccount>> {
+    fn from(result: MultiRpcResult<Option<AccountInfo>>) -> Self {
+        result.map(|maybe_account| maybe_account.map(|account| account.into()))
+    }
+}
+
+impl From<MultiRpcResult<Option<UiAccount>>> for MultiRpcResult<Option<AccountInfo>> {
+    fn from(result: MultiRpcResult<Option<UiAccount>>) -> Self {
+        result.map(|maybe_account| maybe_account.map(|account| account.into()))
+    }
+}
+
+impl From<MultiRpcResult<Option<ConfirmedBlock>>> for MultiRpcResult<Option<UiConfirmedBlock>> {
+    fn from(result: MultiRpcResult<Option<ConfirmedBlock>>) -> Self {
+        result.map(|maybe_block| maybe_block.map(|block| block.into()))
+    }
+}
+
+impl From<MultiRpcResult<Option<UiConfirmedBlock>>> for MultiRpcResult<Option<ConfirmedBlock>> {
+    fn from(result: MultiRpcResult<Option<UiConfirmedBlock>>) -> Self {
+        result.map(|maybe_block| maybe_block.map(|block| block.into()))
     }
 }

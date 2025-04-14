@@ -4105,7 +4105,8 @@ dependencies = [
  "solana-account-decoder-client-types",
  "solana-clock",
  "solana-pubkey",
- "solana-signature",
+ "solana-rpc-client-api",
+ "solana-transaction-status-client-types",
  "thiserror 2.0.12",
  "tower",
  "tower-http",
@@ -4128,6 +4129,7 @@ dependencies = [
  "solana-clock",
  "solana-pubkey",
  "solana-signature",
+ "solana-transaction-status-client-types",
  "strum 0.27.1",
 ]
 
@@ -4166,6 +4168,7 @@ dependencies = [
  "solana-signature",
  "solana-signer",
  "solana-transaction",
+ "solana-transaction-status-client-types",
  "strum 0.27.1",
  "tokio",
 ]
@@ -4185,9 +4188,11 @@ dependencies = [
  "serde_json",
  "solana-account",
  "solana-account-decoder-client-types",
+ "solana-commitment-config",
  "solana-pubkey",
  "solana-signature",
  "solana-transaction",
+ "solana-transaction-status-client-types",
  "strum 0.27.1",
  "thiserror 2.0.12",
  "url",

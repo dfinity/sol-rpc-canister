@@ -13,6 +13,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{from_slice, from_value, to_vec, Value};
 use solana_account_decoder_client_types::UiAccount;
 use solana_clock::Slot;
+use solana_transaction_status_client_types::UiConfirmedBlock;
 use std::fmt::Debug;
 
 /// Describes a payload transformation to execute before passing the HTTP response to consensus.
@@ -23,10 +24,12 @@ pub enum ResponseTransform {
     #[n(0)]
     GetAccountInfo,
     #[n(1)]
-    GetSlot(#[n(1)] RoundingError),
+    GetBlock,
     #[n(2)]
+    GetSlot(#[n(3)] RoundingError),
+    #[n(4)]
     SendTransaction,
-    #[n(3)]
+    #[n(5)]
     Raw,
 }
 
@@ -55,6 +58,17 @@ impl ResponseTransform {
                         ),
                     },
                 );
+            }
+            Self::GetBlock => {
+                canonicalize_response::<Value, Option<UiConfirmedBlock>>(body_bytes, |result| {
+                    match result {
+                        Value::Null => None,
+                        value => Some(
+                            from_value::<UiConfirmedBlock>(value)
+                                .expect("Unable to deserialize block"),
+                        ),
+                    }
+                });
             }
             Self::GetSlot(rounding_error) => {
                 canonicalize_response::<Slot, Slot>(body_bytes, |slot| rounding_error.round(slot));

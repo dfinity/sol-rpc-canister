@@ -33,7 +33,6 @@ type RpcConfig = record {
   responseConsensus : opt ConsensusStrategy;
 };
 
-
 // Rounding error for fetching the current slot from Solana using the JSON-RPC interface, meaning slots will be rounded
 // down to the nearest multiple of this error when being fetched.
 //
@@ -279,6 +278,52 @@ type MultiGetAccountInfoResult = variant {
     Inconsistent : vec record { RpcSource; GetAccountInfoResult };
 };
 
+// The parameters for a Solana `getBlock` RPC method call.
+// TODO XC-342: Add `rewards`, `encoding` and `transactionDetails` fields.
+type GetBlockParams = record {
+    // Slot number of the block to fetch.
+    slot: Slot;
+    // The commitment describes how finalized a block is at that point in time.
+    commitment: opt variant { confirmed; finalized };
+    // The max transaction version to return in responses.
+    // * If the requested block contains a transaction with a higher version,
+    // an error will be returned.
+    // * If this parameter is omitted, only legacy transactions will be returned, and a block
+    // containing any versioned transaction will prompt the error.
+    maxSupportedTransactionVersion: opt nat8;
+};
+
+// Unix timestamp (seconds since the Unix epoch).
+// NOTE: This type is defined as an unsigned integer to align with the Solana JSON-RPC interface,
+// although in practice, an unsigned integer type would be functionally equivalent.
+type Timestamp = int64;
+
+// The result of a Solana `getBlock` RPC method call.
+// TODO XC-342: Add `transactions`, `signatures`, `rewards` and `num_reward_partitions` fields.
+type ConfirmedBlock = record {
+    // The blockhash of this block's parent, as base-58 encoded string; if the parent block is not
+    // available due to ledger cleanup, this field will return "11111111111111111111111111111111".
+    previousBlockhash: text;
+    // The blockhash of this block, as base-58 encoded string.
+    blockhash: text;
+    // The slot index of this block's parent.
+    parentSlot: nat64;
+    // Estimated production time.
+    blockTime: opt Timestamp;
+    // The number of blocks beneath this block.
+    blockHeight: opt nat64;
+};
+
+// Represents the result of a call to the `getBlock` Solana RPC method.
+// If there is no confirmed block for the requested block, the `Ok` variant will be null.
+type GetBlockResult = variant { Ok : opt ConfirmedBlock; Err : RpcError };
+
+// Represents an aggregated result from multiple RPC calls to the `getBlock` Solana RPC method.
+type MultiGetBlockResult = variant {
+    Consistent : GetBlockResult;
+    Inconsistent : vec record { RpcSource; GetBlockResult };
+};
+
 // Represents a Solana slot
 type Slot = nat64;
 
@@ -381,6 +426,10 @@ service : (InstallArgs,) -> {
   // Call the Solana `getAccountInfo` RPC method and return the resulting slot.
   getAccountInfo : (RpcSources, opt RpcConfig, GetAccountInfoParams) -> (MultiGetAccountInfoResult);
   getAccountInfoCyclesCost : (RpcSources, opt RpcConfig, GetAccountInfoParams) -> (RequestCostResult) query;
+
+  // Call the Solana `getBlock` RPC method and return the resulting block.
+  getBlock : (RpcSources, opt RpcConfig, GetBlockParams) -> (MultiGetBlockResult);
+  getBlockCyclesCost : (RpcSources, opt RpcConfig, GetBlockParams) -> (RequestCostResult) query;
 
   // Call the Solana `getSlot` RPC method and return the resulting slot.
   getSlot : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (MultiGetSlotResult);
