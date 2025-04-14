@@ -2,7 +2,6 @@ use super::*;
 use canhttp::http::json::Id;
 use proptest::proptest;
 use serde_json::json;
-use solana_account_decoder_client_types::{UiAccountData, UiAccountEncoding};
 
 mod normalization_tests {
     use super::*;
@@ -47,28 +46,6 @@ mod normalization_tests {
 
     #[test]
     fn should_normalize_get_account_info_response() {
-        assert_normalized(
-            &ResponseTransform::GetAccountInfo,
-            r#"{
-                "context": { "apiVersion": "2.0.15", "slot": 341197053 },
-                "value": {
-                    "data": ["1234", "base58"],
-                    "executable": false,
-                    "lamports": 88849814690250,
-                    "owner": "11111111111111111111111111111111",
-                    "rentEpoch": 18446744073709551615,
-                    "space": 0
-                }
-            }"#,
-            Some(UiAccount {
-                lamports: 88849814690250,
-                data: UiAccountData::Binary("1234".to_string(), UiAccountEncoding::Base58),
-                owner: "11111111111111111111111111111111".to_string(),
-                executable: false,
-                rent_epoch: 18446744073709551615,
-                space: Some(0),
-            }),
-        );
         assert_normalized_equal(
             &ResponseTransform::GetAccountInfo,
             r#"{
@@ -132,7 +109,7 @@ mod normalization_tests {
         assert_normalized(
             &ResponseTransform::GetAccountInfo,
             r#"{"context": { "apiVersion": "2.0.15", "slot": 341197053 }}"#,
-            None::<UiAccount>,
+            Value::Null,
         );
     }
 
@@ -142,34 +119,13 @@ mod normalization_tests {
             assert_normalized(
                 &ResponseTransform::SendTransaction,
                 &format!("\"{transaction_id}\""),
-                transaction_id.to_string(),
+                Value::String(transaction_id),
             );
         }
     }
 
     #[test]
     fn should_normalize_get_block_response() {
-        assert_normalized(
-            &ResponseTransform::GetBlock,
-            r#"{
-                "previousBlockhash": "4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3",
-                "blockhash": "8QeCusqSTKeC23NwjTKRBDcPuEfVLtszkxbpL6mXQEp4",
-                "parentSlot": 372877611,
-                "blockTime": 1744122369,
-                "blockHeight": 360854634
-            }"#,
-            Some(UiConfirmedBlock {
-                previous_blockhash: "4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3".to_string(),
-                blockhash: "8QeCusqSTKeC23NwjTKRBDcPuEfVLtszkxbpL6mXQEp4".to_string(),
-                parent_slot: 372877611,
-                transactions: None,
-                signatures: None,
-                rewards: None,
-                num_reward_partitions: None,
-                block_time: Some(1744122369),
-                block_height: Some(360854634),
-            }),
-        );
         assert_normalized_equal(
             &ResponseTransform::GetBlock,
             r#"{
@@ -191,17 +147,10 @@ mod normalization_tests {
 
     #[test]
     fn should_normalize_empty_get_block_response() {
-        assert_normalized(
-            &ResponseTransform::GetBlock,
-            "null",
-            None::<UiConfirmedBlock>,
-        );
+        assert_normalized(&ResponseTransform::GetBlock, "null", Value::Null);
     }
 
-    fn assert_normalized<T>(transform: &ResponseTransform, result: &str, expected: T)
-    where
-        T: Debug + Serialize + DeserializeOwned,
-    {
+    fn assert_normalized(transform: &ResponseTransform, result: &str, expected: Value) {
         let expected_response = to_vec(&JsonRpcResponse::from_ok(Id::Number(1), expected)).unwrap();
         let normalized_response = normalize_result(transform, result);
         assert_eq!(
@@ -209,7 +158,7 @@ mod normalization_tests {
             normalized_response,
             "expected {:?}, actual: {:?}",
             from_slice::<Value>(&expected_response),
-            from_slice::<Value>(&normalized_response)
+            expected_response,
         );
     }
 

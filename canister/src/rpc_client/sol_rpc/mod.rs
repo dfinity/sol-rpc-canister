@@ -10,10 +10,8 @@ use ic_cdk::{
 };
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
-use serde_json::{from_slice, from_value, to_vec, Value};
-use solana_account_decoder_client_types::UiAccount;
+use serde_json::{from_slice, to_vec, Value};
 use solana_clock::Slot;
-use solana_transaction_status_client_types::UiConfirmedBlock;
 use std::fmt::Debug;
 
 /// Describes a payload transformation to execute before passing the HTTP response to consensus.
@@ -49,25 +47,17 @@ impl ResponseTransform {
 
         match self {
             Self::GetAccountInfo => {
-                canonicalize_response::<Value, Option<UiAccount>>(
-                    body_bytes,
-                    |result| match result["value"].clone() {
+                canonicalize_response::<Value, Option<Value>>(body_bytes, |result| {
+                    match result["value"].clone() {
                         Value::Null => None,
-                        value => Some(
-                            from_value::<UiAccount>(value).expect("Unable to deserialize account"),
-                        ),
-                    },
-                );
+                        value => Some(value),
+                    }
+                });
             }
             Self::GetBlock => {
-                canonicalize_response::<Value, Option<UiConfirmedBlock>>(body_bytes, |result| {
-                    match result {
-                        Value::Null => None,
-                        value => Some(
-                            from_value::<UiConfirmedBlock>(value)
-                                .expect("Unable to deserialize block"),
-                        ),
-                    }
+                canonicalize_response::<Value, Option<Value>>(body_bytes, |result| match result {
+                    Value::Null => None,
+                    value => Some(value),
                 });
             }
             Self::GetSlot(rounding_error) => {
