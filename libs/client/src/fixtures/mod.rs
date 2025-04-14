@@ -1,4 +1,6 @@
 //! Simple types to create basic unit tests for the [`crate::SolRpcClient`].
+//!
+//! Types and methods for this module are only available for non-canister architecture (non `wasm32`).
 
 use crate::{ClientBuilder, Runtime};
 use async_trait::async_trait;
@@ -18,7 +20,9 @@ impl<R> ClientBuilder<R> {
     }
 }
 
-/// A dummy implementation of [`Runtime`] that always return the same response.
+/// A dummy implementation of [`Runtime`] that always return the same candid-encoded response.
+///
+/// Implement your own [`Runtime`] in case a more refined approach is needed.
 pub struct MockRuntime(Vec<u8>);
 
 impl MockRuntime {
