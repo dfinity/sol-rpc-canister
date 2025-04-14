@@ -1,10 +1,9 @@
-use crate::{ConfirmedBlock, RpcResult, RpcSource, TransactionId};
+use crate::{solana::account::AccountInfo, ConfirmedBlock, RpcResult, RpcSource, TransactionId};
 use candid::CandidType;
 use serde::Deserialize;
 use solana_account_decoder_client_types::UiAccount;
 use solana_transaction_status_client_types::UiConfirmedBlock;
 use std::{fmt::Debug, str::FromStr};
-use crate::solana::account::AccountInfo;
 
 /// Represents an aggregated result from multiple RPC calls to different RPC providers.
 /// The results are aggregated using a [`crate::ConsensusStrategy`].

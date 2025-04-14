@@ -194,6 +194,9 @@ async fn should_send_transaction() {
         .expect_consistent()
         .unwrap();
 
+    // Wait until the transaction is confirmed.
+    setup.confirm_transaction(&transaction_id);
+
     // Make sure the funds were sent from the sender to the recipient
     let sender_balance_after = setup.get_account_balance(&sender.pubkey());
     let recipient_balance_after = setup.get_account_balance(&recipient.pubkey());
@@ -203,9 +206,6 @@ async fn should_send_transaction() {
         recipient_balance_before + transaction_amount
     );
     assert!(sender_balance_after + transaction_amount <= sender_balance_before);
-
-    // Make sure the transaction whose ID was returned is indeed confirmed
-    assert!(setup.confirm_transaction(&transaction_id));
 
     setup.setup.drop().await;
 }
@@ -319,9 +319,23 @@ impl Setup {
             .expect("Error while getting latest blockhash")
     }
 
-    fn confirm_transaction(&self, transaction_id: &Signature) -> bool {
-        self.solana_client
-            .confirm_transaction(transaction_id)
-            .expect("Error while getting confirming transaction")
+    fn confirm_transaction(&self, transaction_id: &Signature) {
+        // Wait until the transaction is confirmed
+        let max_wait = Duration::from_secs(10);
+        let start = Instant::now();
+        loop {
+            let confirmed = self
+                .solana_client
+                .confirm_transaction(transaction_id)
+                .expect("Error while getting transaction confirmation status");
+            if confirmed {
+                return;
+            } else {
+                if start.elapsed() > max_wait {
+                    panic!("Timed out waiting for transaction confirmation.");
+                }
+                sleep(Duration::from_millis(500));
+            }
+        }
     }
 }
