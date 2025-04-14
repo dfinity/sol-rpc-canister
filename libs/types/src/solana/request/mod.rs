@@ -133,6 +133,35 @@ impl GetSlotParams {
     }
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+pub struct GetTransactionParams {
+    pub signature: String,
+    pub commitment: Option<CommitmentLevel>,
+    #[serde(rename = "maxSupportedTransactionVersion")]
+    pub max_supported_transaction_version: Option<u8>,
+    pub encoding: Option<GetTransactionEncoding>,
+}
+
+impl From<solana_signature::Signature> for GetTransactionParams {
+    fn from(signature: solana_signature::Signature) -> Self {
+        Self {
+            signature: signature.to_string(),
+            commitment: None,
+            max_supported_transaction_version: None,
+            encoding: None,
+        }
+    }
+}
+
+// TODO XC-343: Add support for `json` and `jsonParsed` formats.
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+pub enum GetTransactionEncoding {
+    #[serde(rename = "base64")]
+    Base64,
+    #[serde(rename = "base58")]
+    Base58,
+}
+
 /// The parameters for a Solana [`sendTransaction`](https://solana.com/docs/rpc/http/sendtransaction) RPC method call.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub struct SendTransactionParams {

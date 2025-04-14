@@ -1,8 +1,13 @@
-use crate::{solana::account::AccountInfo, ConfirmedBlock, RpcResult, RpcSource, TransactionId};
+use crate::{
+    solana::account::AccountInfo, ConfirmedBlock, RpcResult, RpcSource, TransactionId,
+    TransactionInfo,
+};
 use candid::CandidType;
 use serde::Deserialize;
 use solana_account_decoder_client_types::UiAccount;
-use solana_transaction_status_client_types::UiConfirmedBlock;
+use solana_transaction_status_client_types::{
+    EncodedConfirmedTransactionWithStatusMeta, UiConfirmedBlock,
+};
 use std::{fmt::Debug, str::FromStr};
 
 /// Represents an aggregated result from multiple RPC calls to different RPC providers.
@@ -94,5 +99,21 @@ impl From<MultiRpcResult<Option<ConfirmedBlock>>> for MultiRpcResult<Option<UiCo
 impl From<MultiRpcResult<Option<UiConfirmedBlock>>> for MultiRpcResult<Option<ConfirmedBlock>> {
     fn from(result: MultiRpcResult<Option<UiConfirmedBlock>>) -> Self {
         result.map(|maybe_block| maybe_block.map(|block| block.into()))
+    }
+}
+
+impl From<MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>>
+    for MultiRpcResult<Option<TransactionInfo>>
+{
+    fn from(result: MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>) -> Self {
+        result.map(|maybe_transaction| maybe_transaction.map(|transaction| transaction.into()))
+    }
+}
+
+impl From<MultiRpcResult<Option<TransactionInfo>>>
+    for MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>
+{
+    fn from(result: MultiRpcResult<Option<TransactionInfo>>) -> Self {
+        result.map(|maybe_transaction| maybe_transaction.map(|transaction| transaction.into()))
     }
 }

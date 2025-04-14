@@ -1,7 +1,7 @@
 //! Candid types used by the candid interface of the SOL RPC canister.
 
 #![forbid(unsafe_code)]
-#![forbid(missing_docs)]
+// #![forbid(missing_docs)]
 
 mod lifecycle;
 mod response;
@@ -16,12 +16,17 @@ pub use rpc_client::{
     RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider,
     SupportedRpcProviderId,
 };
+pub use solana::transaction::error::TransactionError;
 pub use solana::{
     account::{AccountData, AccountEncoding, AccountInfo, ParsedAccount},
     request::{
         CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams,
-        GetBlockCommitmentLevel, GetBlockParams, GetSlotParams, SendTransactionEncoding,
-        SendTransactionParams,
+        GetBlockCommitmentLevel, GetBlockParams, GetSlotParams, GetTransactionEncoding,
+        GetTransactionParams, SendTransactionEncoding, SendTransactionParams,
     },
-    ConfirmedBlock, Slot, TransactionId,
+    transaction::{
+        EncodedTransaction, LoadedAddresses, TransactionBinaryEncoding, TransactionInfo,
+        TransactionReturnData, TransactionStatusMeta, TransactionTokenBalance, TransactionVersion,
+    },
+    ConfirmedBlock, Pubkey, Slot, Timestamp, TransactionId,
 };

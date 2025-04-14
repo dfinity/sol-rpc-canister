@@ -1,5 +1,6 @@
 pub mod account;
 pub mod request;
+pub mod transaction;
 
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -10,6 +11,28 @@ pub type Slot = u64;
 
 /// A Solana base58-encoded [transaction ID](https://solana.com/docs/references/terminology#transaction-id).
 pub type TransactionId = String;
+
+/// Unix timestamp (seconds since the Unix epoch).
+///
+/// This type is defined as an unsigned integer to align with the Solana JSON-RPC interface,
+/// although in practice, an unsigned integer type would be functionally equivalent.
+pub type Timestamp = i64;
+
+/// Solana Ed25519 [public key](`https://solana.com/docs/references/terminology#public-key-pubkey`).
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
+pub struct Pubkey(pub [u8; 32]);
+
+impl From<solana_pubkey::Pubkey> for Pubkey {
+    fn from(pubkey: solana_pubkey::Pubkey) -> Self {
+        Pubkey(pubkey.to_bytes())
+    }
+}
+
+impl From<Pubkey> for solana_pubkey::Pubkey {
+    fn from(pubkey: Pubkey) -> Self {
+        solana_pubkey::Pubkey::from(pubkey.0)
+    }
+}
 
 /// The result of a Solana `getBlock` RPC method call.
 // TODO XC-342: Add `transactions`, `signatures`, `rewards` and `num_reward_partitions` fields.
@@ -24,9 +47,9 @@ pub struct ConfirmedBlock {
     /// The slot index of this block's parent.
     #[serde(rename = "parentSlot")]
     pub parent_slot: u64,
-    /// Estimated production time, as Unix timestamp (seconds since the Unix epoch).
+    /// Estimated production time.
     #[serde(rename = "blockTime")]
-    pub block_time: Option<i64>,
+    pub block_time: Option<Timestamp>,
     /// The number of blocks beneath this block.
     #[serde(rename = "blockHeight")]
     pub block_height: Option<u64>,

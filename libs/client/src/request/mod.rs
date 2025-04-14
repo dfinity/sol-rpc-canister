@@ -3,9 +3,11 @@ use candid::CandidType;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBlockParams, GetSlotParams,
-    GetSlotRpcConfig, RpcConfig, RpcResult, RpcSources, SendTransactionParams, TransactionId,
+    GetSlotRpcConfig, GetTransactionParams, RpcConfig, RpcResult, RpcSources,
+    SendTransactionParams, TransactionId, TransactionInfo,
 };
 use solana_clock::Slot;
+use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
 use strum::EnumIter;
 
 /// Solana RPC endpoint supported by the SOL RPC canister.
@@ -35,6 +37,8 @@ pub enum SolRpcEndpoint {
     GetBlock,
     /// `getSlot` endpoint.
     GetSlot,
+    /// `getTransaction` endpoint.
+    GetTransaction,
     /// `jsonRequest` endpoint.
     JsonRequest,
     /// `sendTransaction` endpoint.
@@ -48,6 +52,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetAccountInfo => "getAccountInfo",
             SolRpcEndpoint::GetBlock => "getBlock",
             SolRpcEndpoint::GetSlot => "getSlot",
+            SolRpcEndpoint::GetTransaction => "getTransaction",
             SolRpcEndpoint::JsonRequest => "jsonRequest",
             SolRpcEndpoint::SendTransaction => "sendTransaction",
         }
@@ -59,6 +64,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetAccountInfo => "getAccountInfoCyclesCost",
             SolRpcEndpoint::GetBlock => "getBlockCyclesCost",
             SolRpcEndpoint::GetSlot => "getSlotCyclesCost",
+            SolRpcEndpoint::GetTransaction => "getTransactionCyclesCost",
             SolRpcEndpoint::JsonRequest => "jsonRequestCyclesCost",
             SolRpcEndpoint::SendTransaction => "sendTransactionCyclesCost",
         }
@@ -127,6 +133,30 @@ impl SolRpcRequest for GetSlotRequest {
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetSlot
+    }
+
+    fn params(self) -> Self::Params {
+        self.0
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct GetTransactionRequest(GetTransactionParams);
+
+impl GetTransactionRequest {
+    pub fn new(params: GetTransactionParams) -> Self {
+        Self(params)
+    }
+}
+
+impl SolRpcRequest for GetTransactionRequest {
+    type Config = RpcConfig;
+    type Params = GetTransactionParams;
+    type CandidOutput = sol_rpc_types::MultiRpcResult<Option<TransactionInfo>>;
+    type Output = sol_rpc_types::MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>;
+
+    fn endpoint(&self) -> SolRpcEndpoint {
+        SolRpcEndpoint::GetTransaction
     }
 
     fn params(self) -> Self::Params {

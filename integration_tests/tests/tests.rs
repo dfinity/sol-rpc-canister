@@ -17,7 +17,6 @@ use sol_rpc_types::{
     SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_account_decoder_client_types::{UiAccount, UiAccountData, UiAccountEncoding};
-use solana_signature::Signature;
 use solana_signer::Signer;
 use std::{fmt::Debug, iter::zip, str::FromStr};
 use strum::IntoEnumIterator;
@@ -490,7 +489,7 @@ mod send_transaction_tests {
                 .await
                 .expect_consistent();
 
-            assert_eq!(results, Ok(Signature::from_str(signature).unwrap()));
+            assert_eq!(results, Ok(solana_signature::Signature::from_str(signature).unwrap()));
         }
 
         setup.drop().await;
@@ -773,6 +772,9 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::GetBlock => {
                     check(client.get_block(577996)).await;
                 }
+                SolRpcEndpoint::GetTransaction => {
+                    check(client.get_transaction(some_signature())).await;
+                }
                 SolRpcEndpoint::SendTransaction => {
                     check(client.send_transaction(some_transaction())).await;
                 }
@@ -813,6 +815,9 @@ mod cycles_cost_tests {
                 }
                 SolRpcEndpoint::GetBlock => {
                     check(client.get_block(577996)).await;
+                }
+                SolRpcEndpoint::GetTransaction => {
+                    check(client.get_transaction(some_signature())).await;
                 }
                 SolRpcEndpoint::JsonRequest => {
                     check(client.json_request(get_version_request())).await;
@@ -921,6 +926,9 @@ mod cycles_cost_tests {
                     )
                     .await;
                 }
+                SolRpcEndpoint::GetTransaction => {
+                    check(&setup, client.get_transaction(some_signature()), 0).await;
+                }
                 SolRpcEndpoint::JsonRequest => {
                     check(
                         &setup,
@@ -972,4 +980,8 @@ fn some_transaction() -> solana_transaction::Transaction {
         &[keypair],
         solana_hash::Hash::from_str("4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3").unwrap(),
     )
+}
+
+fn some_signature() -> solana_signature::Signature {
+    solana_signature::Signature::from_str("MMNPdhf4gW6pPkAtNdJKAroAC7HjaxXLE2CWNeeDtLzYEaBYrvbNzD2TSdYMsoakyD8w88YjwypAgSUYKsU4tVb").unwrap()
 }

@@ -8,8 +8,8 @@ use sol_rpc_client::SolRpcClient;
 use sol_rpc_int_tests::PocketIcLiveModeRuntime;
 use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoEncoding, GetAccountInfoParams, GetBlockCommitmentLevel,
-    GetBlockParams, GetSlotParams, InstallArgs, OverrideProvider, RegexSubstitution,
-    SendTransactionParams,
+    GetBlockParams, GetSlotParams, GetTransactionEncoding, GetTransactionParams, InstallArgs,
+    OverrideProvider, RegexSubstitution, SendTransactionParams,
 };
 use solana_account_decoder_client_types::UiAccount;
 use solana_client::rpc_client::{RpcClient as SolanaRpcClient, RpcClient};
@@ -22,7 +22,7 @@ use solana_rpc_client_api::config::RpcBlockConfig;
 use solana_signature::Signature;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
-use solana_transaction_status_client_types::TransactionDetails;
+use solana_transaction_status_client_types::{TransactionDetails, UiTransactionEncoding};
 use std::{
     future::Future,
     str::FromStr,
@@ -160,6 +160,41 @@ async fn should_get_block() {
 
         assert_eq!(sol_res, ic_res);
     }
+
+    setup.setup.drop().await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn should_get_transaction() {
+    let setup = Setup::new().await;
+
+    // Generate a transaction and get the signature
+    let signature = setup
+        .solana_client
+        .request_airdrop(&Keypair::new().pubkey(), 10_000_000_000)
+        .expect("Error while requesting airdrop");
+
+    let (sol_res, ic_res) = setup
+        .compare_client(
+            |sol| {
+                sol.get_transaction_with_config(&signature, UiTransactionEncoding::Base64)
+                    .expect("Failed to get slot")
+            },
+            |ic| async move {
+                let mut params: GetTransactionParams = signature.into();
+                params.encoding = Some(GetTransactionEncoding::Base64);
+                params.commitment = Some(CommitmentLevel::Confirmed);
+                ic.get_transaction(params)
+                    .send()
+                    .await
+                    .expect_consistent()
+                    .unwrap_or_else(|e| panic!("`getTransaction` call failed: {e}"))
+                    .expect("Transaction not found")
+            },
+        )
+        .await;
+
+    assert_eq!(sol_res, ic_res);
 
     setup.setup.drop().await;
 }
