@@ -231,6 +231,12 @@ impl<Runtime, Config, Params, CandidOutput, Output>
         *self.request.params_mut() = params.into();
         self
     }
+
+    /// Change the RPC configuration to use for that request.
+    pub fn with_rpc_config(mut self, rpc_config: impl Into<Option<Config>>) -> Self {
+        *self.request.rpc_config_mut() = rpc_config.into();
+        self
+    }
 }
 
 impl<R: Runtime, Config, Params, CandidOutput, Output>
@@ -258,12 +264,10 @@ impl<Runtime, Params, CandidOutput, Output>
             config.rounding_error = Some(rounding_error);
             return self;
         }
-        let config = GetSlotRpcConfig {
+        self.with_rpc_config(GetSlotRpcConfig {
             rounding_error: Some(rounding_error),
             ..Default::default()
-        };
-        *self.request.rpc_config_mut() = Some(config);
-        self
+        })
     }
 }
 
