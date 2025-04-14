@@ -125,7 +125,7 @@ async fn should_get_block() {
         let commitment_config: CommitmentConfig = commitment.clone().into();
         let slot = setup
             .solana_client
-            .get_slot_with_commitment(commitment_config.clone())
+            .get_slot_with_commitment(commitment_config)
             .expect("Failed to get slot");
 
         let (sol_res, ic_res) = setup
