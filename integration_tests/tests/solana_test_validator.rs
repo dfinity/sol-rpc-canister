@@ -18,7 +18,7 @@ use solana_hash::Hash;
 use solana_keypair::Keypair;
 use solana_program::system_instruction;
 use solana_pubkey::Pubkey;
-use solana_rpc_client_api::config::RpcBlockConfig;
+use solana_rpc_client_api::config::{RpcBlockConfig, RpcTransactionConfig};
 use solana_signature::Signature;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
@@ -174,11 +174,20 @@ async fn should_get_transaction() {
         .request_airdrop(&Keypair::new().pubkey(), 10_000_000_000)
         .expect("Error while requesting airdrop");
 
+    setup.confirm_transaction(&signature);
+
     let (sol_res, ic_res) = setup
         .compare_client(
             |sol| {
-                sol.get_transaction(&signature, UiTransactionEncoding::Base64)
-                    .expect("Failed to get slot")
+                sol.get_transaction_with_config(
+                    &signature,
+                    RpcTransactionConfig {
+                        encoding: Some(UiTransactionEncoding::Base64),
+                        commitment: Some(CommitmentConfig::confirmed()),
+                        max_supported_transaction_version: None,
+                    },
+                )
+                .expect("Failed to get transaction")
             },
             |ic| async move {
                 let mut params: GetTransactionParams = signature.into();

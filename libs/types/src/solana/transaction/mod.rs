@@ -1,9 +1,11 @@
 pub mod error;
+pub mod instruction;
 pub mod reward;
 
 use crate::{RpcError, Slot, Timestamp};
 use candid::{CandidType, Deserialize};
 use error::TransactionError;
+use instruction::{CompiledInstruction, InnerInstructions, Instruction};
 use reward::Reward;
 use serde::Serialize;
 use solana_account_decoder_client_types::token::UiTokenAmount;
@@ -12,6 +14,7 @@ use solana_transaction_status_client_types::{
     UiCompiledInstruction, UiInnerInstructions, UiInstruction, UiReturnDataEncoding,
     UiTransactionReturnData, UiTransactionStatusMeta,
 };
+use solana_transaction_status_client_types::option_serializer::OptionSerializer;
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct TransactionInfo {
@@ -103,9 +106,9 @@ impl From<TransactionStatusMeta> for UiTransactionStatusMeta {
                 .rewards
                 .map(|rewards| rewards.into_iter().map(Into::into).collect())
                 .into(),
-            loaded_addresses: meta.loaded_addresses.map(Into::into).into(),
-            return_data: meta.return_data.map(Into::into).into(),
-            compute_units_consumed: meta.compute_units_consumed.into(),
+            loaded_addresses: OptionSerializer::or_skip(meta.loaded_addresses.map(Into::into).into()),
+            return_data: OptionSerializer::or_skip(meta.return_data.map(Into::into).into()),
+            compute_units_consumed: OptionSerializer::or_skip(meta.compute_units_consumed.into()),
         }
     }
 }
@@ -210,27 +213,6 @@ impl From<TransactionBinaryEncoding>
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
-pub struct InnerInstructions {
-    pub index: u8,
-    pub instructions: Vec<Instruction>,
-}
-
-impl TryFrom<UiInnerInstructions> for InnerInstructions {
-    type Error = RpcError;
-
-    fn try_from(instructions: UiInnerInstructions) -> Result<Self, Self::Error> {
-        Ok(Self {
-            index: instructions.index,
-            instructions: instructions
-                .instructions
-                .into_iter()
-                .map(TryInto::<Instruction>::try_into)
-                .collect::<Result<Vec<Instruction>, Self::Error>>()?,
-        })
-    }
-}
-
 impl From<InnerInstructions> for UiInnerInstructions {
     fn from(instructions: InnerInstructions) -> Self {
         Self {
@@ -244,47 +226,10 @@ impl From<InnerInstructions> for UiInnerInstructions {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
-pub enum Instruction {
-    Compiled(CompiledInstruction),
-}
-
-impl TryFrom<UiInstruction> for Instruction {
-    type Error = RpcError;
-
-    fn try_from(instruction: UiInstruction) -> Result<Self, Self::Error> {
-        match instruction {
-            UiInstruction::Compiled(compiled) => Ok(Self::Compiled(compiled.into())),
-            UiInstruction::Parsed(_) => Err(RpcError::ValidationError(
-                "Parsed instructions are not supported".to_string(),
-            )),
-        }
-    }
-}
-
 impl From<Instruction> for UiInstruction {
     fn from(instruction: Instruction) -> Self {
         match instruction {
             Instruction::Compiled(compiled) => Self::Compiled(compiled.into()),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
-pub struct CompiledInstruction {
-    pub program_id_index: u8,
-    pub accounts: Vec<u8>,
-    pub data: String,
-    pub stack_height: Option<u32>,
-}
-
-impl From<UiCompiledInstruction> for CompiledInstruction {
-    fn from(instruction: UiCompiledInstruction) -> Self {
-        Self {
-            program_id_index: instruction.program_id_index,
-            accounts: instruction.accounts,
-            data: instruction.data,
-            stack_height: instruction.stack_height,
         }
     }
 }

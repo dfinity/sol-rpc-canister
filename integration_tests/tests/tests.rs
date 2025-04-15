@@ -930,7 +930,12 @@ mod cycles_cost_tests {
                     .await;
                 }
                 SolRpcEndpoint::GetTransaction => {
-                    check(&setup, client.get_transaction(some_signature()), 0).await;
+                    check(
+                        &setup,
+                        client.get_transaction(some_signature()),
+                        1_796_356_000,
+                    )
+                    .await;
                 }
                 SolRpcEndpoint::JsonRequest => {
                     check(

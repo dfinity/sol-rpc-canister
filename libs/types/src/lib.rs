@@ -1,6 +1,7 @@
 //! Candid types used by the candid interface of the SOL RPC canister.
 
 #![forbid(unsafe_code)]
+// TODO XC-293: Add documentation for all new types
 // #![forbid(missing_docs)]
 
 mod lifecycle;
@@ -24,9 +25,11 @@ pub use solana::{
         GetTransactionParams, SendTransactionEncoding, SendTransactionParams,
     },
     transaction::{
-        error::TransactionError, EncodedTransaction, LoadedAddresses, TransactionBinaryEncoding,
-        TransactionInfo, TransactionReturnData, TransactionStatusMeta, TransactionTokenBalance,
-        TransactionVersion,
+        error::{InstructionError, TransactionError},
+        instruction::{CompiledInstruction, InnerInstructions, Instruction},
+        reward::{Reward, RewardType},
+        EncodedTransaction, LoadedAddresses, TransactionBinaryEncoding, TransactionInfo,
+        TransactionReturnData, TransactionStatusMeta, TransactionTokenBalance, TransactionVersion,
     },
     ConfirmedBlock, Pubkey, Slot, Timestamp, TransactionId,
 };
