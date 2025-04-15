@@ -150,6 +150,7 @@ async fn should_get_block() {
                         max_supported_transaction_version: None,
                         transaction_details: Some(TransactionDetails::Signatures),
                     })
+                    .with_cycles(20_000_000_000)
                     .send()
                     .await
                     .expect_consistent()
