@@ -244,10 +244,10 @@ type AccountEncoding = variant {
 // The parameters for a Solana `getTransaction` RPC method call.
 // TODO XC-293: documentation
 type GetTransactionParams = record {
-    signature: String;
+    signature: text;
     commitment: opt CommitmentLevel;
-    pub maxSupportedTransactionVersion: opt nat8;
-    pub encoding: opt enum { base58; base64 };
+    maxSupportedTransactionVersion: opt nat8;
+    encoding: opt variant { base58; base64 };
 };
 
 // The parameters for a Solana `sendTransaction` RPC method call.
@@ -292,6 +292,9 @@ type MultiGetAccountInfoResult = variant {
 type GetBlockParams = record {
     // Slot number of the block to fetch.
     slot: Slot;
+    // Specifies what transaction details to include in the response.
+    // If this field is not specified, the default value of "none" will be used.
+    transactionDetails: opt variant { none; signatures };
     // The commitment describes how finalized a block is at that point in time.
     commitment: opt variant { confirmed; finalized };
     // The max transaction version to return in responses.
@@ -321,6 +324,9 @@ type ConfirmedBlock = record {
     blockTime: opt Timestamp;
     // The number of blocks beneath this block.
     blockHeight: opt nat64;
+    // The signatures of the transactions in this block. Included if the request parameter `transactionDetails` is not
+    // `none`.
+    signatures: opt vec text;
 };
 
 // Represents the result of a call to the `getBlock` Solana RPC method.
@@ -331,6 +337,172 @@ type GetBlockResult = variant { Ok : opt ConfirmedBlock; Err : RpcError };
 type MultiGetBlockResult = variant {
     Consistent : GetBlockResult;
     Inconsistent : vec record { RpcSource; GetBlockResult };
+};
+
+// TODO XC-293: Format and add documentation
+type CompiledInstruction = record {
+  data : text;
+  accounts : blob;
+  program_id_index : nat8;
+  stack_height : opt nat32;
+};
+type EncodedTransaction = variant {
+  Binary : record { text; variant { base58; base64 } };
+  LegacyBinary : text;
+};
+type Instruction = variant { Compiled : CompiledInstruction };
+type InnerInstructions = record {
+  instructions : vec Instruction;
+  index : nat8;
+};
+type InstructionError = variant {
+  ModifiedProgramId;
+  CallDepth;
+  Immutable;
+  GenericError;
+  ExecutableAccountNotRentExempt;
+  IncorrectAuthority;
+  PrivilegeEscalation;
+  ReentrancyNotAllowed;
+  InvalidInstructionData;
+  RentEpochModified;
+  IllegalOwner;
+  ComputationalBudgetExceeded;
+  ExecutableDataModified;
+  ExecutableLamportChange;
+  UnbalancedInstruction;
+  ProgramEnvironmentSetupFailure;
+  IncorrectProgramId;
+  UnsupportedSysvar;
+  UnsupportedProgramId;
+  AccountDataTooSmall;
+  NotEnoughAccountKeys;
+  AccountBorrowFailed;
+  InvalidRealloc;
+  AccountNotExecutable;
+  AccountNotRentExempt;
+  Custom : nat32;
+  AccountDataSizeChanged;
+  MaxAccountsDataAllocationsExceeded;
+  ExternalAccountLamportSpend;
+  ExternalAccountDataModified;
+  MissingAccount;
+  ProgramFailedToComplete;
+  MaxInstructionTraceLengthExceeded;
+  InvalidAccountData;
+  ProgramFailedToCompile;
+  ExecutableModified;
+  InvalidAccountOwner;
+  MaxSeedLengthExceeded;
+  AccountAlreadyInitialized;
+  AccountBorrowOutstanding;
+  ReadonlyDataModified;
+  UninitializedAccount;
+  InvalidArgument;
+  BorshIoError : text;
+  BuiltinProgramsMustConsumeComputeUnits;
+  MissingRequiredSignature;
+  DuplicateAccountOutOfSync;
+  MaxAccountsExceeded;
+  ArithmeticOverflow;
+  InvalidError;
+  InvalidSeeds;
+  DuplicateAccountIndex;
+  ReadonlyLamportChange;
+  InsufficientFunds;
+};
+type LoadedAddresses = record { writable : vec text; readonly : vec text };
+type Reward = record {
+  lamports : int64;
+  commission : opt nat8;
+  pubkey : text;
+  reward_type : opt variant { Fee; Rent; Voting; Staking };
+  post_balance : nat64;
+};
+type TokenAmount = record {
+  decimals : nat8;
+  ui_amount : opt float64;
+  ui_amount_string : text;
+  amount : text;
+};
+type TransactionDetails = variant { none; signatures };
+type TransactionError = variant {
+  ProgramCacheHitMaxLimit;
+  InvalidAccountForFee;
+  AddressLookupTableNotFound;
+  MissingSignatureForFee;
+  WouldExceedAccountDataBlockLimit;
+  AccountInUse;
+  DuplicateInstruction : nat8;
+  AccountNotFound;
+  TooManyAccountLocks;
+  InvalidAccountIndex;
+  AlreadyProcessed;
+  WouldExceedAccountDataTotalLimit;
+  InvalidAddressLookupTableIndex;
+  SanitizeFailure;
+  ResanitizationNeeded;
+  InvalidRentPayingAccount;
+  MaxLoadedAccountsDataSizeExceeded;
+  InvalidAddressLookupTableData;
+  InvalidWritableAccount;
+  WouldExceedMaxAccountCostLimit;
+  InvalidLoadedAccountsDataSizeLimit;
+  InvalidProgramForExecution;
+  InstructionError : record { nat8; InstructionError };
+  InsufficientFundsForRent : record { account_index : nat8 };
+  UnsupportedVersion;
+  ClusterMaintenance;
+  WouldExceedMaxVoteCostLimit;
+  SignatureFailure;
+  ProgramAccountNotFound;
+  AccountLoadedTwice;
+  ProgramExecutionTemporarilyRestricted : record { account_index : nat8 };
+  AccountBorrowOutstanding;
+  WouldExceedMaxBlockCostLimit;
+  InvalidAddressLookupTableOwner;
+  InsufficientFundsForFee;
+  CallChainTooDeep;
+  UnbalancedTransaction;
+  CommitCancelled;
+  BlockhashNotFound;
+};
+type TransactionInfo = record {
+  block_time : opt Timestamp;
+  meta : opt TransactionStatusMeta;
+  transaction : EncodedTransaction;
+  slot : nat64;
+  version : opt variant { Legacy; Number : nat8 };
+};
+type TransactionStatusMeta = record {
+  fee : nat64;
+  status : variant { Ok; Err: TransactionError };
+  inner_instructions : opt vec InnerInstructions;
+  post_token_balances : opt vec TransactionTokenBalance;
+  pre_balances : vec nat64;
+  post_balances : vec nat64;
+  return_data : opt record { data : text; program_id : text };
+  log_messages : opt vec text;
+  rewards : opt vec Reward;
+  loaded_addresses : opt LoadedAddresses;
+  pre_token_balances : opt vec TransactionTokenBalance;
+  compute_units_consumed : opt nat64;
+};
+type TransactionTokenBalance = record {
+  owner : opt text;
+  mint : text;
+  program_id : opt text;
+  account_index : nat8;
+  ui_token_amount : TokenAmount;
+};
+
+// Represents the result of a call to the `getTransaction` Solana RPC method.
+type GetTransactionResult = variant { Ok : opt TransactionInfo; Err : RpcError };
+
+// Represents an aggregated result from multiple RPC calls to the `getTransaction` Solana RPC method.
+type MultiGetTransactionResult = variant {
+    Consistent : GetTransactionResult;
+    Inconsistent : vec record { RpcSource; GetTransactionResult };
 };
 
 // Represents a Solana slot
@@ -445,8 +617,8 @@ service : (InstallArgs,) -> {
   getSlotCyclesCost : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (RequestCostResult) query;
 
   // Call the Solana `getTransaction` RPC method and return the resulting slot.
-  // TODO XC-293: getTransaction : (RpcSources, opt RpcConfig, opt GetTransactionParams) -> (MultiGetTransactionResult);
-  getTransactionCyclesCost : (RpcSources, opt RpcConfig, opt GetTransactionParams) -> (RequestCostResult) query;
+  getTransaction : (RpcSources, opt RpcConfig, GetTransactionParams) -> (MultiGetTransactionResult);
+  getTransactionCyclesCost : (RpcSources, opt RpcConfig, GetTransactionParams) -> (RequestCostResult) query;
 
   // Call the Solana `sendTransaction` RPC method and return the resulting transaction ID.
   sendTransaction : (RpcSources, opt RpcConfig, SendTransactionParams) -> (MultiSendTransactionResult);

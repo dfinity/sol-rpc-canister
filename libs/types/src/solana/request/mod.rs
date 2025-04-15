@@ -95,8 +95,7 @@ pub struct GetBlockParams {
     pub max_supported_transaction_version: Option<u8>,
     /// Specifies what transaction details to include in the response.
     ///
-    /// Note that if this field is not specified, the default value of [`TransactionDetails::None`]
-    /// will be used.
+    /// If this field is not specified, the default value of [`TransactionDetails::None`] is used.
     #[serde(rename = "transactionDetails")]
     pub transaction_details: Option<TransactionDetails>,
 }
