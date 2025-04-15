@@ -10,11 +10,10 @@ use reward::Reward;
 use serde::Serialize;
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_transaction_status_client_types::{
-    EncodedConfirmedTransactionWithStatusMeta, EncodedTransactionWithStatusMeta,
-    UiCompiledInstruction, UiInnerInstructions, UiInstruction, UiReturnDataEncoding,
-    UiTransactionReturnData, UiTransactionStatusMeta,
+    option_serializer::OptionSerializer, EncodedConfirmedTransactionWithStatusMeta,
+    EncodedTransactionWithStatusMeta, UiCompiledInstruction, UiInnerInstructions, UiInstruction,
+    UiReturnDataEncoding, UiTransactionReturnData, UiTransactionStatusMeta,
 };
-use solana_transaction_status_client_types::option_serializer::OptionSerializer;
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct TransactionInfo {
@@ -106,7 +105,9 @@ impl From<TransactionStatusMeta> for UiTransactionStatusMeta {
                 .rewards
                 .map(|rewards| rewards.into_iter().map(Into::into).collect())
                 .into(),
-            loaded_addresses: OptionSerializer::or_skip(meta.loaded_addresses.map(Into::into).into()),
+            loaded_addresses: OptionSerializer::or_skip(
+                meta.loaded_addresses.map(Into::into).into(),
+            ),
             return_data: OptionSerializer::or_skip(meta.return_data.map(Into::into).into()),
             compute_units_consumed: OptionSerializer::or_skip(meta.compute_units_consumed.into()),
         }

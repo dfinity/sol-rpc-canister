@@ -1,7 +1,9 @@
+use crate::RpcError;
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
-use solana_transaction_status_client_types::{UiCompiledInstruction, UiInnerInstructions, UiInstruction};
-use crate::RpcError;
+use solana_transaction_status_client_types::{
+    UiCompiledInstruction, UiInnerInstructions, UiInstruction,
+};
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct InnerInstructions {

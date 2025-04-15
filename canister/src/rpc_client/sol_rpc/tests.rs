@@ -1,7 +1,7 @@
-use super::*;
-use canhttp::http::json::Id;
+use crate::{rpc_client::sol_rpc::ResponseTransform, types::RoundingError};
+use canhttp::http::json::{Id, JsonRpcResponse};
 use proptest::proptest;
-use serde_json::json;
+use serde_json::{from_slice, json, to_vec, Value};
 
 mod normalization_tests {
     use super::*;
@@ -148,6 +148,94 @@ mod normalization_tests {
     #[test]
     fn should_normalize_empty_get_block_response() {
         assert_normalized(&ResponseTransform::GetBlock, "null", Value::Null);
+    }
+
+    #[test]
+    fn should_normalize_get_transaction_response() {
+        assert_normalized_equal(
+            &ResponseTransform::GetTransaction,
+            r#"{
+                  "slot": 120133,
+                  "transaction": [
+                    "Aeuy7wv/RoaKMYAjzzd16aEQi9elf/Kcpf1gNKTn2cnaQxIJ8KCzmPPljqp6VfeMKahWxPnF+ho82t46h7vQgQ0BAAEDWrC6Wz0HQvlvLX3yuJPFIs2A97rFB0Duo19vnKOAHdcPsWHHq0i1GkB9cmG/amgN4E4jafef5+WodPVJDQS/iAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAApMRQc5RO87aiC9YUMJlSr+njrNgBy9m5jJVApNSV5W8BAgIAAQwCAAAAAOQLVAIAAAA=",
+                    "base64"
+                  ],
+                  "meta": {
+                    "err": null,
+                    "status": {
+                      "Ok": null
+                    },
+                    "fee": 5000,
+                    "preBalances": [
+                      999409999660000,
+                      0,
+                      1
+                    ],
+                    "postBalances": [
+                      999399999655000,
+                      10000000000,
+                      1
+                    ],
+                    "innerInstructions": [],
+                    "logMessages": [
+                      "Program 11111111111111111111111111111111 invoke [1]",
+                      "Program 11111111111111111111111111111111 success"
+                    ],
+                    "preTokenBalances": [],
+                    "postTokenBalances": [],
+                    "rewards": [],
+                    "loadedAddresses": {
+                      "writable": [],
+                      "readonly": []
+                    },
+                    "computeUnitsConsumed": 150
+                  },
+                  "blockTime": 1744486970
+                }"#,
+            r#"{
+                  "transaction": [
+                    "Aeuy7wv/RoaKMYAjzzd16aEQi9elf/Kcpf1gNKTn2cnaQxIJ8KCzmPPljqp6VfeMKahWxPnF+ho82t46h7vQgQ0BAAEDWrC6Wz0HQvlvLX3yuJPFIs2A97rFB0Duo19vnKOAHdcPsWHHq0i1GkB9cmG/amgN4E4jafef5+WodPVJDQS/iAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAApMRQc5RO87aiC9YUMJlSr+njrNgBy9m5jJVApNSV5W8BAgIAAQwCAAAAAOQLVAIAAAA=",
+                    "base64"
+                  ],
+                  "slot": 120133,
+                  "meta": {
+                    "fee": 5000,
+                    "err": null,
+                    "status": {
+                      "Ok": null
+                    },
+                    "loadedAddresses": {
+                      "writable": [],
+                      "readonly": []
+                    },
+                    "preBalances": [
+                      999409999660000,
+                      0,
+                      1
+                    ],
+                    "postBalances": [
+                      999399999655000,
+                      10000000000,
+                      1
+                    ],
+                    "logMessages": [
+                      "Program 11111111111111111111111111111111 invoke [1]",
+                      "Program 11111111111111111111111111111111 success"
+                    ],
+                    "innerInstructions": [],
+                    "preTokenBalances": [],
+                    "postTokenBalances": [],
+                    "rewards": [],
+                    "computeUnitsConsumed": 150
+                  },
+                  "blockTime": 1744486970
+                }"#,
+        );
+    }
+
+    #[test]
+    fn should_normalize_empty_get_transaction_response() {
+        assert_normalized(&ResponseTransform::GetTransaction, "null", Value::Null);
     }
 
     fn assert_normalized(transform: &ResponseTransform, result: &str, expected: Value) {
