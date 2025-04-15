@@ -8,7 +8,7 @@ WALLET=$(dfx identity get-wallet --network="$NETWORK" --identity="$IDENTITY")
 FLAGS="--network=$NETWORK --identity=$IDENTITY --wallet=$WALLET"
 
 # List supported JSON-RPC providers
-dfx canister call sol_rpc getProviders $FLAGS || exit 1
+dfx canister call sol_rpc getProviders "$FLAGS" || exit 1
 
 # Get the last finalized slot on Mainnet with a 2-out-of-3 strategy
 GET_SLOT_PARAMS="(
@@ -21,8 +21,8 @@ GET_SLOT_PARAMS="(
   },
   opt record { minContextSlot = null; commitment = opt variant { finalized } },
 )"
-CYCLES=$(dfx canister call sol_rpc getSlotCyclesCost "$GET_SLOT_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
-GET_SLOT_OUTPUT=$(dfx canister call sol_rpc getSlot "$GET_SLOT_PARAMS" $FLAGS --with-cycles "$CYCLES" --output json || exit 1)
+CYCLES=$(dfx canister call sol_rpc getSlotCyclesCost "$GET_SLOT_PARAMS" "$FLAGS" --output json | jq '.Ok' --raw-output || exit 1)
+GET_SLOT_OUTPUT=$(dfx canister call sol_rpc getSlot "$GET_SLOT_PARAMS" "$FLAGS" --output json --with-cycles "$CYCLES" || exit 1)
 SLOT=$(jq --raw-output '.Consistent.Ok' <<< "$GET_SLOT_OUTPUT")
 
 # Fetch the latest finalized block
@@ -41,8 +41,8 @@ GET_BLOCK_PARAMS="(
     maxSupportedTransactionVersion = null;
   },
 )"
-CYCLES=$(dfx canister call sol_rpc getBlockCyclesCost "$GET_BLOCK_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
-GET_BLOCK_OUTPUT=$(dfx canister call sol_rpc getBlock "$GET_BLOCK_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1)
+CYCLES=$(dfx canister call sol_rpc getBlockCyclesCost "$GET_BLOCK_PARAMS" "$FLAGS" --output json | jq '.Ok' --raw-output || exit 1)
+GET_BLOCK_OUTPUT=$(dfx canister call sol_rpc getBlock "$GET_BLOCK_PARAMS" "$FLAGS" --output json --with-cycles "$CYCLES" || exit 1)
 SIGNATURE=$(jq --raw-output '.Consistent.Ok.signatures[0]' <<< "$GET_BLOCK_OUTPUT")
 
 # Fetch the first transaction in the retrieved block
@@ -61,8 +61,8 @@ GET_TRANSACTION_PARAMS="(
     maxSupportedTransactionVersion = null;
   },
 )"
-CYCLES=$(dfx canister call sol_rpc getTransactionCyclesCost "$GET_TRANSACTION_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
-dfx canister call sol_rpc getTransaction "$GET_TRANSACTION_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
+CYCLES=$(dfx canister call sol_rpc getTransactionCyclesCost "$GET_TRANSACTION_PARAMS" "$FLAGS" --output json | jq '.Ok' --raw-output || exit 1)
+dfx canister call sol_rpc getTransaction "$GET_TRANSACTION_PARAMS" "$FLAGS" --with-cycles "$CYCLES" || exit 1
 
 # TODO XC-339: Add end-to-end test for `sendTransaction` using `getSlot` and `getBlock`
 
@@ -83,5 +83,5 @@ GET_ACCOUNT_INFO_PARAMS="(
     minContextSlot = null;
   },
 )"
-CYCLES=$(dfx canister call sol_rpc getAccountInfoCyclesCost "$GET_ACCOUNT_INFO_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
-dfx canister call sol_rpc getAccountInfo "$GET_ACCOUNT_INFO_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
+CYCLES=$(dfx canister call sol_rpc getAccountInfoCyclesCost "$GET_ACCOUNT_INFO_PARAMS" "$FLAGS" --output json | jq '.Ok' --raw-output || exit 1)
+dfx canister call sol_rpc getAccountInfo "$GET_ACCOUNT_INFO_PARAMS" "$FLAGS" --with-cycles "$CYCLES" || exit 1
