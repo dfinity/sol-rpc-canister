@@ -82,6 +82,14 @@ pub struct GetAccountInfoConfig {
 #[serde(into = "(Slot, Option<GetBlockConfig>)")]
 pub struct GetBlockParams(Slot, Option<GetBlockConfig>);
 
+impl GetBlockParams {
+    pub fn get_transaction_details(&self) -> Option<&TransactionDetails> {
+        self.1
+            .as_ref()
+            .and_then(|config| config.transaction_details.as_ref())
+    }
+}
+
 impl From<sol_rpc_types::GetBlockParams> for GetBlockParams {
     fn from(params: sol_rpc_types::GetBlockParams) -> Self {
         // TODO XC-342: Check if all config fields are null, and if so, serialize it as null.

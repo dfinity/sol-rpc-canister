@@ -26,7 +26,7 @@ use ic_cdk::api::management_canister::http_request::{
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
     ConsensusStrategy, GetSlotRpcConfig, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource,
-    RpcSources, TransactionId,
+    RpcSources, TransactionDetails, TransactionId,
 };
 use solana_clock::Slot;
 use std::{fmt::Debug, marker::PhantomData};
@@ -121,16 +121,19 @@ impl GetBlockRequest {
         config: RpcConfig,
         params: Params,
     ) -> Result<Self, ProviderError> {
+        let params = params.into();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
         let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
-        let max_response_bytes = config
-            .response_size_estimate
-            // TODO XC-342: Revisit this when we add support for more values of `transactionDetails`
-            .unwrap_or(1024 + HEADER_SIZE_LIMIT);
+        let max_response_bytes = config.response_size_estimate.unwrap_or(
+            match params.get_transaction_details() {
+                None | Some(TransactionDetails::None) => 1024,
+                Some(TransactionDetails::Signatures) => 512 * 1024,
+            } + HEADER_SIZE_LIMIT,
+        );
 
         Ok(MultiRpcRequest::new(
             providers,
-            JsonRpcRequest::new("getBlock", params.into()),
+            JsonRpcRequest::new("getBlock", params),
             max_response_bytes,
             ResponseTransform::GetBlock,
             ReductionStrategy::from(consensus_strategy),
