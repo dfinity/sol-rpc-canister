@@ -142,6 +142,19 @@ pub struct GetTransactionParams {
     pub encoding: Option<GetTransactionEncoding>,
 }
 
+impl GetTransactionParams {
+    /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
+    pub fn is_default_config(&self) -> bool {
+        let GetTransactionParams {
+            signature: _,
+            commitment,
+            max_supported_transaction_version,
+            encoding,
+        } = &self;
+        commitment.is_none() && max_supported_transaction_version.is_none() && encoding.is_none()
+    }
+}
+
 impl From<solana_signature::Signature> for GetTransactionParams {
     fn from(signature: solana_signature::Signature) -> Self {
         Self {

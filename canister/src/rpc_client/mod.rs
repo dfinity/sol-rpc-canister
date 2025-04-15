@@ -166,6 +166,34 @@ impl GetSlotRequest {
     }
 }
 
+pub type GetTransactionRequest = MultiRpcRequest<
+    json::GetTransactionParams,
+    Option<solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta>,
+>;
+
+impl GetTransactionRequest {
+    pub fn get_transaction<Params: Into<json::GetTransactionParams>>(
+        rpc_sources: RpcSources,
+        config: RpcConfig,
+        params: Params,
+    ) -> Result<Self, ProviderError> {
+        let consensus_strategy = config.response_consensus.unwrap_or_default();
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let max_response_bytes = config
+            .response_size_estimate
+            // TODO XC-343: Revisit this when we add support for more values of `encoding`
+            .unwrap_or(1024 + HEADER_SIZE_LIMIT);
+
+        Ok(MultiRpcRequest::new(
+            providers,
+            JsonRpcRequest::new("getTransaction", params.into()),
+            max_response_bytes,
+            ResponseTransform::GetBlock,
+            ReductionStrategy::from(consensus_strategy),
+        ))
+    }
+}
+
 pub type SendTransactionRequest = MultiRpcRequest<json::SendTransactionParams, TransactionId>;
 
 impl SendTransactionRequest {

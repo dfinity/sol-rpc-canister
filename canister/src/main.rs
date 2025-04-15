@@ -13,8 +13,9 @@ use sol_rpc_canister::{
 };
 use sol_rpc_types::{
     AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBlockParams, GetSlotParams,
-    GetSlotRpcConfig, MultiRpcResult, RpcAccess, RpcConfig, RpcResult, RpcSources,
-    SendTransactionParams, Slot, SupportedRpcProvider, SupportedRpcProviderId, TransactionId,
+    GetSlotRpcConfig, GetTransactionParams, MultiRpcResult, RpcAccess, RpcConfig, RpcResult,
+    RpcSources, SendTransactionParams, Slot, SupportedRpcProvider, SupportedRpcProviderId,
+    TransactionId, TransactionInfo,
 };
 use std::str::FromStr;
 
@@ -158,6 +159,32 @@ async fn get_slot_cycles_cost(
     )?
     .cycles_cost()
     .await
+}
+
+#[update(name = "getTransaction")]
+#[candid_method(rename = "getTransaction")]
+async fn get_transaction(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: GetTransactionParams,
+) -> MultiRpcResult<Option<TransactionInfo>> {
+    let request = MultiRpcRequest::get_transaction(source, config.unwrap_or_default(), params);
+    send_multi(request).await.into()
+}
+
+#[query(name = "getTransactionCyclesCost")]
+#[candid_method(query, rename = "getTransactionCyclesCost")]
+async fn get_transaction_cycles_cost(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: GetTransactionParams,
+) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
+    MultiRpcRequest::get_transaction(source, config.unwrap_or_default(), params)?
+        .cycles_cost()
+        .await
 }
 
 #[update(name = "sendTransaction")]

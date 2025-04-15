@@ -4192,6 +4192,7 @@ dependencies = [
  "solana-instruction",
  "solana-message",
  "solana-pubkey",
+ "solana-reward-info",
  "solana-signature",
  "solana-transaction",
  "solana-transaction-context",

@@ -28,7 +28,7 @@ impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
 
 impl<T> MultiRpcResult<T> {
     /// Maps a [`MultiRpcResult`] containing values of type `T` to a [`MultiRpcResult`] containing
-    /// values of type `R`.
+    /// values of type `R` by an infallible map.
     pub fn map<R, F>(self, f: F) -> MultiRpcResult<R>
     where
         F: FnOnce(T) -> R + Clone,
@@ -39,6 +39,23 @@ impl<T> MultiRpcResult<T> {
                 results
                     .into_iter()
                     .map(|(source, result)| (source, result.map(f.clone())))
+                    .collect(),
+            ),
+        }
+    }
+
+    /// Maps a [`MultiRpcResult`] containing values of type `T` to a [`MultiRpcResult`] containing
+    /// values of type `R` by a fallible map.
+    pub fn and_then<R, F>(self, f: F) -> MultiRpcResult<R>
+    where
+        F: FnOnce(T) -> RpcResult<R> + Clone,
+    {
+        match self {
+            MultiRpcResult::Consistent(result) => MultiRpcResult::Consistent(result.and_then(f)),
+            MultiRpcResult::Inconsistent(results) => MultiRpcResult::Inconsistent(
+                results
+                    .into_iter()
+                    .map(|(source, result)| (source, result.and_then(f.clone())))
                     .collect(),
             ),
         }
@@ -106,7 +123,11 @@ impl From<MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>>
     for MultiRpcResult<Option<TransactionInfo>>
 {
     fn from(result: MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>) -> Self {
-        result.map(|maybe_transaction| maybe_transaction.map(|transaction| transaction.into()))
+        result.and_then(|maybe_transaction| {
+            maybe_transaction
+                .map(|transaction| transaction.try_into())
+                .transpose()
+        })
     }
 }
 

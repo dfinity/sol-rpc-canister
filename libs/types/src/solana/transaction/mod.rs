@@ -1,14 +1,16 @@
 pub mod error;
 pub mod reward;
 
-use crate::{Pubkey, RpcError, Slot, Timestamp};
+use crate::{RpcError, Slot, Timestamp};
 use candid::{CandidType, Deserialize};
 use error::TransactionError;
 use reward::Reward;
 use serde::Serialize;
+use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_transaction_status_client_types::{
     EncodedConfirmedTransactionWithStatusMeta, EncodedTransactionWithStatusMeta,
-    UiReturnDataEncoding, UiTransactionReturnData, UiTransactionStatusMeta,
+    UiCompiledInstruction, UiInnerInstructions, UiInstruction, UiReturnDataEncoding,
+    UiTransactionReturnData, UiTransactionStatusMeta,
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
@@ -29,7 +31,11 @@ impl TryFrom<EncodedConfirmedTransactionWithStatusMeta> for TransactionInfo {
         Ok(Self {
             slot: transaction.slot,
             block_time: transaction.block_time,
-            meta: transaction.transaction.meta.map(Into::into),
+            meta: transaction
+                .transaction
+                .meta
+                .map(TryInto::try_into)
+                .transpose()?,
             transaction: transaction.transaction.transaction.try_into()?,
             version: transaction.transaction.version.map(Into::into),
         })
@@ -56,7 +62,7 @@ pub struct TransactionStatusMeta {
     pub fee: u64,
     pub pre_balances: Vec<u64>,
     pub post_balances: Vec<u64>,
-    pub inner_instructions: Option<Vec<Vec<InnerInstruction>>>,
+    pub inner_instructions: Option<Vec<InnerInstructions>>,
     pub log_messages: Option<Vec<String>>,
     pub pre_token_balances: Option<Vec<TransactionTokenBalance>>,
     pub post_token_balances: Option<Vec<TransactionTokenBalance>>,
@@ -75,34 +81,70 @@ impl From<TransactionStatusMeta> for UiTransactionStatusMeta {
             fee: meta.fee,
             pre_balances: meta.pre_balances,
             post_balances: meta.post_balances,
-            inner_instructions: meta.inner_instructions.map(Into::into),
+            inner_instructions: meta
+                .inner_instructions
+                .map(|instructions| {
+                    instructions
+                        .into_iter()
+                        .map(|instruction| instruction.into())
+                        .collect()
+                })
+                .into(),
             log_messages: meta.log_messages.into(),
-            pre_token_balances: meta.pre_token_balances.map(Into::into),
-            post_token_balances: meta.post_token_balances.map(Into::into),
-            rewards: meta.rewards.map(Into::into),
-            loaded_addresses: meta.loaded_addresses.map(Into::into).into(),
-            return_data: meta.return_data.map(Into::into).into(),
-            compute_units_consumed: meta.compute_units_consumed,
-        }
-    }
-}
-
-impl From<UiTransactionStatusMeta> for TransactionStatusMeta {
-    fn from(meta: UiTransactionStatusMeta) -> Self {
-        Self {
-            status: meta.status.map_err(Into::into),
-            fee: meta.fee,
-            pre_balances: meta.pre_balances,
-            post_balances: meta.post_balances,
-            inner_instructions: meta.inner_instructions.map(Into::into),
-            log_messages: meta.log_messages.into(),
-            pre_token_balances: meta.pre_token_balances.map(Into::into),
-            post_token_balances: meta.post_token_balances.map(Into::into),
-            rewards: meta.rewards.map(Into::into),
+            pre_token_balances: meta
+                .pre_token_balances
+                .map(|balances| balances.into_iter().map(Into::into).collect())
+                .into(),
+            post_token_balances: meta
+                .post_token_balances
+                .map(|balances| balances.into_iter().map(Into::into).collect())
+                .into(),
+            rewards: meta
+                .rewards
+                .map(|rewards| rewards.into_iter().map(Into::into).collect())
+                .into(),
             loaded_addresses: meta.loaded_addresses.map(Into::into).into(),
             return_data: meta.return_data.map(Into::into).into(),
             compute_units_consumed: meta.compute_units_consumed.into(),
         }
+    }
+}
+
+impl TryFrom<UiTransactionStatusMeta> for TransactionStatusMeta {
+    type Error = RpcError;
+
+    fn try_from(meta: UiTransactionStatusMeta) -> Result<Self, Self::Error> {
+        Ok(Self {
+            status: meta.status.map_err(Into::into),
+            fee: meta.fee,
+            pre_balances: meta.pre_balances,
+            post_balances: meta.post_balances,
+            inner_instructions: meta
+                .inner_instructions
+                .map(|instructions| {
+                    instructions
+                        .into_iter()
+                        .map(|instruction| instruction.try_into())
+                        .collect::<Result<Vec<InnerInstructions>, Self::Error>>()
+                })
+                .transpose()?,
+            log_messages: meta.log_messages.into(),
+            pre_token_balances: meta
+                .pre_token_balances
+                .map(|balances| balances.into_iter().map(Into::into).collect())
+                .into(),
+            post_token_balances: meta
+                .post_token_balances
+                .map(|balances| balances.into_iter().map(Into::into).collect())
+                .into(),
+            rewards: meta
+                .rewards
+                .map(|rewards| rewards.into_iter().map(Into::into).collect())
+                .into(),
+            loaded_addresses: meta.loaded_addresses.map(Into::into).into(),
+            return_data: meta.return_data.map(Into::into).into(),
+            compute_units_consumed: meta.compute_units_consumed.into(),
+        })
     }
 }
 
@@ -172,16 +214,93 @@ impl From<TransactionBinaryEncoding>
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
-pub struct InnerInstruction {
-    pub instruction: CompiledInstruction,
-    pub stack_height: Option<u32>,
+pub struct InnerInstructions {
+    pub index: u8,
+    pub instructions: Vec<Instruction>,
+}
+
+impl TryFrom<UiInnerInstructions> for InnerInstructions {
+    type Error = RpcError;
+
+    fn try_from(instructions: UiInnerInstructions) -> Result<Self, Self::Error> {
+        Ok(Self {
+            index: instructions.index,
+            instructions: instructions
+                .instructions
+                .into_iter()
+                .map(TryInto::<Instruction>::try_into)
+                .collect::<Result<Vec<Instruction>, Self::Error>>()?,
+        })
+    }
+}
+
+impl From<InnerInstructions> for UiInnerInstructions {
+    fn from(instructions: InnerInstructions) -> Self {
+        Self {
+            index: instructions.index,
+            instructions: instructions
+                .instructions
+                .into_iter()
+                .map(Into::into)
+                .collect(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
+pub enum Instruction {
+    Compiled(CompiledInstruction),
+}
+
+impl TryFrom<UiInstruction> for Instruction {
+    type Error = RpcError;
+
+    fn try_from(instruction: UiInstruction) -> Result<Self, Self::Error> {
+        match instruction {
+            UiInstruction::Compiled(compiled) => Ok(Self::Compiled(compiled.into())),
+            UiInstruction::Parsed(_) => Err(RpcError::ValidationError(
+                "Parsed instructions are not supported".to_string(),
+            )),
+        }
+    }
+}
+
+impl From<Instruction> for UiInstruction {
+    fn from(instruction: Instruction) -> Self {
+        match instruction {
+            Instruction::Compiled(compiled) => Self::Compiled(compiled.into()),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct CompiledInstruction {
     pub program_id_index: u8,
     pub accounts: Vec<u8>,
-    pub data: Vec<u8>,
+    pub data: String,
+    pub stack_height: Option<u32>,
+}
+
+impl From<UiCompiledInstruction> for CompiledInstruction {
+    fn from(instruction: UiCompiledInstruction) -> Self {
+        Self {
+            program_id_index: instruction.program_id_index,
+            accounts: instruction.accounts,
+            data: instruction.data,
+            stack_height: instruction.stack_height,
+        }
+    }
+}
+
+impl From<CompiledInstruction> for UiCompiledInstruction {
+    fn from(instruction: CompiledInstruction) -> Self {
+        Self {
+            program_id_index: instruction.program_id_index,
+            accounts: instruction.accounts,
+            data: instruction.data,
+            stack_height: instruction.stack_height,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
@@ -189,8 +308,36 @@ pub struct TransactionTokenBalance {
     pub account_index: u8,
     pub mint: String,
     pub ui_token_amount: TokenAmount,
-    pub owner: String,
-    pub program_id: String,
+    pub owner: Option<String>,
+    pub program_id: Option<String>,
+}
+
+impl From<solana_transaction_status_client_types::UiTransactionTokenBalance>
+    for TransactionTokenBalance
+{
+    fn from(balance: solana_transaction_status_client_types::UiTransactionTokenBalance) -> Self {
+        Self {
+            account_index: balance.account_index,
+            mint: balance.mint,
+            ui_token_amount: balance.ui_token_amount.into(),
+            owner: balance.owner.into(),
+            program_id: balance.program_id.into(),
+        }
+    }
+}
+
+impl From<TransactionTokenBalance>
+    for solana_transaction_status_client_types::UiTransactionTokenBalance
+{
+    fn from(balance: TransactionTokenBalance) -> Self {
+        Self {
+            account_index: balance.account_index,
+            mint: balance.mint,
+            ui_token_amount: balance.ui_token_amount.into(),
+            owner: balance.owner.into(),
+            program_id: balance.program_id.into(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
@@ -199,6 +346,28 @@ pub struct TokenAmount {
     pub decimals: u8,
     pub amount: String,
     pub ui_amount_string: String,
+}
+
+impl From<TokenAmount> for UiTokenAmount {
+    fn from(amount: TokenAmount) -> Self {
+        Self {
+            ui_amount: amount.ui_amount,
+            decimals: amount.decimals,
+            amount: amount.amount,
+            ui_amount_string: amount.ui_amount_string,
+        }
+    }
+}
+
+impl From<UiTokenAmount> for TokenAmount {
+    fn from(amount: UiTokenAmount) -> Self {
+        Self {
+            ui_amount: amount.ui_amount,
+            decimals: amount.decimals,
+            amount: amount.amount,
+            ui_amount_string: amount.ui_amount_string,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]

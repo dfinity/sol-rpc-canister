@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetBlockCommitmentLevel,
-    SendTransactionEncoding, Slot,
+    GetTransactionEncoding, SendTransactionEncoding, Slot,
 };
 use solana_transaction_status_client_types::{TransactionDetails, UiTransactionEncoding};
 
@@ -115,6 +115,41 @@ pub struct GetBlockConfig {
     pub commitment: Option<GetBlockCommitmentLevel>,
     #[serde(rename = "maxSupportedTransactionVersion")]
     pub max_supported_transaction_version: Option<u8>,
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(into = "(String, Option<GetTransactionConfig>)")]
+pub struct GetTransactionParams(String, Option<GetTransactionConfig>);
+
+impl From<sol_rpc_types::GetTransactionParams> for GetTransactionParams {
+    fn from(params: sol_rpc_types::GetTransactionParams) -> Self {
+        let config = if params.is_default_config() {
+            None
+        } else {
+            Some(GetTransactionConfig {
+                commitment: params.commitment,
+                max_supported_transaction_version: params.max_supported_transaction_version,
+                encoding: params.encoding,
+            })
+        };
+        Self(params.signature, config)
+    }
+}
+
+impl From<GetTransactionParams> for (String, Option<GetTransactionConfig>) {
+    fn from(params: GetTransactionParams) -> Self {
+        (params.0.to_string(), params.1)
+    }
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct GetTransactionConfig {
+    pub commitment: Option<CommitmentLevel>,
+    #[serde(rename = "maxSupportedTransactionVersion")]
+    pub max_supported_transaction_version: Option<u8>,
+    pub encoding: Option<GetTransactionEncoding>,
 }
 
 #[skip_serializing_none]

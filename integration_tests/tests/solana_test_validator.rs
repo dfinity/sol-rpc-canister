@@ -177,7 +177,7 @@ async fn should_get_transaction() {
     let (sol_res, ic_res) = setup
         .compare_client(
             |sol| {
-                sol.get_transaction_with_config(&signature, UiTransactionEncoding::Base64)
+                sol.get_transaction(&signature, UiTransactionEncoding::Base64)
                     .expect("Failed to get slot")
             },
             |ic| async move {

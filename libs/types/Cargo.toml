@@ -26,6 +26,7 @@ solana-commitment-config = { workspace = true }
 solana-instruction = { workspace = true }
 solana-message = { workspace = true }
 solana-pubkey = { workspace = true }
+solana-reward-info = { workspace = true }
 solana-signature = { workspace = true }
 solana-transaction = { workspace = true, features = ["bincode"] }
 solana-transaction-context = { workspace = true }
