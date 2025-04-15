@@ -435,6 +435,10 @@ service : (InstallArgs,) -> {
   getSlot : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (MultiGetSlotResult);
   getSlotCyclesCost : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (RequestCostResult) query;
 
+  // Call the Solana `getTransaction` RPC method and return the resulting slot.
+  // TODO XC-293: getTransaction : (RpcSources, opt RpcConfig, opt GetTransactionParams) -> (MultiGetTransactionResult);
+  getTransactionCyclesCost : (RpcSources, opt RpcConfig, opt GetTransactionParams) -> (RequestCostResult) query;
+
   // Call the Solana `sendTransaction` RPC method and return the resulting transaction ID.
   sendTransaction : (RpcSources, opt RpcConfig, SendTransactionParams) -> (MultiSendTransactionResult);
   sendTransactionCyclesCost : (RpcSources, opt RpcConfig, SendTransactionParams) -> (RequestCostResult) query;
