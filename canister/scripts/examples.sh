@@ -24,7 +24,7 @@ GET_SLOT_PARAMS="(
 CYCLES=$(dfx canister call sol_rpc getSlotCyclesCost "$GET_SLOT_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
 GET_SLOT_OUTPUT=$(dfx canister call sol_rpc getSlot "$GET_SLOT_PARAMS" $FLAGS --with-cycles "$CYCLES" --output json || exit 1)
 echo "$GET_SLOT_OUTPUT"
-SIGNATURE=$(echo "$GET_SLOT_OUTPUT" | jq --raw-output '.Consistent.Ok')
+SLOT=$(echo "$GET_SLOT_OUTPUT" | jq --raw-output '.Consistent.Ok')
 
 # Fetch the latest finalized block
 GET_BLOCK_PARAMS="(
