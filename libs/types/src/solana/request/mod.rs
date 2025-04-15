@@ -93,12 +93,26 @@ pub struct GetBlockParams {
     ///   containing any versioned transaction will prompt the error.
     #[serde(rename = "maxSupportedTransactionVersion")]
     pub max_supported_transaction_version: Option<u8>,
+    /// Specifies what transaction details to include in the response.
+    ///
+    /// Note that if this field is not specified, the default value of [`TransactionDetails::None`]
+    /// will be used.
+    #[serde(rename = "transactionDetails")]
+    pub transaction_details: Option<TransactionDetails>,
 }
 
 impl GetBlockParams {
     /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
     pub fn is_default_config(&self) -> bool {
-        self.commitment.is_none() && self.max_supported_transaction_version.is_none()
+        let GetBlockParams {
+            slot: _,
+            commitment,
+            max_supported_transaction_version,
+            transaction_details,
+        } = &self;
+        commitment.is_none()
+            && max_supported_transaction_version.is_none()
+            && transaction_details.is_none()
     }
 }
 
@@ -108,8 +122,23 @@ impl From<Slot> for GetBlockParams {
             slot,
             commitment: None,
             max_supported_transaction_version: None,
+            transaction_details: None,
         }
     }
+}
+
+/// Determines whether and how transactions are included in `getBlock` response.
+///
+/// The default value is [`TransactionDetails::None`].
+#[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
+pub enum TransactionDetails {
+    /// Omits all transaction data and signatures; returns only block metadata.
+    #[serde(rename = "signatures")]
+    Signatures,
+    /// Includes transaction signatures (IDs) only; omits messages and metadata.
+    #[default]
+    #[serde(rename = "none")]
+    None,
 }
 
 /// The parameters for a Solana [`getSlot`](https://solana.com/docs/rpc/http/getslot) RPC method call.

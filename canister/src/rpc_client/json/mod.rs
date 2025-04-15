@@ -1,10 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use sol_rpc_types::{
-    CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetBlockCommitmentLevel,
-    GetTransactionEncoding, SendTransactionEncoding, Slot,
-};
-use solana_transaction_status_client_types::{TransactionDetails, UiTransactionEncoding};
+use sol_rpc_types::{CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetBlockCommitmentLevel, GetTransactionEncoding, SendTransactionEncoding, Slot, TransactionDetails};
+use solana_transaction_status_client_types::{UiTransactionEncoding};
 
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -85,11 +82,11 @@ pub struct GetBlockParams(Slot, Option<GetBlockConfig>);
 impl From<sol_rpc_types::GetBlockParams> for GetBlockParams {
     fn from(params: sol_rpc_types::GetBlockParams) -> Self {
         // TODO XC-342: Check if all config fields are null, and if so, serialize it as null.
-        //  Currently, we do not want it to be null since e.g. `"transactionDetails": "none"`
-        //  is not the default value.
+        //  Currently, we do not want it to be null since rewards=false is not the default value.
         let config = Some(GetBlockConfig {
             encoding: None,
-            transaction_details: Some(TransactionDetails::None),
+            // Always specify since the default value is `full` which we do not support yet
+            transaction_details: Some(params.transaction_details.unwrap_or_default()),
             rewards: Some(false),
             commitment: params.commitment,
             max_supported_transaction_version: params.max_supported_transaction_version,

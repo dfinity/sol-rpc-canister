@@ -22,7 +22,7 @@ pub use solana::{
     request::{
         CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams,
         GetBlockCommitmentLevel, GetBlockParams, GetSlotParams, GetTransactionEncoding,
-        GetTransactionParams, SendTransactionEncoding, SendTransactionParams,
+        GetTransactionParams, SendTransactionEncoding, SendTransactionParams, TransactionDetails,
     },
     transaction::{
         error::{InstructionError, TransactionError},

@@ -53,6 +53,8 @@ pub struct ConfirmedBlock {
     /// The number of blocks beneath this block.
     #[serde(rename = "blockHeight")]
     pub block_height: Option<u64>,
+    /// Transaction signatures in the block. Included in the response whenever [`crate::GetBlockParams::transaction`] 
+    pub signatures: Option<Vec<String>>,
 }
 
 impl From<solana_transaction_status_client_types::UiConfirmedBlock> for ConfirmedBlock {
@@ -63,6 +65,7 @@ impl From<solana_transaction_status_client_types::UiConfirmedBlock> for Confirme
             parent_slot: block.parent_slot,
             block_time: block.block_time,
             block_height: block.block_height,
+            signatures: block.signatures,
         }
     }
 }
@@ -75,7 +78,7 @@ impl From<ConfirmedBlock> for solana_transaction_status_client_types::UiConfirme
             blockhash: block.blockhash,
             parent_slot: block.parent_slot,
             transactions: None,
-            signatures: None,
+            signatures: block.signatures,
             rewards: None,
             num_reward_partitions: None,
             block_time: block.block_time,

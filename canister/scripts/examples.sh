@@ -22,7 +22,7 @@ GET_SLOT_PARAMS="(
   opt record { minContextSlot = null; commitment = opt variant { finalized } },
 )"
 CYCLES=$(dfx canister call sol_rpc getSlotCyclesCost "$GET_SLOT_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
-SLOT=$(dfx canister call sol_rpc getSlot "$GET_SLOT_PARAMS" $FLAGS --with-cycles "$CYCLES" --output json | jq '.Consistent.Ok' --raw-output || exit 1)
+SLOT=$(dfx canister call sol_rpc getSlot "$GET_SLOT_PARAMS" $FLAGS --with-cycles "$CYCLES" --output json | jq '.Consistent.Ok' --raw-output || exit 1 | tee /dev/tty)
 
 # Fetch the latest finalized block
 GET_BLOCK_PARAMS="(
@@ -40,7 +40,26 @@ GET_BLOCK_PARAMS="(
   },
 )"
 CYCLES=$(dfx canister call sol_rpc getBlockCyclesCost "$GET_BLOCK_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
-dfx canister call sol_rpc getBlock "$GET_BLOCK_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
+SIGNATURE=$(dfx canister call sol_rpc getBlock "$GET_BLOCK_PARAMS" $FLAGS --with-cycles "$CYCLES" | jq '.Consistent.Ok.signatures[0]' --raw-output || exit 1 | tee /dev/tty)
+
+# Fetch the first transaction in the retrieved block
+GET_TRANSACTION_PARAMS="(
+  variant { Default = variant { Mainnet } },
+  opt record {
+    responseConsensus = opt variant {
+      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+    };
+    responseSizeEstimate = null;
+  },
+  record {
+    signature = ${SIGNATURE};
+    commitment = opt variant { finalized };
+    encoding = opt variant{ base64 };
+    maxSupportedTransactionVersion = null;
+  },
+)"
+CYCLES=$(dfx canister call sol_rpc getTransactionCyclesCost "$GET_TRANSACTION_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
+dfx canister call sol_rpc getTransaction "$GET_TRANSACTION_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
 
 # TODO XC-339: Add end-to-end test for `sendTransaction` using `getSlot` and `getBlock`
 

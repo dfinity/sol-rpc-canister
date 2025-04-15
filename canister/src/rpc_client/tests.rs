@@ -10,6 +10,7 @@ use sol_rpc_types::{
     GetTransactionEncoding, GetTransactionParams, RpcConfig, RpcSources, SendTransactionEncoding,
     SendTransactionParams, SolanaCluster,
 };
+use sol_rpc_types::TransactionDetails;
 
 mod request_serialization_tests {
     use super::*;
@@ -141,6 +142,7 @@ mod request_serialization_tests {
                     slot: 123,
                     commitment: Some(GetBlockCommitmentLevel::Finalized),
                     max_supported_transaction_version: Some(2u8),
+                    transaction_details: Some(TransactionDetails::Signatures),
                 },
             )
             .unwrap(),
@@ -148,7 +150,7 @@ mod request_serialization_tests {
                 123,
                 {
                     "rewards": false,
-                    "transactionDetails": "none",
+                    "transactionDetails": "signatures",
                     "commitment": "finalized",
                     "maxSupportedTransactionVersion": 2
                 },

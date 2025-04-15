@@ -6,11 +6,7 @@ use futures::future;
 use pocket_ic::PocketIcBuilder;
 use sol_rpc_client::SolRpcClient;
 use sol_rpc_int_tests::PocketIcLiveModeRuntime;
-use sol_rpc_types::{
-    CommitmentLevel, GetAccountInfoEncoding, GetAccountInfoParams, GetBlockCommitmentLevel,
-    GetBlockParams, GetSlotParams, GetTransactionEncoding, GetTransactionParams, InstallArgs,
-    OverrideProvider, RegexSubstitution, SendTransactionParams,
-};
+use sol_rpc_types::{CommitmentLevel, GetAccountInfoEncoding, GetAccountInfoParams, GetBlockCommitmentLevel, GetBlockParams, GetSlotParams, GetTransactionEncoding, GetTransactionParams, InstallArgs, OverrideProvider, RegexSubstitution, SendTransactionParams, TransactionDetails};
 use solana_account_decoder_client_types::UiAccount;
 use solana_client::rpc_client::{RpcClient as SolanaRpcClient, RpcClient};
 use solana_commitment_config::CommitmentConfig;
@@ -22,7 +18,7 @@ use solana_rpc_client_api::config::{RpcBlockConfig, RpcTransactionConfig};
 use solana_signature::Signature;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
-use solana_transaction_status_client_types::{TransactionDetails, UiTransactionEncoding};
+use solana_transaction_status_client_types::{UiTransactionEncoding};
 use std::{
     future::Future,
     str::FromStr,
@@ -135,7 +131,7 @@ async fn should_get_block() {
                         slot,
                         RpcBlockConfig {
                             encoding: None,
-                            transaction_details: Some(TransactionDetails::None),
+                            transaction_details: Some(solana_transaction_status_client_types::TransactionDetails::Signatures),
                             rewards: Some(false),
                             commitment: Some(commitment_config),
                             max_supported_transaction_version: None,
@@ -148,6 +144,7 @@ async fn should_get_block() {
                         slot,
                         commitment: Some(commitment),
                         max_supported_transaction_version: None,
+                        transaction_details: Some(TransactionDetails::Signatures),
                     })
                     .send()
                     .await
