@@ -43,7 +43,7 @@ GET_BLOCK_PARAMS="(
 )"
 CYCLES=$(dfx canister call sol_rpc getBlockCyclesCost "$GET_BLOCK_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
 GET_BLOCK_OUTPUT=$(dfx canister call sol_rpc getBlock "$GET_BLOCK_PARAMS" $FLAGS --output json --with-cycles "$CYCLES" || exit 1)
-SIGNATURE=$(jq --raw-output '.Consistent.Ok.signatures[0]' <<< "$GET_BLOCK_OUTPUT")
+SIGNATURE=$(jq --raw-output '.Consistent.Ok[0].signatures[0][0]' <<< "$GET_BLOCK_OUTPUT")
 
 # Fetch the first transaction in the retrieved block
 GET_TRANSACTION_PARAMS="(
