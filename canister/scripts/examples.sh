@@ -23,8 +23,7 @@ GET_SLOT_PARAMS="(
 )"
 CYCLES=$(dfx canister call sol_rpc getSlotCyclesCost "$GET_SLOT_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
 GET_SLOT_OUTPUT=$(dfx canister call sol_rpc getSlot "$GET_SLOT_PARAMS" $FLAGS --with-cycles "$CYCLES" --output json || exit 1)
-echo "$GET_SLOT_OUTPUT"
-SLOT=$(echo "$GET_SLOT_OUTPUT" | jq --raw-output '.Consistent.Ok')
+SLOT=$(jq --raw-output '.Consistent.Ok' <<< "$GET_SLOT_OUTPUT")
 
 # Fetch the latest finalized block
 GET_BLOCK_PARAMS="(
@@ -44,8 +43,7 @@ GET_BLOCK_PARAMS="(
 )"
 CYCLES=$(dfx canister call sol_rpc getBlockCyclesCost "$GET_BLOCK_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
 GET_BLOCK_OUTPUT=$(dfx canister call sol_rpc getBlock "$GET_BLOCK_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1)
-echo "$GET_BLOCK_OUTPUT"
-SIGNATURE=$(echo "$GET_BLOCK_OUTPUT" | jq --raw-output '.Consistent.Ok.signatures[0]')
+SIGNATURE=$(jq --raw-output '.Consistent.Ok.signatures[0]' <<< "$GET_BLOCK_OUTPUT")
 
 # Fetch the first transaction in the retrieved block
 GET_TRANSACTION_PARAMS="(
