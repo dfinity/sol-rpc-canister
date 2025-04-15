@@ -206,15 +206,31 @@ async fn should_send_transaction() {
     let (sender, sender_balance_before) = setup.generate_keypair_and_fund_account();
     let (recipient, recipient_balance_before) = setup.generate_keypair_and_fund_account();
 
+    let slot = setup
+        .icp_client()
+        .get_slot()
+        .send()
+        .await
+        .expect_consistent()
+        .expect("Call to get slot failed");
+    let block = setup
+        .icp_client()
+        .get_block(slot)
+        .send()
+        .await
+        .expect_consistent()
+        .expect("Call to get block failed")
+        .expect("Block not found");
+    let blockhash = Hash::from_str(&block.blockhash).expect("Failed to parse blockhash");
+
     let transaction_amount = 1_000;
     let instruction =
         system_instruction::transfer(&sender.pubkey(), &recipient.pubkey(), transaction_amount);
-    // TODO XC-289: get the block hash via `getSlot` + `getBlock`
     let transaction = Transaction::new_signed_with_payer(
         &[instruction],
         Some(&sender.pubkey()),
         &[&sender],
-        setup.get_latest_blockhash(),
+        blockhash,
     );
 
     let mut params: SendTransactionParams = transaction.clone().try_into().unwrap();
@@ -346,12 +362,6 @@ impl Setup {
         self.solana_client
             .get_balance(pubkey)
             .expect("Error while getting account balance")
-    }
-
-    fn get_latest_blockhash(&self) -> Hash {
-        self.solana_client
-            .get_latest_blockhash()
-            .expect("Error while getting latest blockhash")
     }
 
     fn confirm_transaction(&self, transaction_id: &Signature) {

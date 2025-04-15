@@ -489,7 +489,10 @@ mod send_transaction_tests {
                 .await
                 .expect_consistent();
 
-            assert_eq!(results, Ok(solana_signature::Signature::from_str(signature).unwrap()));
+            assert_eq!(
+                results,
+                Ok(solana_signature::Signature::from_str(signature).unwrap())
+            );
         }
 
         setup.drop().await;
@@ -983,5 +986,8 @@ fn some_transaction() -> solana_transaction::Transaction {
 }
 
 fn some_signature() -> solana_signature::Signature {
-    solana_signature::Signature::from_str("MMNPdhf4gW6pPkAtNdJKAroAC7HjaxXLE2CWNeeDtLzYEaBYrvbNzD2TSdYMsoakyD8w88YjwypAgSUYKsU4tVb").unwrap()
+    solana_signature::Signature::from_str(
+        "MMNPdhf4gW6pPkAtNdJKAroAC7HjaxXLE2CWNeeDtLzYEaBYrvbNzD2TSdYMsoakyD8w88YjwypAgSUYKsU4tVb",
+    )
+    .unwrap()
 }
