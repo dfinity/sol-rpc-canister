@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use sol_rpc_types::{CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetBlockCommitmentLevel, GetTransactionEncoding, SendTransactionEncoding, Slot, TransactionDetails};
-use solana_transaction_status_client_types::{UiTransactionEncoding};
+use sol_rpc_types::{
+    CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetBlockCommitmentLevel,
+    GetTransactionEncoding, SendTransactionEncoding, Slot, TransactionDetails,
+};
+use solana_transaction_status_client_types::UiTransactionEncoding;
 
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Debug)]

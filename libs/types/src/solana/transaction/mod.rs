@@ -105,11 +105,9 @@ impl From<TransactionStatusMeta> for UiTransactionStatusMeta {
                 .rewards
                 .map(|rewards| rewards.into_iter().map(Into::into).collect())
                 .into(),
-            loaded_addresses: OptionSerializer::or_skip(
-                meta.loaded_addresses.map(Into::into).into(),
-            ),
-            return_data: OptionSerializer::or_skip(meta.return_data.map(Into::into).into()),
-            compute_units_consumed: OptionSerializer::or_skip(meta.compute_units_consumed.into()),
+            loaded_addresses: OptionSerializer::or_skip(meta.loaded_addresses.map(Into::into)),
+            return_data: OptionSerializer::or_skip(meta.return_data.map(Into::into)),
+            compute_units_consumed: OptionSerializer::or_skip(meta.compute_units_consumed),
         }
     }
 }

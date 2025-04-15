@@ -8,9 +8,8 @@ use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams,
     GetBlockCommitmentLevel, GetBlockParams, GetSlotParams, GetSlotRpcConfig,
     GetTransactionEncoding, GetTransactionParams, RpcConfig, RpcSources, SendTransactionEncoding,
-    SendTransactionParams, SolanaCluster,
+    SendTransactionParams, SolanaCluster, TransactionDetails,
 };
-use sol_rpc_types::TransactionDetails;
 
 mod request_serialization_tests {
     use super::*;

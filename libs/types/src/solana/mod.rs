@@ -53,7 +53,8 @@ pub struct ConfirmedBlock {
     /// The number of blocks beneath this block.
     #[serde(rename = "blockHeight")]
     pub block_height: Option<u64>,
-    /// Transaction signatures in the block. Included in the response whenever [`crate::GetBlockParams::transaction`] 
+    /// Signatures of the transactions in the block. Included in the response whenever
+    /// `transactionDetails` is not `none`.
     pub signatures: Option<Vec<String>>,
 }
 
