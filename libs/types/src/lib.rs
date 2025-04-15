@@ -16,7 +16,6 @@ pub use rpc_client::{
     RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider,
     SupportedRpcProviderId,
 };
-pub use solana::transaction::error::TransactionError;
 pub use solana::{
     account::{AccountData, AccountEncoding, AccountInfo, ParsedAccount},
     request::{
@@ -25,8 +24,9 @@ pub use solana::{
         GetTransactionParams, SendTransactionEncoding, SendTransactionParams,
     },
     transaction::{
-        EncodedTransaction, LoadedAddresses, TransactionBinaryEncoding, TransactionInfo,
-        TransactionReturnData, TransactionStatusMeta, TransactionTokenBalance, TransactionVersion,
+        error::TransactionError, EncodedTransaction, LoadedAddresses, TransactionBinaryEncoding,
+        TransactionInfo, TransactionReturnData, TransactionStatusMeta, TransactionTokenBalance,
+        TransactionVersion,
     },
     ConfirmedBlock, Pubkey, Slot, Timestamp, TransactionId,
 };

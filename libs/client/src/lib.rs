@@ -43,15 +43,22 @@ mod request;
 pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 use std::fmt::Debug;
 
-use crate::request::{GetAccountInfoRequest, GetBlockRequest, GetSlotRequest, GetTransactionRequest, JsonRequest, SendTransactionRequest};
+use crate::request::{
+    GetAccountInfoRequest, GetBlockRequest, GetSlotRequest, GetTransactionRequest, JsonRequest,
+    SendTransactionRequest,
+};
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
-use sol_rpc_types::{GetAccountInfoParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig, GetTransactionParams, RpcConfig, RpcSources, SendTransactionParams, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TransactionId, TransactionInfo};
+use sol_rpc_types::{
+    GetAccountInfoParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig, GetTransactionParams,
+    RpcConfig, RpcSources, SendTransactionParams, SolanaCluster, SupportedRpcProvider,
+    SupportedRpcProviderId, TransactionId, TransactionInfo,
+};
 use solana_clock::Slot;
-use std::sync::Arc;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
+use std::sync::Arc;
 
 /// The principal identifying the productive Solana RPC canister under NNS control.
 ///
@@ -249,7 +256,11 @@ impl<R> SolRpcClient<R> {
         sol_rpc_types::MultiRpcResult<Option<TransactionInfo>>,
         sol_rpc_types::MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>,
     > {
-        RequestBuilder::new(self.clone(), GetTransactionRequest::new(params.into()), 10_000_000_000)
+        RequestBuilder::new(
+            self.clone(),
+            GetTransactionRequest::new(params.into()),
+            10_000_000_000,
+        )
     }
 
     /// Call `sendTransaction` on the SOL RPC canister.

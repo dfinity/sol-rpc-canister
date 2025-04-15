@@ -131,18 +131,15 @@ impl TryFrom<UiTransactionStatusMeta> for TransactionStatusMeta {
             log_messages: meta.log_messages.into(),
             pre_token_balances: meta
                 .pre_token_balances
-                .map(|balances| balances.into_iter().map(Into::into).collect())
-                .into(),
+                .map(|balances| balances.into_iter().map(Into::into).collect()),
             post_token_balances: meta
                 .post_token_balances
-                .map(|balances| balances.into_iter().map(Into::into).collect())
-                .into(),
+                .map(|balances| balances.into_iter().map(Into::into).collect()),
             rewards: meta
                 .rewards
-                .map(|rewards| rewards.into_iter().map(Into::into).collect())
-                .into(),
-            loaded_addresses: meta.loaded_addresses.map(Into::into).into(),
-            return_data: meta.return_data.map(Into::into).into(),
+                .map(|rewards| rewards.into_iter().map(Into::into).collect()),
+            loaded_addresses: meta.loaded_addresses.map(Into::into),
+            return_data: meta.return_data.map(Into::into),
             compute_units_consumed: meta.compute_units_consumed.into(),
         })
     }
