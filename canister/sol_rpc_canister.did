@@ -241,6 +241,15 @@ type AccountEncoding = variant {
     jsonParsed;
 };
 
+// The parameters for a Solana `getTransaction` RPC method call.
+// TODO XC-293: documentation
+type GetTransactionParams = record {
+    signature: String;
+    commitment: opt CommitmentLevel;
+    pub maxSupportedTransactionVersion: opt nat8;
+    pub encoding: opt enum { base58; base64 };
+};
+
 // The parameters for a Solana `sendTransaction` RPC method call.
 type SendTransactionParams = record {
     // Fully-signed transaction, as encoded string.
