@@ -37,6 +37,7 @@ GET_BLOCK_PARAMS="(
     slot = ${SLOT};
     commitment = opt variant { finalized };
     maxSupportedTransactionVersion = null;
+    transactionDetails = opt variant { signatures };
   },
 )"
 CYCLES=$(dfx canister call sol_rpc getBlockCyclesCost "$GET_BLOCK_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
