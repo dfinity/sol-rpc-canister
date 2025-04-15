@@ -185,7 +185,7 @@ impl GetTransactionRequest {
         let max_response_bytes = config
             .response_size_estimate
             // TODO XC-343: Revisit this when we add support for more values of `encoding`
-            .unwrap_or(1024 + HEADER_SIZE_LIMIT);
+            .unwrap_or(10 * 1024 + HEADER_SIZE_LIMIT);
 
         Ok(MultiRpcRequest::new(
             providers,
