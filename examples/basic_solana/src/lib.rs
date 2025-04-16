@@ -14,7 +14,9 @@ use ic_cdk::{init, post_upgrade, update};
 use num::{BigUint, ToPrimitive};
 use serde_json::json;
 use sol_rpc_client::{IcRuntime, SolRpcClient};
-use sol_rpc_types::{GetAccountInfoEncoding, GetAccountInfoParams, RpcSources, SolanaCluster};
+use sol_rpc_types::{
+    GetAccountInfoEncoding, GetAccountInfoParams, MultiRpcResult, RpcSources, SolanaCluster,
+};
 use solana_account_decoder_client_types::{UiAccountData, UiAccountEncoding};
 use solana_hash::Hash;
 use solana_message::Message;
@@ -338,26 +340,63 @@ pub async fn send_spl_token(
         .to_string()
 }
 
+// Fetch a recent blockhash using the Solana `getSlot` and `getBlock` methods.
+// Since the `getSlot` method might fail due to Solana's fast blocktime, and some slots do not
+// have blocks, we retry the RPC calls several times in case of failure to find a recent block.
 async fn get_recent_blockhash(rpc_client: &SolRpcClient<IcRuntime>) -> Hash {
-    let slot = rpc_client
-        .get_slot()
-        .send()
-        .await
-        .expect_consistent()
-        .expect("Call to `getSlot` failed");
-    let blockhash = rpc_client
-        .get_block(slot)
-        .send()
-        .await
-        .expect_consistent()
-        .expect("Call to `getBlock` failed")
-        .unwrap_or_else(|| panic!("Block for slot {slot} not found"))
-        .blockhash;
-    Hash::from_str(&blockhash).expect("Unable to parse blockhash")
+    fn check(num_tries: &u8, message: String) {
+        if *num_tries == 3 {
+            panic!("Failed to get recent blockhash after {num_tries} tries: {message}")
+        }
+    }
+
+    let mut num_tries = 0;
+    loop {
+        num_tries += 1;
+
+        let result = rpc_client.get_slot().send().await;
+        let slot = if let MultiRpcResult::Consistent(result) = result {
+            result.expect("Call to `getSlot` failed")
+        } else {
+            check(
+                &num_tries,
+                format!(
+                    "inconsistent `getSlot` result: {:?}",
+                    result.expect_inconsistent()
+                ),
+            );
+            continue;
+        };
+
+        let result = rpc_client.get_block(slot).send().await;
+        let maybe_block = if let MultiRpcResult::Consistent(result) = result {
+            result.expect("Call to `getBlock` failed")
+        } else {
+            check(
+                &num_tries,
+                format!(
+                    "inconsistent result from `getBlock`: {:?}",
+                    result.expect_inconsistent()
+                ),
+            );
+            continue;
+        };
+
+        let block = if let Some(block) = maybe_block {
+            block
+        } else {
+            check(&num_tries, format!("no matching block for slot {slot}"));
+            continue;
+        };
+
+        return Hash::from_str(&block.blockhash).expect("Unable to parse blockhash");
+    }
 }
 
 fn client() -> SolRpcClient<IcRuntime> {
-    SolRpcClient::builder_for_ic()
+    read_state(|state| state.sol_rpc_canister_id())
+        .map(|canister_id| SolRpcClient::builder(IcRuntime, canister_id))
+        .unwrap_or(SolRpcClient::builder_for_ic())
         .with_rpc_sources(RpcSources::Default(
             read_state(|state| state.solana_network()).into(),
         ))
@@ -366,6 +405,7 @@ fn client() -> SolRpcClient<IcRuntime> {
 
 #[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq)]
 pub struct InitArg {
+    pub sol_rpc_canister_id: Option<Principal>,
     pub solana_network: Option<SolanaNetwork>,
     pub ed25519_key_name: Option<Ed25519KeyName>,
 }
@@ -388,7 +428,7 @@ impl From<SolanaNetwork> for SolanaCluster {
     }
 }
 
-#[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq, Clone)]
+#[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq, Clone, Copy)]
 pub enum Ed25519KeyName {
     #[default]
     TestKeyLocalDevelopment,
