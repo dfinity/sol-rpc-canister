@@ -2,7 +2,6 @@ mod ed25519;
 mod solana_wallet;
 mod spl;
 mod state;
-use canhttp::http::json::{ConstantSizeId, Id};
 use solana_nonce::{state::State, versions::Versions as NonceVersions};
 
 use crate::{
@@ -62,10 +61,11 @@ pub async fn associated_token_account(owner: Option<Principal>, mint_account: St
 pub async fn get_balance(account: Option<String>) -> Nat {
     let account = account.unwrap_or(solana_account(None).await);
 
+    // TODO XC-346: use `getBalance` method from client
     let response = client()
         .json_request(json!({
             "jsonrpc": "2.0",
-            "id": Id::from(ConstantSizeId::ZERO),
+            "id": 1,
             "method": "getBalance",
             "params": [ account ]
         }))
@@ -89,6 +89,7 @@ pub async fn get_nonce(account: Option<String>) -> String {
     let account = account.unwrap_or(nonce_account(None).await);
 
     // Fetch the account info with the data encoded in base64 format
+    // TODO XC-347: use method from client to retrieve nonce
     let mut params = GetAccountInfoParams::from_encoded_pubkey(account);
     params.encoding = Some(GetAccountInfoEncoding::Base64);
     let account_data = client()
@@ -122,10 +123,11 @@ pub async fn get_nonce(account: Option<String>) -> String {
 pub async fn get_spl_token_balance(account: Option<String>, mint_account: String) -> String {
     let account = account.unwrap_or(associated_token_account(None, mint_account).await);
 
+    // TODO XC-325: use `getTokenAccountBalance` method from client
     let response = client()
         .json_request(json!({
             "jsonrpc": "2.0",
-            "id": Id::from(ConstantSizeId::ZERO),
+            "id": 1,
             "method": "getTokenAccountBalance",
             "params": [ account ]
         }))

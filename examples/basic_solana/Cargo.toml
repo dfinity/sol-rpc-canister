@@ -11,13 +11,11 @@ base64 = "0.22.1"
 bincode = { workspace = true }
 bs58 = { workspace = true }
 candid = { workspace = true }
-canhttp = { workspace = true, features = ["json"] }
-# Transitive dependency of ic-ed25519
+# Transitive dependency
 # See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
 getrandom = { workspace = true, default-features = false, features = ["custom"] }
 ic-cdk = { workspace = true }
 ic-ed25519 = { workspace = true }
-http = { workspace = true }
 num = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
