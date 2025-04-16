@@ -4,7 +4,7 @@ use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBlockParams, GetSlotParams,
     GetSlotRpcConfig, GetTransactionParams, RpcConfig, RpcResult, RpcSources,
-    SendTransactionParams, TransactionId, TransactionInfo,
+    SendTransactionParams, Signature, TransactionInfo,
 };
 use solana_clock::Slot;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
@@ -176,7 +176,7 @@ impl SendTransactionRequest {
 impl SolRpcRequest for SendTransactionRequest {
     type Config = RpcConfig;
     type Params = SendTransactionParams;
-    type CandidOutput = sol_rpc_types::MultiRpcResult<TransactionId>;
+    type CandidOutput = sol_rpc_types::MultiRpcResult<Signature>;
     type Output = sol_rpc_types::MultiRpcResult<solana_signature::Signature>;
 
     fn endpoint(&self) -> SolRpcEndpoint {

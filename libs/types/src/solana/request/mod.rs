@@ -1,4 +1,5 @@
-use crate::{RpcError, Slot};
+use crate::solana::Pubkey;
+use crate::{RpcError, Signature, Slot};
 use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
@@ -7,7 +8,7 @@ use serde::Serialize;
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub struct GetAccountInfoParams {
     /// The public key of the account whose info to fetch formatted as a base-58 string.
-    pub pubkey: String,
+    pub pubkey: Pubkey,
     /// The request returns the slot that has reached this or the default commitment level.
     pub commitment: Option<CommitmentLevel>,
     /// Encoding format for Account data.
@@ -163,7 +164,7 @@ impl GetSlotParams {
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub struct GetTransactionParams {
-    pub signature: String,
+    pub signature: Signature,
     pub commitment: Option<CommitmentLevel>,
     #[serde(rename = "maxSupportedTransactionVersion")]
     pub max_supported_transaction_version: Option<u8>,

@@ -2,7 +2,7 @@ pub mod error;
 pub mod instruction;
 pub mod reward;
 
-use crate::{RpcError, Slot, Timestamp};
+use crate::{Pubkey, RpcError, Slot, Timestamp};
 use candid::{CandidType, Deserialize};
 use error::TransactionError;
 use instruction::{CompiledInstruction, InnerInstructions, Instruction};
@@ -249,8 +249,8 @@ pub struct TransactionTokenBalance {
     pub account_index: u8,
     pub mint: String,
     pub ui_token_amount: TokenAmount,
-    pub owner: Option<String>,
-    pub program_id: Option<String>,
+    pub owner: Option<Pubkey>,
+    pub program_id: Option<Pubkey>,
 }
 
 impl From<solana_transaction_status_client_types::UiTransactionTokenBalance>
@@ -313,8 +313,8 @@ impl From<UiTokenAmount> for TokenAmount {
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct LoadedAddresses {
-    pub writable: Vec<String>,
-    pub readonly: Vec<String>,
+    pub writable: Vec<Pubkey>,
+    pub readonly: Vec<Pubkey>,
 }
 
 impl From<solana_transaction_status_client_types::UiLoadedAddresses> for LoadedAddresses {
@@ -337,7 +337,7 @@ impl From<LoadedAddresses> for solana_transaction_status_client_types::UiLoadedA
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct TransactionReturnData {
-    pub program_id: String,
+    pub program_id: Pubkey,
     pub data: String,
 }
 

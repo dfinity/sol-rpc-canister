@@ -26,7 +26,7 @@ use ic_cdk::api::management_canister::http_request::{
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
     ConsensusStrategy, GetSlotRpcConfig, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource,
-    RpcSources, TransactionDetails, TransactionId,
+    RpcSources, TransactionDetails, Signature,
 };
 use solana_clock::Slot;
 use std::{fmt::Debug, marker::PhantomData};
@@ -197,7 +197,7 @@ impl GetTransactionRequest {
     }
 }
 
-pub type SendTransactionRequest = MultiRpcRequest<json::SendTransactionParams, TransactionId>;
+pub type SendTransactionRequest = MultiRpcRequest<json::SendTransactionParams, Signature>;
 
 impl SendTransactionRequest {
     pub fn send_transaction<Params: Into<json::SendTransactionParams>>(

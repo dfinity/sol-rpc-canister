@@ -1,9 +1,10 @@
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
+use crate::Pubkey;
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct Reward {
-    pub pubkey: String,
+    pub pubkey: Pubkey,
     pub lamports: i64,
     pub post_balance: u64,
     pub reward_type: Option<RewardType>,

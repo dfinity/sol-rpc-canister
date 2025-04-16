@@ -933,7 +933,7 @@ mod cycles_cost_tests {
                     check(
                         &setup,
                         client.get_transaction(some_signature()),
-                        1_796_356_000,
+                        2_548_381_600,
                     )
                     .await;
                 }

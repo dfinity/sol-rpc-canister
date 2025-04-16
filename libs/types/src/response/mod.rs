@@ -1,5 +1,5 @@
 use crate::{
-    solana::account::AccountInfo, ConfirmedBlock, RpcResult, RpcSource, TransactionId,
+    solana::account::AccountInfo, ConfirmedBlock, RpcResult, RpcSource, Signature,
     TransactionInfo,
 };
 use candid::CandidType;
@@ -86,8 +86,8 @@ impl<T: Debug> MultiRpcResult<T> {
     }
 }
 
-impl From<MultiRpcResult<TransactionId>> for MultiRpcResult<solana_signature::Signature> {
-    fn from(result: MultiRpcResult<TransactionId>) -> Self {
+impl From<MultiRpcResult<Signature>> for MultiRpcResult<solana_signature::Signature> {
+    fn from(result: MultiRpcResult<Signature>) -> Self {
         result.map(|transaction_id| {
             solana_signature::Signature::from_str(&transaction_id)
                 .expect("Unable to parse signature")

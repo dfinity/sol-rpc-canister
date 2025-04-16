@@ -15,7 +15,7 @@ use sol_rpc_types::{
     AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBlockParams, GetSlotParams,
     GetSlotRpcConfig, GetTransactionParams, MultiRpcResult, RpcAccess, RpcConfig, RpcResult,
     RpcSources, SendTransactionParams, Slot, SupportedRpcProvider, SupportedRpcProviderId,
-    TransactionId, TransactionInfo,
+    Signature, TransactionInfo,
 };
 use std::str::FromStr;
 
@@ -193,7 +193,7 @@ async fn send_transaction(
     source: RpcSources,
     config: Option<RpcConfig>,
     params: SendTransactionParams,
-) -> MultiRpcResult<TransactionId> {
+) -> MultiRpcResult<Signature> {
     let request = MultiRpcRequest::send_transaction(source, config.unwrap_or_default(), params);
     send_multi(request).await
 }

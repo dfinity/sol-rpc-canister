@@ -54,7 +54,7 @@ use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     GetAccountInfoParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig, GetTransactionParams,
     RpcConfig, RpcSources, SendTransactionParams, SolanaCluster, SupportedRpcProvider,
-    SupportedRpcProviderId, TransactionId, TransactionInfo,
+    SupportedRpcProviderId, Signature, TransactionInfo,
 };
 use solana_clock::Slot;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
@@ -271,7 +271,7 @@ impl<R> SolRpcClient<R> {
         R,
         RpcConfig,
         SendTransactionParams,
-        sol_rpc_types::MultiRpcResult<TransactionId>,
+        sol_rpc_types::MultiRpcResult<Signature>,
         sol_rpc_types::MultiRpcResult<solana_signature::Signature>,
     >
     where

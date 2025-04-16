@@ -189,6 +189,14 @@ type GetAccountInfoParams = record {
 // Example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 type Pubkey = text;
 
+// Ed25519 signature as a base-58 encoded string.
+// Example: "5LrcE2f6uvydKRquEJ8xp19heGxSvqsVbcqUeFoiWbXe8JNip7ftPQNTAVPyTK7ijVdpkzmKKaAQR7MWMmujAhXD"
+type Signature = text;
+
+// A Solana blockhash as a bse58-encoded string.
+// Example: "DzfXchZJoLMG3cNftcf2sw7qatkkuwQf4xH15N5wkKAb"
+type Blockhash = text;
+
 // Solana account info.
 type AccountInfo = record {
     // Number of lamports assigned to this account.
@@ -244,7 +252,7 @@ type AccountEncoding = variant {
 // The parameters for a Solana `getTransaction` RPC method call.
 // TODO XC-293: documentation
 type GetTransactionParams = record {
-    signature: text;
+    signature: Signature;
     commitment: opt CommitmentLevel;
     maxSupportedTransactionVersion: opt nat8;
     encoding: opt variant { base58; base64 };
@@ -315,9 +323,9 @@ type Timestamp = int64;
 type ConfirmedBlock = record {
     // The blockhash of this block's parent, as base-58 encoded string; if the parent block is not
     // available due to ledger cleanup, this field will return "11111111111111111111111111111111".
-    previousBlockhash: text;
+    previousBlockhash: Blockhash;
     // The blockhash of this block, as base-58 encoded string.
-    blockhash: text;
+    blockhash: Blockhash;
     // The slot index of this block's parent.
     parentSlot: nat64;
     // Estimated production time.
@@ -326,7 +334,7 @@ type ConfirmedBlock = record {
     blockHeight: opt nat64;
     // The signatures of the transactions in this block. Included if the request parameter `transactionDetails` is not
     // `none`.
-    signatures: opt vec text;
+    signatures: opt vec Signature;
 };
 
 // Represents the result of a call to the `getBlock` Solana RPC method.
@@ -411,11 +419,11 @@ type InstructionError = variant {
   ReadonlyLamportChange;
   InsufficientFunds;
 };
-type LoadedAddresses = record { writable : vec text; readonly : vec text };
+type LoadedAddresses = record { writable : vec Pubkey; readonly : vec Pubkey };
 type Reward = record {
   lamports : int64;
   commission : opt nat8;
-  pubkey : text;
+  pubkey : Pubkey;
   reward_type : opt variant { Fee; Rent; Voting; Staking };
   post_balance : nat64;
 };
@@ -481,7 +489,7 @@ type TransactionStatusMeta = record {
   post_token_balances : opt vec TransactionTokenBalance;
   pre_balances : vec nat64;
   post_balances : vec nat64;
-  return_data : opt record { data : text; program_id : text };
+  return_data : opt record { data : text; program_id : Pubkey };
   log_messages : opt vec text;
   rewards : opt vec Reward;
   loaded_addresses : opt LoadedAddresses;
@@ -489,9 +497,9 @@ type TransactionStatusMeta = record {
   compute_units_consumed : opt nat64;
 };
 type TransactionTokenBalance = record {
-  owner : opt text;
+  owner : opt Pubkey;
   mint : text;
-  program_id : opt text;
+  program_id : opt Pubkey;
   account_index : nat8;
   ui_token_amount : TokenAmount;
 };
@@ -517,11 +525,8 @@ type MultiGetSlotResult = variant {
     Inconsistent : vec record { RpcSource; GetSlotResult };
 };
 
-// First transaction signature embedded in the transaction, as base-58 encoded string.
-type TransactionId = text;
-
 // Represents the result of a call to the `sendTransaction` Solana RPC method.
-type SendTransactionResult = variant { Ok : TransactionId; Err : RpcError };
+type SendTransactionResult = variant { Ok : Signature; Err : RpcError };
 
 // Represents an aggregated result from multiple RPC calls to the `sendTransaction` Solana RPC method.
 type MultiSendTransactionResult = variant {
