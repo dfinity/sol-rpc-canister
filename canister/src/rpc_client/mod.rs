@@ -26,7 +26,7 @@ use ic_cdk::api::management_canister::http_request::{
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
     ConsensusStrategy, GetSlotRpcConfig, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource,
-    RpcSources, TransactionDetails, Signature,
+    RpcSources, Signature, TransactionDetails,
 };
 use solana_clock::Slot;
 use std::{fmt::Debug, marker::PhantomData};

@@ -53,8 +53,8 @@ use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     GetAccountInfoParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig, GetTransactionParams,
-    RpcConfig, RpcSources, SendTransactionParams, SolanaCluster, SupportedRpcProvider,
-    SupportedRpcProviderId, Signature, TransactionInfo,
+    RpcConfig, RpcSources, SendTransactionParams, Signature, SolanaCluster, SupportedRpcProvider,
+    SupportedRpcProviderId, TransactionInfo,
 };
 use solana_clock::Slot;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;

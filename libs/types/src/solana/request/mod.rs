@@ -1,5 +1,4 @@
-use crate::solana::Pubkey;
-use crate::{RpcError, Signature, Slot};
+use crate::{solana::Pubkey, RpcError, Signature, Slot};
 use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
 use candid::{CandidType, Deserialize};
 use serde::Serialize;

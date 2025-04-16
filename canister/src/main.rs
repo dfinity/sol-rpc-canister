@@ -14,8 +14,8 @@ use sol_rpc_canister::{
 use sol_rpc_types::{
     AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBlockParams, GetSlotParams,
     GetSlotRpcConfig, GetTransactionParams, MultiRpcResult, RpcAccess, RpcConfig, RpcResult,
-    RpcSources, SendTransactionParams, Slot, SupportedRpcProvider, SupportedRpcProviderId,
-    Signature, TransactionInfo,
+    RpcSources, SendTransactionParams, Signature, Slot, SupportedRpcProvider,
+    SupportedRpcProviderId, TransactionInfo,
 };
 use std::str::FromStr;
 

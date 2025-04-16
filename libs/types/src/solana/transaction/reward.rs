@@ -1,6 +1,6 @@
+use crate::Pubkey;
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
-use crate::Pubkey;
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct Reward {
