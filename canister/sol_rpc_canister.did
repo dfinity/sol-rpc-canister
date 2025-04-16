@@ -302,7 +302,7 @@ type GetBlockParams = record {
     slot: Slot;
     // Specifies what transaction details to include in the response.
     // If this field is not specified, the default value of "none" will be used.
-    transactionDetails: opt variant { none; signatures };
+    transactionDetails: opt TransactionDetails;
     // The commitment describes how finalized a block is at that point in time.
     commitment: opt variant { confirmed; finalized };
     // The max transaction version to return in responses.
@@ -351,8 +351,8 @@ type MultiGetBlockResult = variant {
 type CompiledInstruction = record {
   data : text;
   accounts : blob;
-  program_id_index : nat8;
-  stack_height : opt nat32;
+  programIdIndex : nat8;
+  stackHeight : opt nat32;
 };
 type EncodedTransaction = variant {
   Binary : record { text; variant { base58; base64 } };
@@ -424,13 +424,13 @@ type Reward = record {
   lamports : int64;
   commission : opt nat8;
   pubkey : Pubkey;
-  reward_type : opt variant { Fee; Rent; Voting; Staking };
-  post_balance : nat64;
+  rewardType : opt variant { Fee; Rent; Voting; Staking };
+  postBalance : nat64;
 };
 type TokenAmount = record {
   decimals : nat8;
-  ui_amount : opt float64;
-  ui_amount_string : text;
+  uiAmount : opt float64;
+  uiAmountString : text;
   amount : text;
 };
 type TransactionDetails = variant { none; signatures };
@@ -476,7 +476,7 @@ type TransactionError = variant {
   BlockhashNotFound;
 };
 type TransactionInfo = record {
-  block_time : opt Timestamp;
+  blockTime : opt Timestamp;
   meta : opt TransactionStatusMeta;
   transaction : EncodedTransaction;
   slot : nat64;
@@ -485,23 +485,23 @@ type TransactionInfo = record {
 type TransactionStatusMeta = record {
   fee : nat64;
   status : variant { Ok; Err: TransactionError };
-  inner_instructions : opt vec InnerInstructions;
-  post_token_balances : opt vec TransactionTokenBalance;
-  pre_balances : vec nat64;
-  post_balances : vec nat64;
-  return_data : opt record { data : text; program_id : Pubkey };
-  log_messages : opt vec text;
+  innerInstructions : opt vec InnerInstructions;
+  postTokenBalances : opt vec TransactionTokenBalance;
+  preBalances : vec nat64;
+  postBalances : vec nat64;
+  returnData : opt record { data : text; programId : Pubkey };
+  logMessages : opt vec text;
   rewards : opt vec Reward;
-  loaded_addresses : opt LoadedAddresses;
-  pre_token_balances : opt vec TransactionTokenBalance;
-  compute_units_consumed : opt nat64;
+  loadedAddresses : opt LoadedAddresses;
+  preTokenBalances : opt vec TransactionTokenBalance;
+  computeUnitsConsumed : opt nat64;
 };
 type TransactionTokenBalance = record {
   owner : opt Pubkey;
   mint : text;
-  program_id : opt Pubkey;
-  account_index : nat8;
-  ui_token_amount : TokenAmount;
+  programId : opt Pubkey;
+  accountIndex : nat8;
+  uiTokenAmount : TokenAmount;
 };
 
 // Represents the result of a call to the `getTransaction` Solana RPC method.

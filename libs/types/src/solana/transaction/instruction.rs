@@ -46,9 +46,11 @@ impl TryFrom<UiInstruction> for Instruction {
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct CompiledInstruction {
+    #[serde(rename = "programIdIndex")]
     pub program_id_index: u8,
     pub accounts: Vec<u8>,
     pub data: String,
+    #[serde(rename = "stackHeight")]
     pub stack_height: Option<u32>,
 }
 

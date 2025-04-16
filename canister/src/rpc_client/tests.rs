@@ -84,6 +84,7 @@ mod request_serialization_tests {
 
     #[test]
     fn should_serialize_get_transaction_request() {
+        let signature = solana_signature::Signature::default().to_string();
         assert_serialized(
             GetTransactionRequest::get_transaction(
                 RpcSources::Default(SolanaCluster::Mainnet),
@@ -91,10 +92,7 @@ mod request_serialization_tests {
                 GetTransactionParams::from(solana_signature::Signature::default()),
             )
             .unwrap(),
-            json!([
-                "1111111111111111111111111111111111111111111111111111111111111111",
-                null
-            ]),
+            json!([signature, null]),
         );
         assert_serialized(
             GetTransactionRequest::get_transaction(
@@ -109,7 +107,7 @@ mod request_serialization_tests {
             )
             .unwrap(),
             json!([
-                "1111111111111111111111111111111111111111111111111111111111111111",
+                signature,
                 {
                     "commitment": "confirmed",
                     "maxSupportedTransactionVersion": 2,

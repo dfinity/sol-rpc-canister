@@ -95,7 +95,10 @@ pub struct GetBlockParams {
     pub max_supported_transaction_version: Option<u8>,
     /// Specifies what transaction details to include in the response.
     ///
-    /// If this field is not specified, the default value of [`TransactionDetails::None`] is used.
+    /// *Warning:* If this value is not specified, the default value of [`TransactionDetails::None`]
+    /// will be used, which is different from the default value in the Solana RPC API. This is
+    /// because the default value of `full` for the Solana RPC API results in response sizes that
+    /// are generally too large to be supported by the ICP.
     #[serde(rename = "transactionDetails")]
     pub transaction_details: Option<TransactionDetails>,
 }
@@ -128,13 +131,16 @@ impl From<Slot> for GetBlockParams {
 
 /// Determines whether and how transactions are included in `getBlock` response.
 ///
-/// The default value is [`TransactionDetails::None`].
-#[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
+/// *Warning:* If this value is not specified, the default value of [`TransactionDetails::None`]
+/// will be used, which is different from the default value in the Solana RPC API. This is
+/// because the default value of `full` for the Solana RPC API results in response sizes that
+/// are generally too large to be supported by the ICP.
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, CandidType)]
 pub enum TransactionDetails {
-    /// Omits all transaction data and signatures; returns only block metadata.
+    /// Includes transaction signatures (IDs) and block metadata only.
     #[serde(rename = "signatures")]
     Signatures,
-    /// Includes transaction signatures (IDs) only; omits messages and metadata.
+    /// Omits all transaction data and signatures; returns only block metadata.
     #[default]
     #[serde(rename = "none")]
     None,

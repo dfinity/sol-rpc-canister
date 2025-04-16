@@ -126,7 +126,7 @@ impl GetBlockRequest {
         let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
         let max_response_bytes = config.response_size_estimate.unwrap_or(
             match params.get_transaction_details() {
-                None | Some(TransactionDetails::None) => 1024,
+                None | Some(TransactionDetails::None) => 2048,
                 Some(TransactionDetails::Signatures) => 512 * 1024,
             } + HEADER_SIZE_LIMIT,
         );

@@ -18,6 +18,7 @@ use solana_transaction_status_client_types::{
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct TransactionInfo {
     pub slot: Slot,
+    #[serde(rename = "blockTime")]
     pub block_time: Option<Timestamp>,
     pub meta: Option<TransactionStatusMeta>,
     pub transaction: EncodedTransaction,
@@ -62,15 +63,24 @@ impl From<TransactionInfo> for EncodedConfirmedTransactionWithStatusMeta {
 pub struct TransactionStatusMeta {
     pub status: Result<(), TransactionError>,
     pub fee: u64,
+    #[serde(rename = "preBalances")]
     pub pre_balances: Vec<u64>,
+    #[serde(rename = "postBalances")]
     pub post_balances: Vec<u64>,
+    #[serde(rename = "innerInstructions")]
     pub inner_instructions: Option<Vec<InnerInstructions>>,
+    #[serde(rename = "logMessages")]
     pub log_messages: Option<Vec<String>>,
+    #[serde(rename = "preTokenBalances")]
     pub pre_token_balances: Option<Vec<TransactionTokenBalance>>,
+    #[serde(rename = "postTokenBalances")]
     pub post_token_balances: Option<Vec<TransactionTokenBalance>>,
     pub rewards: Option<Vec<Reward>>,
+    #[serde(rename = "loadedAddresses")]
     pub loaded_addresses: Option<LoadedAddresses>,
+    #[serde(rename = "returnData")]
     pub return_data: Option<TransactionReturnData>,
+    #[serde(rename = "computeUnitsConsumed")]
     pub compute_units_consumed: Option<u64>,
 }
 
@@ -246,10 +256,13 @@ impl From<CompiledInstruction> for UiCompiledInstruction {
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct TransactionTokenBalance {
+    #[serde(rename = "accountIndex")]
     pub account_index: u8,
     pub mint: String,
+    #[serde(rename = "uiTokenAmount")]
     pub ui_token_amount: TokenAmount,
     pub owner: Option<Pubkey>,
+    #[serde(rename = "programId")]
     pub program_id: Option<Pubkey>,
 }
 
@@ -283,9 +296,11 @@ impl From<TransactionTokenBalance>
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct TokenAmount {
+    #[serde(rename = "uiAmount")]
     pub ui_amount: Option<f64>,
     pub decimals: u8,
     pub amount: String,
+    #[serde(rename = "uiAmountString")]
     pub ui_amount_string: String,
 }
 
@@ -337,6 +352,7 @@ impl From<LoadedAddresses> for solana_transaction_status_client_types::UiLoadedA
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct TransactionReturnData {
+    #[serde(rename = "programId")]
     pub program_id: Pubkey,
     pub data: String,
 }

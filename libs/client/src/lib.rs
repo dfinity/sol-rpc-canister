@@ -54,7 +54,7 @@ use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     GetAccountInfoParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig, GetTransactionParams,
     RpcConfig, RpcSources, SendTransactionParams, Signature, SolanaCluster, SupportedRpcProvider,
-    SupportedRpcProviderId, TransactionInfo,
+    SupportedRpcProviderId, TransactionDetails, TransactionInfo,
 };
 use solana_clock::Slot;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
@@ -225,11 +225,12 @@ impl<R> SolRpcClient<R> {
             Option<solana_transaction_status_client_types::UiConfirmedBlock>,
         >,
     > {
-        RequestBuilder::new(
-            self.clone(),
-            GetBlockRequest::new(params.into()),
-            10_000_000_000,
-        )
+        let params = params.into();
+        let cycles = match params.transaction_details.unwrap_or_default() {
+            TransactionDetails::Signatures => 100_000_000_000,
+            TransactionDetails::None => 10_000_000_000,
+        };
+        RequestBuilder::new(self.clone(), GetBlockRequest::new(params), cycles)
     }
 
     /// Call `getSlot` on the SOL RPC canister.

@@ -6,7 +6,9 @@ use serde::Serialize;
 pub struct Reward {
     pub pubkey: Pubkey,
     pub lamports: i64,
+    #[serde(rename = "postBalance")]
     pub post_balance: u64,
+    #[serde(rename = "rewardType")]
     pub reward_type: Option<RewardType>,
     pub commission: Option<u8>,
 }
