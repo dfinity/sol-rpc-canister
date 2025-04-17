@@ -31,7 +31,7 @@ pub struct TransactionInfo {
     /// [Transaction](https://solana.com/de/docs/rpc/json-structures#transactions) object, either
     /// in JSON format or encoded binary data, depending on encoding parameter.
     pub transaction: EncodedTransaction,
-    /// Transaction version. [`None`] if [`maxSupportedTransactionVersion`] is not set in request params.
+    /// Transaction version. [`None`] if `maxSupportedTransactionVersion` is not set in request params.
     pub version: Option<TransactionVersion>,
 }
 
