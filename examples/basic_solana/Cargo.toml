@@ -3,8 +3,9 @@ name = "basic_solana"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-crate-type = ["cdylib"]
+[[bin]]
+name = "basic_solana"
+path = "src/main.rs"
 
 [dependencies]
 base64 = "0.22.1"
