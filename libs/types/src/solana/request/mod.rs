@@ -89,6 +89,16 @@ pub struct GetBalanceParams {
     pub min_context_slot: Option<u64>,
 }
 
+impl From<solana_pubkey::Pubkey> for GetBalanceParams {
+    fn from(pubkey: solana_pubkey::Pubkey) -> Self {
+        Self {
+            pubkey: pubkey.to_string(),
+            commitment: None,
+            min_context_slot: None,
+        }
+    }
+}
+
 /// The parameters for a Solana [`getBlock`](https://solana.com/docs/rpc/http/getblock) RPC method call.
 // TODO XC-342: Add `rewards`, `encoding` and `transactionDetails` fields.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
