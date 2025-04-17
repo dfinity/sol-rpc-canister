@@ -773,10 +773,10 @@ mod cycles_cost_tests {
                     check(client.json_request(get_version_request())).await;
                 }
                 SolRpcEndpoint::GetAccountInfo => {
-                    check(client.get_account_info(some_pubkey())).await;
+                    check(client.get_account_info(USDC_PUBLIC_KEY)).await;
                 }
                 SolRpcEndpoint::GetBalance => {
-                    check(client.get_balance(some_pubkey())).await;
+                    check(client.get_balance(USDC_PUBLIC_KEY)).await;
                 }
                 SolRpcEndpoint::GetBlock => {
                     check(client.get_block(577996)).await;
@@ -820,10 +820,10 @@ mod cycles_cost_tests {
                     check(client.get_slot().with_params(GetSlotParams::default())).await;
                 }
                 SolRpcEndpoint::GetAccountInfo => {
-                    check(client.get_account_info(some_pubkey())).await;
+                    check(client.get_account_info(USDC_PUBLIC_KEY)).await;
                 }
                 SolRpcEndpoint::GetBalance => {
-                    check(client.get_balance(some_pubkey())).await;
+                    check(client.get_balance(USDC_PUBLIC_KEY)).await;
                 }
                 SolRpcEndpoint::GetBlock => {
                     check(client.get_block(577996)).await;
@@ -922,13 +922,13 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::GetAccountInfo => {
                     check(
                         &setup,
-                        client.get_account_info(some_pubkey()),
+                        client.get_account_info(USDC_PUBLIC_KEY),
                         1_793_744_800,
                     )
                     .await;
                 }
                 SolRpcEndpoint::GetBalance => {
-                    check(&setup, client.get_balance(some_pubkey()), 1_731_769_600).await;
+                    check(&setup, client.get_balance(USDC_PUBLIC_KEY), 1_731_769_600).await;
                 }
                 SolRpcEndpoint::GetBlock => {
                     check(&setup, client.get_block(577996), 1_791_868_000).await;
@@ -1051,12 +1051,6 @@ fn assert_within(actual: u128, expected: u128, percentage_error: u8) {
         actual,
         upper_bound
     );
-}
-
-fn some_pubkey() -> solana_pubkey::Pubkey {
-    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-        .parse::<solana_pubkey::Pubkey>()
-        .unwrap()
 }
 
 fn some_transaction() -> solana_transaction::Transaction {
