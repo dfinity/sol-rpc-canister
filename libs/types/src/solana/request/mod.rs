@@ -35,17 +35,22 @@ impl GetAccountInfoParams {
             && data_slice.is_none()
             && min_context_slot.is_none()
     }
-}
 
-impl From<solana_pubkey::Pubkey> for GetAccountInfoParams {
-    fn from(pubkey: solana_pubkey::Pubkey) -> Self {
+    /// Parameters for a `getAccountInfo` request with the given pubkey already base58-encoded.
+    pub fn from_encoded_pubkey(pubkey: String) -> Self {
         Self {
-            pubkey: pubkey.to_string(),
+            pubkey,
             commitment: None,
             encoding: None,
             data_slice: None,
             min_context_slot: None,
         }
+    }
+}
+
+impl From<solana_pubkey::Pubkey> for GetAccountInfoParams {
+    fn from(pubkey: solana_pubkey::Pubkey) -> Self {
+        Self::from_encoded_pubkey(pubkey.to_string())
     }
 }
 
@@ -188,12 +193,22 @@ impl GetSlotParams {
     }
 }
 
+/// The parameters for a Solana [`getTransaction`](https://solana.com/docs/rpc/http/gettransaction) RPC method call.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub struct GetTransactionParams {
+    /// Transaction signature.
     pub signature: Signature,
+    /// Specifies the required finality of the transaction being queried.
     pub commitment: Option<CommitmentLevel>,
+    /// Set the max transaction version to return in responses.
+    ///
+    /// If the requested transaction is a higher version, an error will be returned. If this
+    /// parameter is omitted, only legacy transactions will be returned, and any versioned
+    /// transaction will prompt the error.
     #[serde(rename = "maxSupportedTransactionVersion")]
     pub max_supported_transaction_version: Option<u8>,
+    /// Encoding for the returned transaction
+    // TODO XC-343: Add notes about `jsonParsed` from https://solana.com/de/docs/rpc/http/gettransaction
     pub encoding: Option<GetTransactionEncoding>,
 }
 
@@ -221,11 +236,15 @@ impl From<solana_signature::Signature> for GetTransactionParams {
     }
 }
 
+/// Encoding format for the returned transaction from a [`getTransaction`](https://solana.com/docs/rpc/http/gettransaction)`
+/// RPC method call.
 // TODO XC-343: Add support for `json` and `jsonParsed` formats.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub enum GetTransactionEncoding {
+    /// The transaction is base64-encoded.
     #[serde(rename = "base64")]
     Base64,
+    /// The transaction is base58-encoded.
     #[serde(rename = "base58")]
     Base58,
 }
@@ -254,7 +273,7 @@ pub struct SendTransactionParams {
 }
 
 impl SendTransactionParams {
-    /// Parameters for a `sendTransaction` request with the given transaction already encoded wit
+    /// Parameters for a `sendTransaction` request with the given transaction already encoded with
     /// the given encoding.
     pub fn from_encoded_transaction(
         transaction: String,

@@ -1,6 +1,7 @@
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
 
+/// Represents errors that can occur during the processing of a Solana transaction.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub enum TransactionError {
     /// An account is already being processed in another transaction in a way
@@ -41,7 +42,7 @@ pub enum TransactionError {
     /// implies that account locks are not taken for this TX, and should
     /// not be unlocked.
     SanitizeFailure,
-    // TODO XC-293
+    /// The transaction was rejected because the cluster is undergoing maintenance.
     ClusterMaintenance,
     /// Transaction processing left an account with an outstanding borrowed reference
     AccountBorrowOutstanding,
@@ -75,6 +76,7 @@ pub enum TransactionError {
     DuplicateInstruction(u8),
     /// Transaction results in an account with insufficient funds for rent
     InsufficientFundsForRent {
+        /// Index of the account.
         account_index: u8,
     },
     /// Transaction exceeded max loaded accounts data size cap
@@ -85,6 +87,7 @@ pub enum TransactionError {
     ResanitizationNeeded,
     /// Program execution is temporarily restricted on an account.
     ProgramExecutionTemporarilyRestricted {
+        /// Index of the account.
         account_index: u8,
     },
     /// The total balance before the transaction does not equal the total balance after the transaction
@@ -292,6 +295,8 @@ impl From<TransactionError> for solana_transaction_error::TransactionError {
     }
 }
 
+/// Represents errors that can occur during the execution of a specific instruction within a Solana
+/// transaction.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub enum InstructionError {
     /// Deprecated! Use CustomError instead!

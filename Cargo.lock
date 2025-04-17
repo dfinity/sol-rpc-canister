@@ -277,12 +277,14 @@ dependencies = [
  "bs58",
  "candid",
  "getrandom 0.2.15",
- "http 1.3.1",
  "ic-cdk",
  "ic-ed25519",
  "num 0.4.3",
  "serde",
  "serde_json",
+ "sol_rpc_client",
+ "sol_rpc_types",
+ "solana-account-decoder-client-types",
  "solana-hash",
  "solana-instruction",
  "solana-message",
@@ -5347,7 +5349,7 @@ dependencies = [
 [[package]]
 name = "solana-system-interface"
 version = "1.0.0"
-source = "git+https://github.com/lpahlavi/solana-program-system.git#6dfd02af3419fe1c3abec879a787aeb2bbbed9de"
+source = "git+https://github.com/dfinity/solana-system-program?tag=6185b40-js-feature-flag#d07e31c48384d30722a13e3585a7b04120a0e1fd"
 dependencies = [
  "num-traits",
  "serde",
