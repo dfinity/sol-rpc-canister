@@ -1,14 +1,28 @@
 use basic_solana::{Ed25519KeyName, SolanaNetwork};
-use candid::{Encode, Principal};
+use candid::{Decode, Encode, Principal};
 use pocket_ic::management_canister::{CanisterId, CanisterSettings};
 use pocket_ic::{PocketIc, PocketIcBuilder};
 use sol_rpc_types::{OverrideProvider, RegexSubstitution};
 use std::env::var;
 use std::path::PathBuf;
 
+pub const USER: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x42]);
+
 #[test]
 fn test_basic_solana() {
     let setup = Setup::new();
+
+    let solana_account = setup
+        .env
+        .update_call(
+            setup.basic_solana_canister_id,
+            USER,
+            "solana_account",
+            Encode!(&()).unwrap(),
+        )
+        .expect("Failed to call solana_account");
+    let solana_account = Decode!(&solana_account, String).expect("Failed to decode solana_account");
+    assert_eq!(solana_account, "FufA3YFUgqDQNj4yKM2HUe9QrmPDwbuwEGEdZ3ueDggS");
 }
 
 pub struct Setup {

@@ -33,5 +33,6 @@ solana-signature = { workspace = true }
 solana-transaction = { workspace = true, features = ["bincode"] }
 
 [dev-dependencies]
+candid = { workspace = true }
 ic-test-utilities-load-wasm = { workspace = true }
 pocket-ic = { workspace = true }
