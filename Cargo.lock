@@ -4131,6 +4131,7 @@ dependencies = [
  "solana-signature",
  "solana-transaction-status-client-types",
  "strum 0.27.1",
+ "tokio",
 ]
 
 [[package]]
