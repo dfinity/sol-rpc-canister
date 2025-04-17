@@ -252,11 +252,10 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                     .header("Content-Type", "text/plain; version=0.0.4")
                     .with_body_and_content_length(writer.into_inner())
                     .build(),
-                Err(err) => HttpResponseBuilder::server_error(format!(
-                    "Failed to encode metrics: {}",
-                    err
-                ))
-                .build(),
+                Err(err) => {
+                    HttpResponseBuilder::server_error(format!("Failed to encode metrics: {}", err))
+                        .build()
+                }
             }
         }
         "/logs" => {
