@@ -48,7 +48,7 @@ serde_with = { workspace = true }
 candid_parser = { workspace = true }
 proptest = { workspace = true }
 solana-pubkey = { workspace = true }
-solana-rpc-client-api = { workspace = true }
+solana-signature = { workspace = true }
 
 [features]
 # WARNING: Disabling this feature will lead to some functionality not working anymore

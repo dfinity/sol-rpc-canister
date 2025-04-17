@@ -126,18 +126,20 @@ pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 use std::fmt::Debug;
 
 use crate::request::{
-    GetAccountInfoRequest, GetBlockRequest, GetSlotRequest, JsonRequest, SendTransactionRequest,
+    GetAccountInfoRequest, GetBlockRequest, GetSlotRequest, GetTransactionRequest, JsonRequest,
+    SendTransactionRequest,
 };
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    GetAccountInfoParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources,
-    SendTransactionParams, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
-    TransactionId,
+    GetAccountInfoParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig, GetTransactionParams,
+    RpcConfig, RpcSources, SendTransactionParams, Signature, SolanaCluster, SupportedRpcProvider,
+    SupportedRpcProviderId, TransactionDetails, TransactionInfo,
 };
 use solana_clock::Slot;
+use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
 use std::sync::Arc;
 
 /// The principal identifying the productive Solana RPC canister under NNS control.
@@ -333,11 +335,12 @@ impl<R> SolRpcClient<R> {
             Option<solana_transaction_status_client_types::UiConfirmedBlock>,
         >,
     > {
-        RequestBuilder::new(
-            self.clone(),
-            GetBlockRequest::new(params.into()),
-            10_000_000_000,
-        )
+        let params = params.into();
+        let cycles = match params.transaction_details.unwrap_or_default() {
+            TransactionDetails::Signatures => 100_000_000_000,
+            TransactionDetails::None => 10_000_000_000,
+        };
+        RequestBuilder::new(self.clone(), GetBlockRequest::new(params), cycles)
     }
 
     /// Call `getSlot` on the SOL RPC canister.
@@ -381,6 +384,24 @@ impl<R> SolRpcClient<R> {
         RequestBuilder::new(self.clone(), GetSlotRequest::default(), 10_000_000_000)
     }
 
+    /// Call `getTransaction` on the SOL RPC canister.
+    pub fn get_transaction(
+        &self,
+        params: impl Into<GetTransactionParams>,
+    ) -> RequestBuilder<
+        R,
+        RpcConfig,
+        GetTransactionParams,
+        sol_rpc_types::MultiRpcResult<Option<TransactionInfo>>,
+        sol_rpc_types::MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>,
+    > {
+        RequestBuilder::new(
+            self.clone(),
+            GetTransactionRequest::new(params.into()),
+            10_000_000_000,
+        )
+    }
+
     /// Call `sendTransaction` on the SOL RPC canister.
     ///
     /// # Examples
@@ -422,7 +443,7 @@ impl<R> SolRpcClient<R> {
         R,
         RpcConfig,
         SendTransactionParams,
-        sol_rpc_types::MultiRpcResult<TransactionId>,
+        sol_rpc_types::MultiRpcResult<Signature>,
         sol_rpc_types::MultiRpcResult<solana_signature::Signature>,
     >
     where
