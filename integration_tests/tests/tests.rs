@@ -1003,7 +1003,8 @@ mod get_balance_tests {
                 "id": Id::from(ConstantSizeId::from(id)),
                 "jsonrpc": "2.0",
                 "result": {
-                    "context": { "slot": 334048531, "apiVersion": "2.1.9" },
+                    // context should be filtered out by transform
+                    "context": { "slot": 334048531 + id as u64, "apiVersion": "2.1.9" },
                     "value": 389086612571_u64
                 },
             })
