@@ -83,6 +83,7 @@ pub struct DataSlice {
     pub offset: u32,
 }
 
+/// The parameters for a Solana [`getBalance`](https://solana.com/docs/rpc/http/getbalance) RPC method call.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
 pub struct GetBalanceParams {
     /// The public key of the account to query formatted as a base-58 string.
