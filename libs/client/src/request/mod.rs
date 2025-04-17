@@ -320,6 +320,15 @@ impl<Runtime, Config, Params, CandidOutput, Output>
         self
     }
 
+    /// Modify current parameters to send for that request.
+    pub fn modify_params<F>(mut self, mutator: F) -> Self
+    where
+        F: FnOnce(&mut Params),
+    {
+        mutator(self.request.params_mut());
+        self
+    }
+
     /// Change the RPC configuration to use for that request.
     pub fn with_rpc_config(mut self, rpc_config: impl Into<Option<Config>>) -> Self {
         *self.request.rpc_config_mut() = rpc_config.into();
