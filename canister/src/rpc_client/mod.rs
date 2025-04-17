@@ -26,7 +26,7 @@ use ic_cdk::api::management_canister::http_request::{
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
     ConsensusStrategy, GetSlotRpcConfig, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource,
-    RpcSources, TransactionId,
+    RpcSources, Signature, TransactionDetails,
 };
 use solana_clock::Slot;
 use std::{fmt::Debug, marker::PhantomData};
@@ -121,16 +121,19 @@ impl GetBlockRequest {
         config: RpcConfig,
         params: Params,
     ) -> Result<Self, ProviderError> {
+        let params = params.into();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
         let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
-        let max_response_bytes = config
-            .response_size_estimate
-            // TODO XC-342: Revisit this when we add support for more values of `transactionDetails`
-            .unwrap_or(1024 + HEADER_SIZE_LIMIT);
+        let max_response_bytes = config.response_size_estimate.unwrap_or(
+            match params.get_transaction_details() {
+                None | Some(TransactionDetails::None) => 2048,
+                Some(TransactionDetails::Signatures) => 512 * 1024,
+            } + HEADER_SIZE_LIMIT,
+        );
 
         Ok(MultiRpcRequest::new(
             providers,
-            JsonRpcRequest::new("getBlock", params.into()),
+            JsonRpcRequest::new("getBlock", params),
             max_response_bytes,
             ResponseTransform::GetBlock,
             ReductionStrategy::from(consensus_strategy),
@@ -166,7 +169,35 @@ impl GetSlotRequest {
     }
 }
 
-pub type SendTransactionRequest = MultiRpcRequest<json::SendTransactionParams, TransactionId>;
+pub type GetTransactionRequest = MultiRpcRequest<
+    json::GetTransactionParams,
+    Option<solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta>,
+>;
+
+impl GetTransactionRequest {
+    pub fn get_transaction<Params: Into<json::GetTransactionParams>>(
+        rpc_sources: RpcSources,
+        config: RpcConfig,
+        params: Params,
+    ) -> Result<Self, ProviderError> {
+        let consensus_strategy = config.response_consensus.unwrap_or_default();
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let max_response_bytes = config
+            .response_size_estimate
+            // TODO XC-343: Revisit this when we add support for more values of `encoding`
+            .unwrap_or(10 * 1024 + HEADER_SIZE_LIMIT);
+
+        Ok(MultiRpcRequest::new(
+            providers,
+            JsonRpcRequest::new("getTransaction", params.into()),
+            max_response_bytes,
+            ResponseTransform::GetBlock,
+            ReductionStrategy::from(consensus_strategy),
+        ))
+    }
+}
+
+pub type SendTransactionRequest = MultiRpcRequest<json::SendTransactionParams, Signature>;
 
 impl SendTransactionRequest {
     pub fn send_transaction<Params: Into<json::SendTransactionParams>>(

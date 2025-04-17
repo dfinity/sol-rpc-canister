@@ -2,9 +2,9 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetBlockCommitmentLevel,
-    SendTransactionEncoding, Slot,
+    GetTransactionEncoding, SendTransactionEncoding, Slot, TransactionDetails,
 };
-use solana_transaction_status_client_types::{TransactionDetails, UiTransactionEncoding};
+use solana_transaction_status_client_types::UiTransactionEncoding;
 
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -82,14 +82,21 @@ pub struct GetAccountInfoConfig {
 #[serde(into = "(Slot, Option<GetBlockConfig>)")]
 pub struct GetBlockParams(Slot, Option<GetBlockConfig>);
 
+impl GetBlockParams {
+    pub fn get_transaction_details(&self) -> Option<&TransactionDetails> {
+        self.1
+            .as_ref()
+            .and_then(|config| config.transaction_details.as_ref())
+    }
+}
+
 impl From<sol_rpc_types::GetBlockParams> for GetBlockParams {
     fn from(params: sol_rpc_types::GetBlockParams) -> Self {
         // TODO XC-342: Check if all config fields are null, and if so, serialize it as null.
-        //  Currently, we do not want it to be null since e.g. `"transactionDetails": "none"`
-        //  is not the default value.
+        //  Currently, we do not want it to be null since rewards=false is not the default value.
         let config = Some(GetBlockConfig {
             encoding: None,
-            transaction_details: Some(TransactionDetails::None),
+            transaction_details: Some(params.transaction_details.unwrap_or_default()),
             rewards: Some(false),
             commitment: params.commitment,
             max_supported_transaction_version: params.max_supported_transaction_version,
@@ -115,6 +122,41 @@ pub struct GetBlockConfig {
     pub commitment: Option<GetBlockCommitmentLevel>,
     #[serde(rename = "maxSupportedTransactionVersion")]
     pub max_supported_transaction_version: Option<u8>,
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(into = "(String, Option<GetTransactionConfig>)")]
+pub struct GetTransactionParams(String, Option<GetTransactionConfig>);
+
+impl From<sol_rpc_types::GetTransactionParams> for GetTransactionParams {
+    fn from(params: sol_rpc_types::GetTransactionParams) -> Self {
+        let config = if params.is_default_config() {
+            None
+        } else {
+            Some(GetTransactionConfig {
+                commitment: params.commitment,
+                max_supported_transaction_version: params.max_supported_transaction_version,
+                encoding: params.encoding,
+            })
+        };
+        Self(params.signature, config)
+    }
+}
+
+impl From<GetTransactionParams> for (String, Option<GetTransactionConfig>) {
+    fn from(params: GetTransactionParams) -> Self {
+        (params.0.to_string(), params.1)
+    }
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct GetTransactionConfig {
+    pub commitment: Option<CommitmentLevel>,
+    #[serde(rename = "maxSupportedTransactionVersion")]
+    pub max_supported_transaction_version: Option<u8>,
+    pub encoding: Option<GetTransactionEncoding>,
 }
 
 #[skip_serializing_none]

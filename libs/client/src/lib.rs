@@ -24,38 +24,122 @@
 //!     .build();
 //! ```
 //!
-//! ## Overriding client configuration for a specific call
+//! ## Estimating the amount of cycles to send
 //!
-//! It is sometimes desirable to have a custom configuration for a specific call, e.g. to change the amount of cycles attached:
+//! Every call made to the SOL RPC canister that triggers HTTPs outcalls (e.g., `getSlot`)
+//! needs to attach some cycles to pay for the call.
+//! By default, the client will attach some amount of cycles that should be sufficient for most cases.
+//!
+//! If this is not the case, the amount of cycles to be sent can be changed as follows:
+//! 1. Determine the required amount of cycles to send for a particular request.
+//!    The SOL RPC canister offers some query endpoints (e.g., `getSlotCyclesCost`) for that purpose.
+//!    This could help establishing a baseline so that the estimated cycles cost for similar requests
+//!    can be extrapolated from it instead of making additional queries to the SOL RPC canister.
+//! 2. Override the amount of cycles to send for that particular request.
+//!    It's advisable to actually send *more* cycles than required, since *unused cycles will be refunded*.
 //!
 //! ```rust
 //! use sol_rpc_client::SolRpcClient;
-//! let client = SolRpcClient::builder_for_ic().build();
+//! use sol_rpc_types::MultiRpcResult;
 //!
-//! let slot_fut = client.get_slot().with_cycles(42).send();
+//! # #[tokio::main]
+//! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! # use sol_rpc_types::RpcError;
+//! let client = SolRpcClient::builder_for_ic()
+//! #   .with_mocked_responses(
+//! #        MultiRpcResult::Consistent(Ok(332_577_897_u64)),
+//! #        Ok::<u128, RpcError>(100_000_000_000),
+//! #    )
+//!     .build();
+//!
+//! let request = client.get_slot();
+//!
+//! let minimum_required_cycles_amount = request.clone().request_cost().send().await.unwrap();
+//!
+//! let slot = request
+//!     .with_cycles(minimum_required_cycles_amount)
+//!     .send()
+//!     .await
+//!     .expect_consistent();
+//!
+//! assert_eq!(slot, Ok(332_577_897_u64));
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! ## Overriding client configuration for a specific call
+//!
+//! Besides changing the amount of cycles for a particular call as described above,
+//! it is sometimes desirable to have a custom configuration for a specific
+//! call that is different from the one used by the client for all the other calls.
+//!
+//! For example, maybe for most calls a 2 out-of 3 strategy is good enough, but for `getSlot`
+//! your application requires a higher threshold and more robustness with a 3 out-of 5 :
+//!
+//! ```rust
+//! use sol_rpc_client::SolRpcClient;
+//! use sol_rpc_types::{
+//!     ConsensusStrategy, GetSlotRpcConfig, MultiRpcResult, RpcConfig, RpcSources,
+//!     SolanaCluster,
+//! };
+//!
+//! # #[tokio::main]
+//! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! let client = SolRpcClient::builder_for_ic()
+//! #   .with_mocked_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+//!     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+//!     .with_rpc_config(RpcConfig {
+//!         response_consensus: Some(ConsensusStrategy::Threshold {
+//!             total: Some(3),
+//!             min: 2,
+//!         }),
+//!     ..Default::default()
+//!     })
+//!     .build();
+//!
+//! let slot = client
+//!     .get_slot()
+//!     .with_rpc_config(GetSlotRpcConfig {
+//!         response_consensus: Some(ConsensusStrategy::Threshold {
+//!             total: Some(5),
+//!             min: 3,
+//!         }),
+//!         ..Default::default()
+//!     })
+//!     .send()
+//!     .await
+//!     .expect_consistent();
+//!
+//! assert_eq!(slot, Ok(332_577_897_u64));
+//! # Ok(())
+//! # }
 //! ```
 
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 
+#[cfg(not(target_arch = "wasm32"))]
+pub mod fixtures;
 mod request;
 
 pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 use std::fmt::Debug;
 
 use crate::request::{
-    GetAccountInfoRequest, GetBlockRequest, GetSlotRequest, JsonRequest, SendTransactionRequest,
+    GetAccountInfoRequest, GetBlockRequest, GetSlotRequest, GetTransactionRequest, JsonRequest,
+    SendTransactionRequest,
 };
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    GetAccountInfoParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig, RpcConfig, RpcSources,
-    SendTransactionParams, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
-    TransactionId,
+    GetAccountInfoParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig, GetTransactionParams,
+    RpcConfig, RpcSources, SendTransactionParams, Signature, SolanaCluster, SupportedRpcProvider,
+    SupportedRpcProviderId, TransactionDetails, TransactionInfo,
 };
 use solana_clock::Slot;
+use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
 use std::sync::Arc;
 
 /// The principal identifying the productive Solana RPC canister under NNS control.
@@ -193,6 +277,34 @@ impl<R> ClientBuilder<R> {
 
 impl<R> SolRpcClient<R> {
     /// Call `getAccountInfo` on the SOL RPC canister.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster};
+    /// use solana_pubkey::pubkey;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use sol_rpc_client::fixtures::usdc_account;
+    /// # use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo, MultiRpcResult};
+    /// let client = SolRpcClient::builder_for_ic()
+    ///     .with_mocked_response(MultiRpcResult::Consistent(Ok(Some(usdc_account()))))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let usdc_account = client
+    ///     .get_account_info(pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"))
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent()
+    ///     .unwrap()
+    ///     .unwrap();
+    ///
+    /// assert_eq!(usdc_account.owner, "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA".to_string());
+    /// # Ok(())
+    /// # }
     pub fn get_account_info(
         &self,
         params: impl Into<GetAccountInfoParams>,
@@ -223,14 +335,43 @@ impl<R> SolRpcClient<R> {
             Option<solana_transaction_status_client_types::UiConfirmedBlock>,
         >,
     > {
-        RequestBuilder::new(
-            self.clone(),
-            GetBlockRequest::new(params.into()),
-            10_000_000_000,
-        )
+        let params = params.into();
+        let cycles = match params.transaction_details.unwrap_or_default() {
+            TransactionDetails::Signatures => 100_000_000_000,
+            TransactionDetails::None => 10_000_000_000,
+        };
+        RequestBuilder::new(self.clone(), GetBlockRequest::new(params), cycles)
     }
 
     /// Call `getSlot` on the SOL RPC canister.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{CommitmentLevel, GetSlotParams, MultiRpcResult, RpcSources, SolanaCluster};
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let slot = client
+    ///     .get_slot()
+    ///     .with_params(GetSlotParams {
+    ///         commitment: Some(CommitmentLevel::Finalized),
+    ///         ..Default::default()
+    ///     })
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent();
+    ///
+    /// assert_eq!(slot, Ok(332_577_897_u64));
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn get_slot(
         &self,
     ) -> RequestBuilder<
@@ -243,7 +384,58 @@ impl<R> SolRpcClient<R> {
         RequestBuilder::new(self.clone(), GetSlotRequest::default(), 10_000_000_000)
     }
 
+    /// Call `getTransaction` on the SOL RPC canister.
+    pub fn get_transaction(
+        &self,
+        params: impl Into<GetTransactionParams>,
+    ) -> RequestBuilder<
+        R,
+        RpcConfig,
+        GetTransactionParams,
+        sol_rpc_types::MultiRpcResult<Option<TransactionInfo>>,
+        sol_rpc_types::MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>,
+    > {
+        RequestBuilder::new(
+            self.clone(),
+            GetTransactionRequest::new(params.into()),
+            10_000_000_000,
+        )
+    }
+
     /// Call `sendTransaction` on the SOL RPC canister.
+    ///
+    /// # Examples
+    ///
+    /// See the [basic_solana](https://github.com/dfinity/sol-rpc-canister/tree/main/examples/basic_solana) example
+    /// to know how to sign a Solana transaction using the [threshold Ed25519 API](https://internetcomputer.org/docs/current/developer-docs/smart-contracts/signatures/signing-messages-t-schnorr).
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{CommitmentLevel, MultiRpcResult, RpcSources, SendTransactionEncoding, SendTransactionParams, SolanaCluster};
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok("tspfR5p1PFphquz4WzDb7qM4UhJdgQXkEZtW88BykVEdX2zL2kBT9kidwQBviKwQuA3b6GMCR1gknHvzQ3r623T")))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let transaction_id = client
+    ///     .send_transaction(SendTransactionParams::from_encoded_transaction(
+    ///         "ASy...pwEC".to_string(),
+    ///         SendTransactionEncoding::Base64,
+    ///     ))
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent();
+    ///
+    /// assert_eq!(
+    ///     transaction_id,
+    ///     Ok("tspfR5p1PFphquz4WzDb7qM4UhJdgQXkEZtW88BykVEdX2zL2kBT9kidwQBviKwQuA3b6GMCR1gknHvzQ3r623T".parse().unwrap())
+    /// );
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn send_transaction<T>(
         &self,
         params: T,
@@ -251,7 +443,7 @@ impl<R> SolRpcClient<R> {
         R,
         RpcConfig,
         SendTransactionParams,
-        sol_rpc_types::MultiRpcResult<TransactionId>,
+        sol_rpc_types::MultiRpcResult<Signature>,
         sol_rpc_types::MultiRpcResult<solana_signature::Signature>,
     >
     where
@@ -269,6 +461,60 @@ impl<R> SolRpcClient<R> {
     }
 
     /// Call `jsonRequest` on the SOL RPC canister.
+    ///
+    /// This method is useful to send any JSON-RPC request in case the SOL RPC canister
+    /// does not offer a Candid API for the requested JSON-RPC method.
+    ///
+    /// # Examples
+    ///
+    /// The following example calls `getVersion`:
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use serde_json::json;
+    /// use sol_rpc_types::{MultiRpcResult, RpcSources, SolanaCluster};
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #    .with_mocked_response(MultiRpcResult::Consistent(Ok(json!({
+    /// #            "jsonrpc": "2.0",
+    /// #            "result": {
+    /// #                "feature-set": 3271415109_u32,
+    /// #                "solana-core": "2.1.16"
+    /// #            },
+    /// #            "id": 1
+    /// #        })
+    /// #    .to_string())))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let version: serde_json::Value = client
+    ///     .json_request(json!({
+    ///             "jsonrpc": "2.0",
+    ///             "id": 1,
+    ///             "method": "getVersion"
+    ///         }))
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent()
+    ///     .map(|s| serde_json::from_str(&s).unwrap())
+    ///     .unwrap();
+    ///
+    /// assert_eq!(
+    ///     version,
+    ///     json!({
+    ///         "jsonrpc": "2.0",
+    ///         "result": {
+    ///             "feature-set": 3271415109_u32,
+    ///             "solana-core": "2.1.16"
+    ///         },
+    ///         "id": 1
+    ///     })
+    /// );
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn json_request(
         &self,
         json_request: serde_json::Value,

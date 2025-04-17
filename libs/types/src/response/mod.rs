@@ -1,8 +1,12 @@
-use crate::{AccountInfo, ConfirmedBlock, RpcResult, RpcSource, TransactionId};
+use crate::{
+    solana::account::AccountInfo, ConfirmedBlock, RpcResult, RpcSource, Signature, TransactionInfo,
+};
 use candid::CandidType;
 use serde::Deserialize;
 use solana_account_decoder_client_types::UiAccount;
-use solana_transaction_status_client_types::UiConfirmedBlock;
+use solana_transaction_status_client_types::{
+    EncodedConfirmedTransactionWithStatusMeta, UiConfirmedBlock,
+};
 use std::{fmt::Debug, str::FromStr};
 
 /// Represents an aggregated result from multiple RPC calls to different RPC providers.
@@ -23,7 +27,7 @@ impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
 
 impl<T> MultiRpcResult<T> {
     /// Maps a [`MultiRpcResult`] containing values of type `T` to a [`MultiRpcResult`] containing
-    /// values of type `R`.
+    /// values of type `R` by an infallible map.
     pub fn map<R, F>(self, f: F) -> MultiRpcResult<R>
     where
         F: FnOnce(T) -> R + Clone,
@@ -34,6 +38,23 @@ impl<T> MultiRpcResult<T> {
                 results
                     .into_iter()
                     .map(|(source, result)| (source, result.map(f.clone())))
+                    .collect(),
+            ),
+        }
+    }
+
+    /// Maps a [`MultiRpcResult`] containing values of type `T` to a [`MultiRpcResult`] containing
+    /// values of type `R` by a fallible map.
+    pub fn and_then<R, F>(self, f: F) -> MultiRpcResult<R>
+    where
+        F: FnOnce(T) -> RpcResult<R> + Clone,
+    {
+        match self {
+            MultiRpcResult::Consistent(result) => MultiRpcResult::Consistent(result.and_then(f)),
+            MultiRpcResult::Inconsistent(results) => MultiRpcResult::Inconsistent(
+                results
+                    .into_iter()
+                    .map(|(source, result)| (source, result.and_then(f.clone())))
                     .collect(),
             ),
         }
@@ -64,8 +85,8 @@ impl<T: Debug> MultiRpcResult<T> {
     }
 }
 
-impl From<MultiRpcResult<TransactionId>> for MultiRpcResult<solana_signature::Signature> {
-    fn from(result: MultiRpcResult<TransactionId>) -> Self {
+impl From<MultiRpcResult<Signature>> for MultiRpcResult<solana_signature::Signature> {
+    fn from(result: MultiRpcResult<Signature>) -> Self {
         result.map(|transaction_id| {
             solana_signature::Signature::from_str(&transaction_id)
                 .expect("Unable to parse signature")
@@ -94,5 +115,25 @@ impl From<MultiRpcResult<Option<ConfirmedBlock>>> for MultiRpcResult<Option<UiCo
 impl From<MultiRpcResult<Option<UiConfirmedBlock>>> for MultiRpcResult<Option<ConfirmedBlock>> {
     fn from(result: MultiRpcResult<Option<UiConfirmedBlock>>) -> Self {
         result.map(|maybe_block| maybe_block.map(|block| block.into()))
+    }
+}
+
+impl From<MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>>
+    for MultiRpcResult<Option<TransactionInfo>>
+{
+    fn from(result: MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>) -> Self {
+        result.and_then(|maybe_transaction| {
+            maybe_transaction
+                .map(|transaction| transaction.try_into())
+                .transpose()
+        })
+    }
+}
+
+impl From<MultiRpcResult<Option<TransactionInfo>>>
+    for MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>
+{
+    fn from(result: MultiRpcResult<Option<TransactionInfo>>) -> Self {
+        result.map(|maybe_transaction| maybe_transaction.map(|transaction| transaction.into()))
     }
 }

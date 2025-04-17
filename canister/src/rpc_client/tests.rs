@@ -1,12 +1,14 @@
 use crate::rpc_client::{
-    GetAccountInfoRequest, GetBlockRequest, GetSlotRequest, MultiRpcRequest, SendTransactionRequest,
+    GetAccountInfoRequest, GetBlockRequest, GetSlotRequest, GetTransactionRequest, MultiRpcRequest,
+    SendTransactionRequest,
 };
 use serde::Serialize;
 use serde_json::json;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams,
-    GetBlockCommitmentLevel, GetBlockParams, GetSlotParams, GetSlotRpcConfig, RpcConfig,
-    RpcSources, SendTransactionEncoding, SendTransactionParams, SolanaCluster,
+    GetBlockCommitmentLevel, GetBlockParams, GetSlotParams, GetSlotRpcConfig,
+    GetTransactionEncoding, GetTransactionParams, RpcConfig, RpcSources, SendTransactionEncoding,
+    SendTransactionParams, SolanaCluster, TransactionDetails,
 };
 
 mod request_serialization_tests {
@@ -81,6 +83,41 @@ mod request_serialization_tests {
     }
 
     #[test]
+    fn should_serialize_get_transaction_request() {
+        let signature = solana_signature::Signature::default().to_string();
+        assert_serialized(
+            GetTransactionRequest::get_transaction(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetTransactionParams::from(solana_signature::Signature::default()),
+            )
+            .unwrap(),
+            json!([signature, null]),
+        );
+        assert_serialized(
+            GetTransactionRequest::get_transaction(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetTransactionParams {
+                    signature: solana_signature::Signature::default().to_string(),
+                    commitment: Some(CommitmentLevel::Confirmed),
+                    max_supported_transaction_version: Some(2),
+                    encoding: Some(GetTransactionEncoding::Base64),
+                },
+            )
+            .unwrap(),
+            json!([
+                signature,
+                {
+                    "commitment": "confirmed",
+                    "maxSupportedTransactionVersion": 2,
+                    "encoding": "base64",
+                }
+            ]),
+        );
+    }
+
+    #[test]
     fn should_serialize_get_block_request() {
         assert_serialized(
             GetBlockRequest::get_block(
@@ -102,6 +139,7 @@ mod request_serialization_tests {
                     slot: 123,
                     commitment: Some(GetBlockCommitmentLevel::Finalized),
                     max_supported_transaction_version: Some(2u8),
+                    transaction_details: Some(TransactionDetails::Signatures),
                 },
             )
             .unwrap(),
@@ -109,7 +147,7 @@ mod request_serialization_tests {
                 123,
                 {
                     "rewards": false,
-                    "transactionDetails": "none",
+                    "transactionDetails": "signatures",
                     "commitment": "finalized",
                     "maxSupportedTransactionVersion": 2
                 },

@@ -8,8 +8,8 @@ use sol_rpc_client::SolRpcClient;
 use sol_rpc_int_tests::PocketIcLiveModeRuntime;
 use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoEncoding, GetAccountInfoParams, GetBlockCommitmentLevel,
-    GetBlockParams, GetSlotParams, InstallArgs, OverrideProvider, RegexSubstitution,
-    SendTransactionParams,
+    GetBlockParams, GetSlotParams, GetTransactionEncoding, GetTransactionParams, InstallArgs,
+    OverrideProvider, RegexSubstitution, SendTransactionParams, TransactionDetails,
 };
 use solana_account_decoder_client_types::UiAccount;
 use solana_client::rpc_client::{RpcClient as SolanaRpcClient, RpcClient};
@@ -18,11 +18,11 @@ use solana_hash::Hash;
 use solana_keypair::Keypair;
 use solana_program::system_instruction;
 use solana_pubkey::Pubkey;
-use solana_rpc_client_api::config::RpcBlockConfig;
+use solana_rpc_client_api::config::{RpcBlockConfig, RpcTransactionConfig};
 use solana_signature::Signature;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
-use solana_transaction_status_client_types::TransactionDetails;
+use solana_transaction_status_client_types::UiTransactionEncoding;
 use std::{
     future::Future,
     str::FromStr,
@@ -135,7 +135,7 @@ async fn should_get_block() {
                         slot,
                         RpcBlockConfig {
                             encoding: None,
-                            transaction_details: Some(TransactionDetails::None),
+                            transaction_details: Some(solana_transaction_status_client_types::TransactionDetails::Signatures),
                             rewards: Some(false),
                             commitment: Some(commitment_config),
                             max_supported_transaction_version: None,
@@ -148,6 +148,7 @@ async fn should_get_block() {
                         slot,
                         commitment: Some(commitment),
                         max_supported_transaction_version: None,
+                        transaction_details: Some(TransactionDetails::Signatures),
                     })
                     .send()
                     .await
@@ -160,6 +161,50 @@ async fn should_get_block() {
 
         assert_eq!(sol_res, ic_res);
     }
+
+    setup.setup.drop().await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn should_get_transaction() {
+    let setup = Setup::new().await;
+
+    // Generate a transaction and get the signature
+    let signature = setup
+        .solana_client
+        .request_airdrop(&Keypair::new().pubkey(), 10_000_000_000)
+        .expect("Error while requesting airdrop");
+
+    setup.confirm_transaction(&signature);
+
+    let (sol_res, ic_res) = setup
+        .compare_client(
+            |sol| {
+                sol.get_transaction_with_config(
+                    &signature,
+                    RpcTransactionConfig {
+                        encoding: Some(UiTransactionEncoding::Base64),
+                        commitment: Some(CommitmentConfig::confirmed()),
+                        max_supported_transaction_version: None,
+                    },
+                )
+                .expect("Failed to get transaction")
+            },
+            |ic| async move {
+                let mut params: GetTransactionParams = signature.into();
+                params.encoding = Some(GetTransactionEncoding::Base64);
+                params.commitment = Some(CommitmentLevel::Confirmed);
+                ic.get_transaction(params)
+                    .send()
+                    .await
+                    .expect_consistent()
+                    .unwrap_or_else(|e| panic!("`getTransaction` call failed: {e}"))
+                    .expect("Transaction not found")
+            },
+        )
+        .await;
+
+    assert_eq!(sol_res, ic_res);
 
     setup.setup.drop().await;
 }
@@ -210,6 +255,9 @@ async fn should_send_transaction() {
         .expect_consistent()
         .unwrap();
 
+    // Wait until the transaction is confirmed.
+    setup.confirm_transaction(&transaction_id);
+
     // Make sure the funds were sent from the sender to the recipient
     let sender_balance_after = setup.get_account_balance(&sender.pubkey());
     let recipient_balance_after = setup.get_account_balance(&recipient.pubkey());
@@ -219,9 +267,6 @@ async fn should_send_transaction() {
         recipient_balance_before + transaction_amount
     );
     assert!(sender_balance_after + transaction_amount <= sender_balance_before);
-
-    // Make sure the transaction whose ID was returned is indeed confirmed
-    assert!(setup.confirm_transaction(&transaction_id));
 
     setup.setup.drop().await;
 }
@@ -329,9 +374,23 @@ impl Setup {
             .expect("Error while getting account balance")
     }
 
-    fn confirm_transaction(&self, transaction_id: &Signature) -> bool {
-        self.solana_client
-            .confirm_transaction(transaction_id)
-            .expect("Error while getting confirming transaction")
+    fn confirm_transaction(&self, transaction_id: &Signature) {
+        // Wait until the transaction is confirmed
+        let max_wait = Duration::from_secs(10);
+        let start = Instant::now();
+        loop {
+            let confirmed = self
+                .solana_client
+                .confirm_transaction(transaction_id)
+                .expect("Error while getting transaction confirmation status");
+            if confirmed {
+                return;
+            } else {
+                if start.elapsed() > max_wait {
+                    panic!("Timed out waiting for transaction confirmation.");
+                }
+                sleep(Duration::from_millis(500));
+            }
+        }
     }
 }

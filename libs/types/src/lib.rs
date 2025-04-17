@@ -1,7 +1,8 @@
 //! Candid types used by the candid interface of the SOL RPC canister.
 
 #![forbid(unsafe_code)]
-#![forbid(missing_docs)]
+// TODO XC-293: Add documentation for all new types
+// #![forbid(missing_docs)]
 
 mod lifecycle;
 mod response;
@@ -17,8 +18,18 @@ pub use rpc_client::{
     SupportedRpcProviderId,
 };
 pub use solana::{
-    AccountData, AccountEncoding, AccountInfo, CommitmentLevel, ConfirmedBlock, DataSlice,
-    GetAccountInfoEncoding, GetAccountInfoParams, GetBlockCommitmentLevel, GetBlockParams,
-    GetSlotParams, ParsedAccount, Pubkey, SendTransactionEncoding, SendTransactionParams, Slot,
-    TransactionId,
+    account::{AccountData, AccountEncoding, AccountInfo, ParsedAccount},
+    request::{
+        CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams,
+        GetBlockCommitmentLevel, GetBlockParams, GetSlotParams, GetTransactionEncoding,
+        GetTransactionParams, SendTransactionEncoding, SendTransactionParams, TransactionDetails,
+    },
+    transaction::{
+        error::{InstructionError, TransactionError},
+        instruction::{CompiledInstruction, InnerInstructions, Instruction},
+        reward::{Reward, RewardType},
+        EncodedTransaction, LoadedAddresses, TransactionBinaryEncoding, TransactionInfo,
+        TransactionReturnData, TransactionStatusMeta, TransactionTokenBalance, TransactionVersion,
+    },
+    Blockhash, ConfirmedBlock, Pubkey, Signature, Slot, Timestamp,
 };
