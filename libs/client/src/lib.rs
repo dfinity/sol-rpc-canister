@@ -126,17 +126,18 @@ pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 use std::fmt::Debug;
 
 use crate::request::{
-    GetAccountInfoRequest, GetBlockRequest, GetSlotRequest, GetTransactionRequest, JsonRequest,
-    SendTransactionRequest,
+    GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetSlotRequest,
+    GetTransactionRequest, JsonRequest, SendTransactionRequest,
 };
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    GetAccountInfoParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig, GetTransactionParams,
-    RpcConfig, RpcSources, SendTransactionParams, Signature, SolanaCluster, SupportedRpcProvider,
-    SupportedRpcProviderId, TransactionDetails, TransactionInfo,
+    GetAccountInfoParams, GetBalanceParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig,
+    GetTransactionParams, Lamport, RpcConfig, RpcSources, SendTransactionParams, Signature,
+    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TransactionDetails,
+    TransactionInfo,
 };
 use solana_clock::Slot;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
@@ -319,6 +320,50 @@ impl<R> SolRpcClient<R> {
             self.clone(),
             GetAccountInfoRequest::new(params.into()),
             10_000_000_000,
+        )
+    }
+
+    /// Call `getBalance` on the SOL RPC canister.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster};
+    /// use solana_pubkey::pubkey;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use sol_rpc_types::MultiRpcResult;
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(389_086_612_571_u64)))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let balance = client
+    ///     .get_balance(pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"))
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent();
+    ///
+    /// assert_eq!(balance, Ok(389_086_612_571_u64));
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn get_balance(
+        &self,
+        params: impl Into<GetBalanceParams>,
+    ) -> RequestBuilder<
+        R,
+        RpcConfig,
+        GetBalanceParams,
+        sol_rpc_types::MultiRpcResult<Lamport>,
+        sol_rpc_types::MultiRpcResult<Lamport>,
+    > {
+        RequestBuilder::new(
+            self.clone(),
+            GetBalanceRequest::new(params.into()),
+            1_000_000_000,
         )
     }
 
