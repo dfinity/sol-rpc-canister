@@ -85,3 +85,20 @@ GET_ACCOUNT_INFO_PARAMS="(
 )"
 CYCLES=$(dfx canister call sol_rpc getAccountInfoCyclesCost "$GET_ACCOUNT_INFO_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
 dfx canister call sol_rpc getAccountInfo "$GET_ACCOUNT_INFO_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
+
+GET_BALANCE_PARAMS="(
+  variant { Default = variant { Mainnet } },
+  opt record {
+    responseConsensus = opt variant {
+      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+    };
+    responseSizeEstimate = null;
+  },
+  record {
+    pubkey = \"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v\";
+    commitment = null;
+    minContextSlot = null;
+  },
+)"
+CYCLES=$(dfx canister call sol_rpc getBalanceCyclesCost "$GET_BALANCE_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
+dfx canister call sol_rpc getBalance "$GET_BALANCE_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1

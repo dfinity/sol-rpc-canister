@@ -25,8 +25,8 @@ use ic_cdk::api::management_canister::http_request::{
 };
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
-    ConsensusStrategy, GetSlotRpcConfig, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource,
-    RpcSources, Signature, TransactionDetails,
+    ConsensusStrategy, GetSlotRpcConfig, Lamport, ProviderError, RpcConfig, RpcError, RpcResult,
+    RpcSource, RpcSources, Signature, TransactionDetails,
 };
 use solana_clock::Slot;
 use std::{fmt::Debug, marker::PhantomData};
@@ -105,6 +105,30 @@ impl GetAccountInfoRequest {
             JsonRpcRequest::new("getAccountInfo", params.into()),
             max_response_bytes,
             ResponseTransform::GetAccountInfo,
+            ReductionStrategy::from(consensus_strategy),
+        ))
+    }
+}
+
+pub type GetBalanceRequest = MultiRpcRequest<json::GetBalanceParams, Lamport>;
+
+impl GetBalanceRequest {
+    pub fn get_balance<Params: Into<json::GetBalanceParams>>(
+        rpc_sources: RpcSources,
+        config: RpcConfig,
+        params: Params,
+    ) -> Result<Self, ProviderError> {
+        let consensus_strategy = config.response_consensus.unwrap_or_default();
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let max_response_bytes = config
+            .response_size_estimate
+            .unwrap_or(256 + HEADER_SIZE_LIMIT);
+
+        Ok(MultiRpcRequest::new(
+            providers,
+            JsonRpcRequest::new("getBalance", params.into()),
+            max_response_bytes,
+            ResponseTransform::GetBalance,
             ReductionStrategy::from(consensus_strategy),
         ))
     }

@@ -11,7 +11,7 @@ use crate::{
 use base64::{prelude::BASE64_STANDARD, Engine};
 use candid::{CandidType, Deserialize, Nat, Principal};
 use ic_cdk::{init, post_upgrade, update};
-use num::{BigUint, ToPrimitive};
+use num::ToPrimitive;
 use serde_json::json;
 use sol_rpc_client::{IcRuntime, SolRpcClient};
 use sol_rpc_types::{
@@ -62,28 +62,15 @@ pub async fn associated_token_account(owner: Option<Principal>, mint_account: St
 #[update]
 pub async fn get_balance(account: Option<String>) -> Nat {
     let account = account.unwrap_or(solana_account(None).await);
-
-    // TODO XC-346: use `getBalance` method from client
-    let response = client()
-        .json_request(json!({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "getBalance",
-            "params": [ account ]
-        }))
+    let public_key = Pubkey::from_str(&account).unwrap();
+    let balance = client()
+        .get_balance(public_key)
         .send()
         .await
         .expect_consistent()
         .expect("Call to `getBalance` failed");
 
-    // The response to a successful `getBalance` call has the following format:
-    // { "id": "[ID]", "jsonrpc": "2.0", "result": { "context": { "slot": [SLOT] } }, "value": [BALANCE] }, }
-    let balance = serde_json::to_value(response)
-        .expect("`getBalance` response is not a valid JSON")["result"]["value"]
-        .as_u64()
-        .unwrap();
-
-    Nat(BigUint::from(balance))
+    Nat::from(balance)
 }
 
 #[update]

@@ -9,6 +9,9 @@ use std::fmt::Debug;
 /// A Solana [slot](https://solana.com/docs/references/terminology#slot).
 pub type Slot = u64;
 
+/// A Solana [Lamport](https://solana.com/de/docs/references/terminology#lamport).
+pub type Lamport = u64;
+
 /// A Solana base58-encoded [blockhash](https://solana.com/de/docs/references/terminology#blockhash).
 pub type Blockhash = String;
 

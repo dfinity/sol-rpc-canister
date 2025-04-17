@@ -9,7 +9,7 @@ use sol_rpc_int_tests::PocketIcLiveModeRuntime;
 use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoEncoding, GetAccountInfoParams, GetBlockCommitmentLevel,
     GetBlockParams, GetSlotParams, GetTransactionEncoding, GetTransactionParams, InstallArgs,
-    OverrideProvider, RegexSubstitution, SendTransactionParams, TransactionDetails,
+    Lamport, OverrideProvider, RegexSubstitution, SendTransactionParams, TransactionDetails,
 };
 use solana_account_decoder_client_types::UiAccount;
 use solana_client::rpc_client::{RpcClient as SolanaRpcClient, RpcClient};
@@ -141,7 +141,7 @@ async fn should_get_block() {
                             max_supported_transaction_version: None,
                         },
                     )
-                    .expect("Failed to get block")
+                        .expect("Failed to get block")
                 },
                 |ic| async move {
                     ic.get_block(GetBlockParams {
@@ -150,11 +150,11 @@ async fn should_get_block() {
                         max_supported_transaction_version: None,
                         transaction_details: Some(TransactionDetails::Signatures),
                     })
-                    .send()
-                    .await
-                    .expect_consistent()
-                    .unwrap_or_else(|e| panic!("`getBlock` call failed: {e}"))
-                    .unwrap_or_else(|| panic!("No block for slot {slot}"))
+                        .send()
+                        .await
+                        .expect_consistent()
+                        .unwrap_or_else(|e| panic!("`getBlock` call failed: {e}"))
+                        .unwrap_or_else(|| panic!("No block for slot {slot}"))
                 },
             )
             .await;
@@ -269,6 +269,44 @@ async fn should_send_transaction() {
     assert!(sender_balance_after + transaction_amount <= sender_balance_before);
 
     setup.setup.drop().await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn should_get_balance() {
+    async fn compare_balances(setup: &Setup, account: Pubkey) -> Lamport {
+        let pubkey = account;
+        let (sol_res, ic_res) = setup
+            .compare_client(
+                |sol| sol.get_balance(&account).expect("Failed to get balance"),
+                |ic| async move {
+                    ic.get_balance(pubkey)
+                        .modify_params(|params| {
+                            params.commitment = Some(CommitmentLevel::Confirmed)
+                        })
+                        .send()
+                        .await
+                        .expect_consistent()
+                        .expect("Failed to get balance from SOL RPC")
+                },
+            )
+            .await;
+        assert_eq!(sol_res, ic_res);
+        sol_res
+    }
+
+    let setup = Setup::new().await;
+    let user = Keypair::new();
+    let publickey = user.pubkey();
+
+    assert_eq!(compare_balances(&setup, publickey).await, 0);
+
+    let tx = setup
+        .solana_client
+        .request_airdrop(&user.pubkey(), 10_000_000_000)
+        .expect("Error while requesting airdrop");
+    setup.confirm_transaction(&tx);
+
+    assert_eq!(compare_balances(&setup, publickey).await, 10_000_000_000);
 }
 
 fn solana_rpc_client_get_account(

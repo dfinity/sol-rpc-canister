@@ -19,7 +19,7 @@ pub use rpc_client::{
 pub use solana::{
     account::{AccountData, AccountEncoding, AccountInfo, ParsedAccount},
     request::{
-        CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams,
+        CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
         GetBlockCommitmentLevel, GetBlockParams, GetSlotParams, GetTransactionEncoding,
         GetTransactionParams, SendTransactionEncoding, SendTransactionParams, TransactionDetails,
     },
@@ -30,5 +30,5 @@ pub use solana::{
         EncodedTransaction, LoadedAddresses, TransactionBinaryEncoding, TransactionInfo,
         TransactionReturnData, TransactionStatusMeta, TransactionTokenBalance, TransactionVersion,
     },
-    Blockhash, ConfirmedBlock, Pubkey, Signature, Slot, Timestamp,
+    Blockhash, ConfirmedBlock, Lamport, Pubkey, Signature, Slot, Timestamp,
 };

@@ -13,9 +13,9 @@ use sol_rpc_canister::{
     rpc_client::MultiRpcRequest,
 };
 use sol_rpc_types::{
-    AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBlockParams, GetSlotParams,
-    GetSlotRpcConfig, GetTransactionParams, MultiRpcResult, RpcAccess, RpcConfig, RpcResult,
-    RpcSources, SendTransactionParams, Signature, Slot, SupportedRpcProvider,
+    AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
+    GetSlotParams, GetSlotRpcConfig, GetTransactionParams, Lamport, MultiRpcResult, RpcAccess,
+    RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot, SupportedRpcProvider,
     SupportedRpcProviderId, TransactionInfo,
 };
 use std::str::FromStr;
@@ -98,6 +98,32 @@ async fn get_account_info_cycles_cost(
         return Ok(0);
     }
     MultiRpcRequest::get_account_info(source, config.unwrap_or_default(), params)?
+        .cycles_cost()
+        .await
+}
+
+#[update(name = "getBalance")]
+#[candid_method(rename = "getBalance")]
+async fn get_balance(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: GetBalanceParams,
+) -> MultiRpcResult<Lamport> {
+    let request = MultiRpcRequest::get_balance(source, config.unwrap_or_default(), params);
+    send_multi(request).await
+}
+
+#[query(name = "getBalanceCyclesCost")]
+#[candid_method(query, rename = "getBalanceCyclesCost")]
+async fn get_balance_cycles_cost(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: GetBalanceParams,
+) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
+    MultiRpcRequest::get_balance(source, config.unwrap_or_default(), params)?
         .cycles_cost()
         .await
 }
