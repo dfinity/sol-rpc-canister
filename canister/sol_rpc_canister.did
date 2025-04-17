@@ -355,8 +355,8 @@ type CompiledInstruction = record {
   stackHeight : opt nat32;
 };
 type EncodedTransaction = variant {
-  Binary : record { text; variant { base58; base64 } };
-  LegacyBinary : text;
+  binary : record { text; variant { base58; base64 } };
+  legacyBinary : text;
 };
 type Instruction = variant { Compiled : CompiledInstruction };
 type InnerInstructions = record {
@@ -424,7 +424,7 @@ type Reward = record {
   lamports : int64;
   commission : opt nat8;
   pubkey : Pubkey;
-  rewardType : opt variant { Fee; Rent; Voting; Staking };
+  rewardType : opt variant { fee; rent; voting; staking };
   postBalance : nat64;
 };
 type TokenAmount = record {
@@ -480,7 +480,7 @@ type TransactionInfo = record {
   meta : opt TransactionStatusMeta;
   transaction : EncodedTransaction;
   slot : nat64;
-  version : opt variant { Legacy; Number : nat8 };
+  version : opt variant { legacy; number : nat8 };
 };
 type TransactionStatusMeta = record {
   fee : nat64;

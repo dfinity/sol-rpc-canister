@@ -194,8 +194,10 @@ impl TryFrom<UiTransactionStatusMeta> for TransactionStatusMeta {
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub enum EncodedTransaction {
     /// Legacy format kept for backwards compatibility. The transaction is base58-encoded.
+    #[serde(rename = "legacyBinary")]
     LegacyBinary(String),
     ///The transaction is encoded in one of the [`TransactionBinaryEncoding`] formats.
+    #[serde(rename = "binary")]
     Binary(String, TransactionBinaryEncoding),
 }
 
@@ -404,8 +406,10 @@ impl From<TransactionReturnData> for UiTransactionReturnData {
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub enum TransactionVersion {
     /// Legacy transaction format, which does not explicitly include a version number.
+    #[serde(rename = "legacy")]
     Legacy,
     /// Versioned transaction format.
+    #[serde(rename = "number")]
     Number(u8),
 }
 

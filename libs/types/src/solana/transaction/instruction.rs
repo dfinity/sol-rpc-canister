@@ -48,6 +48,7 @@ impl From<InnerInstructions> for UiInnerInstructions {
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub enum Instruction {
     /// A compiled Solana instruction.
+    #[serde(rename = "compiled")]
     Compiled(CompiledInstruction),
 }
 
