@@ -59,7 +59,7 @@ impl ResponseTransform {
                 });
             }
             Self::GetBalance => {
-                todo!()
+                canonicalize_response::<Value, Value>(body_bytes, |result| result["value"].clone());
             }
             Self::GetBlock => {
                 canonicalize_response::<Value, Option<Value>>(body_bytes, |result| match result {
