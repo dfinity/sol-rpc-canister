@@ -96,7 +96,6 @@ impl From<sol_rpc_types::GetBlockParams> for GetBlockParams {
         //  Currently, we do not want it to be null since rewards=false is not the default value.
         let config = Some(GetBlockConfig {
             encoding: None,
-            // Always specify since the default value is `full` which we do not support yet
             transaction_details: Some(params.transaction_details.unwrap_or_default()),
             rewards: Some(false),
             commitment: params.commitment,

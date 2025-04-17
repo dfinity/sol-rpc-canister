@@ -20,7 +20,7 @@ impl TryFrom<UiInnerInstructions> for InnerInstructions {
             instructions: instructions
                 .instructions
                 .into_iter()
-                .map(TryInto::<Instruction>::try_into)
+                .map(Instruction::try_from)
                 .collect::<Result<Vec<Instruction>, Self::Error>>()?,
         })
     }
