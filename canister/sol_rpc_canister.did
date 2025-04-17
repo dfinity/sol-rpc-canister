@@ -358,7 +358,7 @@ type EncodedTransaction = variant {
   binary : record { text; variant { base58; base64 } };
   legacyBinary : text;
 };
-type Instruction = variant { Compiled : CompiledInstruction };
+type Instruction = variant { compiled : CompiledInstruction };
 type InnerInstructions = record {
   instructions : vec Instruction;
   index : nat8;
