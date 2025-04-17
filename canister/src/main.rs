@@ -109,7 +109,7 @@ async fn get_balance(
     params: GetBalanceParams,
 ) -> MultiRpcResult<Lamport> {
     let request = MultiRpcRequest::get_balance(source, config.unwrap_or_default(), params);
-    send_multi(request).await.into()
+    send_multi(request).await
 }
 
 #[update(name = "getBlock")]
