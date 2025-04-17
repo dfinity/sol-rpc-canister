@@ -638,6 +638,7 @@ service : (InstallArgs,) -> {
 
   // Call the Solana `getBalance` RPC method and return the resulting block.
   getBalance : (RpcSources, opt RpcConfig, GetBalanceParams) -> (MultiGetBalanceResult);
+  getBalanceCyclesCost : (RpcSources, opt RpcConfig, GetBalanceParams) -> (RequestCostResult) query;
 
   // Call the Solana `getBlock` RPC method and return the resulting block.
   getBlock : (RpcSources, opt RpcConfig, GetBlockParams) -> (MultiGetBlockResult);

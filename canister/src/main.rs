@@ -112,6 +112,21 @@ async fn get_balance(
     send_multi(request).await
 }
 
+#[query(name = "getBalanceCyclesCost")]
+#[candid_method(query, rename = "getBalanceCyclesCost")]
+async fn get_balance_cycles_cost(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: GetBalanceParams,
+) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
+    MultiRpcRequest::get_balance(source, config.unwrap_or_default(), params)?
+        .cycles_cost()
+        .await
+}
+
 #[update(name = "getBlock")]
 #[candid_method(rename = "getBlock")]
 async fn get_block(
