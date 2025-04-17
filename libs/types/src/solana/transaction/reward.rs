@@ -48,12 +48,16 @@ impl From<Reward> for solana_transaction_status_client_types::Reward {
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub enum RewardType {
     /// Reward from transaction fees collected in the block.
+    #[serde(rename = "fee")]
     Fee,
     /// Reward from rent fees paid by accounts storing data on-chain.
+    #[serde(rename = "rent")]
     Rent,
     /// Reward earned from delegating stake to validators with good performance.
+    #[serde(rename = "staking")]
     Staking,
     /// Reward earned for participating in vote transactions to help reach consensus.
+    #[serde(rename = "voting")]
     Voting,
 }
 
