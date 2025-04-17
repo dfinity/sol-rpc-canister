@@ -17,6 +17,7 @@ use sol_rpc_types::{
     SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_account_decoder_client_types::{UiAccount, UiAccountData, UiAccountEncoding};
+use solana_pubkey::pubkey;
 use solana_signer::Signer;
 use std::{fmt::Debug, iter::zip, str::FromStr};
 use strum::IntoEnumIterator;
@@ -28,6 +29,8 @@ const MOCK_RESPONSE: &str = formatcp!(
     MOCK_RESPONSE_RESULT
 );
 const MOCK_REQUEST_MAX_RESPONSE_BYTES: u64 = 1000;
+const USDC_PUBLIC_KEY: solana_pubkey::Pubkey =
+    pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
 
 mod mock_request_tests {
     use super::*;
@@ -963,6 +966,73 @@ mod cycles_cost_tests {
                     .await
                 }
             }
+        }
+
+        setup.drop().await;
+    }
+}
+
+mod get_balance_tests {
+    use crate::{rpc_sources, USDC_PUBLIC_KEY};
+    use canhttp::http::json::{ConstantSizeId, Id};
+    use serde_json::json;
+    use sol_rpc_int_tests::mock::MockOutcallBuilder;
+    use sol_rpc_int_tests::{Setup, SolRpcTestClient};
+    use sol_rpc_types::CommitmentLevel;
+    use std::iter::zip;
+
+    #[tokio::test]
+    async fn should_get_balance() {
+        fn request_body(id: u8) -> serde_json::Value {
+            json!({
+                "jsonrpc": "2.0",
+                "id": Id::from(ConstantSizeId::from(id)),
+                "method": "getBalance",
+                "params": [
+                    USDC_PUBLIC_KEY.to_string(),
+                    {
+                        "commitment": "confirmed",
+                        "minContextSlot": 100
+                    }
+                ]
+            })
+        }
+
+        fn response_body(id: u8) -> serde_json::Value {
+            json!({
+                "id": Id::from(ConstantSizeId::from(id)),
+                "jsonrpc": "2.0",
+                "result": {
+                    "context": { "slot": 334048531, "apiVersion": "2.1.9" },
+                    "value": 389086612571_u64
+                },
+            })
+        }
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
+            let client = setup.client().with_rpc_sources(sources);
+
+            let results = client
+                .mock_http_sequence(vec![
+                    MockOutcallBuilder::new(200, response_body(first_id))
+                        .with_request_body(request_body(first_id)),
+                    MockOutcallBuilder::new(200, response_body(first_id + 1))
+                        .with_request_body(request_body(first_id + 1)),
+                    MockOutcallBuilder::new(200, response_body(first_id + 2))
+                        .with_request_body(request_body(first_id + 2)),
+                ])
+                .build()
+                .get_balance(USDC_PUBLIC_KEY)
+                .modify_params(|params| {
+                    params.commitment = Some(CommitmentLevel::Confirmed);
+                    params.min_context_slot = Some(100);
+                })
+                .send()
+                .await
+                .expect_consistent();
+
+            assert_eq!(results, Ok(389_086_612_571_u64));
         }
 
         setup.drop().await;
