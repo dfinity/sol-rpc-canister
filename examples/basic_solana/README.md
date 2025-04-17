@@ -46,14 +46,14 @@ equivalent of "gas" on other blockchains).
 ### Deploy the smart contract to the Internet Computer
 
 ```bash
-dfx deploy --ic basic_solana --argument '(record {solana_network = opt variant {Devnet}; ed25519_key_name = opt variant {TestKey1}})'
+dfx deploy --ic basic_solana --argument (opt record { solana_network = opt variant {Devnet}; ed25519_key_name = opt variant {TestKey1}; sol_rpc_canister_id = null })
 ```
 
 #### What this does
 
 - `dfx deploy` tells the command line interface to `deploy` the smart contract
 - `--ic` tells the command line to deploy the smart contract to the mainnet ICP blockchain
-- `--argument (opt record {solana_network = opt variant {Devnet}; ed25519_key_name = opt variant {TestKey1}})`
+- `--argument (opt record { solana_network = opt variant {Devnet}; ed25519_key_name = opt variant {TestKey1}; sol_rpc_canister_id = null })`
   initializes the smart contract with the provided arguments:
     - `solana_network = opt variant {Devnet}`: the canister uses
       the [Solana Devnet](https://solana.com/docs/core/clusters)
@@ -62,6 +62,9 @@ dfx deploy --ic basic_solana --argument '(record {solana_network = opt variant {
       available on the ICP mainnet.
       See [signing messages](https://internetcomputer.org/docs/current/developer-docs/smart-contracts/encryption/signing-messages#signing-messages-1)
       for more details.
+    - `sol_rpc_canister_id = null`: the canister makes RPC requests to the Solana network via the standard SOL-RPC canister on the ICP (
+      canister ID: `tghme-zyaaa-aaaar-qarca-cai`). This can be replaced by the canister ID of another SOL-RPC canister, e.g. a
+      locally deployed one.
 
 If successful, you should see an output that looks like this:
 

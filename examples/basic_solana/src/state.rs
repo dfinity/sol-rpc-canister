@@ -2,6 +2,7 @@ use crate::{
     ed25519::{get_ed25519_public_key, Ed25519ExtendedPublicKey},
     Ed25519KeyName, InitArg, SolanaNetwork,
 };
+use candid::Principal;
 use std::{
     cell::RefCell,
     ops::{Deref, DerefMut},
@@ -28,6 +29,7 @@ where
 
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct State {
+    sol_rpc_canister_id: Option<Principal>,
     solana_network: SolanaNetwork,
     ed25519_public_key: Option<Ed25519ExtendedPublicKey>,
     ed25519_key_name: Ed25519KeyName,
@@ -35,17 +37,22 @@ pub struct State {
 
 impl State {
     pub fn ed25519_key_name(&self) -> Ed25519KeyName {
-        self.ed25519_key_name.clone()
+        self.ed25519_key_name
     }
 
     pub fn solana_network(&self) -> SolanaNetwork {
         self.solana_network
+    }
+
+    pub fn sol_rpc_canister_id(&self) -> Option<Principal> {
+        self.sol_rpc_canister_id
     }
 }
 
 impl From<InitArg> for State {
     fn from(init_arg: InitArg) -> Self {
         State {
+            sol_rpc_canister_id: init_arg.sol_rpc_canister_id,
             solana_network: init_arg.solana_network.unwrap_or_default(),
             ed25519_key_name: init_arg.ed25519_key_name.unwrap_or_default(),
             ..Default::default()
