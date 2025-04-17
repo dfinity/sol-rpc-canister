@@ -182,7 +182,7 @@ pub struct GetTransactionParams {
     #[serde(rename = "maxSupportedTransactionVersion")]
     pub max_supported_transaction_version: Option<u8>,
     /// Encoding for the returned transaction
-    // TODO XC-293: Add notes about `jsonParsed` from https://solana.com/de/docs/rpc/http/gettransaction
+    // TODO XC-343: Add notes about `jsonParsed` from https://solana.com/de/docs/rpc/http/gettransaction
     pub encoding: Option<GetTransactionEncoding>,
 }
 
