@@ -1,8 +1,7 @@
 //! Candid types used by the candid interface of the SOL RPC canister.
 
 #![forbid(unsafe_code)]
-// TODO XC-293: Add documentation for all new types
-// #![forbid(missing_docs)]
+#![forbid(missing_docs)]
 
 mod lifecycle;
 mod response;
