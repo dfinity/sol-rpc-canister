@@ -11,7 +11,12 @@ use sol_rpc_canister::{
     providers::{get_provider, PROVIDERS},
     rpc_client::MultiRpcRequest,
 };
-use sol_rpc_types::{AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig, GetTransactionParams, MultiRpcResult, RpcAccess, RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot, SupportedRpcProvider, SupportedRpcProviderId, TransactionInfo};
+use sol_rpc_types::{
+    AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
+    GetSlotParams, GetSlotRpcConfig, GetTransactionParams, Lamport, MultiRpcResult, RpcAccess,
+    RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot, SupportedRpcProvider,
+    SupportedRpcProviderId, TransactionInfo,
+};
 use std::str::FromStr;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
@@ -102,7 +107,7 @@ async fn get_balance(
     source: RpcSources,
     config: Option<RpcConfig>,
     params: GetBalanceParams,
-) -> MultiRpcResult<u64> {
+) -> MultiRpcResult<Lamport> {
     let request = MultiRpcRequest::get_balance(source, config.unwrap_or_default(), params);
     send_multi(request).await.into()
 }

@@ -31,5 +31,5 @@ pub use solana::{
         EncodedTransaction, LoadedAddresses, TransactionBinaryEncoding, TransactionInfo,
         TransactionReturnData, TransactionStatusMeta, TransactionTokenBalance, TransactionVersion,
     },
-    Blockhash, ConfirmedBlock, Pubkey, Signature, Slot, Timestamp,
+    Blockhash, ConfirmedBlock, Lamport, Pubkey, Signature, Slot, Timestamp,
 };

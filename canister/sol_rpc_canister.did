@@ -295,6 +295,29 @@ type MultiGetAccountInfoResult = variant {
     Inconsistent : vec record { RpcSource; GetAccountInfoResult };
 };
 
+// The parameters for a Solana `getBalance` RPC method call.
+type GetBalanceParams = record {
+  // Pubkey of account to query, as base-58 encoded string.
+  pubkey: Pubkey;
+  // The commitment describes how finalized a block is at that point in time.
+  commitment: opt CommitmentLevel;
+  // The minimum slot that the request can be evaluated at.
+  minContextSlot: opt nat64;
+};
+
+// Smallest denomination of SOL, the native token on Solana, i.e.
+// 1_000_000_000 Lamports is 1 SOL
+type Lamport = nat64;
+
+// Represents an aggregated result from multiple RPC calls to the `getBalance` Solana RPC method.
+type MultiGetBalanceResult = variant {
+    Consistent : GetBalanceResult;
+    Inconsistent : vec record { RpcSource; GetBalanceResult };
+};
+
+// Represents the result of a call to the `getBalance` Solana RPC method.
+type GetBalanceResult = variant { Ok : Lamport; Err : RpcError };
+
 // The parameters for a Solana `getBlock` RPC method call.
 // TODO XC-342: Add `rewards`, `encoding` and `transactionDetails` fields.
 type GetBlockParams = record {
@@ -612,6 +635,9 @@ service : (InstallArgs,) -> {
   // Call the Solana `getAccountInfo` RPC method and return the resulting slot.
   getAccountInfo : (RpcSources, opt RpcConfig, GetAccountInfoParams) -> (MultiGetAccountInfoResult);
   getAccountInfoCyclesCost : (RpcSources, opt RpcConfig, GetAccountInfoParams) -> (RequestCostResult) query;
+
+  // Call the Solana `getBalance` RPC method and return the resulting block.
+  getBalance : (RpcSources, opt RpcConfig, GetBalanceParams) -> (MultiGetBalanceResult);
 
   // Call the Solana `getBlock` RPC method and return the resulting block.
   getBlock : (RpcSources, opt RpcConfig, GetBlockParams) -> (MultiGetBlockResult);

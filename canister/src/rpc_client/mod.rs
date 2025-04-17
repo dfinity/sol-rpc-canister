@@ -25,8 +25,8 @@ use ic_cdk::api::management_canister::http_request::{
 };
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
-    ConsensusStrategy, GetSlotRpcConfig, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource,
-    RpcSources, Signature, TransactionDetails,
+    ConsensusStrategy, GetSlotRpcConfig, Lamport, ProviderError, RpcConfig, RpcError, RpcResult,
+    RpcSource, RpcSources, Signature, TransactionDetails,
 };
 use solana_clock::Slot;
 use std::{fmt::Debug, marker::PhantomData};
@@ -110,7 +110,7 @@ impl GetAccountInfoRequest {
     }
 }
 
-pub type GetBalanceRequest = MultiRpcRequest<json::GetBalanceParams, u64>;
+pub type GetBalanceRequest = MultiRpcRequest<json::GetBalanceParams, Lamport>;
 
 impl GetBalanceRequest {
     pub fn get_balance<Params: Into<json::GetBalanceParams>>(
