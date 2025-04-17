@@ -35,17 +35,22 @@ impl GetAccountInfoParams {
             && data_slice.is_none()
             && min_context_slot.is_none()
     }
-}
 
-impl From<solana_pubkey::Pubkey> for GetAccountInfoParams {
-    fn from(pubkey: solana_pubkey::Pubkey) -> Self {
+    /// Parameters for a `getAccountInfo` request with the given pubkey already base58-encoded.
+    pub fn from_encoded_pubkey(pubkey: String) -> Self {
         Self {
-            pubkey: pubkey.to_string(),
+            pubkey,
             commitment: None,
             encoding: None,
             data_slice: None,
             min_context_slot: None,
         }
+    }
+}
+
+impl From<solana_pubkey::Pubkey> for GetAccountInfoParams {
+    fn from(pubkey: solana_pubkey::Pubkey) -> Self {
+        Self::from_encoded_pubkey(pubkey.to_string())
     }
 }
 
@@ -233,7 +238,7 @@ pub struct SendTransactionParams {
 }
 
 impl SendTransactionParams {
-    /// Parameters for a `sendTransaction` request with the given transaction already encoded wit
+    /// Parameters for a `sendTransaction` request with the given transaction already encoded with
     /// the given encoding.
     pub fn from_encoded_transaction(
         transaction: String,
