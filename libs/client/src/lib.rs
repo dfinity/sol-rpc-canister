@@ -363,7 +363,7 @@ impl<R> SolRpcClient<R> {
         RequestBuilder::new(
             self.clone(),
             GetBalanceRequest::new(params.into()),
-            1_000_000_000,
+            10_000_000_000,
         )
     }
 

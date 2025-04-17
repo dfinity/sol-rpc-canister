@@ -772,6 +772,9 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::GetAccountInfo => {
                     check(client.get_account_info(some_pubkey())).await;
                 }
+                SolRpcEndpoint::GetBalance => {
+                    check(client.get_balance(some_pubkey())).await;
+                }
                 SolRpcEndpoint::GetBlock => {
                     check(client.get_block(577996)).await;
                 }
@@ -815,6 +818,9 @@ mod cycles_cost_tests {
                 }
                 SolRpcEndpoint::GetAccountInfo => {
                     check(client.get_account_info(some_pubkey())).await;
+                }
+                SolRpcEndpoint::GetBalance => {
+                    check(client.get_balance(some_pubkey())).await;
                 }
                 SolRpcEndpoint::GetBlock => {
                     check(client.get_block(577996)).await;
@@ -917,6 +923,9 @@ mod cycles_cost_tests {
                         1_793_744_800,
                     )
                     .await;
+                }
+                SolRpcEndpoint::GetBalance => {
+                    check(&setup, client.get_balance(some_pubkey()), 1_731_769_600).await;
                 }
                 SolRpcEndpoint::GetBlock => {
                     check(&setup, client.get_block(577996), 1_791_868_000).await;
