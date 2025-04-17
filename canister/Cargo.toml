@@ -23,6 +23,7 @@ derive_more = { workspace = true }
 hex = { workspace = true }
 http = { workspace = true }
 ic-cdk = { workspace = true }
+ic-http-types = { workspace = true }
 ic-metrics-encoder = { workspace = true }
 ic-stable-structures = { workspace = true }
 maplit = { workspace = true }

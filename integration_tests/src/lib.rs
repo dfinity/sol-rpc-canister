@@ -3,6 +3,7 @@ use candid::{decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encod
 use canhttp::http::json::ConstantSizeId;
 use canlog::{Log, LogEntry};
 use ic_cdk::api::call::RejectionCode;
+use ic_http_types::{HttpRequest, HttpResponse};
 use num_traits::ToPrimitive;
 use pocket_ic::{
     common::rest::{
@@ -14,10 +15,7 @@ use pocket_ic::{
 };
 use regex::Regex;
 use serde::{de::DeserializeOwned, Deserialize};
-use sol_rpc_canister::{
-    http_types::{HttpRequest, HttpResponse},
-    logs::Priority,
-};
+use sol_rpc_canister::logs::Priority;
 use sol_rpc_client::{ClientBuilder, Runtime, SolRpcClient};
 use sol_rpc_types::{InstallArgs, RpcAccess, SupportedRpcProviderId};
 use std::{

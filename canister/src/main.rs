@@ -1,10 +1,11 @@
 use candid::candid_method;
 use canlog::{log, Log, Sort};
 use ic_cdk::{api::is_controller, query, update};
+use ic_http_types::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use ic_metrics_encoder::MetricsEncoder;
 use sol_rpc_canister::{
     candid_rpc::send_multi,
-    http_types, lifecycle,
+    lifecycle,
     logs::Priority,
     memory::{mutate_state, read_state, State},
     metrics::encode_metrics,
@@ -241,17 +242,17 @@ async fn json_request_cycles_cost(
 }
 
 #[query(hidden = true)]
-fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
+fn http_request(request: HttpRequest) -> HttpResponse {
     match request.path() {
         "/metrics" => {
             let mut writer = MetricsEncoder::new(vec![], ic_cdk::api::time() as i64 / 1_000_000);
 
             match encode_metrics(&mut writer) {
-                Ok(()) => http_types::HttpResponseBuilder::ok()
+                Ok(()) => HttpResponseBuilder::ok()
                     .header("Content-Type", "text/plain; version=0.0.4")
                     .with_body_and_content_length(writer.into_inner())
                     .build(),
-                Err(err) => http_types::HttpResponseBuilder::server_error(format!(
+                Err(err) => HttpResponseBuilder::server_error(format!(
                     "Failed to encode metrics: {}",
                     err
                 ))
@@ -263,7 +264,7 @@ fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
                 Some(arg) => match u64::from_str(arg) {
                     Ok(value) => value,
                     Err(_) => {
-                        return http_types::HttpResponseBuilder::bad_request()
+                        return HttpResponseBuilder::bad_request()
                             .with_body_and_content_length("failed to parse the 'time' parameter")
                             .build()
                     }
@@ -307,12 +308,12 @@ fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
             ));
 
             const MAX_BODY_SIZE: usize = 2_000_000;
-            http_types::HttpResponseBuilder::ok()
+            HttpResponseBuilder::ok()
                 .header("Content-Type", "application/json; charset=utf-8")
                 .with_body_and_content_length(log.serialize_logs(MAX_BODY_SIZE))
                 .build()
         }
-        _ => http_types::HttpResponseBuilder::not_found().build(),
+        _ => HttpResponseBuilder::not_found().build(),
     }
 }
 
