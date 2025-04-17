@@ -110,6 +110,30 @@ impl GetAccountInfoRequest {
     }
 }
 
+pub type GetBalanceRequest = MultiRpcRequest<json::GetBalanceParams, u64>;
+
+impl GetBalanceRequest {
+    pub fn get_balance<Params: Into<json::GetBalanceParams>>(
+        rpc_sources: RpcSources,
+        config: RpcConfig,
+        params: Params,
+    ) -> Result<Self, ProviderError> {
+        let consensus_strategy = config.response_consensus.unwrap_or_default();
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let max_response_bytes = config
+            .response_size_estimate
+            .unwrap_or(256 + HEADER_SIZE_LIMIT);
+
+        Ok(MultiRpcRequest::new(
+            providers,
+            JsonRpcRequest::new("getBalance", params.into()),
+            max_response_bytes,
+            ResponseTransform::GetBalance,
+            ReductionStrategy::from(consensus_strategy),
+        ))
+    }
+}
+
 pub type GetBlockRequest = MultiRpcRequest<
     json::GetBlockParams,
     Option<solana_transaction_status_client_types::UiConfirmedBlock>,

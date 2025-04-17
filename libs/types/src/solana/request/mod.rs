@@ -78,6 +78,17 @@ pub struct DataSlice {
     pub offset: u32,
 }
 
+#[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
+pub struct GetBalanceParams {
+    /// The public key of the account to query formatted as a base-58 string.
+    pub pubkey: Pubkey,
+    /// The request returns the slot that has reached this or the default commitment level.
+    pub commitment: Option<CommitmentLevel>,
+    /// The minimum slot that the request can be evaluated at.
+    #[serde(rename = "minContextSlot")]
+    pub min_context_slot: Option<u64>,
+}
+
 /// The parameters for a Solana [`getBlock`](https://solana.com/docs/rpc/http/getblock) RPC method call.
 // TODO XC-342: Add `rewards`, `encoding` and `transactionDetails` fields.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]

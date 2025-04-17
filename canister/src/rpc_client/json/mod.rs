@@ -79,6 +79,45 @@ pub struct GetAccountInfoConfig {
 
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(into = "(String, Option<GetBalanceConfig>)")]
+pub struct GetBalanceParams(String, Option<GetBalanceConfig>);
+
+#[skip_serializing_none]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct GetBalanceConfig {
+    pub commitment: Option<CommitmentLevel>,
+    #[serde(rename = "minContextSlot")]
+    pub min_context_slot: Option<u64>,
+}
+
+impl From<sol_rpc_types::GetBalanceParams> for GetBalanceParams {
+    fn from(
+        sol_rpc_types::GetBalanceParams {
+            pubkey,
+            commitment,
+            min_context_slot,
+        }: sol_rpc_types::GetBalanceParams,
+    ) -> Self {
+        let config = if commitment.is_some() || min_context_slot.is_some() {
+            Some(GetBalanceConfig {
+                commitment,
+                min_context_slot,
+            })
+        } else {
+            None
+        };
+        GetBalanceParams(pubkey, config)
+    }
+}
+
+impl From<GetBalanceParams> for (String, Option<GetBalanceConfig>) {
+    fn from(value: GetBalanceParams) -> Self {
+        (value.0, value.1)
+    }
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(into = "(Slot, Option<GetBlockConfig>)")]
 pub struct GetBlockParams(Slot, Option<GetBlockConfig>);
 
