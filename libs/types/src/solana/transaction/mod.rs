@@ -136,7 +136,7 @@ impl TryFrom<UiTransactionStatusMeta> for TransactionStatusMeta {
                 .map(|instructions| {
                     instructions
                         .into_iter()
-                        .map(|instruction| InnerInstructions::try_from(instruction))
+                        .map(InnerInstructions::try_from)
                         .collect::<Result<Vec<InnerInstructions>, Self::Error>>()
                 })
                 .transpose()?,
