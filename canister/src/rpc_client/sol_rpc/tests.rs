@@ -238,6 +238,39 @@ mod normalization_tests {
         assert_normalized(&ResponseTransform::GetTransaction, "null", Value::Null);
     }
 
+    #[test]
+    fn should_normalize_get_balance_response() {
+        assert_normalized(
+            &ResponseTransform::GetAccountInfo,
+            r#"{ "context": { "slot": 334035824, "apiVersion": "2.1.9" }, "value": 0 }"#,
+            json!(0),
+        );
+
+        assert_normalized(
+            &ResponseTransform::GetAccountInfo,
+            r#"{ "context": { "slot": 334035824, "apiVersion": "2.1.9" }, "value": 1000000 }"#,
+            json!(1000000),
+        );
+
+        assert_normalized_equal(
+            &ResponseTransform::GetBalance,
+            r#"{
+                    "context": {
+                        "slot": 334036571,
+                        "apiVersion": "2.1.9"
+                    },
+                    "value": 1000000
+                }"#,
+            r#"{
+                    "context": {
+                        "slot": 334036572,
+                        "apiVersion": "2.1.9"
+                    },
+                    "value": 1000000
+                }"#,
+        );
+    }
+
     fn assert_normalized(transform: &ResponseTransform, result: &str, expected: Value) {
         let expected_response = to_vec(&JsonRpcResponse::from_ok(Id::Number(1), expected)).unwrap();
         let normalized_response = normalize_result(transform, result);
@@ -246,7 +279,7 @@ mod normalization_tests {
             normalized_response,
             "expected {:?}, actual: {:?}",
             from_slice::<Value>(&expected_response),
-            expected_response,
+            from_slice::<Value>(&normalized_response),
         );
     }
 
