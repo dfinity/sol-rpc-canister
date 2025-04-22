@@ -276,6 +276,7 @@ dependencies = [
  "bincode",
  "bs58",
  "candid",
+ "candid_parser",
  "getrandom 0.2.15",
  "ic-cdk",
  "ic-ed25519",
