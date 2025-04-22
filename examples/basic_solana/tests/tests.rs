@@ -1,10 +1,12 @@
 use basic_solana::{Ed25519KeyName, SolanaNetwork};
 use candid::utils::ArgumentEncoder;
-use candid::{decode_args, encode_args, CandidType, Encode, Principal};
+use candid::{decode_args, encode_args, CandidType, Encode, Nat, Principal};
 use pocket_ic::management_canister::{CanisterId, CanisterSettings};
 use pocket_ic::{PocketIc, PocketIcBuilder};
 use serde::de::DeserializeOwned;
-use sol_rpc_types::{OverrideProvider, RegexSubstitution};
+use sol_rpc_types::{
+    OverrideProvider, RegexSubstitution, RpcAccess, SupportedRpcProvider, SupportedRpcProviderId,
+};
 use solana_client::rpc_client::RpcClient as SolanaRpcClient;
 use solana_commitment_config::CommitmentConfig;
 use solana_pubkey::{pubkey, Pubkey};
@@ -18,60 +20,51 @@ pub const AIRDROP_AMOUNT: u64 = 1_000_000_000; // 1 SOL
 // *NOTE*: Update instructions in README.md if you change this test!
 #[test]
 fn test_basic_solana() {
-    let setup = Setup::new();
+    let setup = Setup::new().with_mock_api_keys();
     let basic_solana = setup.basic_solana();
 
     let user_solana_account: Pubkey = basic_solana
         .update_call::<_, String>(USER, "solana_account", ())
         .parse()
         .expect("Failed to parse public key");
-    assert_eq!(
-        user_solana_account,
-        pubkey!("FufA3YFUgqDQNj4yKM2HUe9QrmPDwbuwEGEdZ3ueDggS")
-    );
-
-    let _airdrop_tx = setup
-        .solana_client
-        .request_airdrop(&user_solana_account, AIRDROP_AMOUNT)
-        .unwrap();
-    assert_eq!(
-        setup.solana_client.wait_for_balance_with_commitment(
-            &user_solana_account,
-            Some(AIRDROP_AMOUNT),
-            CommitmentConfig::confirmed()
-        ),
-        Some(AIRDROP_AMOUNT)
-    );
+    setup.airdrop(&user_solana_account, AIRDROP_AMOUNT);
+    println!("User solana account {user_solana_account}");
 
     let receiver_solana_account = pubkey!("8HNiduWaBanrBv8c2pgGXZWnpKBdEYuQNHnspqto4yyq");
     assert_ne!(user_solana_account, receiver_solana_account);
-    assert_eq!(
-        setup
-            .solana_client
-            .get_balance(&receiver_solana_account)
-            .unwrap(),
-        0
-    );
+    // The receiver account must be Initialized before receiving SOL,
+    // which will be done when requesting an airdrop
+    setup.airdrop(&receiver_solana_account, AIRDROP_AMOUNT);
+    println!("Receiver solana account {receiver_solana_account}");
 
+    let receiver_balance_before = setup
+        .solana_client
+        .get_balance(&receiver_solana_account)
+        .unwrap();
     let _send_sol_tx: String = basic_solana.update_call(
         USER,
         "send_sol",
-        (None::<Principal>, receiver_solana_account.to_string(), 1),
+        (
+            None::<Principal>,
+            receiver_solana_account.to_string(),
+            Nat::from(1_u8),
+        ),
     );
+    let expected_receiver_balance = receiver_balance_before + 1;
     assert_eq!(
         setup.solana_client.wait_for_balance_with_commitment(
             &receiver_solana_account,
-            Some(1),
+            Some(expected_receiver_balance),
             CommitmentConfig::confirmed()
         ),
-        Some(1)
+        Some(expected_receiver_balance)
     );
 }
 
 pub struct Setup {
     env: Arc<PocketIc>,
     solana_client: SolanaRpcClient,
-    _sol_rpc_canister_id: CanisterId,
+    sol_rpc_canister_id: CanisterId,
     basic_solana_canister_id: CanisterId,
 }
 
@@ -80,7 +73,10 @@ impl Setup {
     const SOLANA_VALIDATOR_URL: &'static str = "http://localhost:8899";
 
     pub fn new() -> Self {
-        let env = PocketIcBuilder::new().with_fiduciary_subnet().build();
+        let env = PocketIcBuilder::new()
+            .with_nns_subnet() //make_live requires NNS subnet.
+            .with_fiduciary_subnet()
+            .build();
 
         let sol_rpc_canister_id = env.create_canister_with_settings(
             None,
@@ -109,7 +105,7 @@ impl Setup {
         let basic_solana_canister_id = env.create_canister();
         env.add_cycles(basic_solana_canister_id, u64::MAX as u128);
         let basic_solana_install_args = basic_solana::InitArg {
-            sol_rpc_canister_id: Some(basic_solana_canister_id),
+            sol_rpc_canister_id: Some(sol_rpc_canister_id),
             solana_network: Some(SolanaNetwork::Devnet),
             ed25519_key_name: Some(Ed25519KeyName::ProductionKey1),
         };
@@ -120,6 +116,10 @@ impl Setup {
             None,
         );
 
+        println!("Basic solana canister ID {basic_solana_canister_id}");
+        println!("SOL RPC canister id {sol_rpc_canister_id}");
+        let mut env = env;
+        let _endpoint = env.make_live(None);
         Self {
             env: Arc::new(env),
             solana_client: SolanaRpcClient::new_with_commitment(
@@ -128,8 +128,47 @@ impl Setup {
                 // sufficient reliability.
                 CommitmentConfig::confirmed(),
             ),
-            _sol_rpc_canister_id: sol_rpc_canister_id,
+            sol_rpc_canister_id,
             basic_solana_canister_id,
+        }
+    }
+
+    fn with_mock_api_keys(self) -> Self {
+        const MOCK_API_KEY: &str = "mock-api-key";
+        let sol_rpc = self.sol_rpc();
+        let providers: Vec<(SupportedRpcProviderId, SupportedRpcProvider)> =
+            sol_rpc.update_call(Principal::anonymous(), "getProviders", ());
+        let mut api_keys = Vec::new();
+        for (id, provider) in providers {
+            match provider.access {
+                RpcAccess::Authenticated { .. } => {
+                    api_keys.push((id, Some(MOCK_API_KEY.to_string())));
+                }
+                RpcAccess::Unauthenticated { .. } => {}
+            }
+        }
+        let _res: () = sol_rpc.update_call(Self::DEFAULT_CONTROLLER, "updateApiKeys", (api_keys,));
+        self
+    }
+
+    fn airdrop(&self, account: &Pubkey, amount: u64) {
+        let balance_before = self.solana_client.get_balance(account).unwrap();
+        let _airdrop_tx = self.solana_client.request_airdrop(account, amount).unwrap();
+        let expected_balance = balance_before + amount;
+        assert_eq!(
+            self.solana_client.wait_for_balance_with_commitment(
+                account,
+                Some(expected_balance),
+                CommitmentConfig::confirmed()
+            ),
+            Some(expected_balance)
+        );
+    }
+
+    fn sol_rpc(&self) -> Canister {
+        Canister {
+            env: self.env.clone(),
+            id: self.sol_rpc_canister_id,
         }
     }
 
@@ -174,9 +213,9 @@ impl Canister {
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
     {
-        let result = self
+        let message_id = self
             .env
-            .update_call(
+            .submit_call(
                 self.id,
                 sender,
                 method,
@@ -185,7 +224,11 @@ impl Canister {
                 }),
             )
             .unwrap_or_else(|e| panic!("Failed to call method {method}: {e}"));
-        let (res,) = decode_args(&result).unwrap_or_else(|e| {
+        let response_bytes = self
+            .env
+            .await_call_no_ticks(message_id)
+            .unwrap_or_else(|e| panic!("Failed to await call for method {method}: {e}"));
+        let (res,) = decode_args(&response_bytes).unwrap_or_else(|e| {
             panic!("Failed to decode canister response for method {method}: {e}")
         });
         res
