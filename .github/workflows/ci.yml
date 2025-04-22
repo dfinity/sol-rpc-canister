@@ -66,7 +66,7 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v4
       - name: 'Run unit tests'
-        run: cargo test --locked --workspace --exclude sol_rpc_int_tests
+        run: cargo test --locked --workspace --exclude basic_solana --exclude sol_rpc_int_tests
 
   integration-tests:
     needs: [ reproducible-build ]
@@ -107,8 +107,11 @@ jobs:
         run: |
           echo "WALLET_WASM_PATH=$GITHUB_WORKSPACE/wallet.wasm.gz" >> "$GITHUB_ENV"
 
-      - name: 'Cargo test'
-        run: cargo test --package sol_rpc_int_tests -- --test-threads 2 --nocapture
+      - name: 'Test basic_solana'
+        run: cargo test --locked --package basic_solana
+
+      - name: 'Test sol_rpc_int_tests'
+        run: cargo test --locked --package sol_rpc_int_tests -- --test-threads 2 --nocapture
 
   end-to-end-tests:
     needs: [ reproducible-build ]
