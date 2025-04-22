@@ -78,6 +78,11 @@ fn test_basic_solana() {
         .update_call::<_, String>(USER, "create_nonce_account", ())
         .parse()
         .unwrap();
+    setup.solana_client.wait_for_balance_with_commitment(
+        &nonce_account,
+        Some(1_500_000),
+        CommitmentConfig::confirmed(),
+    );
     let nonce: Hash = basic_solana
         .update_call::<_, String>(USER, "get_nonce", (Some(nonce_account.to_string()),))
         .parse()
