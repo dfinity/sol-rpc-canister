@@ -149,6 +149,25 @@ pub async fn create_nonce_account(owner: Option<Principal>) -> String {
     let payer = wallet.solana_account();
     let nonce_account = wallet.derived_nonce_account();
 
+    if let Some(_account) = client
+        .get_account_info(*nonce_account.as_ref())
+        .send()
+        .await
+        .expect_consistent()
+        .unwrap_or_else(|e| {
+            panic!(
+                "Call to `getAccountInfo` for {} failed: {e}",
+                nonce_account.as_ref()
+            )
+        })
+    {
+        ic_cdk::println!(
+            "[create_nonce_account]: Account {} already exists. Skipping creation of nonce account",
+            nonce_account.as_ref()
+        );
+        return nonce_account.as_ref().to_string();
+    }
+
     let instructions = system_instruction::create_nonce_account(
         payer.as_ref(),
         nonce_account.as_ref(),
@@ -176,8 +195,9 @@ pub async fn create_nonce_account(owner: Option<Principal>) -> String {
         .send()
         .await
         .expect_consistent()
-        .expect("Call to `sendTransaction` failed")
-        .to_string()
+        .expect("Call to `sendTransaction` failed");
+
+    nonce_account.as_ref().to_string()
 }
 
 #[update]
@@ -228,6 +248,10 @@ pub async fn send_sol(owner: Option<Principal>, to: String, amount: Nat) -> Stri
     let payer = wallet.solana_account();
     let amount = amount.0.to_u64().unwrap();
 
+    ic_cdk::println!(
+        "Instruction to transfer {amount} lamports from {} to {recipient}",
+        payer.as_ref()
+    );
     let instruction = system_instruction::transfer(payer.as_ref(), &recipient, amount);
 
     let message = Message::new_with_blockhash(

@@ -9,7 +9,9 @@ use sol_rpc_types::{
 };
 use solana_client::rpc_client::RpcClient as SolanaRpcClient;
 use solana_commitment_config::CommitmentConfig;
+use solana_hash::Hash;
 use solana_pubkey::{pubkey, Pubkey};
+use solana_signature::Signature;
 use std::env::var;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -23,10 +25,13 @@ fn test_basic_solana() {
     let setup = Setup::new().with_mock_api_keys();
     let basic_solana = setup.basic_solana();
 
+    // ## Step 2: Generating a Solana account
     let user_solana_account: Pubkey = basic_solana
         .update_call::<_, String>(USER, "solana_account", ())
         .parse()
         .expect("Failed to parse public key");
+
+    // ## Step 3: Receiving SOL
     setup.airdrop(&user_solana_account, AIRDROP_AMOUNT);
     println!("User solana account {user_solana_account}");
 
@@ -37,19 +42,23 @@ fn test_basic_solana() {
     setup.airdrop(&receiver_solana_account, AIRDROP_AMOUNT);
     println!("Receiver solana account {receiver_solana_account}");
 
+    // ## Step 4: Sending SOL
     let receiver_balance_before = setup
         .solana_client
         .get_balance(&receiver_solana_account)
         .unwrap();
-    let _send_sol_tx: String = basic_solana.update_call(
-        USER,
-        "send_sol",
-        (
-            None::<Principal>,
-            receiver_solana_account.to_string(),
-            Nat::from(1_u8),
-        ),
-    );
+    let send_sol_tx: Signature = basic_solana
+        .update_call::<_, String>(
+            USER,
+            "send_sol",
+            (
+                None::<Principal>,
+                receiver_solana_account.to_string(),
+                Nat::from(1_u8),
+            ),
+        )
+        .parse()
+        .unwrap();
     let expected_receiver_balance = receiver_balance_before + 1;
     assert_eq!(
         setup.solana_client.wait_for_balance_with_commitment(
@@ -59,6 +68,26 @@ fn test_basic_solana() {
         ),
         Some(expected_receiver_balance)
     );
+    assert!(setup
+        .solana_client
+        .confirm_transaction(&send_sol_tx)
+        .unwrap());
+
+    // ## Step 5: Sending SOL using durable nonces
+    let nonce_account: Pubkey = basic_solana
+        .update_call::<_, String>(USER, "create_nonce_account", ())
+        .parse()
+        .unwrap();
+    let nonce: Hash = basic_solana
+        .update_call::<_, String>(USER, "get_nonce", (Some(nonce_account.to_string()),))
+        .parse()
+        .unwrap();
+    let actual_nonce = solana_rpc_client_nonce_utils::data_from_account(
+        &setup.solana_client.get_account(&nonce_account).unwrap(),
+    )
+    .unwrap()
+    .blockhash();
+    assert_eq!(nonce, actual_nonce);
 }
 
 pub struct Setup {

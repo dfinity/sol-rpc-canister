@@ -76,6 +76,7 @@ solana-program = "2.2.0"
 solana-pubkey = "2.2.0"
 solana-reward-info = "2.2.0"
 solana-rpc-client-api = "2.2.0"
+solana-rpc-client-nonce-utils = "2.2.0"
 solana-signature = "2.2.0"
 solana-signer = "2.2.0"
 solana-transaction = "2.2.0"
@@ -109,6 +110,7 @@ solana-program = { git = "https://github.com/dfinity/agave", tag = "323039e-js-f
 solana-pubkey = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-reward-info = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-rpc-client-api = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
+solana-rpc-client-nonce-utils = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-signer = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-signature = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-transaction = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
