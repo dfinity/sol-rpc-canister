@@ -116,6 +116,10 @@ fn test_basic_solana() {
         .unwrap());
     let nonce_2 = setup.ensure_nonce_consistent(&nonce_account);
     assert_ne!(nonce_1, nonce_2);
+
+    // ## Step 6: Sending Solana Program Library (SPL) tokens
+    // TODO: XC-349 test SPL tokens, adding the spl_token_2022 dependency brings a lot of problems
+    // with conflicting versions of transitive dependencies.
 }
 
 pub struct Setup {
