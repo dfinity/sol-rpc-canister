@@ -302,6 +302,8 @@ pub async fn send_sol_with_durable_nonce(
 
     client
         .send_transaction(transaction)
+        // TODO XC-350: use commitment level from client
+        .modify_params(|params| params.preflight_commitment = Some(CommitmentLevel::Confirmed))
         .send()
         .await
         .expect_consistent()

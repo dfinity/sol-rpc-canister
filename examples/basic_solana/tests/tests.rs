@@ -83,16 +83,39 @@ fn test_basic_solana() {
         Some(1_500_000),
         CommitmentConfig::confirmed(),
     );
-    let nonce: Hash = basic_solana
-        .update_call::<_, String>(USER, "get_nonce", (Some(nonce_account.to_string()),))
+    let nonce_1 = setup.ensure_nonce_consistent(&nonce_account);
+
+    let receiver_balance_before = setup
+        .solana_client
+        .get_balance(&receiver_solana_account)
+        .unwrap();
+    let send_sol_tx: Signature = basic_solana
+        .update_call::<_, String>(
+            USER,
+            "send_sol_with_durable_nonce",
+            (
+                None::<Principal>,
+                receiver_solana_account.to_string(),
+                Nat::from(1_u8),
+            ),
+        )
         .parse()
         .unwrap();
-    let actual_nonce = solana_rpc_client_nonce_utils::data_from_account(
-        &setup.solana_client.get_account(&nonce_account).unwrap(),
-    )
-    .unwrap()
-    .blockhash();
-    assert_eq!(nonce, actual_nonce);
+    let expected_receiver_balance = receiver_balance_before + 1;
+    assert_eq!(
+        setup.solana_client.wait_for_balance_with_commitment(
+            &receiver_solana_account,
+            Some(expected_receiver_balance),
+            CommitmentConfig::confirmed()
+        ),
+        Some(expected_receiver_balance)
+    );
+    assert!(setup
+        .solana_client
+        .confirm_transaction(&send_sol_tx)
+        .unwrap());
+    let nonce_2 = setup.ensure_nonce_consistent(&nonce_account);
+    assert_ne!(nonce_1, nonce_2);
 }
 
 pub struct Setup {
@@ -197,6 +220,21 @@ impl Setup {
             ),
             Some(expected_balance)
         );
+    }
+
+    fn ensure_nonce_consistent(&self, nonce_account: &Pubkey) -> Hash {
+        let expected_nonce: Hash = self
+            .basic_solana()
+            .update_call::<_, String>(USER, "get_nonce", (Some(nonce_account.to_string()),))
+            .parse()
+            .unwrap();
+        let actual_nonce = solana_rpc_client_nonce_utils::data_from_account(
+            &self.solana_client.get_account(nonce_account).unwrap(),
+        )
+        .unwrap()
+        .blockhash();
+        assert_eq!(expected_nonce, actual_nonce);
+        expected_nonce
     }
 
     fn sol_rpc(&self) -> Canister {
