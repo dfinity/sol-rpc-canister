@@ -22,9 +22,11 @@ pub enum ResponseTransform {
     #[n(0)]
     GetAccountInfo,
     #[n(1)]
-    GetBlock,
+    GetBalance,
     #[n(2)]
-    GetSlot(#[n(3)] RoundingError),
+    GetBlock,
+    #[n(3)]
+    GetSlot(#[n(0)] RoundingError),
     #[n(4)]
     GetTransaction,
     #[n(5)]
@@ -55,6 +57,9 @@ impl ResponseTransform {
                         value => Some(value),
                     }
                 });
+            }
+            Self::GetBalance => {
+                canonicalize_response::<Value, Value>(body_bytes, |result| result["value"].clone());
             }
             Self::GetBlock => {
                 canonicalize_response::<Value, Option<Value>>(body_bytes, |result| match result {

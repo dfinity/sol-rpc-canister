@@ -2,9 +2,9 @@ use crate::{Runtime, SolRpcClient};
 use candid::CandidType;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBlockParams, GetSlotParams,
-    GetSlotRpcConfig, GetTransactionParams, RpcConfig, RpcResult, RpcSources,
-    SendTransactionParams, Signature, TransactionInfo,
+    AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
+    GetSlotParams, GetSlotRpcConfig, GetTransactionParams, Lamport, RpcConfig, RpcResult,
+    RpcSources, SendTransactionParams, Signature, TransactionInfo,
 };
 use solana_clock::Slot;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
@@ -33,6 +33,8 @@ pub trait SolRpcRequest {
 pub enum SolRpcEndpoint {
     /// `getAccountInfo` endpoint.
     GetAccountInfo,
+    /// `getBalance` endpoint.
+    GetBalance,
     /// `getBlock` endpoint.
     GetBlock,
     /// `getSlot` endpoint.
@@ -50,6 +52,7 @@ impl SolRpcEndpoint {
     pub fn rpc_method(&self) -> &'static str {
         match &self {
             SolRpcEndpoint::GetAccountInfo => "getAccountInfo",
+            SolRpcEndpoint::GetBalance => "getBalance",
             SolRpcEndpoint::GetBlock => "getBlock",
             SolRpcEndpoint::GetSlot => "getSlot",
             SolRpcEndpoint::GetTransaction => "getTransaction",
@@ -62,6 +65,7 @@ impl SolRpcEndpoint {
     pub fn cycles_cost_method(&self) -> &'static str {
         match &self {
             SolRpcEndpoint::GetAccountInfo => "getAccountInfoCyclesCost",
+            SolRpcEndpoint::GetBalance => "getBalanceCyclesCost",
             SolRpcEndpoint::GetBlock => "getBlockCyclesCost",
             SolRpcEndpoint::GetSlot => "getSlotCyclesCost",
             SolRpcEndpoint::GetTransaction => "getTransactionCyclesCost",
@@ -89,6 +93,30 @@ impl SolRpcRequest for GetAccountInfoRequest {
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetAccountInfo
+    }
+
+    fn params(self) -> Self::Params {
+        self.0
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct GetBalanceRequest(GetBalanceParams);
+
+impl GetBalanceRequest {
+    pub fn new(params: GetBalanceParams) -> Self {
+        Self(params)
+    }
+}
+
+impl SolRpcRequest for GetBalanceRequest {
+    type Config = RpcConfig;
+    type Params = GetBalanceParams;
+    type CandidOutput = sol_rpc_types::MultiRpcResult<Lamport>;
+    type Output = sol_rpc_types::MultiRpcResult<Lamport>;
+
+    fn endpoint(&self) -> SolRpcEndpoint {
+        SolRpcEndpoint::GetBalance
     }
 
     fn params(self) -> Self::Params {
@@ -289,6 +317,15 @@ impl<Runtime, Config, Params, CandidOutput, Output>
     /// Change the parameters to send for that request.
     pub fn with_params(mut self, params: impl Into<Params>) -> Self {
         *self.request.params_mut() = params.into();
+        self
+    }
+
+    /// Modify current parameters to send for that request.
+    pub fn modify_params<F>(mut self, mutator: F) -> Self
+    where
+        F: FnOnce(&mut Params),
+    {
+        mutator(self.request.params_mut());
         self
     }
 

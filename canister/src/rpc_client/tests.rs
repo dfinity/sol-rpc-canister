@@ -13,6 +13,7 @@ use sol_rpc_types::{
 
 mod request_serialization_tests {
     use super::*;
+    use sol_rpc_types::GetBalanceParams;
 
     #[test]
     fn should_serialize_get_account_info_request() {
@@ -114,6 +115,42 @@ mod request_serialization_tests {
                     "encoding": "base64",
                 }
             ]),
+        );
+    }
+
+    #[test]
+    fn should_serialize_get_balance_request() {
+        let pubkey = solana_pubkey::Pubkey::default();
+        assert_serialized(
+            MultiRpcRequest::get_balance(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetBalanceParams::from(pubkey),
+            )
+            .unwrap(),
+            json!([pubkey.to_string(), null]),
+        );
+
+        assert_serialized(
+            MultiRpcRequest::get_balance(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetBalanceParams {
+                    pubkey: pubkey.to_string(),
+                    commitment: Some(CommitmentLevel::Confirmed),
+                    min_context_slot: Some(42),
+                },
+            )
+            .unwrap(),
+            json!(
+                [
+                    pubkey.to_string(),
+                    {
+                        "commitment": "confirmed",
+                        "minContextSlot": 42
+                    }
+                ]
+            ),
         );
     }
 
