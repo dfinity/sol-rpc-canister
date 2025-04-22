@@ -37,6 +37,9 @@ type Address = text;
 // A transaction ID on Solana, i.e. the first signature in a transaction.
 type Txid = text;
 
+// Hash value used as recent_blockhash field in Transactions.
+type Blockhash = text;
+
 service : (InitArg) -> {
     // Returns the Solana account derived from the owner principal.
     //
@@ -62,7 +65,7 @@ service : (InitArg) -> {
     // Returns the current blockhash for the given Solana nonce account.
     //
     // If no account is provided, the nonce account derived from the caller's principal is used.
-    get_nonce : (account: opt Address) -> (Lamport);
+    get_nonce : (account: opt Address) -> (Blockhash);
 
     // Returns the balance of the given Solana account for the SPL token associated with
     // the given token mint account. The balance is a floating point value and is formatted
