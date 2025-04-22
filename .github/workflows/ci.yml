@@ -107,10 +107,13 @@ jobs:
         run: |
           echo "WALLET_WASM_PATH=$GITHUB_WORKSPACE/wallet.wasm.gz" >> "$GITHUB_ENV"
 
+      - name: 'Set BASIC_SOLANA_WASM_PATH for load_wasm'
+        run: |
+          echo "BASIC_SOLANA_WASM_PATH=$GITHUB_WORKSPACE/target/wasm32-unknown-unknown/canister-release/basic_solana.wasm" >> "$GITHUB_ENV"
+
       - name: 'Test basic_solana'
         run: |
           cargo build --manifest-path examples/basic_solana/Cargo.toml --target wasm32-unknown-unknown --no-default-features --profile canister-release 
-          echo "BASIC_SOLANA_WASM_PATH=$GITHUB_WORKSPACE/target/wasm32-unknown-unknown/canister-release/basic_solana.wasm" >> "$GITHUB_ENV"
           cargo test --locked --package basic_solana
 
 
