@@ -3,8 +3,9 @@ name = "basic_solana"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-crate-type = ["cdylib"]
+[[bin]]
+name = "basic_solana"
+path = "src/main.rs"
 
 [dependencies]
 base64 = "0.22.1"
@@ -30,3 +31,12 @@ solana-program = { workspace = true }
 solana-pubkey = { workspace = true }
 solana-signature = { workspace = true }
 solana-transaction = { workspace = true, features = ["bincode"] }
+
+[dev-dependencies]
+candid = { workspace = true }
+candid_parser = { workspace = true }
+ic-test-utilities-load-wasm = { workspace = true }
+pocket-ic = { workspace = true }
+solana-client = { workspace = true }
+solana-commitment-config = { workspace = true }
+solana-rpc-client-nonce-utils = {workspace = true}
