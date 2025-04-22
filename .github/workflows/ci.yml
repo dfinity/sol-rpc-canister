@@ -108,7 +108,11 @@ jobs:
           echo "WALLET_WASM_PATH=$GITHUB_WORKSPACE/wallet.wasm.gz" >> "$GITHUB_ENV"
 
       - name: 'Test basic_solana'
-        run: cargo test --locked --package basic_solana
+        run: |
+          cargo build --manifest-path examples/basic_solana/Cargo.toml --target wasm32-unknown-unknown --no-default-features --profile canister-release 
+          echo "BASIC_SOLANA_WASM_PATH=$GITHUB_WORKSPACE/target/wasm32-unknown-unknown/canister-release/basic_solana.wasm" >> "$GITHUB_ENV"
+          cargo test --locked --package basic_solana
+
 
       - name: 'Test sol_rpc_int_tests'
         run: cargo test --locked --package sol_rpc_int_tests -- --test-threads 2 --nocapture
