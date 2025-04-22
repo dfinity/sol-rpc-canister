@@ -287,6 +287,8 @@ dependencies = [
  "sol_rpc_client",
  "sol_rpc_types",
  "solana-account-decoder-client-types",
+ "solana-client",
+ "solana-commitment-config",
  "solana-hash",
  "solana-instruction",
  "solana-message",
