@@ -39,4 +39,6 @@ ic-test-utilities-load-wasm = { workspace = true }
 pocket-ic = { workspace = true }
 solana-client = { workspace = true }
 solana-commitment-config = { workspace = true }
+solana-keypair = { workspace = true }
 solana-rpc-client-nonce-utils = {workspace = true}
+solana-signer = {workspace = true}

@@ -11,8 +11,13 @@ use sol_rpc_types::{
 use solana_client::rpc_client::RpcClient as SolanaRpcClient;
 use solana_commitment_config::CommitmentConfig;
 use solana_hash::Hash;
+use solana_instruction::{AccountMeta, Instruction};
+use solana_keypair::Keypair;
+use solana_program::sysvar;
 use solana_pubkey::{pubkey, Pubkey};
 use solana_signature::Signature;
+use solana_signer::Signer;
+use solana_transaction::Transaction;
 use std::env::var;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -119,8 +124,23 @@ fn test_basic_solana() {
     assert_ne!(nonce_1, nonce_2);
 
     // ## Step 6: Sending Solana Program Library (SPL) tokens
-    // TODO: XC-349 test SPL tokens, adding the spl_token_2022 dependency brings a lot of problems
-    // with conflicting versions of transitive dependencies.
+    let mint_account = setup.create_spl_token();
+    println!("Created SPL token at {mint_account}");
+    let user_associated_token_account: Pubkey = basic_solana
+        .update_call::<_, String>(
+            USER,
+            "create_associated_token_account",
+            (None::<Principal>, mint_account.to_string()),
+        )
+        .parse()
+        .unwrap();
+    let token_account = setup
+        .solana_client
+        .get_token_account(&user_associated_token_account)
+        .unwrap()
+        .expect("Missing user's associated token account");
+    assert_eq!(token_account.mint, mint_account.to_string());
+    assert_eq!(token_account.token_amount.amount, "0");
 }
 
 pub struct Setup {
@@ -241,6 +261,54 @@ impl Setup {
         .blockhash();
         assert_eq!(expected_nonce, actual_nonce);
         expected_nonce
+    }
+
+    fn create_spl_token(&self) -> Pubkey {
+        const MIN_ACCOUNT_LEN: u8 = 82;
+        const SPL_TOKEN_2022_ID: Pubkey = pubkey!("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
+
+        let mint_authority = Keypair::new();
+        self.airdrop(&mint_authority.pubkey(), 1_000_000_000);
+        let mint_account = Keypair::new();
+        let mint_rent = self
+            .solana_client
+            .get_minimum_balance_for_rent_exemption(MIN_ACCOUNT_LEN as usize)
+            .unwrap();
+        let create_mint_account_ix = solana_program::system_instruction::create_account(
+            &mint_authority.pubkey(),
+            &mint_account.pubkey(),
+            mint_rent,
+            MIN_ACCOUNT_LEN as u64,
+            &SPL_TOKEN_2022_ID,
+        );
+        // See https://github.com/solana-program/token-2022/blob/644f0b014cbdb25c11c20ccedfb6e412d399b6dc/program/src/instruction.rs#L1207
+        let initialize_mint_ix = {
+            let decimals: u8 = 9;
+            let mut buf = Vec::with_capacity(35);
+            buf.push(0);
+            buf.push(decimals);
+            buf.extend_from_slice(mint_authority.pubkey().as_ref());
+            buf.push(0); //no freeze authority
+
+            Instruction {
+                program_id: SPL_TOKEN_2022_ID,
+                accounts: vec![
+                    AccountMeta::new(mint_account.pubkey(), false),
+                    AccountMeta::new_readonly(sysvar::rent::id(), false),
+                ],
+                data: buf,
+            }
+        };
+        let token_mint = Transaction::new_signed_with_payer(
+            &[create_mint_account_ix, initialize_mint_ix],
+            Some(&mint_authority.pubkey()),
+            &[&mint_authority, &mint_account],
+            self.solana_client.get_latest_blockhash().unwrap(),
+        );
+        self.solana_client
+            .send_and_confirm_transaction(&token_mint)
+            .unwrap();
+        mint_account.pubkey()
     }
 
     fn sol_rpc(&self) -> Canister {
