@@ -6,7 +6,7 @@ pub mod state;
 use crate::state::read_state;
 use candid::{CandidType, Deserialize, Principal};
 use sol_rpc_client::{IcRuntime, SolRpcClient};
-use sol_rpc_types::{MultiRpcResult, RpcSources, SolanaCluster};
+use sol_rpc_types::{CommitmentLevel, MultiRpcResult, RpcSources, SolanaCluster};
 use solana_hash::Hash;
 use std::{fmt::Display, str::FromStr};
 
@@ -60,6 +60,7 @@ pub fn client() -> SolRpcClient<IcRuntime> {
         .with_rpc_sources(RpcSources::Default(
             read_state(|state| state.solana_network()).into(),
         ))
+        .with_default_commitment_level(CommitmentLevel::Confirmed)
         .build()
 }
 
