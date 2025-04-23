@@ -1,10 +1,13 @@
+#[cfg(test)]
+mod tests;
+
 use crate::{Runtime, SolRpcClient};
 use candid::CandidType;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
-    GetSlotParams, GetSlotRpcConfig, GetTransactionParams, Lamport, RpcConfig, RpcResult,
-    RpcSources, SendTransactionParams, Signature, TransactionInfo,
+    AccountInfo, CommitmentLevel, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams,
+    GetBlockParams, GetSlotParams, GetSlotRpcConfig, GetTransactionParams, Lamport, RpcConfig,
+    RpcResult, RpcSources, SendTransactionParams, Signature, TransactionInfo,
 };
 use solana_clock::Slot;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
@@ -79,7 +82,11 @@ impl SolRpcEndpoint {
 pub struct GetAccountInfoRequest(GetAccountInfoParams);
 
 impl GetAccountInfoRequest {
-    pub fn new(params: GetAccountInfoParams) -> Self {
+    pub fn new(
+        default_commitment_level: Option<CommitmentLevel>,
+        mut params: GetAccountInfoParams,
+    ) -> Self {
+        set_default(default_commitment_level, &mut params.commitment);
         Self(params)
     }
 }
@@ -431,5 +438,11 @@ impl<R: Runtime, Config, Params> RequestCostBuilder<R, Config, Params> {
         Params: CandidType + Send,
     {
         self.client.execute_cycles_cost_request(self.request).await
+    }
+}
+
+fn set_default<T>(default_value: Option<T>, value: &mut Option<T>) {
+    if default_value.is_some() && value.is_none() {
+        *value = Some(default_value.unwrap())
     }
 }

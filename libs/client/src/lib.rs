@@ -267,6 +267,15 @@ impl<R> ClientBuilder<R> {
         self
     }
 
+    /// Mutates the builder to use the given [`CommitmentLevel`].
+    ///
+    /// All requests made by the built client will use that commitment level.
+    /// This can be overridden by each  request.
+    pub fn with_default_commitment_level(mut self, commitment_level: CommitmentLevel) -> Self {
+        self.config.default_commitment_level = Some(commitment_level);
+        self
+    }
+
     /// Creates a [`SolRpcClient`] from the configuration specified in the [`ClientBuilder`].
     pub fn build(self) -> SolRpcClient<R> {
         SolRpcClient {
@@ -317,7 +326,7 @@ impl<R> SolRpcClient<R> {
     > {
         RequestBuilder::new(
             self.clone(),
-            GetAccountInfoRequest::new(params.into()),
+            GetAccountInfoRequest::new(self.config.default_commitment_level.clone(), params.into()),
             10_000_000_000,
         )
     }
