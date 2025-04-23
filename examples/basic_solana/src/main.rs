@@ -101,7 +101,7 @@ pub async fn get_nonce(account: Option<String>) -> String {
 }
 
 #[update]
-pub async fn get_spl_token_balance(account: Option<String>, mint_account: String) -> String {
+pub async fn get_spl_token_balance(account: Option<String>, mint_account: String) -> Nat {
     let account = account.unwrap_or(associated_token_account(None, mint_account).await);
 
     let commitment = read_state(State::solana_commitment_level);
@@ -138,7 +138,8 @@ pub async fn get_spl_token_balance(account: Option<String>, mint_account: String
     response["value"]["amount"]
         .as_str()
         .unwrap_or_else(|| panic!("Failed to parse getTokenAccountBalance response {response}"))
-        .to_string()
+        .parse()
+        .unwrap()
 }
 
 #[update]

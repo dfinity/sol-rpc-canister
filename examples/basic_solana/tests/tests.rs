@@ -206,7 +206,7 @@ fn test_basic_solana() {
         .unwrap()
         .expect("Missing user's associated token account");
     assert_eq!(token_account.token_amount.amount, "999999000");
-    let sender_spl_balance: String = basic_solana.update_call(
+    let sender_spl_balance: Nat = basic_solana.update_call(
         SENDER,
         "get_spl_token_balance",
         (
@@ -214,14 +214,14 @@ fn test_basic_solana() {
             mint_account.to_string(),
         ),
     );
-    assert_eq!(token_account.token_amount.amount, sender_spl_balance);
+    assert_eq!(sender_spl_balance, Nat::from(999_999_000_u64));
     let token_account = setup
         .solana_client
         .get_token_account(&receiver_associated_token_account)
         .unwrap()
         .expect("Missing receiver's associated token account");
     assert_eq!(token_account.token_amount.amount, "1000");
-    let receiver_spl_balance: String = basic_solana.update_call(
+    let receiver_spl_balance: Nat = basic_solana.update_call(
         RECEIVER,
         "get_spl_token_balance",
         (
@@ -229,7 +229,7 @@ fn test_basic_solana() {
             mint_account.to_string(),
         ),
     );
-    assert_eq!(token_account.token_amount.amount, receiver_spl_balance);
+    assert_eq!(receiver_spl_balance, Nat::from(1_000_u64));
 }
 
 pub struct Setup {
