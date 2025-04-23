@@ -22,6 +22,8 @@ use solana_transaction::Transaction;
 use std::env::var;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::thread;
+use std::time::Duration;
 
 pub const SENDER: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x42]);
 pub const RECEIVER: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x43]);
@@ -140,6 +142,7 @@ fn test_basic_solana() {
         )
         .parse()
         .unwrap();
+    setup.wait_for_account_to_exist(&sender_associated_token_account, CommitmentLevel::Confirmed);
     println!("Sender's associated token account {sender_associated_token_account}");
 
     let receiver_associated_token_account: Pubkey = basic_solana
@@ -150,11 +153,15 @@ fn test_basic_solana() {
         )
         .parse()
         .unwrap();
+    setup.wait_for_account_to_exist(
+        &receiver_associated_token_account,
+        CommitmentLevel::Confirmed,
+    );
     println!("Receiver's associated token account {receiver_associated_token_account}");
 
     for (associated_token_account, owner) in [
         (sender_associated_token_account, sender_solana_account),
-        // (receiver_associated_token_account, receiver_solana_account),
+        (receiver_associated_token_account, receiver_solana_account),
     ] {
         let token_account = setup
             .solana_client
@@ -459,6 +466,39 @@ impl Setup {
             );
             if tx.is_ok() {
                 break;
+            }
+            thread::sleep(Duration::from_millis(400))
+        }
+    }
+
+    fn wait_for_account_to_exist(&self, account: &Pubkey, commitment_level: CommitmentLevel) {
+        let mut num_trials = 0;
+        loop {
+            num_trials += 1;
+            if num_trials > 20 {
+                panic!(
+                    "Account {account} does not have desired commitment level {commitment_level:?}",
+                );
+            }
+            let result = self
+                .solana_client
+                .get_account_with_commitment(
+                    account,
+                    match commitment_level {
+                        CommitmentLevel::Processed => CommitmentConfig::processed(),
+                        CommitmentLevel::Confirmed => CommitmentConfig::confirmed(),
+                        CommitmentLevel::Finalized => CommitmentConfig::finalized(),
+                    },
+                )
+                .unwrap_or_else(|e| panic!("Failed to retrieve account {account}: {e}"));
+            match result.value {
+                Some(found_account) if found_account.lamports > 0 => {
+                    break;
+                }
+                _ => {
+                    thread::sleep(Duration::from_millis(400));
+                    continue;
+                }
             }
         }
     }
