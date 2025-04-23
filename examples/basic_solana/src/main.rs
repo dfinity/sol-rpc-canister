@@ -1,7 +1,7 @@
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use basic_solana::solana_wallet::SolanaWallet;
-use basic_solana::state::init_state;
+use basic_solana::state::{init_state, read_state, State};
 use basic_solana::{client, get_recent_blockhash, spl, validate_caller_not_anonymous, InitArg};
 use candid::{Nat, Principal};
 use ic_cdk::{init, post_upgrade, update};
@@ -11,7 +11,7 @@ use sol_rpc_types::{GetAccountInfoEncoding, GetAccountInfoParams};
 use solana_account_decoder_client_types::{UiAccountData, UiAccountEncoding};
 use solana_hash::Hash;
 use solana_message::Message;
-use solana_nonce::{state::State, versions::Versions as NonceVersions};
+use solana_nonce::versions::Versions as NonceVersions;
 use solana_program::system_instruction;
 use solana_pubkey::Pubkey;
 use solana_transaction::Transaction;
@@ -95,8 +95,8 @@ pub async fn get_nonce(account: Option<String>) -> String {
         .expect("Failed to deserialize nonce account data")
         .state()
     {
-        State::Uninitialized => panic!("Nonce account is uninitialized"),
-        State::Initialized(data) => data.blockhash().to_string(),
+        solana_nonce::state::State::Uninitialized => panic!("Nonce account is uninitialized"),
+        solana_nonce::state::State::Initialized(data) => data.blockhash().to_string(),
     }
 }
 
@@ -104,25 +104,40 @@ pub async fn get_nonce(account: Option<String>) -> String {
 pub async fn get_spl_token_balance(account: Option<String>, mint_account: String) -> String {
     let account = account.unwrap_or(associated_token_account(None, mint_account).await);
 
+    let commitment = read_state(State::solana_commitment_level);
     // TODO XC-325: use `getTokenAccountBalance` method from client
     let response = client()
         .json_request(json!({
             "jsonrpc": "2.0",
             "id": 1,
             "method": "getTokenAccountBalance",
-            "params": [ account ]
+            "params": [ account , {
+                "commitment": commitment
+            }]
         }))
         .send()
         .await
         .expect_consistent()
         .expect("Call to `getTokenAccountBalance` failed");
 
-    // The response to a successful `getTokenAccountBalance` call has the following format:
-    // { "id": "[ID]", "jsonrpc": "2.0", "result": { "context": { "slot": [SLOT] } }, "value": [ { "uiAmountString": "FORMATTED AMOUNT" } ] }, }
-    serde_json::to_value(response).expect("`getTokenAccountBalance` response is not a valid JSON")
-        ["result"]["value"]["uiAmountString"]
+    // The response to a json_request for the `getTokenAccountBalance` endpoint has the following format:
+    //{
+    //    "context": {
+    //      "apiVersion": "2.0.22",
+    //      "slot": 63
+    //    },
+    //    "value": {
+    //      "amount": "999999000",
+    //      "decimals": 9,
+    //      "uiAmount": 0.999999,
+    //      "uiAmountString": "0.999999"
+    //     }
+    //}
+    let response: serde_json::Value = serde_json::from_str(&response)
+        .expect("`getTokenAccountBalance` response is not a valid JSON");
+    response["value"]["amount"]
         .as_str()
-        .unwrap()
+        .unwrap_or_else(|| panic!("Failed to parse getTokenAccountBalance response {response}"))
         .to_string()
 }
 
