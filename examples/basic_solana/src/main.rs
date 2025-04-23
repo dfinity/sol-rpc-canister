@@ -200,8 +200,24 @@ pub async fn create_associated_token_account(
     let payer = wallet.solana_account();
     let mint = Pubkey::from_str(&mint_account).unwrap();
 
-    let instruction =
+    let (associated_token_account, instruction) =
         spl::create_associated_token_account_instruction(payer.as_ref(), payer.as_ref(), &mint);
+
+    if let Some(_account) = client
+        .get_account_info(associated_token_account)
+        .send()
+        .await
+        .expect_consistent()
+        .unwrap_or_else(|e| {
+            panic!("Call to `getAccountInfo` for {associated_token_account} failed: {e}")
+        })
+    {
+        ic_cdk::println!(
+            "[create_associated_token_account]: Account {} already exists. Skipping creation of associated token account",
+            associated_token_account
+        );
+        return associated_token_account.to_string();
+    }
 
     let message = Message::new_with_blockhash(
         &[instruction],
@@ -221,7 +237,9 @@ pub async fn create_associated_token_account(
         .await
         .expect_consistent()
         .expect("Call to `sendTransaction` failed")
-        .to_string()
+        .to_string();
+
+    associated_token_account.to_string()
 }
 
 #[update]
