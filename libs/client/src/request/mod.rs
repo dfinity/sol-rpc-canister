@@ -11,6 +11,7 @@ use sol_rpc_types::{
 };
 use solana_clock::Slot;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
+use std::fmt::{Debug, Formatter};
 use strum::EnumIter;
 
 /// Solana RPC endpoint supported by the SOL RPC canister.
@@ -418,6 +419,56 @@ pub struct Request<Config, Params, CandidOutput, Output> {
     pub(super) cycles: u128,
     pub(super) _candid_marker: std::marker::PhantomData<CandidOutput>,
     pub(super) _output_marker: std::marker::PhantomData<Output>,
+}
+
+impl<Config: Debug, Params: Debug, CandidOutput, Output> Debug
+    for Request<Config, Params, CandidOutput, Output>
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let Request {
+            endpoint,
+            rpc_sources,
+            rpc_config,
+            params,
+            cycles,
+            _candid_marker,
+            _output_marker,
+        } = &self;
+        f.debug_struct("Request")
+            .field("endpoint", endpoint)
+            .field("rpc_sources", rpc_sources)
+            .field("rpc_config", rpc_config)
+            .field("params", params)
+            .field("cycles", cycles)
+            .field("_candid_marker", _candid_marker)
+            .field("_output_marker", _output_marker)
+            .finish()
+    }
+}
+
+impl<Config: PartialEq, Params: PartialEq, CandidOutput, Output> PartialEq
+    for Request<Config, Params, CandidOutput, Output>
+{
+    fn eq(
+        &self,
+        Request {
+            endpoint,
+            rpc_sources,
+            rpc_config,
+            params,
+            cycles,
+            _candid_marker,
+            _output_marker,
+        }: &Self,
+    ) -> bool {
+        &self.endpoint == endpoint
+            && &self.rpc_sources == rpc_sources
+            && &self.rpc_config == rpc_config
+            && &self.params == params
+            && &self.cycles == cycles
+            && &self._candid_marker == _candid_marker
+            && &self._output_marker == _output_marker
+    }
 }
 
 impl<Config: Clone, Params: Clone, CandidOutput, Output> Clone
