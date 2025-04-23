@@ -346,7 +346,7 @@ pub enum SendTransactionEncoding {
 
 /// [Commitment levels](https://solana.com/docs/rpc#configuring-state-commitment) in Solana,
 /// representing finality guarantees of transactions and memory queries.
-#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Serialize, CandidType)]
+#[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize, CandidType)]
 pub enum CommitmentLevel {
     /// The transaction is processed by a leader, but may be dropped.
     #[serde(rename = "processed")]
@@ -356,6 +356,7 @@ pub enum CommitmentLevel {
     Confirmed,
     /// The transaction is finalized and cannot be rolled back.
     #[serde(rename = "finalized")]
+    #[default]
     Finalized,
 }
 
