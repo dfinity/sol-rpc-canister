@@ -111,7 +111,11 @@ impl SolRpcRequest for GetAccountInfoRequest {
 pub struct GetBalanceRequest(GetBalanceParams);
 
 impl GetBalanceRequest {
-    pub fn new(params: GetBalanceParams) -> Self {
+    pub fn new(
+        default_commitment_level: Option<CommitmentLevel>,
+        mut params: GetBalanceParams,
+    ) -> Self {
+        set_default(default_commitment_level, &mut params.commitment);
         Self(params)
     }
 }
