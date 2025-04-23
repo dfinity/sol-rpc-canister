@@ -5,9 +5,9 @@ use crate::{Runtime, SolRpcClient};
 use candid::CandidType;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    AccountInfo, CommitmentLevel, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams,
-    GetBlockParams, GetSlotParams, GetSlotRpcConfig, GetTransactionParams, Lamport, RpcConfig,
-    RpcResult, RpcSources, SendTransactionParams, Signature, TransactionInfo,
+    AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
+    GetSlotParams, GetSlotRpcConfig, GetTransactionParams, Lamport, RpcConfig, RpcResult,
+    RpcSources, SendTransactionParams, Signature, TransactionInfo,
 };
 use solana_clock::Slot;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
@@ -82,11 +82,7 @@ impl SolRpcEndpoint {
 pub struct GetAccountInfoRequest(GetAccountInfoParams);
 
 impl GetAccountInfoRequest {
-    pub fn new(
-        default_commitment_level: Option<CommitmentLevel>,
-        mut params: GetAccountInfoParams,
-    ) -> Self {
-        set_default(default_commitment_level, &mut params.commitment);
+    pub fn new(params: GetAccountInfoParams) -> Self {
         Self(params)
     }
 }
@@ -111,11 +107,7 @@ impl SolRpcRequest for GetAccountInfoRequest {
 pub struct GetBalanceRequest(GetBalanceParams);
 
 impl GetBalanceRequest {
-    pub fn new(
-        default_commitment_level: Option<CommitmentLevel>,
-        mut params: GetBalanceParams,
-    ) -> Self {
-        set_default(default_commitment_level, &mut params.commitment);
+    pub fn new(params: GetBalanceParams) -> Self {
         Self(params)
     }
 }
@@ -254,6 +246,76 @@ impl SolRpcRequest for JsonRequest {
     }
 }
 
+trait SetDefaultCommitmentLevel<Params> {
+    fn set_default_commitment_level(&self, params: &mut Params);
+}
+
+impl<R> SetDefaultCommitmentLevel<GetAccountInfoParams> for SolRpcClient<R> {
+    fn set_default_commitment_level(&self, params: &mut GetAccountInfoParams) {
+        set_default(
+            self.config.default_commitment_level.clone(),
+            &mut params.commitment,
+        );
+    }
+}
+
+impl<R> SetDefaultCommitmentLevel<GetBalanceParams> for SolRpcClient<R> {
+    fn set_default_commitment_level(&self, params: &mut GetBalanceParams) {
+        set_default(
+            self.config.default_commitment_level.clone(),
+            &mut params.commitment,
+        );
+    }
+}
+
+impl<R> SetDefaultCommitmentLevel<GetBlockParams> for SolRpcClient<R> {
+    fn set_default_commitment_level(&self, params: &mut GetBlockParams) {
+        //nop
+    }
+}
+
+impl<R> SetDefaultCommitmentLevel<Option<GetSlotParams>> for SolRpcClient<R> {
+    fn set_default_commitment_level(&self, params: &mut Option<GetSlotParams>) {
+        if let Some(slot_params) = params {
+            set_default(
+                self.config.default_commitment_level.clone(),
+                &mut slot_params.commitment,
+            );
+            return;
+        }
+        if let Some(commitment) = self.config.default_commitment_level.clone() {
+            *params = Some(GetSlotParams {
+                commitment: Some(commitment),
+                ..Default::default()
+            })
+        }
+    }
+}
+
+impl<R> SetDefaultCommitmentLevel<GetTransactionParams> for SolRpcClient<R> {
+    fn set_default_commitment_level(&self, params: &mut GetTransactionParams) {
+        set_default(
+            self.config.default_commitment_level.clone(),
+            &mut params.commitment,
+        );
+    }
+}
+
+impl<R> SetDefaultCommitmentLevel<SendTransactionParams> for SolRpcClient<R> {
+    fn set_default_commitment_level(&self, params: &mut SendTransactionParams) {
+        set_default(
+            self.config.default_commitment_level.clone(),
+            &mut params.preflight_commitment,
+        );
+    }
+}
+
+impl<R> SetDefaultCommitmentLevel<String> for SolRpcClient<R> {
+    fn set_default_commitment_level(&self, params: &mut String) {
+        //nop
+    }
+}
+
 /// A builder to construct a [`Request`].
 ///
 /// To construct a [`RequestBuilder`], refer to the [`SolRpcClient`] documentation.
@@ -290,12 +352,16 @@ impl<Runtime, Config, Params, CandidOutput, Output>
             Output = Output,
         >,
         Config: From<RpcConfig>,
+        SolRpcClient<Runtime>: SetDefaultCommitmentLevel<Params>,
     {
+        let endpoint = rpc_request.endpoint();
+        let mut params = rpc_request.params();
+        client.set_default_commitment_level(&mut params);
         let request = Request {
-            endpoint: rpc_request.endpoint(),
+            endpoint,
             rpc_sources: client.config.rpc_sources.clone(),
             rpc_config: client.config.rpc_config.clone().map(Config::from),
-            params: rpc_request.params(),
+            params,
             cycles,
             _candid_marker: Default::default(),
             _output_marker: Default::default(),

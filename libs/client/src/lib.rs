@@ -326,7 +326,7 @@ impl<R> SolRpcClient<R> {
     > {
         RequestBuilder::new(
             self.clone(),
-            GetAccountInfoRequest::new(self.config.default_commitment_level.clone(), params.into()),
+            GetAccountInfoRequest::new(params.into()),
             10_000_000_000,
         )
     }
@@ -370,7 +370,7 @@ impl<R> SolRpcClient<R> {
     > {
         RequestBuilder::new(
             self.clone(),
-            GetBalanceRequest::new(self.config.default_commitment_level.clone(), params.into()),
+            GetBalanceRequest::new(params.into()),
             10_000_000_000,
         )
     }
