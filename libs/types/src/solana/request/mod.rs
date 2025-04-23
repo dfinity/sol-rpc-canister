@@ -371,7 +371,7 @@ impl From<CommitmentLevel> for solana_commitment_config::CommitmentConfig {
 
 /// Subset of [`CommitmentLevel`] whose variants are allowed values for the `encoding`
 /// field of [`GetBlockParams`].
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Serialize, CandidType)]
 pub enum GetBlockCommitmentLevel {
     /// See [`CommitmentLevel::Confirmed`].
     #[serde(rename = "confirmed")]
