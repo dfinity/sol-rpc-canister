@@ -134,9 +134,9 @@ use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    GetAccountInfoParams, GetBalanceParams, GetBlockParams, GetSlotParams, GetSlotRpcConfig,
-    GetTransactionParams, Lamport, RpcConfig, RpcSources, SendTransactionParams, Signature,
-    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TransactionDetails,
+    CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams, GetSlotParams,
+    GetSlotRpcConfig, GetTransactionParams, Lamport, RpcConfig, RpcSources, SendTransactionParams,
+    Signature, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TransactionDetails,
     TransactionInfo,
 };
 use solana_clock::Slot;
@@ -214,14 +214,11 @@ impl SolRpcClient<IcRuntime> {
 /// Client to interact with the SOL RPC canister.
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct ClientConfig<R> {
-    /// This setup's canister [`Runtime`].
-    pub runtime: R,
-    /// The [`Principal`] of the SOL RPC canister.
-    pub sol_rpc_canister: Principal,
-    /// Configuration for how to perform RPC HTTP calls.
-    pub rpc_config: Option<RpcConfig>,
-    /// Defines what RPC sources to fetch from.
-    pub rpc_sources: RpcSources,
+    runtime: R,
+    sol_rpc_canister: Principal,
+    rpc_config: Option<RpcConfig>,
+    default_commitment_level: Option<CommitmentLevel>,
+    rpc_sources: RpcSources,
 }
 
 /// A [`ClientBuilder`] to create a [`SolRpcClient`] with custom configuration.
@@ -237,6 +234,7 @@ impl<R> ClientBuilder<R> {
                 runtime,
                 sol_rpc_canister,
                 rpc_config: None,
+                default_commitment_level: None,
                 rpc_sources: RpcSources::Default(SolanaCluster::Mainnet),
             },
         }
@@ -251,6 +249,7 @@ impl<R> ClientBuilder<R> {
                 runtime: other_runtime(self.config.runtime),
                 sol_rpc_canister: self.config.sol_rpc_canister,
                 rpc_config: self.config.rpc_config,
+                default_commitment_level: self.config.default_commitment_level,
                 rpc_sources: self.config.rpc_sources,
             },
         }
@@ -265,6 +264,15 @@ impl<R> ClientBuilder<R> {
     /// Mutates the builder to use the given [`RpcConfig`].
     pub fn with_rpc_config(mut self, rpc_config: RpcConfig) -> Self {
         self.config.rpc_config = Some(rpc_config);
+        self
+    }
+
+    /// Mutates the builder to use the given [`CommitmentLevel`].
+    ///
+    /// All requests made by the built client will use that commitment level.
+    /// This can be overridden by each  request.
+    pub fn with_default_commitment_level(mut self, commitment_level: CommitmentLevel) -> Self {
+        self.config.default_commitment_level = Some(commitment_level);
         self
     }
 

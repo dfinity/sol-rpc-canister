@@ -2,6 +2,9 @@ type InitArg = record {
     // The canister will interact with this Solana network.
     // If not specified, the value is set to `Devnet`.
     solana_network : opt SolanaNetwork;
+    // Commitment level to use when interacting with the Solana blockchain.
+    // If not specified, the value is set to `finalized`.
+    solana_commitment_level : opt CommitmentLevel;
     // EdDSA keys will be derived from this key.
     // If not specified, the value is set to `TestKeyLocalDevelopment`.
     ed25519_key_name : opt Ed25519KeyName;
@@ -17,6 +20,14 @@ type SolanaNetwork = variant {
     Devnet;
     // Validator and stress testing.
     Testnet;
+};
+
+// Commitment levels in Solana, representing finality guarantees of transactions and state queries.
+// See https://solana.com/de/docs/rpc#configuring-state-commitment.
+type CommitmentLevel = variant {
+  processed;
+  confirmed;
+  finalized;
 };
 
 type Ed25519KeyName = variant {

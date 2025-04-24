@@ -3,10 +3,10 @@ pub mod solana_wallet;
 pub mod spl;
 pub mod state;
 
-use crate::state::read_state;
+use crate::state::{read_state, State};
 use candid::{CandidType, Deserialize, Principal};
 use sol_rpc_client::{IcRuntime, SolRpcClient};
-use sol_rpc_types::{MultiRpcResult, RpcSources, SolanaCluster};
+use sol_rpc_types::{CommitmentLevel, MultiRpcResult, RpcSources, SolanaCluster};
 use solana_hash::Hash;
 use std::{fmt::Display, str::FromStr};
 
@@ -60,6 +60,7 @@ pub fn client() -> SolRpcClient<IcRuntime> {
         .with_rpc_sources(RpcSources::Default(
             read_state(|state| state.solana_network()).into(),
         ))
+        .with_default_commitment_level(read_state(State::solana_commitment_level))
         .build()
 }
 
@@ -68,6 +69,7 @@ pub struct InitArg {
     pub sol_rpc_canister_id: Option<Principal>,
     pub solana_network: Option<SolanaNetwork>,
     pub ed25519_key_name: Option<Ed25519KeyName>,
+    pub solana_commitment_level: Option<CommitmentLevel>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq, Clone, Copy)]

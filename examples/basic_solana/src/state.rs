@@ -3,6 +3,7 @@ use crate::{
     Ed25519KeyName, InitArg, SolanaNetwork,
 };
 use candid::Principal;
+use sol_rpc_types::CommitmentLevel;
 use std::{
     cell::RefCell,
     ops::{Deref, DerefMut},
@@ -31,6 +32,7 @@ where
 pub struct State {
     sol_rpc_canister_id: Option<Principal>,
     solana_network: SolanaNetwork,
+    solana_commitment_level: CommitmentLevel,
     ed25519_public_key: Option<Ed25519ExtendedPublicKey>,
     ed25519_key_name: Ed25519KeyName,
 }
@@ -44,6 +46,10 @@ impl State {
         self.solana_network
     }
 
+    pub fn solana_commitment_level(&self) -> CommitmentLevel {
+        self.solana_commitment_level.clone()
+    }
+
     pub fn sol_rpc_canister_id(&self) -> Option<Principal> {
         self.sol_rpc_canister_id
     }
@@ -54,8 +60,9 @@ impl From<InitArg> for State {
         State {
             sol_rpc_canister_id: init_arg.sol_rpc_canister_id,
             solana_network: init_arg.solana_network.unwrap_or_default(),
+            solana_commitment_level: init_arg.solana_commitment_level.unwrap_or_default(),
+            ed25519_public_key: None,
             ed25519_key_name: init_arg.ed25519_key_name.unwrap_or_default(),
-            ..Default::default()
         }
     }
 }

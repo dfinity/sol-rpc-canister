@@ -5,7 +5,8 @@ use pocket_ic::management_canister::{CanisterId, CanisterSettings};
 use pocket_ic::{PocketIc, PocketIcBuilder};
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    OverrideProvider, RegexSubstitution, RpcAccess, SupportedRpcProvider, SupportedRpcProviderId,
+    CommitmentLevel, OverrideProvider, RegexSubstitution, RpcAccess, SupportedRpcProvider,
+    SupportedRpcProviderId,
 };
 use solana_client::rpc_client::RpcClient as SolanaRpcClient;
 use solana_commitment_config::CommitmentConfig;
@@ -169,6 +170,7 @@ impl Setup {
             sol_rpc_canister_id: Some(sol_rpc_canister_id),
             solana_network: Some(SolanaNetwork::Devnet),
             ed25519_key_name: Some(Ed25519KeyName::ProductionKey1),
+            solana_commitment_level: Some(CommitmentLevel::Confirmed),
         };
         env.install_canister(
             basic_solana_canister_id,

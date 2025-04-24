@@ -7,7 +7,7 @@ use candid::{Nat, Principal};
 use ic_cdk::{init, post_upgrade, update};
 use num::ToPrimitive;
 use serde_json::json;
-use sol_rpc_types::{CommitmentLevel, GetAccountInfoEncoding, GetAccountInfoParams};
+use sol_rpc_types::{GetAccountInfoEncoding, GetAccountInfoParams};
 use solana_account_decoder_client_types::{UiAccountData, UiAccountEncoding};
 use solana_hash::Hash;
 use solana_message::Message;
@@ -75,8 +75,6 @@ pub async fn get_nonce(account: Option<String>) -> String {
     params.encoding = Some(GetAccountInfoEncoding::Base64);
     let account_data = client()
         .get_account_info(params)
-        // TODO XC-350: use commitment level from client
-        .modify_params(|params| params.commitment = Some(CommitmentLevel::Confirmed))
         .send()
         .await
         .expect_consistent()
@@ -140,8 +138,6 @@ pub async fn create_nonce_account(owner: Option<Principal>) -> String {
 
     if let Some(_account) = client
         .get_account_info(*nonce_account.as_ref())
-        // TODO XC-350: use commitment level from client
-        .modify_params(|params| params.commitment = Some(CommitmentLevel::Confirmed))
         .send()
         .await
         .expect_consistent()
@@ -183,8 +179,6 @@ pub async fn create_nonce_account(owner: Option<Principal>) -> String {
 
     client
         .send_transaction(transaction)
-        // TODO XC-350: use commitment level from client
-        .modify_params(|params| params.preflight_commitment = Some(CommitmentLevel::Confirmed))
         .send()
         .await
         .expect_consistent()
@@ -260,8 +254,6 @@ pub async fn send_sol(owner: Option<Principal>, to: String, amount: Nat) -> Stri
 
     client
         .send_transaction(transaction)
-        // TODO XC-350: use commitment level from client
-        .modify_params(|params| params.preflight_commitment = Some(CommitmentLevel::Confirmed))
         .send()
         .await
         .expect_consistent()
@@ -302,8 +294,6 @@ pub async fn send_sol_with_durable_nonce(
 
     client
         .send_transaction(transaction)
-        // TODO XC-350: use commitment level from client
-        .modify_params(|params| params.preflight_commitment = Some(CommitmentLevel::Confirmed))
         .send()
         .await
         .expect_consistent()
