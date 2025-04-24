@@ -156,20 +156,18 @@ impl SolRpcRequest for GetBlockRequest {
     fn params(self, default_commitment_level: Option<CommitmentLevel>) -> Self::Params {
         let mut params = self.0;
         let default_block_commitment_level =
-            default_commitment_level
-                .clone()
-                .map(|commitment| match commitment {
-                    CommitmentLevel::Processed => {
-                        // The minimum commitment level for `getBlock` is `confirmed,
-                        // `processed` is not supported.
-                        // Not setting a value here would be equivalent to requiring the block to be `finalized`,
-                        // which seems to go against the chosen `default_commitment_level` of `processed` and so `confirmed`
-                        // is the best we can do here.
-                        GetBlockCommitmentLevel::Confirmed
-                    }
-                    CommitmentLevel::Confirmed => GetBlockCommitmentLevel::Confirmed,
-                    CommitmentLevel::Finalized => GetBlockCommitmentLevel::Finalized,
-                });
+            default_commitment_level.map(|commitment| match commitment {
+                CommitmentLevel::Processed => {
+                    // The minimum commitment level for `getBlock` is `confirmed,
+                    // `processed` is not supported.
+                    // Not setting a value here would be equivalent to requiring the block to be `finalized`,
+                    // which seems to go against the chosen `default_commitment_level` of `processed` and so `confirmed`
+                    // is the best we can do here.
+                    GetBlockCommitmentLevel::Confirmed
+                }
+                CommitmentLevel::Confirmed => GetBlockCommitmentLevel::Confirmed,
+                CommitmentLevel::Finalized => GetBlockCommitmentLevel::Finalized,
+            });
         set_default(default_block_commitment_level, &mut params.commitment);
         params
     }
