@@ -9,16 +9,26 @@ use sol_rpc_types::{
     SupportedRpcProviderId,
 };
 use solana_client::rpc_client::RpcClient as SolanaRpcClient;
+use solana_client::rpc_config::RpcTransactionConfig;
 use solana_commitment_config::CommitmentConfig;
 use solana_hash::Hash;
+use solana_instruction::{AccountMeta, Instruction};
+use solana_keypair::Keypair;
+use solana_program::sysvar;
 use solana_pubkey::{pubkey, Pubkey};
 use solana_signature::Signature;
+use solana_signer::Signer;
+use solana_transaction::Transaction;
 use std::env::var;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::thread;
+use std::time::Duration;
 
-pub const USER: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x42]);
+pub const SENDER: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x42]);
+pub const RECEIVER: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x43]);
 pub const AIRDROP_AMOUNT: u64 = 1_000_000_000; // 1 SOL
+pub const SPL_TOKEN_2022_ID: Pubkey = pubkey!("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
 
 // *NOTE*: Update instructions in README.md if you change this test!
 #[test]
@@ -27,17 +37,20 @@ fn test_basic_solana() {
     let basic_solana = setup.basic_solana();
 
     // ## Step 2: Generating a Solana account
-    let user_solana_account: Pubkey = basic_solana
-        .update_call::<_, String>(USER, "solana_account", ())
+    let sender_solana_account: Pubkey = basic_solana
+        .update_call::<_, String>(SENDER, "solana_account", ())
         .parse()
         .expect("Failed to parse public key");
 
     // ## Step 3: Receiving SOL
-    setup.airdrop(&user_solana_account, AIRDROP_AMOUNT);
-    println!("User solana account {user_solana_account}");
+    setup.airdrop(&sender_solana_account, AIRDROP_AMOUNT);
+    println!("User solana account {sender_solana_account}");
 
-    let receiver_solana_account = pubkey!("8HNiduWaBanrBv8c2pgGXZWnpKBdEYuQNHnspqto4yyq");
-    assert_ne!(user_solana_account, receiver_solana_account);
+    let receiver_solana_account = basic_solana
+        .update_call::<_, String>(RECEIVER, "solana_account", ())
+        .parse()
+        .expect("Failed to parse public key");
+    assert_ne!(sender_solana_account, receiver_solana_account);
     // The receiver account must be Initialized before receiving SOL,
     // which will be done when requesting an airdrop
     setup.airdrop(&receiver_solana_account, AIRDROP_AMOUNT);
@@ -50,7 +63,7 @@ fn test_basic_solana() {
         .unwrap();
     let send_sol_tx: Signature = basic_solana
         .update_call::<_, String>(
-            USER,
+            SENDER,
             "send_sol",
             (
                 None::<Principal>,
@@ -76,7 +89,7 @@ fn test_basic_solana() {
 
     // ## Step 5: Sending SOL using durable nonces
     let nonce_account: Pubkey = basic_solana
-        .update_call::<_, String>(USER, "create_nonce_account", ())
+        .update_call::<_, String>(SENDER, "create_nonce_account", ())
         .parse()
         .unwrap();
     setup.solana_client.wait_for_balance_with_commitment(
@@ -92,7 +105,7 @@ fn test_basic_solana() {
         .unwrap();
     let send_sol_tx: Signature = basic_solana
         .update_call::<_, String>(
-            USER,
+            SENDER,
             "send_sol_with_durable_nonce",
             (
                 None::<Principal>,
@@ -119,8 +132,104 @@ fn test_basic_solana() {
     assert_ne!(nonce_1, nonce_2);
 
     // ## Step 6: Sending Solana Program Library (SPL) tokens
-    // TODO: XC-349 test SPL tokens, adding the spl_token_2022 dependency brings a lot of problems
-    // with conflicting versions of transitive dependencies.
+    let (mint_authority, mint_account) = setup.create_spl_token();
+    println!("Created SPL token at {mint_account}");
+    let sender_associated_token_account: Pubkey = basic_solana
+        .update_call::<_, String>(
+            SENDER,
+            "create_associated_token_account",
+            (None::<Principal>, mint_account.to_string()),
+        )
+        .parse()
+        .unwrap();
+    setup.wait_for_account_to_exist(&sender_associated_token_account, CommitmentLevel::Confirmed);
+    println!("Sender's associated token account {sender_associated_token_account}");
+
+    let receiver_associated_token_account: Pubkey = basic_solana
+        .update_call::<_, String>(
+            RECEIVER,
+            "create_associated_token_account",
+            (None::<Principal>, mint_account.to_string()),
+        )
+        .parse()
+        .unwrap();
+    setup.wait_for_account_to_exist(
+        &receiver_associated_token_account,
+        CommitmentLevel::Confirmed,
+    );
+    println!("Receiver's associated token account {receiver_associated_token_account}");
+
+    for (associated_token_account, owner) in [
+        (sender_associated_token_account, sender_solana_account),
+        (receiver_associated_token_account, receiver_solana_account),
+    ] {
+        let token_account = setup
+            .solana_client
+            .get_token_account(&associated_token_account)
+            .unwrap()
+            .expect("Missing user's associated token account");
+        assert_eq!(token_account.mint, mint_account.to_string());
+        assert_eq!(token_account.owner, owner.to_string());
+        assert_eq!(token_account.token_amount.amount, "0");
+    }
+
+    setup.mint_spl(
+        &mint_authority,
+        1_000_000_000,
+        mint_account,
+        sender_associated_token_account,
+    );
+    let token_account = setup
+        .solana_client
+        .get_token_account(&sender_associated_token_account)
+        .unwrap()
+        .expect("Missing user's associated token account");
+    assert_eq!(token_account.token_amount.amount, "1000000000");
+
+    let send_spl_tx: Signature = basic_solana
+        .update_call::<_, String>(
+            SENDER,
+            "send_spl_token",
+            (
+                None::<Principal>,
+                mint_account.to_string(),
+                receiver_solana_account.to_string(),
+                Nat::from(1_000_u16),
+            ),
+        )
+        .parse()
+        .unwrap();
+    setup.wait_for_transaction_to_have_commitment(&send_spl_tx, CommitmentLevel::Confirmed);
+    let token_account = setup
+        .solana_client
+        .get_token_account(&sender_associated_token_account)
+        .unwrap()
+        .expect("Missing user's associated token account");
+    assert_eq!(token_account.token_amount.amount, "999999000");
+    let sender_spl_balance: Nat = basic_solana.update_call(
+        SENDER,
+        "get_spl_token_balance",
+        (
+            Some(sender_associated_token_account.to_string()),
+            mint_account.to_string(),
+        ),
+    );
+    assert_eq!(sender_spl_balance, Nat::from(999_999_000_u64));
+    let token_account = setup
+        .solana_client
+        .get_token_account(&receiver_associated_token_account)
+        .unwrap()
+        .expect("Missing receiver's associated token account");
+    assert_eq!(token_account.token_amount.amount, "1000");
+    let receiver_spl_balance: Nat = basic_solana.update_call(
+        RECEIVER,
+        "get_spl_token_balance",
+        (
+            Some(receiver_associated_token_account.to_string()),
+            mint_account.to_string(),
+        ),
+    );
+    assert_eq!(receiver_spl_balance, Nat::from(1_000_u64));
 }
 
 pub struct Setup {
@@ -231,7 +340,7 @@ impl Setup {
     fn ensure_nonce_consistent(&self, nonce_account: &Pubkey) -> Hash {
         let expected_nonce: Hash = self
             .basic_solana()
-            .update_call::<_, String>(USER, "get_nonce", (Some(nonce_account.to_string()),))
+            .update_call::<_, String>(SENDER, "get_nonce", (Some(nonce_account.to_string()),))
             .parse()
             .unwrap();
         let actual_nonce = solana_rpc_client_nonce_utils::data_from_account(
@@ -241,6 +350,157 @@ impl Setup {
         .blockhash();
         assert_eq!(expected_nonce, actual_nonce);
         expected_nonce
+    }
+
+    fn create_spl_token(&self) -> (Keypair, Pubkey) {
+        const MIN_ACCOUNT_LEN: u8 = 82;
+
+        let mint_authority = Keypair::new();
+        self.airdrop(&mint_authority.pubkey(), 1_000_000_000);
+        let mint_account = Keypair::new();
+        let mint_rent = self
+            .solana_client
+            .get_minimum_balance_for_rent_exemption(MIN_ACCOUNT_LEN as usize)
+            .unwrap();
+        let create_mint_account_ix = solana_program::system_instruction::create_account(
+            &mint_authority.pubkey(),
+            &mint_account.pubkey(),
+            mint_rent,
+            MIN_ACCOUNT_LEN as u64,
+            &SPL_TOKEN_2022_ID,
+        );
+        // See https://github.com/solana-program/token-2022/blob/644f0b014cbdb25c11c20ccedfb6e412d399b6dc/program/src/instruction.rs#L1207
+        let initialize_mint_ix = {
+            let decimals: u8 = 9;
+            let mut buf = Vec::with_capacity(35);
+            buf.push(0);
+            buf.push(decimals);
+            buf.extend_from_slice(mint_authority.pubkey().as_ref());
+            buf.push(0); //no freeze authority
+
+            Instruction {
+                program_id: SPL_TOKEN_2022_ID,
+                accounts: vec![
+                    AccountMeta::new(mint_account.pubkey(), false),
+                    AccountMeta::new_readonly(sysvar::rent::id(), false),
+                ],
+                data: buf,
+            }
+        };
+        let token_mint = Transaction::new_signed_with_payer(
+            &[create_mint_account_ix, initialize_mint_ix],
+            Some(&mint_authority.pubkey()),
+            &[&mint_authority, &mint_account],
+            self.solana_client.get_latest_blockhash().unwrap(),
+        );
+        self.solana_client
+            .send_and_confirm_transaction(&token_mint)
+            .unwrap();
+        (mint_authority, mint_account.pubkey())
+    }
+
+    fn mint_spl(
+        &self,
+        mint_authority: &Keypair,
+        amount: u64,
+        mint_account: Pubkey,
+        user_associated_token_account: Pubkey,
+    ) {
+        assert!(
+            self.solana_client
+                .get_token_account(&user_associated_token_account)
+                .unwrap()
+                .is_some(),
+            "Associated token account {user_associated_token_account} not found"
+        );
+
+        let mint_ix = {
+            let mut buf = Vec::with_capacity(9);
+            buf.push(7);
+            buf.extend_from_slice(&amount.to_le_bytes());
+            Instruction {
+                program_id: SPL_TOKEN_2022_ID,
+                accounts: vec![
+                    AccountMeta::new(mint_account, false),
+                    AccountMeta::new(user_associated_token_account, false),
+                    AccountMeta::new_readonly(mint_authority.pubkey(), true),
+                ],
+                data: buf,
+            }
+        };
+
+        let mint_spl_tx = Transaction::new_signed_with_payer(
+            &[mint_ix],
+            Some(&mint_authority.pubkey()),
+            &[mint_authority],
+            self.solana_client.get_latest_blockhash().unwrap(),
+        );
+        self.solana_client
+            .send_and_confirm_transaction(&mint_spl_tx)
+            .unwrap();
+    }
+
+    fn wait_for_transaction_to_have_commitment(
+        &self,
+        transaction: &Signature,
+        commitment_level: CommitmentLevel,
+    ) {
+        let mut num_trials = 0;
+        loop {
+            num_trials += 1;
+            if num_trials > 20 {
+                panic!(
+                    "Transaction {transaction} does not have desired commitment level {commitment_level:?}",
+                );
+            }
+            let tx = self.solana_client.get_transaction_with_config(
+                transaction,
+                RpcTransactionConfig {
+                    commitment: Some(match commitment_level {
+                        CommitmentLevel::Processed => CommitmentConfig::processed(),
+                        CommitmentLevel::Confirmed => CommitmentConfig::confirmed(),
+                        CommitmentLevel::Finalized => CommitmentConfig::finalized(),
+                    }),
+                    ..Default::default()
+                },
+            );
+            if tx.is_ok() {
+                break;
+            }
+            thread::sleep(Duration::from_millis(400))
+        }
+    }
+
+    fn wait_for_account_to_exist(&self, account: &Pubkey, commitment_level: CommitmentLevel) {
+        let mut num_trials = 0;
+        loop {
+            num_trials += 1;
+            if num_trials > 20 {
+                panic!(
+                    "Account {account} does not have desired commitment level {commitment_level:?}",
+                );
+            }
+            let result = self
+                .solana_client
+                .get_account_with_commitment(
+                    account,
+                    match commitment_level {
+                        CommitmentLevel::Processed => CommitmentConfig::processed(),
+                        CommitmentLevel::Confirmed => CommitmentConfig::confirmed(),
+                        CommitmentLevel::Finalized => CommitmentConfig::finalized(),
+                    },
+                )
+                .unwrap_or_else(|e| panic!("Failed to retrieve account {account}: {e}"));
+            match result.value {
+                Some(found_account) if found_account.lamports > 0 => {
+                    break;
+                }
+                _ => {
+                    thread::sleep(Duration::from_millis(400));
+                    continue;
+                }
+            }
+        }
     }
 
     fn sol_rpc(&self) -> Canister {
