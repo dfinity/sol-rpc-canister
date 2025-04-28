@@ -33,5 +33,17 @@ git_release_enable = true # enable GitHub/Gitea releases for `package_a`
 publish = false # disable `cargo publish` for `package_a`
 
 [[package]]
+name = "basic_solana"
+release = false # don't process this package
+
+[[package]]
+name = "canlog"
+release = false # don't process this package
+
+[[package]]
+name = "canlog_derive"
+release = false # don't process this package
+
+[[package]]
 name = "sol_rpc_int_tests"
 release = false # don't process this package
