@@ -95,6 +95,7 @@ function build_canister() {
     RUSTFLAGS="--remap-path-prefix $CARGO_HOME=/cargo"
 
     cargo_build_args=(
+        --locked
         --target "$TARGET"
         --release
         --package "$canister"

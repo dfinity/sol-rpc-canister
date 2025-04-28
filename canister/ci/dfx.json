@@ -1,0 +1,19 @@
+{
+  "canisters": {
+    "sol_rpc": {
+      "candid": "../sol_rpc_canister.did",
+      "package": "sol_rpc_canister",
+      "type": "rust",
+      "gzip": true,
+      "build": "../../scripts/docker-build",
+      "wasm": "../../wasms/sol_rpc_canister.wasm.gz"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "version": 1
+}

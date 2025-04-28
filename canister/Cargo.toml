@@ -13,9 +13,47 @@ name = "sol_rpc_canister"
 path = "src/main.rs"
 
 [dependencies]
-candid = {workspace = true}
-ic-cdk = {workspace = true}
-sol_rpc_types =  {path = "../libs/types"}
+assert_matches = { workspace = true }
+candid = { workspace = true }
+canhttp = { workspace = true, features = ["json", "multi"] }
+canlog = { path = "../canlog", features = ["derive"] }
+ciborium = { workspace = true }
+const_format = { workspace = true }
+derive_more = { workspace = true }
+hex = { workspace = true }
+http = { workspace = true }
+ic-cdk = { workspace = true }
+ic-http-types = { workspace = true }
+ic-metrics-encoder = { workspace = true }
+ic-stable-structures = { workspace = true }
+maplit = { workspace = true }
+minicbor = { workspace = true }
+num-traits = { workspace = true }
+solana-clock = { workspace = true }
+sol_rpc_types = { path = "../libs/types" }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_bytes = { workspace = true }
+solana-account = { workspace = true, features = ["serde"] }
+solana-account-decoder-client-types = { workspace = true }
+solana-transaction-status-client-types = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true, features = ["set-header", "util"] }
+url = { workspace = true }
+zeroize = { workspace = true }
+thiserror = { workspace = true }
+serde_with = { workspace = true }
 
 [dev-dependencies]
-candid_parser = {workspace = true}
+candid_parser = { workspace = true }
+proptest = { workspace = true }
+solana-pubkey = { workspace = true }
+solana-signature = { workspace = true }
+
+[features]
+# WARNING: Disabling this feature will lead to some functionality not working anymore
+#   such as decoding of Solana account data in base64+zstd format which in turn might
+#   lead to some runtime errors.
+zstd = ["solana-account-decoder-client-types/zstd"]
+default = ["zstd"]
