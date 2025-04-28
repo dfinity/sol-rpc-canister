@@ -17,6 +17,9 @@ git_release_enable = false
 # creates the git release as draft
 git_release_draft = true
 
+# If true, creates the release PR as a draft.
+pr_draft = true
+
 # labels for the release PR
 pr_labels = ["release"]
 
