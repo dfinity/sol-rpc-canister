@@ -146,7 +146,6 @@ impl Setup {
         self
     }
 
-    // TODO XC-329: remove verifyApiKey endpoint
     pub async fn verify_api_key(&self, api_key: (SupportedRpcProviderId, Option<String>)) {
         let runtime = self.new_pocket_ic_runtime();
         runtime
@@ -217,6 +216,10 @@ impl Setup {
     pub fn controller(&self) -> Principal {
         self.controller
     }
+
+    pub fn sol_rpc_canister_id(&self) -> CanisterId {
+        self.sol_rpc_canister_id
+    }
 }
 
 async fn tick_until_http_request(env: &PocketIc) -> Vec<CanisterHttpRequest> {
@@ -248,6 +251,12 @@ fn wallet_wasm() -> Vec<u8> {
         )
     };
     ic_test_utilities_load_wasm::load_wasm(PathBuf::new(), "wallet", &[])
+}
+
+impl AsRef<PocketIc> for Setup {
+    fn as_ref(&self) -> &PocketIc {
+        &self.env
+    }
 }
 
 #[derive(Clone)]
