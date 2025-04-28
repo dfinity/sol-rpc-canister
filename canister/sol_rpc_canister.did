@@ -250,11 +250,17 @@ type AccountEncoding = variant {
 };
 
 // The parameters for a Solana `getTransaction` RPC method call.
-// TODO XC-293: documentation
 type GetTransactionParams = record {
+    // Transaction signature, as base-58 encoded string.
     signature: Signature;
+    // The commitment describes how finalized a block is at that point in time.
     commitment: opt CommitmentLevel;
+    // Set the max transaction version to return in responses.
+    // If the requested transaction is a higher version, an error will be returned.
+    // If this parameter is omitted, only legacy transactions will be returned,
+    // and any versioned transaction will prompt the error.
     maxSupportedTransactionVersion: opt nat8;
+    // Encoding for the returned Transaction.
     encoding: opt variant { base58; base64 };
 };
 
@@ -370,22 +376,28 @@ type MultiGetBlockResult = variant {
     Inconsistent : vec record { RpcSource; GetBlockResult };
 };
 
-// TODO XC-293: Format and add documentation
+// A compiled Solana instruction.
 type CompiledInstruction = record {
   data : text;
   accounts : blob;
   programIdIndex : nat8;
   stackHeight : opt nat32;
 };
+// Encoding of a Solana transaction.
 type EncodedTransaction = variant {
   binary : record { text; variant { base58; base64 } };
   legacyBinary : text;
 };
+// Specific operation executed by a Solana transaction.
 type Instruction = variant { compiled : CompiledInstruction };
+// List of inner instructions executed by a Solana transaction.
+// See the [Solana documentation](https://solana.com/de/docs/rpc/json-structures#inner-instructions) for more details.
 type InnerInstructions = record {
   instructions : vec Instruction;
   index : nat8;
 };
+// Errors that can occur during the execution of a specific instruction within a Solana transaction.
+// See the [Solana documentation](https://github.com/solana-labs/solana/blob/7700cb3128c1f19820de67b81aa45d18f73d2ac0/sdk/program/src/instruction.rs#L33) for more details.
 type InstructionError = variant {
   ModifiedProgramId;
   CallDepth;
@@ -442,7 +454,9 @@ type InstructionError = variant {
   ReadonlyLamportChange;
   InsufficientFunds;
 };
+// Transaction addresses loaded from address lookup tables.
 type LoadedAddresses = record { writable : vec Pubkey; readonly : vec Pubkey };
+// Reward or penalty applied to an account for fees, rent, voting, or staking activity.
 type Reward = record {
   lamports : int64;
   commission : opt nat8;
@@ -450,13 +464,19 @@ type Reward = record {
   rewardType : opt variant { fee; rent; voting; staking };
   postBalance : nat64;
 };
+// A human-readable representation of a token amount.
 type TokenAmount = record {
   decimals : nat8;
   uiAmount : opt float64;
   uiAmountString : text;
   amount : text;
 };
+
+// Determines whether and how transactions are included in a `getBlock` response.
 type TransactionDetails = variant { none; signatures };
+
+// Error that can occur when processing a Solana transaction.
+// See the [Solana documentation](https://github.com/solana-labs/solana/blob/c0c60386544ec9a9ec7119229f37386d9f070523/sdk/src/transaction/error.rs#L13) for more details.
 type TransactionError = variant {
   ProgramCacheHitMaxLimit;
   InvalidAccountForFee;
@@ -498,13 +518,23 @@ type TransactionError = variant {
   CommitCancelled;
   BlockhashNotFound;
 };
+// The result of a Solana `getTransaction` RPC method call.
 type TransactionInfo = record {
+  // Estimated production time, as Unix timestamp (seconds since the Unix epoch) of when the transaction was processed.
+  // `null` if not available.
   blockTime : opt Timestamp;
+  // [Transaction status metadata object](https://solana.com/docs/rpc/json-structures#transaction-status-metadata) or null.
   meta : opt TransactionStatusMeta;
+  // Transaction object, either in JSON format or encoded binary data, depending on encoding parameter
   transaction : EncodedTransaction;
+  // The slot this transaction was processed in
   slot : nat64;
+  // Transaction version.
+  // Undefined if `maxSupportedTransactionVersion` is not set in request params.
   version : opt variant { legacy; number : nat8 };
 };
+// Transaction status metadata.
+// See the [Solana documentation](https://solana.com/docs/rpc/json-structures#transaction-status-metadata) for more details.
 type TransactionStatusMeta = record {
   fee : nat64;
   status : variant { Ok; Err: TransactionError };
@@ -519,6 +549,7 @@ type TransactionStatusMeta = record {
   preTokenBalances : opt vec TransactionTokenBalance;
   computeUnitsConsumed : opt nat64;
 };
+// Balance of a specific SPL token account.
 type TransactionTokenBalance = record {
   owner : opt Pubkey;
   mint : text;

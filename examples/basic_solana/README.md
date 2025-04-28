@@ -6,8 +6,11 @@ keywords: [ advanced, rust, solana, sol, integration, solana integration ]
 
 ## Overview
 
-This tutorial will walk you through how to deploy a simple [canister smart contract](TODO XC-301) **that can send and
-receive SOL** on the Internet Computer.
+This tutorial will walk you through how to deploy a simple smart contract on the Internet Computer
+(known as [canisters](https://internetcomputer.org/docs/building-apps/essentials/canisters)) **that can control digital assets**
+on the Solana blockchain:
+1. SOL, the native currency on Solana;
+2. any other token (known as [SPL tokens](https://solana.com/docs/tokens)).
 
 ## Architecture
 
@@ -16,7 +19,7 @@ the [threshold EdDSA](https://internetcomputer.org/docs/current/developer-docs/s
 and [HTTPs outcalls](https://internetcomputer.org/docs/current/developer-docs/smart-contracts/advanced-features/https-outcalls/https-outcalls-overview)
 features of the Internet Computer.
 
-For a deeper understanding of the ICP < > SOL integration, see the [Solana integration overview](TODO XC-301).
+For a deeper understanding of the ICP < > SOL integration, see the [chain fusion overview](https://internetcomputer.org/docs/building-apps/chain-fusion/overview).
 
 ## Prerequisites
 
@@ -141,8 +144,8 @@ The `send_sol` endpoint sends SOL by executing the following steps:
    blockhash.
 3. Signing the Solana transaction using
    the [threshold Ed25519 API](https://internetcomputer.org/docs/current/developer-docs/smart-contracts/signatures/signing-messages-t-schnorr).
-4. Sending the signed transaction to the Solana network using the [`sendTransaction`](TODO XC-301) method in
-   the [SOL-RPC canister](TODO XC-301).
+4. Sending the signed transaction to the Solana network using the `sendTransaction` method in
+   the [SOL-RPC canister](https://github.com/dfinity/sol-rpc-canister).
 
 The `send_sol` endpoint returns the transaction ID of the transaction sent to the Solana network, which can for example
 be used to track the transaction on a Solana blockchain explorer.
@@ -187,8 +190,8 @@ in the transaction are different and the durable nonce is included in the transa
    as well as the durable nonce value instead of a recent blockhash.
 3. Signing the Solana transaction using
    the [threshold Ed25519 API](https://internetcomputer.org/docs/current/developer-docs/smart-contracts/signatures/signing-messages-t-schnorr).
-4. Sending the signed transaction to the Solana network using the [`sendTransaction`](TODO XC-301) method in
-   the [SOL-RPC canister](TODO XC-301).
+4. Sending the signed transaction to the Solana network using the `sendTransaction` method in
+   the [SOL-RPC canister](https://github.com/dfinity/sol-rpc-canister).
 
 The `send_sol_with_durable_nonce` endpoint returns the transaction ID of the transaction sent to the Solana network. You
 can also verify (either in a Solana explorer or using the `get_nonce` endpoint) that the nonce value stored in the
@@ -263,7 +266,7 @@ In this tutorial, you were able to:
 * Create an associated token account for an SPL token use the canister to send some tokens to another Solana account.
 
 Additional examples regarding the ICP < > SOL integration can be
-found [here](TODO XC-301).
+found [here](https://github.com/dfinity/sol-rpc-canister/tree/main/examples).
 
 ## Security considerations and best practices
 
