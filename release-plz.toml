@@ -11,8 +11,8 @@ dependencies_update = false
 # create tags for the releases
 git_tag_enable = true
 
-# disable GitHub releases
-git_release_enable = false
+# enable GitHub releases
+git_release_enable = true
 
 # creates the git release as draft
 git_release_draft = true
