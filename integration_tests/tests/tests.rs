@@ -597,6 +597,8 @@ mod retrieve_logs_tests {
 
 mod update_api_key_tests {
     use super::*;
+    use candid::{encode_args, Principal};
+    use pocket_ic::{ErrorCode, RejectCode, RejectResponse};
 
     #[tokio::test]
     async fn should_update_api_key() {
@@ -650,6 +652,36 @@ mod update_api_key_tests {
                 Some("invalid-api-key".to_string()),
             )])
             .await;
+    }
+
+    #[tokio::test]
+    async fn should_prevent_unauthorized_call_to_verify_api_key() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+        let args = (SupportedRpcProviderId::AlchemyMainnet, Some("test-key"));
+
+        for unauthorized_principal in [Principal::anonymous(), DEFAULT_CALLER_TEST_ID] {
+            let result = setup
+                .as_ref()
+                .query_call(
+                    setup.sol_rpc_canister_id(),
+                    unauthorized_principal,
+                    "verifyApiKey",
+                    encode_args(args).unwrap(),
+                )
+                .await;
+
+            assert_eq!(
+                result,
+                Err(RejectResponse {
+                    reject_code: RejectCode::CanisterReject,
+                    reject_message: "You are not authorized".to_string(),
+                    error_code: ErrorCode::CanisterRejectedMessage,
+                    certified: false,
+                })
+            );
+        }
+
+        setup.drop().await;
     }
 }
 
