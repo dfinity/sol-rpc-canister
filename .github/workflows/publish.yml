@@ -19,8 +19,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-#          TODO XC-284: remove this, should be done from main
-          ref: 8f029e58d2608772b0869a4b07af5e3ec05118bc
 
       - name: "Download build for Release Candidate"
         #     Adapted from [Internet Identity](https://github.com/dfinity/internet-identity/blob/c33e9f65a8045cbedde6f96cfb7f7cb677694fc9/.github/workflows/deploy-rc.yml#L22)
