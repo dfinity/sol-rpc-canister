@@ -78,7 +78,7 @@ jobs:
           echo "releases: $RELEASES" # example: [{"package_name":"my-package","prs":[{"html_url":"https://github.com/user/proj/pull/1439","number":1439}],"tag":"v0.1.0","version":"0.1.0"}]
           echo "releases_created: $RELEASES_CREATED" # example: true
 
-          release_tag=$(echo "$RELEASES" | jq -r '.[0].tag')
+          release_tag=$(echo "$RELEASES" | jq -r '.[] | select(.package_name == "sol_rpc_canister") | .tag')
           echo "release_tag: $release_tag"
           echo "RELEASE_TAG=$release_tag" >> "$GITHUB_ENV"
 
