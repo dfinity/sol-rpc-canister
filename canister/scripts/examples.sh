@@ -38,7 +38,7 @@ GET_BLOCK_PARAMS="(
     slot = ${SLOT};
     commitment = opt variant { finalized };
     transactionDetails = opt variant { signatures };
-    maxSupportedTransactionVersion = null;
+    maxSupportedTransactionVersion = opt (0 : nat8);
   },
 )"
 CYCLES=$(dfx canister call sol_rpc getBlockCyclesCost "$GET_BLOCK_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
@@ -58,7 +58,7 @@ GET_TRANSACTION_PARAMS="(
     signature = \"${SIGNATURE}\";
     commitment = opt variant { finalized };
     encoding = opt variant{ base64 };
-    maxSupportedTransactionVersion = null;
+    maxSupportedTransactionVersion = opt (0 : nat8);
   },
 )"
 CYCLES=$(dfx canister call sol_rpc getTransactionCyclesCost "$GET_TRANSACTION_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
