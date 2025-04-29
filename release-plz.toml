@@ -1,0 +1,52 @@
+[workspace]
+# path of the git-cliff configuration
+changelog_config = "cliff.toml"
+
+# enable changelog updates
+changelog_update = true
+
+# update dependencies with `cargo update`
+dependencies_update = false
+
+# create tags for the releases
+git_tag_enable = true
+
+# enable GitHub releases
+git_release_enable = true
+
+# creates the git release as draft
+git_release_draft = true
+
+# If true, creates the release PR as a draft.
+pr_draft = true
+
+# labels for the release PR
+pr_labels = ["release"]
+
+# disallow updating repositories with uncommitted changes
+allow_dirty = false
+
+# disallow packaging with uncommitted changes
+publish_allow_dirty = false
+
+[[package]] # the double square brackets define a TOML table array
+name = "sol_rpc_canister"
+changelog_update = true # enable changelog update for `package_a`
+git_release_enable = true # enable GitHub/Gitea releases for `package_a`
+publish = false # disable `cargo publish` for `package_a`
+
+[[package]]
+name = "basic_solana"
+release = false # don't process this package
+
+[[package]]
+name = "canlog"
+release = false # don't process this package
+
+[[package]]
+name = "canlog_derive"
+release = false # don't process this package
+
+[[package]]
+name = "sol_rpc_int_tests"
+release = false # don't process this package
