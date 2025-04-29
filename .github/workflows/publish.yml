@@ -5,7 +5,7 @@ on:
 
 jobs:
   # Release unpublished packages.
-  release-plz-pr:
+  release-plz-release:
     name: Publish artifacts
     runs-on: ubuntu-latest
     permissions:
@@ -71,6 +71,7 @@ jobs:
       - name: "Add assets to Github release"
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: "v0.1.0"
           files: |
             sol_rpc_canister.wasm.gz
             canister/sol_rpc_canister.did
