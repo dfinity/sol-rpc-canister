@@ -12,16 +12,16 @@ jobs:
       pull-requests: write
       contents: write
     concurrency:
-      group: release-plz-${{ github.ref }}
-      cancel-in-progress: false
+      group: publish
+      cancel-in-progress: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-#     Adapted from [Internet Identity](https://github.com/dfinity/internet-identity/blob/c33e9f65a8045cbedde6f96cfb7f7cb677694fc9/.github/workflows/deploy-rc.yml#L22)
       - name: "Download build for Release Candidate"
+        #     Adapted from [Internet Identity](https://github.com/dfinity/internet-identity/blob/c33e9f65a8045cbedde6f96cfb7f7cb677694fc9/.github/workflows/deploy-rc.yml#L22)
         uses: actions/github-script@v7
         with:
           script: |
@@ -67,7 +67,7 @@ jobs:
       - name: "Install parse-changelog"
         uses: taiki-e/install-action@parse-changelog
 
-      - name: Run release-plz
+      - name: "Run release-plz"
         id: release-plz
         uses: release-plz/action@bbd1afc9813d25602e002b29e96e0aacebab1160 # v0.5.105
         with:
@@ -100,7 +100,6 @@ jobs:
           
           notes=$(parse-changelog canister/CHANGELOG.md "$release_version")
           echo "$notes" >> ${{ github.workspace }}-RELEASE.txt
-
 
       - name: "Create Github release"
         uses: softprops/action-gh-release@v2
