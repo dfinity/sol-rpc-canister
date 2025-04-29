@@ -9,32 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add support for `getTransaction` RPC method ([#68](https://github.com/dfinity/sol-rpc-canister/pull/68))
+- Add Solana JSON-RPC providers ([#9](https://github.com/dfinity/sol-rpc-canister/pull/9), [#10](https://github.com/dfinity/sol-rpc-canister/pull/10) and [#32](https://github.com/dfinity/sol-rpc-canister/pull/32))
+- Add `getBalance` RPC method ([#74](https://github.com/dfinity/sol-rpc-canister/pull/74))
 - Add `getBlock` RPC method ([#53](https://github.com/dfinity/sol-rpc-canister/pull/53))
+- Add `getSlot` RPC method ([#33](https://github.com/dfinity/sol-rpc-canister/pull/33) and [#48](https://github.com/dfinity/sol-rpc-canister/pull/48))
+- Add `getTransaction` RPC method ([#68](https://github.com/dfinity/sol-rpc-canister/pull/68))
 - Add `sendTransaction` RPC method ([#59](https://github.com/dfinity/sol-rpc-canister/pull/59))
-- Add NOTICE to Apache license ([#60](https://github.com/dfinity/sol-rpc-canister/pull/60))
 - Add `getAccountInfo` RPC method ([#49](https://github.com/dfinity/sol-rpc-canister/pull/49))
-
-### Changed
-
-- Release pipeline ([#4](https://github.com/dfinity/sol-rpc-canister/pull/4))
-- Default commitment level for `SolRpcClient` ([#77](https://github.com/dfinity/sol-rpc-canister/pull/77))
-- Support method `getBalance` ([#74](https://github.com/dfinity/sol-rpc-canister/pull/74))
-- Use SOL RPC canister in `basic_solana` example ([#69](https://github.com/dfinity/sol-rpc-canister/pull/69))
-- Rust documentation tests for the `SolRpcClient` ([#65](https://github.com/dfinity/sol-rpc-canister/pull/65))
-- Add basic README instructions ([#63](https://github.com/dfinity/sol-rpc-canister/pull/63))
-- Cycles cost ([#52](https://github.com/dfinity/sol-rpc-canister/pull/52))
-- Client builder ([#54](https://github.com/dfinity/sol-rpc-canister/pull/54))
-- Round result from `getSlot` RPC method ([#48](https://github.com/dfinity/sol-rpc-canister/pull/48))
-- Use `canhttp` `multi` feature ([#46](https://github.com/dfinity/sol-rpc-canister/pull/46))
-- Implement a method for making generic RPC request ([#39](https://github.com/dfinity/sol-rpc-canister/pull/39))
-- Implement getSlot RPC method ([#33](https://github.com/dfinity/sol-rpc-canister/pull/33))
-- Streamline providers ([#32](https://github.com/dfinity/sol-rpc-canister/pull/32))
-- Add support for API keys ([#10](https://github.com/dfinity/sol-rpc-canister/pull/10))
-- Hard-code SOL RPC providers ([#9](https://github.com/dfinity/sol-rpc-canister/pull/9))
-- Initial cargo workspace and build pipeline ([#2](https://github.com/dfinity/sol-rpc-canister/pull/2))
-
-### Fixed
-
-- Forward calls through wallet canister ([#40](https://github.com/dfinity/sol-rpc-canister/pull/40))
-- E2e test with Solana test validator ([#20](https://github.com/dfinity/sol-rpc-canister/pull/20))
+- Add support for making generic JSON-RPC request ([#39](https://github.com/dfinity/sol-rpc-canister/pull/39))
+- Retrieve the cycle costs of RPC methods ([#52](https://github.com/dfinity/sol-rpc-canister/pull/52))
+- Use the builder pattern for instantiating the client ([#54](https://github.com/dfinity/sol-rpc-canister/pull/54))
+- Use a default commitment level for requests made by the client ([#77](https://github.com/dfinity/sol-rpc-canister/pull/77))
+- Add Rust documentation tests for the client ([#65](https://github.com/dfinity/sol-rpc-canister/pull/65))
