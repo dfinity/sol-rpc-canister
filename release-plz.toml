@@ -36,7 +36,6 @@ name = "sol_rpc_canister"
 git_tag_name = "v{{ version }}"
 # Enable git tags for this package
 git_tag_enable = true
-git_release_enable = true # enable GitHub releases
 publish = false # disable `cargo publish`
 
 [[package]] # the double square brackets define a TOML table array
