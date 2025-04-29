@@ -57,8 +57,11 @@ jobs:
             await exec.exec('unzip', ["artifact.zip" ]);
             await exec.exec('rm', ["artifact.zip" ]);
 
-      - name: "Print shasum of found build"
-        run: shasum -a 256 ./sol_rpc_canister.wasm.gz
+      - name: "SHA256 of release asset"
+        run: |
+          set -e
+          SHA256=$(shasum -a 256 ./sol_rpc_canister.wasm.gz | cut -d ' ' -f1)
+          echo "SOL_RPC_CANISTER_WASM_GZ_SHA256=$SHA256" >> "$GITHUB_ENV"
 
       - name: Run release-plz
         id: release-plz
@@ -69,7 +72,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
-      - name: "Read release-plz output"
+      - name: "Generate Github release body"
         env:
           RELEASES: ${{ steps.release-plz.outputs.releases }}
           RELEASES_CREATED: ${{ steps.release-plz.outputs.releases_created }}
@@ -81,12 +84,21 @@ jobs:
           release_tag=$(echo "$RELEASES" | jq -r '.[] | select(.package_name == "sol_rpc_canister") | .tag')
           echo "release_tag: $release_tag"
           echo "RELEASE_TAG=$release_tag" >> "$GITHUB_ENV"
+          
+          release_version=$(echo "$RELEASES" | jq -r '.[] | select(.package_name == "sol_rpc_canister") | .version')
+          echo "release_version: $release_version"
+          echo "RELEASE_VERSION=$release_version" >> "$GITHUB_ENV"
+          
+          echo "- SHA-256 hash: ${{ env.SOL_RPC_CANISTER_WASM_GZ_SHA256}}" >> ${{ github.workspace }}-RELEASE.txt
+          echo "" >> ${{ github.workspace }}-RELEASE.txt
+          echo "## What's Changed" >> ${{ github.workspace }}-RELEASE.txt
 
-      - name: "Add assets to Github release"
+      - name: "Create Github release"
         uses: softprops/action-gh-release@v2
         with:
           draft: true
           tag_name: ${{ env.RELEASE_TAG}}
+          body_path: ${{ github.workspace }}-RELEASE.txt
           files: |
             sol_rpc_canister.wasm.gz
             canister/sol_rpc_canister.did
