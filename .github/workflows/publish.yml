@@ -61,6 +61,7 @@ jobs:
         run: |
           set -e
           SHA256=$(shasum -a 256 ./sol_rpc_canister.wasm.gz | cut -d ' ' -f1)
+          echo "SHA256 of sol_rpc_canister.wasm.gz: $SHA256"
           echo "SOL_RPC_CANISTER_WASM_GZ_SHA256=$SHA256" >> "$GITHUB_ENV"
 
       - name: Run release-plz
@@ -73,6 +74,7 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
       - name: "Generate Github release body"
+        uses: taiki-e/install-action@parse-changelog
         env:
           RELEASES: ${{ steps.release-plz.outputs.releases }}
           RELEASES_CREATED: ${{ steps.release-plz.outputs.releases_created }}
@@ -92,6 +94,11 @@ jobs:
           echo "- SHA-256 hash: ${{ env.SOL_RPC_CANISTER_WASM_GZ_SHA256}}" >> ${{ github.workspace }}-RELEASE.txt
           echo "" >> ${{ github.workspace }}-RELEASE.txt
           echo "## What's Changed" >> ${{ github.workspace }}-RELEASE.txt
+          echo "" >> ${{ github.workspace }}-RELEASE.txt
+          
+          notes=$(parse-changelog canister/CHANGELOG.md "$release_version")
+          echo "$notes" >> ${{ github.workspace }}-RELEASE.txt
+
 
       - name: "Create Github release"
         uses: softprops/action-gh-release@v2
