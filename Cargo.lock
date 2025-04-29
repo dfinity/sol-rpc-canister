@@ -648,12 +648,13 @@ dependencies = [
 [[package]]
 name = "canlog"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "501fbf3672be975fa709f013322a91c60951177444cc9cf4ba9d3fd0add97be0"
 dependencies = [
  "candid",
  "canlog_derive",
  "ic-canister-log",
  "ic-cdk",
- "proptest",
  "regex",
  "serde",
  "serde_json",
@@ -662,12 +663,12 @@ dependencies = [
 [[package]]
 name = "canlog_derive"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6620814f83b784938b29ca6ca8867967a93a4f7f08c1b7ec6256d12c1b53abe8"
 dependencies = [
- "canlog",
  "darling",
  "proc-macro2",
  "quote",
- "serde",
  "syn 2.0.100",
 ]
 
