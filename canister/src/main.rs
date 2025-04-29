@@ -347,8 +347,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     name = "verifyApiKey",
     hidden = true
 )]
-async fn verify_api_key(api_key: (SupportedRpcProviderId, Option<String>)) {
-    let (provider, api_key) = api_key;
+async fn verify_api_key((provider, api_key): (SupportedRpcProviderId, Option<String>)) {
     let api_key = api_key.map(|key| TryFrom::try_from(key).expect("Invalid API key"));
     if read_state(|state| state.get_api_key(&provider)) != api_key {
         panic!("API key does not match input")
