@@ -8,11 +8,11 @@ changelog_update = true
 # update dependencies with `cargo update`
 dependencies_update = false
 
-# create tags for the releases
-git_tag_enable = true
+# Disable git releases for all packages by default
+git_release_enable = false
 
-# enable GitHub releases
-git_release_enable = true
+# Disable git tags for all packages by default
+git_tag_enable = false
 
 # creates the git release as draft
 git_release_draft = true
@@ -31,9 +31,13 @@ publish_allow_dirty = false
 
 [[package]] # the double square brackets define a TOML table array
 name = "sol_rpc_canister"
-changelog_update = true # enable changelog update for `package_a`
-git_release_enable = true # enable GitHub/Gitea releases for `package_a`
-publish = false # disable `cargo publish` for `package_a`
+# Customize the git tag name.
+# Setting for single git tag, see https://release-plz.dev/docs/extra/single-tag
+git_tag_name = "v{{ version }}"
+# Enable git tags for this package
+git_tag_enable = true
+git_release_enable = true # enable GitHub releases
+publish = false # disable `cargo publish`
 
 [[package]] # the double square brackets define a TOML table array
 name = "sol_rpc_client"
