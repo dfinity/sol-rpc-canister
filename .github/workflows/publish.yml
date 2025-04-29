@@ -20,6 +20,7 @@ jobs:
         with:
           fetch-depth: 0
 
+#     Adapted from [Internet Identity](https://github.com/dfinity/internet-identity/blob/c33e9f65a8045cbedde6f96cfb7f7cb677694fc9/.github/workflows/deploy-rc.yml#L22)
       - name: "Download build for Release Candidate"
         uses: actions/github-script@v7
         with:
@@ -59,10 +60,18 @@ jobs:
       - name: "Print shasum of found build"
         run: shasum -a 256 ./sol_rpc_canister.wasm.gz
 
-#      - name: Run release-plz
-#        uses: release-plz/action@bbd1afc9813d25602e002b29e96e0aacebab1160 # v0.5.105
-#        with:
-#          command: release
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - name: Run release-plz
+        uses: release-plz/action@bbd1afc9813d25602e002b29e96e0aacebab1160 # v0.5.105
+        with:
+          command: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: "Add assets to Github release"
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: |
+            sol_rpc_canister.wasm.gz
+            canister/sol_rpc_canister.did
