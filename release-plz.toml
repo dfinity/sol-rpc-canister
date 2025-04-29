@@ -35,6 +35,18 @@ changelog_update = true # enable changelog update for `package_a`
 git_release_enable = true # enable GitHub/Gitea releases for `package_a`
 publish = false # disable `cargo publish` for `package_a`
 
+[[package]] # the double square brackets define a TOML table array
+name = "sol_rpc_client"
+#git_release_enable = false # enable GitHub releases
+# TODO XC-284: enable cargo publish
+publish = false # disable `cargo publish`
+
+[[package]] # the double square brackets define a TOML table array
+name = "sol_rpc_types"
+#git_release_enable = false # enable GitHub releases
+# TODO XC-284: enable cargo publish
+publish = false # disable `cargo publish`
+
 [[package]]
 name = "basic_solana"
 release = false # don't process this package
