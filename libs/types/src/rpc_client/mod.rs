@@ -139,6 +139,28 @@ impl From<RpcConfig> for GetSlotRpcConfig {
     }
 }
 
+/// Configures how to perform HTTP calls for the Solana `getRecentPrioritizationFees` RPC method.
+#[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]
+pub struct GetRecentPrioritizationFeesRpcConfig {
+    /// Describes the expected (90th percentile) number of bytes in the HTTP response body.
+    /// This number should be less than `MAX_PAYLOAD_SIZE`.
+    #[serde(rename = "responseSizeEstimate")]
+    pub response_size_estimate: Option<u64>,
+
+    /// Specifies how the responses of the different RPC providers should be aggregated into
+    /// a single response.
+    #[serde(rename = "responseConsensus")]
+    pub response_consensus: Option<ConsensusStrategy>,
+
+    /// TODO
+    #[serde(rename = "maxSlotRoundingError")]
+    pub max_slot_rounding_error: Option<u64>,
+
+    /// TODO
+    #[serde(rename = "numSlots")]
+    pub num_slots: Option<u8>
+}
+
 /// Defines a consensus strategy for combining responses from different providers.
 #[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]
 pub enum ConsensusStrategy {

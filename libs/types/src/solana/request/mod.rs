@@ -1,6 +1,7 @@
 use crate::{solana::Pubkey, RpcError, Signature, Slot};
 use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
 use candid::{CandidType, Deserialize};
+use candid::types::{Serializer, Type};
 use serde::Serialize;
 
 /// The parameters for a Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method call.
@@ -171,6 +172,25 @@ pub enum TransactionDetails {
     #[default]
     #[serde(rename = "none")]
     None,
+}
+
+/// The parameters for a Solana [`getRecentPrioritizationFees`](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees) RPC method call.
+#[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
+#[serde(try_from = "Vec<Pubkey>", into = "Vec<Pubkey>")]
+pub struct GetRecentPrioritizationFeesParams(pub Vec<Pubkey>);
+
+impl TryFrom<Vec<Pubkey>> for GetRecentPrioritizationFeesParams {
+    type Error = String;
+
+    fn try_from(value: Vec<Pubkey>) -> Result<Self, Self::Error> {
+        todo!("validate at most 128 addresses")
+    }
+}
+
+impl From<GetRecentPrioritizationFeesParams> for Vec<Pubkey> {
+    fn from(value: GetRecentPrioritizationFeesParams) -> Self {
+        value.0
+    }
 }
 
 /// The parameters for a Solana [`getSlot`](https://solana.com/docs/rpc/http/getslot) RPC method call.

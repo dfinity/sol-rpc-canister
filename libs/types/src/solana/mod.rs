@@ -80,3 +80,14 @@ impl From<ConfirmedBlock> for solana_transaction_status_client_types::UiConfirme
         }
     }
 }
+
+/// An entry in the result of a Solana `getRecentPrioritizationFees` RPC method call.
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
+pub struct PrioritizationFee {
+    /// Slot in which the fee was observed.
+    pub slot: u64,
+    /// The per-compute-unit fee paid by at least one successfully landed transaction,
+    /// specified in increments of micro-lamports (0.000001 lamports)
+    #[serde(rename = "prioritizationFee")]
+    pub prioritization_fee: u64,
+}
