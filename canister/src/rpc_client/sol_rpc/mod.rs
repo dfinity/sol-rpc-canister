@@ -3,7 +3,7 @@ mod tests;
 
 use crate::types::RoundingError;
 use candid::candid_method;
-use canhttp::http::json::JsonRpcResponse;
+use canhttp::http::json::{JsonRpcResponse, JsonRpcResult};
 use ic_cdk::{
     api::management_canister::http_request::{HttpResponse, TransformArgs},
     query,
@@ -11,6 +11,7 @@ use ic_cdk::{
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{from_slice, to_vec, Value};
+use sol_rpc_types::PrioritizationFee;
 use solana_clock::Slot;
 use std::fmt::Debug;
 
@@ -26,12 +27,19 @@ pub enum ResponseTransform {
     #[n(2)]
     GetBlock,
     #[n(3)]
-    GetSlot(#[n(0)] RoundingError),
+    GetRecentPrioritizationFees {
+        #[n(0)]
+        max_slot_rounding_error: RoundingError,
+        #[n(1)]
+        num_slots: u8,
+    },
     #[n(4)]
-    GetTransaction,
+    GetSlot(#[n(0)] RoundingError),
     #[n(5)]
-    SendTransaction,
+    GetTransaction,
     #[n(6)]
+    SendTransaction,
+    #[n(7)]
     Raw,
 }
 
@@ -66,6 +74,63 @@ impl ResponseTransform {
                     Value::Null => None,
                     value => Some(value),
                 });
+            }
+            Self::GetRecentPrioritizationFees {
+                max_slot_rounding_error,
+                num_slots,
+            } => {
+                assert!(
+                    &1_u8 <= num_slots && num_slots <= &150_u8,
+                    "BUG: expected number of slots to be between 1 and 150, but got {num_slots}"
+                );
+                if let Ok(response) =
+                    from_slice::<JsonRpcResponse<Vec<PrioritizationFee>>>(body_bytes)
+                {
+                    let (id, result) = response.into_parts();
+                    match result {
+                        Ok(mut fees) => {
+                            // The order of the prioritization fees in the response is not specified in the
+                            // [API](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees),
+                            // although examples and manual testing show that the response is sorted by increasing number of slot.
+                            // To avoid any problem, we enforce the sorting.
+                            fees.sort_unstable_by_key(|fee| fee.slot);
+                            // Currently, a node's prioritization-fee cache stores data from up to 150 blocks.
+                            if fees.len() <= 150 {
+                                *body_bytes = serde_json::to_vec(&JsonRpcResponse::from_ok( id, fees ))
+                                    .expect(
+                                        "BUG: failed to serialize previously deserialized JsonRpcResponse",
+                                    );
+                                return;
+                            }
+                            let max_slot = max_slot_rounding_error.round(
+                                fees.last()
+                                    .expect("BUG: recent prioritization fees should contain at least 150 elements")
+                                    .slot,
+                            );
+                            let min_slot = max_slot
+                                .checked_sub((num_slots - 1) as u64)
+                                .expect("ERROR: ");
+                            fees.retain(|fee| min_slot <= fee.slot && fee.slot <= max_slot);
+                            assert_eq!(fees.len(), *num_slots as usize);
+
+                            *body_bytes = serde_json::to_vec(&JsonRpcResponse::from_ok(id, fees))
+                                .expect(
+                                "BUG: failed to serialize previously deserialized JsonRpcResponse",
+                            );
+                        }
+                        Err(json_rpc_error) => {
+                            // canonicalize json representation
+                            *body_bytes = serde_json::to_vec(&JsonRpcResponse::<
+                                Vec<PrioritizationFee>,
+                            >::from_error(
+                                id, json_rpc_error
+                            ))
+                            .expect(
+                                "BUG: failed to serialize previously deserialized JsonRpcResponse",
+                            )
+                        }
+                    }
+                }
             }
             Self::GetSlot(rounding_error) => {
                 canonicalize_response::<Slot, Slot>(body_bytes, |slot| rounding_error.round(slot));
