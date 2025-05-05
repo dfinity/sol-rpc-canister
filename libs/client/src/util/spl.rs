@@ -42,8 +42,8 @@ pub fn get_associated_token_address(
 
 // TODO XC-297: Replace usages with call to `create_associated_token_account` method in
 //   `spl-associated-token-account-client` crate.
-/// Creates an instruction to run the 
-/// [`Create`](https://github.com/solana-program/associated-token-account/blob/109de0bf04dc033873941c6befed2a7ab07a93d9/program/src/instruction.rs#L18) 
+/// Creates an instruction to run the
+/// [`Create`](https://github.com/solana-program/associated-token-account/blob/109de0bf04dc033873941c6befed2a7ab07a93d9/program/src/instruction.rs#L18)
 /// instruction in the SPL Associated Token Account program.
 ///
 /// This implementation was taken from the `spl-associated-token-account-client` crate
