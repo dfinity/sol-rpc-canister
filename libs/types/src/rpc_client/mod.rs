@@ -157,8 +157,8 @@ pub struct GetRecentPrioritizationFeesRpcConfig {
     pub max_slot_rounding_error: Option<u64>,
 
     /// TODO
-    #[serde(rename = "numSlots")]
-    pub num_slots: Option<u8>
+    #[serde(rename = "maxNumSlots")]
+    pub max_num_slots: Option<u8>
 }
 
 /// Defines a consensus strategy for combining responses from different providers.

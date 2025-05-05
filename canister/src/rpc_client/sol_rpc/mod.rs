@@ -31,7 +31,7 @@ pub enum ResponseTransform {
         #[n(0)]
         max_slot_rounding_error: RoundingError,
         #[n(1)]
-        num_slots: u8,
+        max_num_slots: u8,
     },
     #[n(4)]
     GetSlot(#[n(0)] RoundingError),
@@ -77,7 +77,7 @@ impl ResponseTransform {
             }
             Self::GetRecentPrioritizationFees {
                 max_slot_rounding_error,
-                num_slots,
+                max_num_slots: num_slots,
             } => {
                 assert!(
                     &1_u8 <= num_slots && num_slots <= &150_u8,

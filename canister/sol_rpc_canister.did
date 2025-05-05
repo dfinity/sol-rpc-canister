@@ -63,7 +63,7 @@ type GetRecentPrioritizationFeesRpcConfig = record {
   responseConsensus : opt ConsensusStrategy;
   maxSlotRoundingError : opt RoundingError;
   // The number of slots to look back to calculate the estimate. Valid numbers are 1-150, default is 100
-  numSlots : opt nat8;
+  maxNumSlots : opt nat8;
 };
 
 // Defines a consensus strategy for combining responses from different providers.
