@@ -1,6 +1,6 @@
 use base64::{prelude::BASE64_STANDARD, Engine};
 use basic_solana::{
-    client, get_recent_blockhash, solana_wallet::SolanaWallet, spl, state::init_state,
+    client, get_recent_blockhash, solana_wallet::SolanaWallet, state::init_state,
     validate_caller_not_anonymous, InitArg,
 };
 use candid::{Nat, Principal};
@@ -47,7 +47,8 @@ pub async fn associated_token_account(owner: Option<Principal>, mint_account: St
     let owner = owner.unwrap_or_else(validate_caller_not_anonymous);
     let mint = Pubkey::from_str(&mint_account).unwrap();
     let wallet = SolanaWallet::new(owner).await;
-    spl::get_associated_token_address(wallet.solana_account().as_ref(), &mint).to_string()
+    sol_rpc_client::get_associated_token_address(wallet.solana_account().as_ref(), &mint)
+        .to_string()
 }
 
 #[update]
@@ -186,7 +187,11 @@ pub async fn create_associated_token_account(
     let mint = Pubkey::from_str(&mint_account).unwrap();
 
     let (associated_token_account, instruction) =
-        spl::create_associated_token_account_instruction(payer.as_ref(), payer.as_ref(), &mint);
+        sol_rpc_client::create_associated_token_account_instruction(
+            payer.as_ref(),
+            payer.as_ref(),
+            &mint,
+        );
 
     if let Some(_account) = client
         .get_account_info(associated_token_account)
@@ -321,10 +326,11 @@ pub async fn send_spl_token(
     let mint = Pubkey::from_str(&mint_account).unwrap();
     let amount = amount.0.to_u64().unwrap();
 
-    let from = spl::get_associated_token_address(payer.as_ref(), &mint);
-    let to = spl::get_associated_token_address(&recipient, &mint);
+    let from = sol_rpc_client::get_associated_token_address(payer.as_ref(), &mint);
+    let to = sol_rpc_client::get_associated_token_address(&recipient, &mint);
 
-    let instruction = spl::transfer_instruction(&from, &to, payer.as_ref(), amount);
+    let instruction =
+        sol_rpc_client::token_transfer_instruction(&from, &to, payer.as_ref(), amount);
 
     let message = Message::new_with_blockhash(
         &[instruction],

@@ -19,11 +19,12 @@ serde_json = { workspace = true }
 solana-account = { workspace = true }
 solana-account-decoder-client-types = { workspace = true }
 solana-clock = { workspace = true }
-solana-pubkey = { workspace = true }
+solana-instruction = { workspace = true }
+solana-pubkey = { workspace = true, features = ["curve25519"] }
 solana-signature = { workspace = true }
 solana-transaction-status-client-types = { workspace = true }
 sol_rpc_types = { version = "0.1.0", path = "../types" }
-strum = {workspace = true}
+strum = { workspace = true }
 
 [dev-dependencies]
-tokio = {workspace = true, features = ["full"]}
+tokio = { workspace = true, features = ["full"] }

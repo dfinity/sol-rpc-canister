@@ -121,9 +121,14 @@
 #[cfg(not(target_arch = "wasm32"))]
 pub mod fixtures;
 mod request;
+mod util;
 
 pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 use std::fmt::Debug;
+pub use util::spl::{
+    create_associated_token_account_instruction, get_associated_token_address,
+    token_transfer_instruction,
+};
 
 use crate::request::{
     GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetSlotRequest,

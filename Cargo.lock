@@ -4149,6 +4149,7 @@ dependencies = [
  "solana-account",
  "solana-account-decoder-client-types",
  "solana-clock",
+ "solana-instruction",
  "solana-pubkey",
  "solana-signature",
  "solana-transaction-status-client-types",
