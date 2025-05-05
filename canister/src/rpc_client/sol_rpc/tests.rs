@@ -310,3 +310,214 @@ mod normalization_tests {
         );
     }
 }
+
+mod get_recent_prioritization_fees {
+    use crate::rpc_client::sol_rpc::ResponseTransform;
+    use crate::types::RoundingError;
+    use proptest::arbitrary::any;
+    use proptest::array::uniform32;
+    use proptest::prelude::{prop, Strategy};
+    use proptest::{prop_assert_eq, proptest};
+    use rand::prelude::SliceRandom;
+    use rand_chacha::rand_core::SeedableRng;
+    use rand_chacha::ChaCha20Rng;
+    use serde_json::json;
+    use sol_rpc_types::{PrioritizationFee, Slot};
+    use std::ops::RangeInclusive;
+
+    #[test]
+    fn should_normalize_response_with_less_than_150_entries() {
+        fn prioritization_fees(slots: Vec<u64>) -> Vec<serde_json::Value> {
+            slots
+                .into_iter()
+                .map(|slot| {
+                    json!({
+                        "prioritizationFee": slot,
+                        "slot": slot
+                    })
+                })
+                .collect()
+        }
+        let raw_response = json!({
+                "jsonrpc": "2.0",
+                "result": prioritization_fees(vec![1, 2, 3, 4, 5]),
+                "id": 1
+        });
+
+        for (transform, expected_fees) in [
+            (
+                ResponseTransform::GetRecentPrioritizationFees {
+                    max_slot_rounding_error: RoundingError::new(2),
+                    max_num_slots: 2,
+                },
+                prioritization_fees(vec![3, 4]),
+            ),
+            (
+                ResponseTransform::GetRecentPrioritizationFees {
+                    max_slot_rounding_error: RoundingError::new(2),
+                    max_num_slots: 0,
+                },
+                prioritization_fees(vec![]),
+            ),
+            (
+                ResponseTransform::GetRecentPrioritizationFees {
+                    max_slot_rounding_error: RoundingError::new(2),
+                    max_num_slots: u8::MAX,
+                },
+                prioritization_fees(vec![1, 2, 3, 4]),
+            ),
+            (
+                ResponseTransform::GetRecentPrioritizationFees {
+                    max_slot_rounding_error: RoundingError::new(10),
+                    max_num_slots: 2,
+                },
+                prioritization_fees(vec![]),
+            ),
+        ] {
+            let mut raw_bytes = serde_json::to_vec(&raw_response).unwrap();
+            transform.apply(&mut raw_bytes);
+            let transformed_response: serde_json::Value =
+                serde_json::from_slice(&raw_bytes).unwrap();
+
+            assert_eq!(
+                transformed_response,
+                json!({
+                        "jsonrpc": "2.0",
+                        "result": expected_fees,
+                        "id": 1
+                })
+            );
+        }
+    }
+
+    #[test]
+    fn should_normalize_response_with_no_fees() {
+        let raw_response = json!({
+            "jsonrpc": "2.0",
+            "result": [],
+            "id": 1
+        });
+        let transform = ResponseTransform::GetRecentPrioritizationFees {
+            max_slot_rounding_error: RoundingError::new(2),
+            max_num_slots: 2,
+        };
+        let original_bytes = serde_json::to_vec(&raw_response).unwrap();
+        let mut transformed_bytes = original_bytes.clone();
+        transform.apply(&mut transformed_bytes);
+        let transformed_response: serde_json::Value =
+            serde_json::from_slice(&transformed_bytes).unwrap();
+
+        assert_eq!(raw_response, transformed_response);
+    }
+
+    proptest! {
+        #[test]
+        fn should_be_nop_when_failed_to_deserialize(original_bytes in  prop::collection::vec(any::<u8>(), 0..1000)) {
+            let transform = ResponseTransform::GetRecentPrioritizationFees {
+                max_slot_rounding_error: RoundingError::new(2),
+                max_num_slots: 2,
+            };
+            let mut transformed_bytes = original_bytes.clone();
+            transform.apply(&mut transformed_bytes);
+
+            assert_eq!(original_bytes, transformed_bytes);
+        }
+
+        #[test]
+        fn should_normalize_get_recent_prioritization_fees_response(fees in arb_prioritization_fees(337346483..=337346632)) {
+            let raw_response = json!({
+                "jsonrpc": "2.0",
+                "result": fees.clone(),
+                "id": 1
+            });
+
+            let transform = ResponseTransform::GetRecentPrioritizationFees {
+                max_slot_rounding_error: RoundingError::new(20),
+                max_num_slots: 100,
+            };
+            let mut raw_bytes = serde_json::to_vec(&raw_response).unwrap();
+            transform.apply(&mut raw_bytes);
+            let transformed_response: serde_json::Value = serde_json::from_slice(&raw_bytes).unwrap();
+
+            let mut expected_fees = fees;
+            // last slot is 337346632 and has index 150.
+            // Last slot rounded by 20 is 337346620, which has index 138.
+            expected_fees.drain(138..);
+            expected_fees.drain(..38);
+            prop_assert_eq!(expected_fees.len(), 100);
+
+            prop_assert_eq!(
+                transformed_response,
+                json!({
+                    "jsonrpc": "2.0",
+                    "result": expected_fees,
+                    "id": 1
+                })
+            )
+        }
+
+        #[test]
+        fn should_normalize_unsorted_prioritization_fees(
+            seed in uniform32(any::<u8>()),
+            fees in arb_prioritization_fees(337346483..=337346632)
+        ) {
+            let mut rng = ChaCha20Rng::from_seed(seed);
+            let shuffled_fees = {
+                let mut f = fees.clone();
+                f.shuffle(&mut rng);
+                f
+            };
+            let transform = ResponseTransform::GetRecentPrioritizationFees {
+                max_slot_rounding_error: RoundingError::new(20),
+                max_num_slots: 100,
+            };
+
+            let fees_bytes = {
+               let raw_response = json!({
+                    "jsonrpc": "2.0",
+                    "result": fees.clone(),
+                    "id": 1
+                });
+                let mut raw_bytes = serde_json::to_vec(&raw_response).unwrap();
+                transform.apply(&mut raw_bytes);
+                raw_bytes
+            };
+
+            let shuffled_fees_bytes = {
+               let raw_response = json!({
+                    "jsonrpc": "2.0",
+                    "result": shuffled_fees,
+                    "id": 1
+                });
+                let mut raw_bytes = serde_json::to_vec(&raw_response).unwrap();
+                transform.apply(&mut raw_bytes);
+                raw_bytes
+            };
+
+            assert_eq!(fees_bytes, shuffled_fees_bytes);
+        }
+    }
+
+    fn arb_prioritization_fees(
+        slots: RangeInclusive<Slot>,
+    ) -> impl Strategy<Value = Vec<PrioritizationFee>> {
+        let len = if slots.is_empty() {
+            0
+        } else {
+            slots.end() - slots.start() + 1
+        };
+        prop::collection::vec(any::<u64>(), len as usize).prop_map(move |fees| {
+            fees.into_iter()
+                .enumerate()
+                .map(|(index, prioritization_fee)| {
+                    let slot = slots.start() + index as u64;
+                    assert!(slots.contains(&slot));
+                    PrioritizationFee {
+                        slot,
+                        prioritization_fee,
+                    }
+                })
+                .collect::<Vec<_>>()
+        })
+    }
+}

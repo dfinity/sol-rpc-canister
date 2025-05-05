@@ -1,7 +1,6 @@
 use crate::{solana::Pubkey, RpcError, Signature, Slot};
 use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
 use candid::{CandidType, Deserialize};
-use candid::types::{Serializer, Type};
 use serde::Serialize;
 
 /// The parameters for a Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method call.

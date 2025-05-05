@@ -16,7 +16,7 @@ path = "src/main.rs"
 assert_matches = { workspace = true }
 candid = { workspace = true }
 canhttp = { workspace = true, features = ["json", "multi"] }
-canlog = {workspace = true}
+canlog = { workspace = true }
 ciborium = { workspace = true }
 const_format = { workspace = true }
 derive_more = { workspace = true }
@@ -48,6 +48,8 @@ serde_with = { workspace = true }
 [dev-dependencies]
 candid_parser = { workspace = true }
 proptest = { workspace = true }
+rand = { workspace = true }
+rand_chacha = { workspace = true }
 solana-pubkey = { workspace = true }
 solana-signature = { workspace = true }
 

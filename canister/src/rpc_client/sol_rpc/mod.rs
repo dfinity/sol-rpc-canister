@@ -3,7 +3,7 @@ mod tests;
 
 use crate::types::RoundingError;
 use candid::candid_method;
-use canhttp::http::json::{JsonRpcResponse, JsonRpcResult};
+use canhttp::http::json::JsonRpcResponse;
 use ic_cdk::{
     api::management_canister::http_request::{HttpResponse, TransformArgs},
     query,
@@ -77,41 +77,43 @@ impl ResponseTransform {
             }
             Self::GetRecentPrioritizationFees {
                 max_slot_rounding_error,
-                max_num_slots: num_slots,
+                max_num_slots,
             } => {
-                assert!(
-                    &1_u8 <= num_slots && num_slots <= &150_u8,
-                    "BUG: expected number of slots to be between 1 and 150, but got {num_slots}"
-                );
                 if let Ok(response) =
                     from_slice::<JsonRpcResponse<Vec<PrioritizationFee>>>(body_bytes)
                 {
                     let (id, result) = response.into_parts();
                     match result {
                         Ok(mut fees) => {
-                            // The order of the prioritization fees in the response is not specified in the
+                            // The exact number of elements for the returned priority fees is not really specified in the
                             // [API](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees),
-                            // although examples and manual testing show that the response is sorted by increasing number of slot.
-                            // To avoid any problem, we enforce the sorting.
-                            fees.sort_unstable_by_key(|fee| fee.slot);
-                            // Currently, a node's prioritization-fee cache stores data from up to 150 blocks.
-                            if fees.len() <= 150 {
-                                *body_bytes = serde_json::to_vec(&JsonRpcResponse::from_ok( id, fees ))
-                                    .expect(
-                                        "BUG: failed to serialize previously deserialized JsonRpcResponse",
-                                    );
-                                return;
+                            // which simply mentions
+                            // "Currently, a node's prioritization-fee cache stores data from up to 150 blocks."
+                            // Manual testing shows that the result seems to always contain 150 elements,
+                            // also for not used addresses.
+                            if fees.is_empty() || max_num_slots == &0 {
+                                fees.clear();
+                            } else {
+                                // The order of the prioritization fees in the response is not specified in the
+                                // [API](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees),
+                                // although examples and manual testing show that the response is sorted by increasing number of slot.
+                                // To avoid any problem, we enforce the sorting.
+                                fees.sort_unstable_by_key(|fee| fee.slot);
+                                let max_rounded_slot = max_slot_rounding_error.round(
+                                    fees.last()
+                                        .expect(
+                                            "BUG: recent prioritization fees should be non-empty",
+                                        )
+                                        .slot,
+                                );
+                                let min_slot =
+                                    max_rounded_slot.saturating_sub((max_num_slots - 1) as u64);
+                                fees.retain(|fee| {
+                                    min_slot <= fee.slot && fee.slot <= max_rounded_slot
+                                });
+                                assert!(fees.len() <= *max_num_slots as usize,
+                                        "BUG: expected prioritization fees to have at most {max_num_slots} elements, but got {}", fees.len());
                             }
-                            let max_slot = max_slot_rounding_error.round(
-                                fees.last()
-                                    .expect("BUG: recent prioritization fees should contain at least 150 elements")
-                                    .slot,
-                            );
-                            let min_slot = max_slot
-                                .checked_sub((num_slots - 1) as u64)
-                                .expect("ERROR: ");
-                            fees.retain(|fee| min_slot <= fee.slot && fee.slot <= max_slot);
-                            assert_eq!(fees.len(), *num_slots as usize);
 
                             *body_bytes = serde_json::to_vec(&JsonRpcResponse::from_ok(id, fees))
                                 .expect(
