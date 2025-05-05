@@ -5,15 +5,14 @@ use crate::rpc_client::{
 use serde::Serialize;
 use serde_json::json;
 use sol_rpc_types::{
-    CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams,
+    CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
     GetBlockCommitmentLevel, GetBlockParams, GetSlotParams, GetSlotRpcConfig,
-    GetTransactionEncoding, GetTransactionParams, RpcConfig, RpcSources, SendTransactionEncoding,
-    SendTransactionParams, SolanaCluster, TransactionDetails,
+    GetTokenAccountBalanceParams, GetTransactionEncoding, GetTransactionParams, RpcConfig,
+    RpcSources, SendTransactionEncoding, SendTransactionParams, SolanaCluster, TransactionDetails,
 };
 
 mod request_serialization_tests {
     use super::*;
-    use sol_rpc_types::GetBalanceParams;
 
     #[test]
     fn should_serialize_get_account_info_request() {
@@ -151,6 +150,36 @@ mod request_serialization_tests {
                     }
                 ]
             ),
+        );
+    }
+
+    #[test]
+    fn should_serialize_get_token_account_balance_request() {
+        let pubkey = solana_pubkey::Pubkey::default();
+        assert_serialized(
+            MultiRpcRequest::get_token_account_balance(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetTokenAccountBalanceParams::from(pubkey),
+            )
+            .unwrap(),
+            json!([pubkey.to_string(), null]),
+        );
+
+        assert_serialized(
+            MultiRpcRequest::get_token_account_balance(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetTokenAccountBalanceParams {
+                    pubkey: pubkey.to_string(),
+                    commitment: Some(CommitmentLevel::Confirmed),
+                },
+            )
+            .unwrap(),
+            json!([
+                pubkey.to_string(),
+                {"commitment": "confirmed"}
+            ]),
         );
     }
 

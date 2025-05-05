@@ -1,15 +1,17 @@
 use basic_solana::{Ed25519KeyName, SolanaNetwork};
-use candid::utils::ArgumentEncoder;
-use candid::{decode_args, encode_args, CandidType, Encode, Nat, Principal};
-use pocket_ic::management_canister::{CanisterId, CanisterSettings};
-use pocket_ic::{PocketIc, PocketIcBuilder};
+use candid::{
+    decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encode, Nat, Principal,
+};
+use pocket_ic::{
+    management_canister::{CanisterId, CanisterSettings},
+    PocketIc, PocketIcBuilder,
+};
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     CommitmentLevel, OverrideProvider, RegexSubstitution, RpcAccess, SupportedRpcProvider,
     SupportedRpcProviderId,
 };
-use solana_client::rpc_client::RpcClient as SolanaRpcClient;
-use solana_client::rpc_config::RpcTransactionConfig;
+use solana_client::{rpc_client::RpcClient as SolanaRpcClient, rpc_config::RpcTransactionConfig};
 use solana_commitment_config::CommitmentConfig;
 use solana_hash::Hash;
 use solana_instruction::{AccountMeta, Instruction};
@@ -19,11 +21,7 @@ use solana_pubkey::{pubkey, Pubkey};
 use solana_signature::Signature;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
-use std::env::var;
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::thread;
-use std::time::Duration;
+use std::{env::var, path::PathBuf, sync::Arc, thread, time::Duration};
 
 pub const SENDER: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x42]);
 pub const RECEIVER: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x43]);
@@ -206,7 +204,7 @@ fn test_basic_solana() {
         .unwrap()
         .expect("Missing user's associated token account");
     assert_eq!(token_account.token_amount.amount, "999999000");
-    let sender_spl_balance: Nat = basic_solana.update_call(
+    let sender_spl_balance: String = basic_solana.update_call(
         SENDER,
         "get_spl_token_balance",
         (
@@ -214,14 +212,14 @@ fn test_basic_solana() {
             mint_account.to_string(),
         ),
     );
-    assert_eq!(sender_spl_balance, Nat::from(999_999_000_u64));
+    assert_eq!(sender_spl_balance, "0.999999");
     let token_account = setup
         .solana_client
         .get_token_account(&receiver_associated_token_account)
         .unwrap()
         .expect("Missing receiver's associated token account");
     assert_eq!(token_account.token_amount.amount, "1000");
-    let receiver_spl_balance: Nat = basic_solana.update_call(
+    let receiver_spl_balance: String = basic_solana.update_call(
         RECEIVER,
         "get_spl_token_balance",
         (
@@ -229,7 +227,7 @@ fn test_basic_solana() {
             mint_account.to_string(),
         ),
     );
-    assert_eq!(receiver_spl_balance, Nat::from(1_000_u64));
+    assert_eq!(receiver_spl_balance, "0.000001");
 }
 
 pub struct Setup {

@@ -16,7 +16,9 @@ use sol_rpc_types::{
     RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster,
     SupportedRpcProvider, SupportedRpcProviderId,
 };
-use solana_account_decoder_client_types::{UiAccount, UiAccountData, UiAccountEncoding};
+use solana_account_decoder_client_types::{
+    token::UiTokenAmount, UiAccount, UiAccountData, UiAccountEncoding,
+};
 use solana_pubkey::pubkey;
 use solana_signer::Signer;
 use std::{fmt::Debug, iter::zip, str::FromStr};
@@ -816,6 +818,9 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::GetTransaction => {
                     check(client.get_transaction(some_signature())).await;
                 }
+                SolRpcEndpoint::GetTokenAccountBalance => {
+                    check(client.get_token_account_balance(USDC_PUBLIC_KEY)).await;
+                }
                 SolRpcEndpoint::SendTransaction => {
                     check(client.send_transaction(some_transaction())).await;
                 }
@@ -859,6 +864,9 @@ mod cycles_cost_tests {
                 }
                 SolRpcEndpoint::GetBlock => {
                     check(client.get_block(577996)).await;
+                }
+                SolRpcEndpoint::GetTokenAccountBalance => {
+                    check(client.get_token_account_balance(USDC_PUBLIC_KEY)).await;
                 }
                 SolRpcEndpoint::GetTransaction => {
                     check(client.get_transaction(some_signature())).await;
@@ -919,7 +927,7 @@ mod cycles_cost_tests {
                 "BUG: not enough cycles requested. Requested {cycles_cost} cycles, but consumed {cycles_consumed} cycles"
             );
 
-            // Same request with less cycles should fail.
+            // Same request with fewer cycles should fail.
             let results = request
                 .with_cycles(cycles_cost - 1)
                 .send()
@@ -973,6 +981,14 @@ mod cycles_cost_tests {
                     )
                     .await;
                 }
+                SolRpcEndpoint::GetTokenAccountBalance => {
+                    check(
+                        &setup,
+                        client.get_token_account_balance(USDC_PUBLIC_KEY),
+                        1_732_259_200,
+                    )
+                    .await;
+                }
                 SolRpcEndpoint::GetTransaction => {
                     check(
                         &setup,
@@ -1005,13 +1021,7 @@ mod cycles_cost_tests {
 }
 
 mod get_balance_tests {
-    use crate::{rpc_sources, USDC_PUBLIC_KEY};
-    use canhttp::http::json::{ConstantSizeId, Id};
-    use serde_json::json;
-    use sol_rpc_int_tests::mock::MockOutcallBuilder;
-    use sol_rpc_int_tests::{Setup, SolRpcTestClient};
-    use sol_rpc_types::CommitmentLevel;
-    use std::iter::zip;
+    use super::*;
 
     #[tokio::test]
     async fn should_get_balance() {
@@ -1066,6 +1076,79 @@ mod get_balance_tests {
                 .expect_consistent();
 
             assert_eq!(results, Ok(389_086_612_571_u64));
+        }
+
+        setup.drop().await;
+    }
+}
+
+mod get_token_account_balance_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn should_get_token_account_balance() {
+        fn request_body(id: u8) -> serde_json::Value {
+            json!({
+                "jsonrpc": "2.0",
+                "id": Id::from(ConstantSizeId::from(id)),
+                "method": "getTokenAccountBalance",
+                "params": [
+                    USDC_PUBLIC_KEY.to_string(),
+                    {
+                        "commitment": "confirmed",
+                    }
+                ]
+            })
+        }
+
+        fn response_body(id: u8) -> serde_json::Value {
+            json!({
+                "id": Id::from(ConstantSizeId::from(id)),
+                "jsonrpc": "2.0",
+                "result": {
+                    // context should be filtered out by transform
+                    "context": { "slot": 334048531 + id as u64, "apiVersion": "2.1.9" },
+                    "value": {
+                        "amount": "9864",
+                        "decimals": 2,
+                        "uiAmount": 98.64,
+                        "uiAmountString": "98.64",
+                    }
+                },
+            })
+        }
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
+            let client = setup.client().with_rpc_sources(sources);
+
+            let results = client
+                .mock_http_sequence(vec![
+                    MockOutcallBuilder::new(200, response_body(first_id))
+                        .with_request_body(request_body(first_id)),
+                    MockOutcallBuilder::new(200, response_body(first_id + 1))
+                        .with_request_body(request_body(first_id + 1)),
+                    MockOutcallBuilder::new(200, response_body(first_id + 2))
+                        .with_request_body(request_body(first_id + 2)),
+                ])
+                .build()
+                .get_token_account_balance(USDC_PUBLIC_KEY)
+                .modify_params(|params| {
+                    params.commitment = Some(CommitmentLevel::Confirmed);
+                })
+                .send()
+                .await
+                .expect_consistent();
+
+            assert_eq!(
+                results,
+                Ok(UiTokenAmount {
+                    amount: "9864".to_string(),
+                    decimals: 2,
+                    ui_amount: Some(98.64),
+                    ui_amount_string: "98.64".to_string(),
+                })
+            );
         }
 
         setup.drop().await;
