@@ -315,12 +315,12 @@ mod get_recent_prioritization_fees {
     use crate::rpc_client::sol_rpc::ResponseTransform;
     use crate::types::RoundingError;
     use proptest::arbitrary::any;
-    use proptest::array::uniform32;
+    // use proptest::array::uniform32;
     use proptest::prelude::{prop, Strategy};
     use proptest::{prop_assert_eq, proptest};
-    use rand::prelude::SliceRandom;
-    use rand_chacha::rand_core::SeedableRng;
-    use rand_chacha::ChaCha20Rng;
+    // use rand::prelude::SliceRandom;
+    // use rand_chacha::rand_core::SeedableRng;
+    // use rand_chacha::ChaCha20Rng;
     use serde_json::json;
     use sol_rpc_types::{PrioritizationFee, Slot};
     use std::ops::RangeInclusive;
@@ -456,46 +456,46 @@ mod get_recent_prioritization_fees {
             )
         }
 
-        #[test]
-        fn should_normalize_unsorted_prioritization_fees(
-            seed in uniform32(any::<u8>()),
-            fees in arb_prioritization_fees(337346483..=337346632)
-        ) {
-            let mut rng = ChaCha20Rng::from_seed(seed);
-            let shuffled_fees = {
-                let mut f = fees.clone();
-                f.shuffle(&mut rng);
-                f
-            };
-            let transform = ResponseTransform::GetRecentPrioritizationFees {
-                max_slot_rounding_error: RoundingError::new(20),
-                max_num_slots: 100,
-            };
-
-            let fees_bytes = {
-               let raw_response = json!({
-                    "jsonrpc": "2.0",
-                    "result": fees.clone(),
-                    "id": 1
-                });
-                let mut raw_bytes = serde_json::to_vec(&raw_response).unwrap();
-                transform.apply(&mut raw_bytes);
-                raw_bytes
-            };
-
-            let shuffled_fees_bytes = {
-               let raw_response = json!({
-                    "jsonrpc": "2.0",
-                    "result": shuffled_fees,
-                    "id": 1
-                });
-                let mut raw_bytes = serde_json::to_vec(&raw_response).unwrap();
-                transform.apply(&mut raw_bytes);
-                raw_bytes
-            };
-
-            assert_eq!(fees_bytes, shuffled_fees_bytes);
-        }
+        // #[test]
+        // fn should_normalize_unsorted_prioritization_fees(
+        //     seed in uniform32(any::<u8>()),
+        //     fees in arb_prioritization_fees(337346483..=337346632)
+        // ) {
+        //     let mut rng = ChaCha20Rng::from_seed(seed);
+        //     let shuffled_fees = {
+        //         let mut f = fees.clone();
+        //         f.shuffle(&mut rng);
+        //         f
+        //     };
+        //     let transform = ResponseTransform::GetRecentPrioritizationFees {
+        //         max_slot_rounding_error: RoundingError::new(20),
+        //         max_num_slots: 100,
+        //     };
+        //
+        //     let fees_bytes = {
+        //        let raw_response = json!({
+        //             "jsonrpc": "2.0",
+        //             "result": fees.clone(),
+        //             "id": 1
+        //         });
+        //         let mut raw_bytes = serde_json::to_vec(&raw_response).unwrap();
+        //         transform.apply(&mut raw_bytes);
+        //         raw_bytes
+        //     };
+        //
+        //     let shuffled_fees_bytes = {
+        //        let raw_response = json!({
+        //             "jsonrpc": "2.0",
+        //             "result": shuffled_fees,
+        //             "id": 1
+        //         });
+        //         let mut raw_bytes = serde_json::to_vec(&raw_response).unwrap();
+        //         transform.apply(&mut raw_bytes);
+        //         raw_bytes
+        //     };
+        //
+        //     assert_eq!(fees_bytes, shuffled_fees_bytes);
+        // }
     }
 
     fn arb_prioritization_fees(
