@@ -4129,6 +4129,7 @@ dependencies = [
  "solana-account-decoder-client-types",
  "solana-clock",
  "solana-pubkey",
+ "solana-rpc-client-api",
  "solana-signature",
  "solana-transaction-status-client-types",
  "thiserror 2.0.12",

@@ -25,7 +25,8 @@ use ic_cdk::api::management_canister::http_request::{
 };
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
-    ConsensusStrategy, GetSlotRpcConfig, Lamport, ProviderError, RpcConfig, RpcError, RpcResult,
+    ConsensusStrategy, GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
+    GetSlotRpcConfig, Lamport, PrioritizationFee, ProviderError, RpcConfig, RpcError, RpcResult,
     RpcSource, RpcSources, Signature, TransactionDetails,
 };
 use solana_clock::Slot;
@@ -188,6 +189,37 @@ impl GetSlotRequest {
             JsonRpcRequest::new("getSlot", params.into()),
             max_response_bytes,
             ResponseTransform::GetSlot(rounding_error),
+            ReductionStrategy::from(consensus_strategy),
+        ))
+    }
+}
+
+pub type GetRecentPrioritizationFeesRequest =
+    MultiRpcRequest<GetRecentPrioritizationFeesParams, Vec<PrioritizationFee>>;
+
+impl GetRecentPrioritizationFeesRequest {
+    pub fn get_recent_prioritization_fees<Params: Into<GetRecentPrioritizationFeesParams>>(
+        rpc_sources: RpcSources,
+        config: GetRecentPrioritizationFeesRpcConfig,
+        params: Params,
+    ) -> Result<Self, ProviderError> {
+        let consensus_strategy = config.response_consensus.unwrap_or_default();
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let max_response_bytes = config
+            .response_size_estimate
+            .unwrap_or(2 * 1024 + HEADER_SIZE_LIMIT);
+
+        Ok(MultiRpcRequest::new(
+            providers,
+            JsonRpcRequest::new("getRecentPrioritizationFees", params.into()),
+            max_response_bytes,
+            ResponseTransform::GetRecentPrioritizationFees {
+                max_slot_rounding_error: config
+                    .max_slot_rounding_error
+                    .map(RoundingError::new)
+                    .unwrap_or_default(),
+                max_num_slots: config.max_num_slots.unwrap_or(100),
+            },
             ReductionStrategy::from(consensus_strategy),
         ))
     }

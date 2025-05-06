@@ -181,8 +181,15 @@ pub struct GetRecentPrioritizationFeesParams(pub Vec<Pubkey>);
 impl TryFrom<Vec<Pubkey>> for GetRecentPrioritizationFeesParams {
     type Error = String;
 
-    fn try_from(value: Vec<Pubkey>) -> Result<Self, Self::Error> {
-        todo!("validate at most 128 addresses")
+    fn try_from(accounts: Vec<Pubkey>) -> Result<Self, Self::Error> {
+        const MAX_NUM_ACCOUNTS: usize = 128;
+        if accounts.len() > MAX_NUM_ACCOUNTS {
+            return Err(format!(
+                "Expected at most {MAX_NUM_ACCOUNTS} account addresses, but got {}",
+                accounts.len()
+            ));
+        }
+        Ok(Self(accounts))
     }
 }
 

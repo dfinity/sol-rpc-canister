@@ -162,7 +162,12 @@ async fn get_recent_prioritization_fees(
     config: Option<GetRecentPrioritizationFeesRpcConfig>,
     params: Option<GetRecentPrioritizationFeesParams>,
 ) -> MultiRpcResult<Vec<PrioritizationFee>> {
-    todo!()
+    let request = MultiRpcRequest::get_recent_prioritization_fees(
+        source,
+        config.unwrap_or_default(),
+        params.unwrap_or_default(),
+    );
+    send_multi(request).await
 }
 
 #[query(name = "getRecentPrioritizationFeesCyclesCost")]
@@ -175,7 +180,13 @@ async fn get_recent_prioritization_fees_cycles_cost(
     if read_state(State::is_demo_mode_active) {
         return Ok(0);
     }
-    todo!()
+    MultiRpcRequest::get_recent_prioritization_fees(
+        source,
+        config.unwrap_or_default(),
+        params.unwrap_or_default(),
+    )?
+    .cycles_cost()
+    .await
 }
 
 #[update(name = "getSlot")]
