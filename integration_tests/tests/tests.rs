@@ -973,7 +973,12 @@ mod cycles_cost_tests {
                 }
 
                 SolRpcEndpoint::GetRecentPrioritizationFees => {
-                    check(&setup, client.get_recent_prioritization_fees(), 1).await;
+                    check(
+                        &setup,
+                        client.get_recent_prioritization_fees(),
+                        1_876_772_800,
+                    )
+                    .await;
                 }
                 SolRpcEndpoint::GetSlot => {
                     check(
