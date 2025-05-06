@@ -20,7 +20,6 @@ solana-account = { workspace = true }
 solana-account-decoder-client-types = { workspace = true }
 solana-clock = { workspace = true }
 solana-pubkey = { workspace = true }
-solana-rpc-client-api = {workspace = true}
 solana-signature = { workspace = true }
 solana-transaction-status-client-types = { workspace = true }
 sol_rpc_types = { version = "0.1.0", path = "../types" }

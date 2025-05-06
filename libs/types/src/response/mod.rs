@@ -1,6 +1,5 @@
 use crate::{
-    solana::account::AccountInfo, ConfirmedBlock, PrioritizationFee, RpcResult, RpcSource,
-    Signature, TransactionInfo,
+    solana::account::AccountInfo, ConfirmedBlock, RpcResult, RpcSource, Signature, TransactionInfo,
 };
 use candid::CandidType;
 use serde::Deserialize;
@@ -136,17 +135,5 @@ impl From<MultiRpcResult<Option<TransactionInfo>>>
 {
     fn from(result: MultiRpcResult<Option<TransactionInfo>>) -> Self {
         result.map(|maybe_transaction| maybe_transaction.map(|transaction| transaction.into()))
-    }
-}
-
-impl From<MultiRpcResult<Vec<PrioritizationFee>>>
-    for MultiRpcResult<Vec<solana_rpc_client_api::response::RpcPrioritizationFee>>
-{
-    fn from(result: MultiRpcResult<Vec<PrioritizationFee>>) -> Self {
-        result.map(|fees| {
-            fees.into_iter()
-                .map(solana_rpc_client_api::response::RpcPrioritizationFee::from)
-                .collect()
-        })
     }
 }

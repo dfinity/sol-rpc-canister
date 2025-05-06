@@ -186,8 +186,7 @@ impl SolRpcRequest for GetRecentPrioritizationFeesRequest {
     type Config = GetRecentPrioritizationFeesRpcConfig;
     type Params = Option<GetRecentPrioritizationFeesParams>;
     type CandidOutput = sol_rpc_types::MultiRpcResult<Vec<PrioritizationFee>>;
-    type Output =
-        sol_rpc_types::MultiRpcResult<Vec<solana_rpc_client_api::response::RpcPrioritizationFee>>;
+    type Output = Self::CandidOutput;
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetRecentPrioritizationFees
@@ -322,7 +321,7 @@ pub type GetRecentPrioritizationFeesRequestBuilder<R> = RequestBuilder<
     GetRecentPrioritizationFeesRpcConfig,
     Option<GetRecentPrioritizationFeesParams>,
     sol_rpc_types::MultiRpcResult<Vec<PrioritizationFee>>,
-    sol_rpc_types::MultiRpcResult<Vec<solana_rpc_client_api::response::RpcPrioritizationFee>>,
+    sol_rpc_types::MultiRpcResult<Vec<PrioritizationFee>>,
 >;
 
 impl<Runtime, Config: Clone, Params: Clone, CandidOutput, Output> Clone
