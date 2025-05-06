@@ -207,7 +207,7 @@ impl GetRecentPrioritizationFeesRequest {
         let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
         let max_response_bytes = config
             .response_size_estimate
-            .unwrap_or(2 * 1024 + HEADER_SIZE_LIMIT);
+            .unwrap_or(8 * 1024 + HEADER_SIZE_LIMIT);
 
         Ok(MultiRpcRequest::new(
             providers,

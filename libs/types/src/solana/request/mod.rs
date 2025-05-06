@@ -175,7 +175,7 @@ pub enum TransactionDetails {
 
 /// The parameters for a Solana [`getRecentPrioritizationFees`](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees) RPC method call.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
-#[serde(try_from = "Vec<Pubkey>", into = "Vec<Pubkey>")]
+#[serde(try_from = "Vec<Pubkey>", into = "[Vec<Pubkey>; 1]")]
 pub struct GetRecentPrioritizationFeesParams(pub Vec<Pubkey>);
 
 impl TryFrom<Vec<Pubkey>> for GetRecentPrioritizationFeesParams {
@@ -199,9 +199,9 @@ impl From<solana_pubkey::Pubkey> for GetRecentPrioritizationFeesParams {
     }
 }
 
-impl From<GetRecentPrioritizationFeesParams> for Vec<Pubkey> {
+impl From<GetRecentPrioritizationFeesParams> for [Vec<Pubkey>; 1] {
     fn from(value: GetRecentPrioritizationFeesParams) -> Self {
-        value.0
+        [value.0]
     }
 }
 

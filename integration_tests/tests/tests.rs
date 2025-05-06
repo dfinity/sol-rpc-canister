@@ -1111,10 +1111,28 @@ mod get_recent_prioritization_fees_tests {
 
         assert_eq!(
             fees,
-            Ok(vec![PrioritizationFee {
-                slot: 0,
-                prioritization_fee: 0,
-            }])
+            Ok(vec![
+                PrioritizationFee {
+                    prioritization_fee: 535775,
+                    slot: 338225906
+                },
+                PrioritizationFee {
+                    prioritization_fee: 65038,
+                    slot: 338225907
+                },
+                PrioritizationFee {
+                    prioritization_fee: 0,
+                    slot: 338225908
+                },
+                PrioritizationFee {
+                    prioritization_fee: 0,
+                    slot: 338225909
+                },
+                PrioritizationFee {
+                    prioritization_fee: 0,
+                    slot: 338225910
+                },
+            ])
         );
 
         setup.drop().await;
