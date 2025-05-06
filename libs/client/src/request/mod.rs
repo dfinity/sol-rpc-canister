@@ -426,6 +426,20 @@ impl<R: Runtime, Config, Params, CandidOutput, Output>
     }
 }
 
+impl<Runtime, Config, CandidOutput, Output>
+    RequestBuilder<Runtime, Config, Option<GetRecentPrioritizationFeesParams>, CandidOutput, Output>
+{
+    /// Add an account to look up for a `getRecentPrioritizationFees` request.
+    /// 
+    /// The response to a `getRecentPrioritizationFees` request reflects a fee to land 
+    /// a transaction locking all of the provided accounts as writable.
+    pub fn for_writable_account(mut self, account: solana_pubkey::Pubkey) -> Self {
+        let params = self.request.params_mut().get_or_insert_default();
+        params.0.push(account.to_string());
+        self
+    }
+}
+
 impl<Runtime, Params, CandidOutput, Output>
     RequestBuilder<Runtime, GetRecentPrioritizationFeesRpcConfig, Params, CandidOutput, Output>
 {

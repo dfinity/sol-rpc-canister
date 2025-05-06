@@ -406,7 +406,7 @@ impl<R> SolRpcClient<R> {
         RequestBuilder::new(
             self.clone(),
             GetRecentPrioritizationFeesRequest::default(),
-            1_000,
+            10_000_000_000,
         )
     }
 
