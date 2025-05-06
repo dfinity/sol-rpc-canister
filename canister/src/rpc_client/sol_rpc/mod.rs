@@ -26,14 +26,14 @@ pub enum ResponseTransform {
     #[n(2)]
     GetBlock,
     #[n(3)]
-    GetSlot(#[n(4)] RoundingError),
-    #[n(5)]
+    GetSlot(#[n(0)] RoundingError),
+    #[n(4)]
     GetTokenAccountBalance,
-    #[n(6)]
+    #[n(5)]
     GetTransaction,
-    #[n(7)]
+    #[n(6)]
     SendTransaction,
-    #[n(8)]
+    #[n(7)]
     Raw,
 }
 
