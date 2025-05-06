@@ -126,8 +126,9 @@ pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 use std::fmt::Debug;
 
 use crate::request::{
-    GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetSlotRequest,
-    GetTransactionRequest, JsonRequest, SendTransactionRequest,
+    GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetRecentPrioritizationFeesRequest,
+    GetRecentPrioritizationFeesRequestBuilder, GetSlotRequest, GetTransactionRequest, JsonRequest,
+    SendTransactionRequest,
 };
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
@@ -394,6 +395,19 @@ impl<R> SolRpcClient<R> {
             TransactionDetails::None => 10_000_000_000,
         };
         RequestBuilder::new(self.clone(), GetBlockRequest::new(params), cycles)
+    }
+
+    /// Call `getRecentPrioritizationFees` on the SOL RPC canister.
+    ///
+    /// # Examples
+    ///
+    /// TODO XC-326: rust example
+    pub fn get_recent_prioritization_fees(&self) -> GetRecentPrioritizationFeesRequestBuilder<R> {
+        RequestBuilder::new(
+            self.clone(),
+            GetRecentPrioritizationFeesRequest::default(),
+            1_000,
+        )
     }
 
     /// Call `getSlot` on the SOL RPC canister.

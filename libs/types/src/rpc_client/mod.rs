@@ -161,6 +161,16 @@ pub struct GetRecentPrioritizationFeesRpcConfig {
     pub max_num_slots: Option<u8>,
 }
 
+impl From<RpcConfig> for GetRecentPrioritizationFeesRpcConfig {
+    fn from(value: RpcConfig) -> Self {
+        GetRecentPrioritizationFeesRpcConfig {
+            response_size_estimate: value.response_size_estimate,
+            response_consensus: value.response_consensus,
+            ..Default::default()
+        }
+    }
+}
+
 /// Defines a consensus strategy for combining responses from different providers.
 #[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]
 pub enum ConsensusStrategy {

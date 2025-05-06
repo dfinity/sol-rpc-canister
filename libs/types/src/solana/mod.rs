@@ -91,3 +91,12 @@ pub struct PrioritizationFee {
     #[serde(rename = "prioritizationFee")]
     pub prioritization_fee: u64,
 }
+
+impl From<PrioritizationFee> for solana_rpc_client_api::response::RpcPrioritizationFee {
+    fn from(value: PrioritizationFee) -> Self {
+        Self {
+            slot: value.slot,
+            prioritization_fee: value.prioritization_fee,
+        }
+    }
+}

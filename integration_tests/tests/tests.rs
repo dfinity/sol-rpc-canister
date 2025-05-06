@@ -813,6 +813,9 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::GetBlock => {
                     check(client.get_block(577996)).await;
                 }
+                SolRpcEndpoint::GetRecentPrioritizationFees => {
+                    check(client.get_recent_prioritization_fees()).await
+                }
                 SolRpcEndpoint::GetTransaction => {
                     check(client.get_transaction(some_signature())).await;
                 }
@@ -859,6 +862,9 @@ mod cycles_cost_tests {
                 }
                 SolRpcEndpoint::GetBlock => {
                     check(client.get_block(577996)).await;
+                }
+                SolRpcEndpoint::GetRecentPrioritizationFees => {
+                    check(client.get_recent_prioritization_fees()).await;
                 }
                 SolRpcEndpoint::GetTransaction => {
                     check(client.get_transaction(some_signature())).await;
@@ -964,6 +970,10 @@ mod cycles_cost_tests {
                 }
                 SolRpcEndpoint::GetBlock => {
                     check(&setup, client.get_block(577996), 1_791_868_000).await;
+                }
+
+                SolRpcEndpoint::GetRecentPrioritizationFees => {
+                    check(&setup, client.get_recent_prioritization_fees(), 1).await;
                 }
                 SolRpcEndpoint::GetSlot => {
                     check(

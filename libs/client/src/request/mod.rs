@@ -6,8 +6,10 @@ use candid::CandidType;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams,
-    GetBlockCommitmentLevel, GetBlockParams, GetSlotParams, GetSlotRpcConfig, GetTransactionParams,
-    Lamport, RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, TransactionInfo,
+    GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
+    GetRecentPrioritizationFeesRpcConfig, GetSlotParams, GetSlotRpcConfig, GetTransactionParams,
+    Lamport, PrioritizationFee, RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature,
+    TransactionInfo,
 };
 use solana_clock::Slot;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
@@ -41,6 +43,8 @@ pub enum SolRpcEndpoint {
     GetBalance,
     /// `getBlock` endpoint.
     GetBlock,
+    /// `getRecentPrioritizationFees` endpoint.
+    GetRecentPrioritizationFees,
     /// `getSlot` endpoint.
     GetSlot,
     /// `getTransaction` endpoint.
@@ -58,6 +62,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetAccountInfo => "getAccountInfo",
             SolRpcEndpoint::GetBalance => "getBalance",
             SolRpcEndpoint::GetBlock => "getBlock",
+            SolRpcEndpoint::GetRecentPrioritizationFees => "getRecentPrioritizationFees",
             SolRpcEndpoint::GetSlot => "getSlot",
             SolRpcEndpoint::GetTransaction => "getTransaction",
             SolRpcEndpoint::JsonRequest => "jsonRequest",
@@ -71,6 +76,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetAccountInfo => "getAccountInfoCyclesCost",
             SolRpcEndpoint::GetBalance => "getBalanceCyclesCost",
             SolRpcEndpoint::GetBlock => "getBlockCyclesCost",
+            SolRpcEndpoint::GetRecentPrioritizationFees => "getRecentPrioritizationFeesCyclesCost",
             SolRpcEndpoint::GetSlot => "getSlotCyclesCost",
             SolRpcEndpoint::GetTransaction => "getTransactionCyclesCost",
             SolRpcEndpoint::JsonRequest => "jsonRequestCyclesCost",
@@ -170,6 +176,27 @@ impl SolRpcRequest for GetBlockRequest {
             });
         set_default(default_block_commitment_level, &mut params.commitment);
         params
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct GetRecentPrioritizationFeesRequest(Option<GetRecentPrioritizationFeesParams>);
+
+impl SolRpcRequest for GetRecentPrioritizationFeesRequest {
+    type Config = GetRecentPrioritizationFeesRpcConfig;
+    type Params = Option<GetRecentPrioritizationFeesParams>;
+    type CandidOutput = sol_rpc_types::MultiRpcResult<Vec<PrioritizationFee>>;
+    type Output =
+        sol_rpc_types::MultiRpcResult<Vec<solana_rpc_client_api::response::RpcPrioritizationFee>>;
+
+    fn endpoint(&self) -> SolRpcEndpoint {
+        SolRpcEndpoint::GetRecentPrioritizationFees
+    }
+
+    fn params(self, _default_commitment_level: Option<CommitmentLevel>) -> Self::Params {
+        // [getRecentPrioritizationFees](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees)
+        // does not use commitment levels
+        self.0
     }
 }
 
@@ -290,6 +317,14 @@ pub struct RequestBuilder<Runtime, Config, Params, CandidOutput, Output> {
     request: Request<Config, Params, CandidOutput, Output>,
 }
 
+pub type GetRecentPrioritizationFeesRequestBuilder<R> = RequestBuilder<
+    R,
+    GetRecentPrioritizationFeesRpcConfig,
+    Option<GetRecentPrioritizationFeesParams>,
+    sol_rpc_types::MultiRpcResult<Vec<PrioritizationFee>>,
+    sol_rpc_types::MultiRpcResult<Vec<solana_rpc_client_api::response::RpcPrioritizationFee>>,
+>;
+
 impl<Runtime, Config: Clone, Params: Clone, CandidOutput, Output> Clone
     for RequestBuilder<Runtime, Config, Params, CandidOutput, Output>
 {
@@ -393,18 +428,31 @@ impl<R: Runtime, Config, Params, CandidOutput, Output>
 }
 
 impl<Runtime, Params, CandidOutput, Output>
+    RequestBuilder<Runtime, GetRecentPrioritizationFeesRpcConfig, Params, CandidOutput, Output>
+{
+    /// Change the rounding error for the maximum slot value for a `getRecentPrioritizationFees` request.
+    pub fn with_max_slot_rounding_error(mut self, rounding_error: u64) -> Self {
+        let config = self.request.rpc_config_mut().get_or_insert_default();
+        config.max_slot_rounding_error = Some(rounding_error);
+        self
+    }
+
+    /// Change the maximum number of slots for a `getRecentPrioritizationFees` request.
+    pub fn with_max_num_slots(mut self, num_slots: u8) -> Self {
+        let config = self.request.rpc_config_mut().get_or_insert_default();
+        config.max_num_slots = Some(num_slots);
+        self
+    }
+}
+
+impl<Runtime, Params, CandidOutput, Output>
     RequestBuilder<Runtime, GetSlotRpcConfig, Params, CandidOutput, Output>
 {
     /// Change the rounding error for `getSlot` request.
     pub fn with_rounding_error(mut self, rounding_error: u64) -> Self {
-        if let Some(config) = self.request.rpc_config_mut() {
-            config.rounding_error = Some(rounding_error);
-            return self;
-        }
-        self.with_rpc_config(GetSlotRpcConfig {
-            rounding_error: Some(rounding_error),
-            ..Default::default()
-        })
+        let config = self.request.rpc_config_mut().get_or_insert_default();
+        config.rounding_error = Some(rounding_error);
+        self
     }
 }
 
