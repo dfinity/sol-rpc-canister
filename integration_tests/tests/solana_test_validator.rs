@@ -9,7 +9,8 @@ use sol_rpc_int_tests::PocketIcLiveModeRuntime;
 use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoEncoding, GetAccountInfoParams, GetBlockCommitmentLevel,
     GetBlockParams, GetSlotParams, GetTransactionEncoding, GetTransactionParams, InstallArgs,
-    Lamport, OverrideProvider, RegexSubstitution, SendTransactionParams, TransactionDetails,
+    Lamport, OverrideProvider, PrioritizationFee, RegexSubstitution, SendTransactionParams,
+    TransactionDetails,
 };
 use solana_account_decoder_client_types::UiAccount;
 use solana_client::rpc_client::{RpcClient as SolanaRpcClient, RpcClient};
@@ -17,12 +18,14 @@ use solana_commitment_config::CommitmentConfig;
 use solana_hash::Hash;
 use solana_keypair::Keypair;
 use solana_program::system_instruction;
-use solana_pubkey::Pubkey;
+use solana_pubkey::{pubkey, Pubkey};
 use solana_rpc_client_api::config::{RpcBlockConfig, RpcTransactionConfig};
+use solana_rpc_client_api::response::RpcPrioritizationFee;
 use solana_signature::Signature;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
 use solana_transaction_status_client_types::UiTransactionEncoding;
+use std::iter::zip;
 use std::{
     future::Future,
     str::FromStr,
@@ -55,6 +58,48 @@ async fn should_get_slot() {
         sol_res.abs_diff(ic_res) < 20,
         "Difference is too large between slot {sol_res} from Solana client and slot {ic_res} from the SOL RPC canister"
     );
+
+    setup.setup.drop().await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn should_get_recent_prioritization_fees() {
+    const TOKEN_2022: Pubkey = pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+    let setup = Setup::new().await;
+
+    let (sol_res, ic_res) = setup
+        .compare_client(
+            |sol| {
+                sol.get_recent_prioritization_fees(&[TOKEN_2022])
+                    .expect("Failed to get recent prioritization fees")
+            },
+            |ic| async move {
+                ic.get_recent_prioritization_fees()
+                    .for_writable_accounts(vec![TOKEN_2022])
+                    .with_max_num_slots(150)
+                    .with_max_slot_rounding_error(1)
+                    .send()
+                    .await
+                    .expect_consistent()
+                    .unwrap_or_else(|e| panic!("`getRecentPrioritizationFees` call failed: {e}"))
+            },
+        )
+        .await;
+
+    assert_eq!(sol_res.len(), ic_res.len());
+    for (fees_sol, fees_ic) in zip(sol_res, ic_res) {
+        let RpcPrioritizationFee {
+            slot: slot_sol,
+            prioritization_fee: prioritization_fee_sol,
+        } = fees_sol;
+        let PrioritizationFee {
+            slot: slot_ic,
+            prioritization_fee: prioritization_fee_ic,
+        } = fees_ic;
+
+        assert_eq!(slot_sol, slot_ic);
+        assert_eq!(prioritization_fee_sol, prioritization_fee_ic)
+    }
 
     setup.setup.drop().await;
 }
