@@ -15,6 +15,7 @@ use sol_rpc_types::{
 use solana_account_decoder_client_types::UiAccount;
 use solana_client::rpc_client::{RpcClient as SolanaRpcClient, RpcClient};
 use solana_commitment_config::CommitmentConfig;
+use solana_compute_budget_interface::ComputeBudgetInstruction;
 use solana_hash::Hash;
 use solana_keypair::Keypair;
 use solana_program::system_instruction;
@@ -64,18 +65,60 @@ async fn should_get_slot() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn should_get_recent_prioritization_fees() {
-    const TOKEN_2022: Pubkey = pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+    const BASE_FEE_PER_SIGNATURE_LAMPORTS: u64 = 5000;
+    const NUM_TRANSACTIONS: u64 = 10;
+
     let setup = Setup::new().await;
 
+    let (sender, sender_balance_before) = setup.generate_keypair_and_fund_account();
+    let (recipient, _recipient_balance_before) = setup.generate_keypair_and_fund_account();
+
+    // Generate some transactions with priority fees to ensure that
+    // 1) There are some slots
+    // 2) Priority fee is not always 0
+    let mut transactions = Vec::with_capacity(NUM_TRANSACTIONS as usize);
+    let transaction_amount = 1;
+    for micro_lamports in 1..=NUM_TRANSACTIONS {
+        let modify_cu_ix = ComputeBudgetInstruction::set_compute_unit_limit(1_000_000);
+        let add_priority_fee_ix =
+            ComputeBudgetInstruction::set_compute_unit_price(micro_lamports as u64);
+        let transfer_ix =
+            system_instruction::transfer(&sender.pubkey(), &recipient.pubkey(), transaction_amount);
+        let blockhash = setup.solana_client.get_latest_blockhash().unwrap();
+        let transaction = Transaction::new_signed_with_payer(
+            &[modify_cu_ix, add_priority_fee_ix, transfer_ix],
+            Some(&sender.pubkey()),
+            &[&sender],
+            blockhash,
+        );
+        let signature = setup
+            .solana_client
+            .send_and_confirm_transaction(&transaction)
+            .unwrap();
+        println!("Sent transaction {micro_lamports}: {signature}");
+        transactions.push(signature);
+    }
+
+    let spent_lamports = NUM_TRANSACTIONS * transaction_amount //amount sent
+            + NUM_TRANSACTIONS * BASE_FEE_PER_SIGNATURE_LAMPORTS //base fee
+            + NUM_TRANSACTIONS * (NUM_TRANSACTIONS+1) / 2; //prioritization_fee = 1 µL * CUL / 1_000_000 + .. + NUM_TRANSACTIONS * CUL / 1_000_000 and compute unit limit was set to 1 million.
+    assert_eq!(
+        sender_balance_before - setup.solana_client.get_balance(&sender.pubkey()).unwrap(),
+        spent_lamports
+    );
+
+    setup.confirm_transaction(transactions.last().unwrap());
+
+    let account = sender.pubkey();
     let (sol_res, ic_res) = setup
         .compare_client(
             |sol| {
-                sol.get_recent_prioritization_fees(&[TOKEN_2022])
+                sol.get_recent_prioritization_fees(&[account])
                     .expect("Failed to get recent prioritization fees")
             },
             |ic| async move {
                 ic.get_recent_prioritization_fees()
-                    .for_writable_accounts(vec![TOKEN_2022])
+                    .for_writable_accounts(vec![account])
                     .with_max_num_slots(150)
                     .with_max_slot_rounding_error(1)
                     .send()
@@ -86,7 +129,13 @@ async fn should_get_recent_prioritization_fees() {
         )
         .await;
 
-    assert_eq!(sol_res.len(), ic_res.len());
+    assert_eq!(
+        sol_res.len(),
+        ic_res.len(),
+        "SOL results {:?}, ICP results {:?}",
+        sol_res,
+        ic_res
+    );
     for (fees_sol, fees_ic) in zip(sol_res, ic_res) {
         let RpcPrioritizationFee {
             slot: slot_sol,

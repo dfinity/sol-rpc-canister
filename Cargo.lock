@@ -4185,6 +4185,7 @@ dependencies = [
  "solana-account-decoder-client-types",
  "solana-client",
  "solana-commitment-config",
+ "solana-compute-budget-interface",
  "solana-hash",
  "solana-keypair",
  "solana-message",
@@ -4429,6 +4430,15 @@ source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a0
 dependencies = [
  "serde",
  "serde_derive",
+]
+
+[[package]]
+name = "solana-compute-budget-interface"
+version = "2.2.0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
+dependencies = [
+ "solana-instruction",
+ "solana-sdk-ids",
 ]
 
 [[package]]
