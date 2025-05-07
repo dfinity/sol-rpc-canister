@@ -365,10 +365,10 @@ async fn should_get_token_account_balance() {
     assert_eq!(
         compare_balances(&setup, associated_token_account).await,
         UiTokenAmount {
-            ui_amount: Some(0.0),
+            ui_amount: Some(1e-6),
             decimals: 9,
-            amount: "0".to_string(),
-            ui_amount_string: "0".to_string(),
+            amount: "1000".to_string(),
+            ui_amount_string: "0.000001".to_string()
         }
     );
 }
