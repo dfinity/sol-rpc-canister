@@ -11,14 +11,15 @@ use sol_rpc_types::{
     GetBlockParams, GetSlotParams, GetTransactionEncoding, GetTransactionParams, InstallArgs,
     Lamport, OverrideProvider, RegexSubstitution, SendTransactionParams, TransactionDetails,
 };
-use solana_account_decoder_client_types::token::UiTokenAmount;
-use solana_account_decoder_client_types::UiAccount;
+use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
 use solana_client::rpc_client::{RpcClient as SolanaRpcClient, RpcClient};
 use solana_commitment_config::CommitmentConfig;
 use solana_hash::Hash;
 use solana_keypair::Keypair;
-use solana_program::instruction::{AccountMeta, Instruction};
-use solana_program::{system_instruction, sysvar};
+use solana_program::{
+    instruction::{AccountMeta, Instruction},
+    system_instruction, sysvar,
+};
 use solana_pubkey::{pubkey, Pubkey};
 use solana_rpc_client_api::config::{RpcBlockConfig, RpcTransactionConfig};
 use solana_signature::Signature;
@@ -480,7 +481,7 @@ impl Setup {
             spl::create_associated_token_account_instruction(
                 &user.pubkey(),
                 &user.pubkey(),
-                &mint_account,
+                mint_account,
             );
 
         let transaction = Transaction::new_signed_with_payer(
