@@ -25,6 +25,8 @@ use std::{
 };
 
 pub mod mock;
+pub mod spl;
+
 use mock::{MockOutcall, MockOutcallBuilder};
 
 const DEFAULT_MAX_RESPONSE_BYTES: u64 = 2_000_000;

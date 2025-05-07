@@ -5,7 +5,7 @@
 use futures::future;
 use pocket_ic::PocketIcBuilder;
 use sol_rpc_client::SolRpcClient;
-use sol_rpc_int_tests::PocketIcLiveModeRuntime;
+use sol_rpc_int_tests::{spl, PocketIcLiveModeRuntime};
 use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoEncoding, GetAccountInfoParams, GetBlockCommitmentLevel,
     GetBlockParams, GetSlotParams, GetTransactionEncoding, GetTransactionParams, InstallArgs,
@@ -25,7 +25,13 @@ use solana_signature::Signature;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
 use solana_transaction_status_client_types::UiTransactionEncoding;
-use std::{future::Future, str::FromStr, thread, thread::sleep, time::{Duration, Instant}};
+use std::{
+    future::Future,
+    str::FromStr,
+    thread,
+    thread::sleep,
+    time::{Duration, Instant},
+};
 
 pub const SPL_TOKEN_2022_ID: Pubkey = pubkey!("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
 
@@ -335,26 +341,35 @@ async fn should_get_token_account_balance() {
     }
 
     let setup = Setup::new().await;
-    let sender = Keypair::new();
-    let recipient = Keypair::new();
+    let (user, _) = setup.generate_keypair_and_fund_account();
     let (mint_authority, mint_account) = setup.create_spl_token();
-    setup.create_token_account(sender.pubkey());
-    setup.create_token_account(recipient.pubkey());
+    let associated_token_account = setup.create_associated_token_account(&user, &mint_account);
 
     assert_eq!(
-        compare_balances(&setup, publickey).await.ui_amount_string,
-        "0"
+        compare_balances(&setup, associated_token_account).await,
+        UiTokenAmount {
+            ui_amount: Some(0.0),
+            decimals: 9,
+            amount: "0".to_string(),
+            ui_amount_string: "0".to_string(),
+        }
     );
 
-    let tx = setup
-        .solana_client
-        .request_airdrop(&user.pubkey(), 10_000_000_000)
-        .expect("Error while requesting airdrop");
-    setup.confirm_transaction(&tx);
+    setup.mint_spl(
+        &mint_authority,
+        1_000,
+        mint_account,
+        associated_token_account,
+    );
 
     assert_eq!(
-        compare_balances(&setup, publickey).await.ui_amount_string,
-        "10000000000"
+        compare_balances(&setup, associated_token_account).await,
+        UiTokenAmount {
+            ui_amount: Some(0.0),
+            decimals: 9,
+            amount: "0".to_string(),
+            ui_amount_string: "0".to_string(),
+        }
     );
 }
 
@@ -460,6 +475,32 @@ impl Setup {
             .expect("Error while getting account balance")
     }
 
+    pub fn create_associated_token_account(&self, user: &Keypair, mint_account: &Pubkey) -> Pubkey {
+        let (associated_token_account, instruction) =
+            spl::create_associated_token_account_instruction(
+                &user.pubkey(),
+                &user.pubkey(),
+                &mint_account,
+            );
+
+        let transaction = Transaction::new_signed_with_payer(
+            &[instruction],
+            Some(&user.pubkey()),
+            &[&user],
+            self.solana_client
+                .get_latest_blockhash()
+                .expect("Unable to fetch latest blockhash"),
+        );
+
+        self.solana_client
+            .send_transaction(&transaction)
+            .expect("Unable to create associated token account");
+
+        self.wait_for_account_to_exist(&associated_token_account);
+
+        associated_token_account
+    }
+
     fn create_spl_token(&self) -> (Keypair, Pubkey) {
         const MIN_ACCOUNT_LEN: u8 = 82;
 
@@ -548,38 +589,8 @@ impl Setup {
             .unwrap();
     }
 
-    fn wait_for_transaction_to_have_commitment(
-        &self,
-        transaction: &Signature,
-        commitment_level: CommitmentLevel,
-    ) {
-        let mut num_trials = 0;
-        loop {
-            num_trials += 1;
-            if num_trials > 20 {
-                panic!(
-                    "Transaction {transaction} does not have desired commitment level {commitment_level:?}",
-                );
-            }
-            let tx = self.solana_client.get_transaction_with_config(
-                transaction,
-                RpcTransactionConfig {
-                    commitment: Some(match commitment_level {
-                        CommitmentLevel::Processed => CommitmentConfig::processed(),
-                        CommitmentLevel::Confirmed => CommitmentConfig::confirmed(),
-                        CommitmentLevel::Finalized => CommitmentConfig::finalized(),
-                    }),
-                    ..Default::default()
-                },
-            );
-            if tx.is_ok() {
-                break;
-            }
-            thread::sleep(Duration::from_millis(400))
-        }
-    }
-
-    fn wait_for_account_to_exist(&self, account: &Pubkey, commitment_level: CommitmentLevel) {
+    fn wait_for_account_to_exist(&self, account: &Pubkey) {
+        let commitment_level = self.solana_client.commitment();
         let mut num_trials = 0;
         loop {
             num_trials += 1;
@@ -590,14 +601,7 @@ impl Setup {
             }
             let result = self
                 .solana_client
-                .get_account_with_commitment(
-                    account,
-                    match commitment_level {
-                        CommitmentLevel::Processed => CommitmentConfig::processed(),
-                        CommitmentLevel::Confirmed => CommitmentConfig::confirmed(),
-                        CommitmentLevel::Finalized => CommitmentConfig::finalized(),
-                    },
-                )
+                .get_account_with_commitment(account, commitment_level)
                 .unwrap_or_else(|e| panic!("Failed to retrieve account {account}: {e}"));
             match result.value {
                 Some(found_account) if found_account.lamports > 0 => {
