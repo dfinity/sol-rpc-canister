@@ -9,7 +9,7 @@ use pocket_ic::{
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     CommitmentLevel, OverrideProvider, RegexSubstitution, RpcAccess, SupportedRpcProvider,
-    SupportedRpcProviderId,
+    SupportedRpcProviderId, TokenAmount,
 };
 use solana_client::{rpc_client::RpcClient as SolanaRpcClient, rpc_config::RpcTransactionConfig};
 use solana_commitment_config::CommitmentConfig;
@@ -204,7 +204,7 @@ fn test_basic_solana() {
         .unwrap()
         .expect("Missing user's associated token account");
     assert_eq!(token_account.token_amount.amount, "999999000");
-    let sender_spl_balance: String = basic_solana.update_call(
+    let sender_spl_balance: TokenAmount = basic_solana.update_call(
         SENDER,
         "get_spl_token_balance",
         (
@@ -212,14 +212,22 @@ fn test_basic_solana() {
             mint_account.to_string(),
         ),
     );
-    assert_eq!(sender_spl_balance, "0.999999");
+    assert_eq!(
+        sender_spl_balance,
+        TokenAmount {
+            ui_amount: Some(0.999999),
+            decimals: 9,
+            amount: "999999000".to_string(),
+            ui_amount_string: "0.999999".to_string(),
+        }
+    );
     let token_account = setup
         .solana_client
         .get_token_account(&receiver_associated_token_account)
         .unwrap()
         .expect("Missing receiver's associated token account");
     assert_eq!(token_account.token_amount.amount, "1000");
-    let receiver_spl_balance: String = basic_solana.update_call(
+    let receiver_spl_balance: TokenAmount = basic_solana.update_call(
         RECEIVER,
         "get_spl_token_balance",
         (
@@ -227,7 +235,15 @@ fn test_basic_solana() {
             mint_account.to_string(),
         ),
     );
-    assert_eq!(receiver_spl_balance, "0.000001");
+    assert_eq!(
+        receiver_spl_balance,
+        TokenAmount {
+            ui_amount: Some(0.000001),
+            decimals: 9,
+            amount: "1000".to_string(),
+            ui_amount_string: "0.000001".to_string(),
+        }
+    );
 }
 
 pub struct Setup {

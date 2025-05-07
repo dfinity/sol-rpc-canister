@@ -51,6 +51,18 @@ type Txid = text;
 // Hash value used as recent_blockhash field in Transactions.
 type Blockhash = text;
 
+// A human-readable representation of a token amount, as returned by the Solana `getTokenAccountBalance` RPC method.
+type TokenAmount = record {
+  // The raw balance without decimals, a string representation of a nat64.
+  amount : text;
+  // Number of base 10 digits to the right of the decimal place.
+  decimals : nat8;
+  // DEPRECATED: The balance, using mint-prescribed decimals.
+  uiAmount : opt float64;
+  // The balance as a string, using mint-prescribed decimals.
+  uiAmountString : text;
+};
+
 service : (InitArg) -> {
     // Returns the Solana account derived from the owner principal.
     //
@@ -82,7 +94,7 @@ service : (InitArg) -> {
     // the given token mint account formatted as a string.
     //
     // If no account is provided, the account derived from the caller's principal is used.
-    get_spl_token_balance : (account: opt Address, mint_account: Address) -> (text);
+    get_spl_token_balance : (account: opt Address, mint_account: Address) -> (TokenAmount);
 
     // Creates a nonce account with the given Solana account as nonce authority. Returns the
     // resulting nonce account address.

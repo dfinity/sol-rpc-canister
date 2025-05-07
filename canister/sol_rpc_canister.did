@@ -697,6 +697,7 @@ service : (InstallArgs,) -> {
   getSlotCyclesCost : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (RequestCostResult) query;
 
   // Call the Solana `getTokenAccountBalance` RPC method and return the resulting balance.
+  // If the account does not exist, this method will return a JSON-RPC error.
   getTokenAccountBalance : (RpcSources, opt RpcConfig, GetTokenAccountBalanceParams) -> (MultiGetTokenAccountBalanceResult);
   getTokenAccountBalanceCyclesCost : (RpcSources, opt RpcConfig, GetTokenAccountBalanceParams) -> (RequestCostResult) query;
 

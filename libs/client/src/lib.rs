@@ -412,25 +412,25 @@ impl<R> SolRpcClient<R> {
     /// # use sol_rpc_types::{MultiRpcResult, TokenAmount};
     /// let client = SolRpcClient::builder_for_ic()
     /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(TokenAmount {
-    /// #       ui_amount: None,
-    /// #       decimals: 0,
-    /// #       amount: "".to_string(),
-    /// #       ui_amount_string: "".to_string(),
+    /// #       ui_amount: Some(251153323.575906),
+    /// #       decimals: 6,
+    /// #       amount: "251153323575906".to_string(),
+    /// #       ui_amount_string: "251153323.575906".to_string(),
     /// #    })))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
     /// let balance = client
-    ///     .get_token_account_balance(pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"))
+    ///     .get_token_account_balance(pubkey!("3emsAVdmGKERbHjmGfQ6oZ1e35dkf5iYcS6U4CPKFVaa"))
     ///     .send()
     ///     .await
     ///     .expect_consistent();
     ///
     /// assert_eq!(balance, Ok(UiTokenAmount {
-    ///     ui_amount: None,
-    ///     decimals: 0,
-    ///     amount: "".to_string(),
-    ///     ui_amount_string: "".to_string(),
+    ///         ui_amount: Some(251153323.575906),
+    ///         decimals: 6,
+    ///         amount: "251153323575906".to_string(),
+    ///         ui_amount_string: "251153323.575906".to_string(),
     /// }));
     /// # Ok(())
     /// # }

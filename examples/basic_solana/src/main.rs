@@ -6,7 +6,7 @@ use basic_solana::{
 use candid::{Nat, Principal};
 use ic_cdk::{init, post_upgrade, update};
 use num::ToPrimitive;
-use sol_rpc_types::{GetAccountInfoEncoding, GetAccountInfoParams};
+use sol_rpc_types::{GetAccountInfoEncoding, GetAccountInfoParams, TokenAmount};
 use solana_account_decoder_client_types::{UiAccountData, UiAccountEncoding};
 use solana_hash::Hash;
 use solana_message::Message;
@@ -99,7 +99,7 @@ pub async fn get_nonce(account: Option<String>) -> String {
 }
 
 #[update]
-pub async fn get_spl_token_balance(account: Option<String>, mint_account: String) -> String {
+pub async fn get_spl_token_balance(account: Option<String>, mint_account: String) -> TokenAmount {
     let account = account.unwrap_or(associated_token_account(None, mint_account).await);
     let public_key = Pubkey::from_str(&account).unwrap();
     client()
@@ -108,7 +108,7 @@ pub async fn get_spl_token_balance(account: Option<String>, mint_account: String
         .await
         .expect_consistent()
         .expect("Call to `getTokenAccountBalance` failed")
-        .ui_amount_string
+        .into()
 }
 
 #[update]
