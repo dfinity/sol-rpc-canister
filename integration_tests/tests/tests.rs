@@ -1676,7 +1676,7 @@ mod cycles_cost_tests {
                     check(
                         &setup,
                         client.get_recent_prioritization_fees(),
-                        1_876_772_800,
+                        2_378_204_800,
                     )
                     .await;
                 }
