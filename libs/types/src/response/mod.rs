@@ -1,9 +1,10 @@
 use crate::{
-    solana::account::AccountInfo, ConfirmedBlock, RpcResult, RpcSource, Signature, TransactionInfo,
+    solana::account::AccountInfo, ConfirmedBlock, RpcResult, RpcSource, Signature, TokenAmount,
+    TransactionInfo,
 };
 use candid::CandidType;
 use serde::Deserialize;
-use solana_account_decoder_client_types::UiAccount;
+use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
 use solana_transaction_status_client_types::{
     EncodedConfirmedTransactionWithStatusMeta, UiConfirmedBlock,
 };
@@ -135,5 +136,17 @@ impl From<MultiRpcResult<Option<TransactionInfo>>>
 {
     fn from(result: MultiRpcResult<Option<TransactionInfo>>) -> Self {
         result.map(|maybe_transaction| maybe_transaction.map(|transaction| transaction.into()))
+    }
+}
+
+impl From<MultiRpcResult<TokenAmount>> for MultiRpcResult<UiTokenAmount> {
+    fn from(result: MultiRpcResult<TokenAmount>) -> Self {
+        result.map(UiTokenAmount::from)
+    }
+}
+
+impl From<MultiRpcResult<UiTokenAmount>> for MultiRpcResult<TokenAmount> {
+    fn from(result: MultiRpcResult<UiTokenAmount>) -> Self {
+        result.map(TokenAmount::from)
     }
 }

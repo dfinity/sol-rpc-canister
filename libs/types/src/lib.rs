@@ -20,15 +20,17 @@ pub use solana::{
     account::{AccountData, AccountEncoding, AccountInfo, ParsedAccount},
     request::{
         CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
-        GetBlockCommitmentLevel, GetBlockParams, GetSlotParams, GetTransactionEncoding,
-        GetTransactionParams, SendTransactionEncoding, SendTransactionParams, TransactionDetails,
+        GetBlockCommitmentLevel, GetBlockParams, GetSlotParams, GetTokenAccountBalanceParams,
+        GetTransactionEncoding, GetTransactionParams, SendTransactionEncoding,
+        SendTransactionParams, TransactionDetails,
     },
     transaction::{
         error::{InstructionError, TransactionError},
         instruction::{CompiledInstruction, InnerInstructions, Instruction},
         reward::{Reward, RewardType},
-        EncodedTransaction, LoadedAddresses, TransactionBinaryEncoding, TransactionInfo,
-        TransactionReturnData, TransactionStatusMeta, TransactionTokenBalance, TransactionVersion,
+        EncodedTransaction, LoadedAddresses, TokenAmount, TransactionBinaryEncoding,
+        TransactionInfo, TransactionReturnData, TransactionStatusMeta, TransactionTokenBalance,
+        TransactionVersion,
     },
     Blockhash, ConfirmedBlock, Lamport, Pubkey, Signature, Slot, Timestamp,
 };

@@ -193,6 +193,33 @@ impl GetSlotRequest {
     }
 }
 
+pub type GetTokenAccountBalanceRequest = MultiRpcRequest<
+    json::GetTokenAccountBalanceParams,
+    solana_account_decoder_client_types::token::UiTokenAmount,
+>;
+
+impl GetTokenAccountBalanceRequest {
+    pub fn get_token_account_balance<Params: Into<json::GetTokenAccountBalanceParams>>(
+        rpc_sources: RpcSources,
+        config: RpcConfig,
+        params: Params,
+    ) -> Result<Self, ProviderError> {
+        let consensus_strategy = config.response_consensus.unwrap_or_default();
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let max_response_bytes = config
+            .response_size_estimate
+            .unwrap_or(1024 + HEADER_SIZE_LIMIT);
+
+        Ok(MultiRpcRequest::new(
+            providers,
+            JsonRpcRequest::new("getTokenAccountBalance", params.into()),
+            max_response_bytes,
+            ResponseTransform::GetTokenAccountBalance,
+            ReductionStrategy::from(consensus_strategy),
+        ))
+    }
+}
+
 pub type GetTransactionRequest = MultiRpcRequest<
     json::GetTransactionParams,
     Option<solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta>,

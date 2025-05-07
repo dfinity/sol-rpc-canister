@@ -8,7 +8,7 @@ use serde::Serialize;
 pub struct GetAccountInfoParams {
     /// The public key of the account whose info to fetch formatted as a base-58 string.
     pub pubkey: Pubkey,
-    /// The request returns the slot that has reached this or the default commitment level.
+    /// The commitment describes how finalized a block is at that point in time.
     pub commitment: Option<CommitmentLevel>,
     /// Encoding format for Account data.
     pub encoding: Option<GetAccountInfoEncoding>,
@@ -191,6 +191,24 @@ impl GetSlotParams {
             min_context_slot,
         } = &self;
         commitment.is_none() && min_context_slot.is_none()
+    }
+}
+
+/// The parameters for a Solana [`getTokenAccountBalance`](https://solana.com/docs/rpc/http/gettokenaccountbalance) RPC method call.
+#[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
+pub struct GetTokenAccountBalanceParams {
+    /// The public key of the token account to query formatted as a base-58 string.
+    pub pubkey: Pubkey,
+    /// The commitment describes how finalized a block is at that point in time.
+    pub commitment: Option<CommitmentLevel>,
+}
+
+impl From<solana_pubkey::Pubkey> for GetTokenAccountBalanceParams {
+    fn from(pubkey: solana_pubkey::Pubkey) -> Self {
+        Self {
+            pubkey: pubkey.to_string(),
+            commitment: None,
+        }
     }
 }
 

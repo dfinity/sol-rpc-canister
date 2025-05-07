@@ -28,10 +28,12 @@ pub enum ResponseTransform {
     #[n(3)]
     GetSlot(#[n(0)] RoundingError),
     #[n(4)]
-    GetTransaction,
+    GetTokenAccountBalance,
     #[n(5)]
-    SendTransaction,
+    GetTransaction,
     #[n(6)]
+    SendTransaction,
+    #[n(7)]
     Raw,
 }
 
@@ -75,6 +77,9 @@ impl ResponseTransform {
                     Value::Null => None,
                     value => Some(value),
                 });
+            }
+            Self::GetTokenAccountBalance => {
+                canonicalize_response::<Value, Value>(body_bytes, |result| result["value"].clone());
             }
             Self::SendTransaction => {
                 canonicalize_response::<String, String>(body_bytes, std::convert::identity);
