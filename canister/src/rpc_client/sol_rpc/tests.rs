@@ -321,6 +321,7 @@ mod get_recent_prioritization_fees {
     use rand::prelude::SliceRandom;
     use rand_chacha::rand_core::SeedableRng;
     use rand_chacha::ChaCha20Rng;
+    use serde::Serialize;
     use serde_json::json;
     use sol_rpc_types::{PrioritizationFee, Slot};
     use std::ops::RangeInclusive;
@@ -338,11 +339,7 @@ mod get_recent_prioritization_fees {
                 })
                 .collect()
         }
-        let raw_response = json!({
-                "jsonrpc": "2.0",
-                "result": prioritization_fees(vec![1, 2, 3, 4, 5]),
-                "id": 1
-        });
+        let raw_response = json_response(&prioritization_fees(vec![1, 2, 3, 4, 5]));
 
         for (transform, expected_fees) in [
             (
@@ -379,24 +376,13 @@ mod get_recent_prioritization_fees {
             let transformed_response: serde_json::Value =
                 serde_json::from_slice(&raw_bytes).unwrap();
 
-            assert_eq!(
-                transformed_response,
-                json!({
-                        "jsonrpc": "2.0",
-                        "result": expected_fees,
-                        "id": 1
-                })
-            );
+            assert_eq!(transformed_response, json_response(&expected_fees));
         }
     }
 
     #[test]
     fn should_normalize_response_with_no_fees() {
-        let raw_response = json!({
-            "jsonrpc": "2.0",
-            "result": [],
-            "id": 1
-        });
+        let raw_response = json_response::<PrioritizationFee>(&[]);
         let transform = ResponseTransform::GetRecentPrioritizationFees {
             max_slot_rounding_error: RoundingError::new(2),
             max_num_slots: 2,
@@ -408,6 +394,63 @@ mod get_recent_prioritization_fees {
             serde_json::from_slice(&transformed_bytes).unwrap();
 
         assert_eq!(raw_response, transformed_response);
+    }
+
+    // The API of [getRecentPrioritizationFees](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees)
+    // does not specify whether the array of prioritization fees includes a range of continuous slots.
+    // The following was observed:
+    // 1) On mainnet: the range seems always continuous (e.g., for slots 337346483..=337346632), also for not used addresses
+    // 2) Locally with solana-test-validator, the range is not necessarily continuous, e.g.
+    // RpcPrioritizationFee { slot: 5183, prioritization_fee: 150 }, RpcPrioritizationFee { slot: 5321, prioritization_fee: 0 }
+    #[test]
+    fn should_normalize_response_with_non_contiguous_slots() {
+        let range_1 = [PrioritizationFee {
+            slot: 150,
+            prioritization_fee: 150,
+        }];
+        let range_2 = [PrioritizationFee {
+            slot: 500,
+            prioritization_fee: 500,
+        }];
+        let fees = [&range_1[..], &range_2[..]].concat();
+
+        let transform = ResponseTransform::GetRecentPrioritizationFees {
+            max_slot_rounding_error: RoundingError::new(10),
+            max_num_slots: 100,
+        };
+        let mut raw_bytes = serde_json::to_vec(&json_response(&fees)).unwrap();
+        transform.apply(&mut raw_bytes);
+        let transformed_response: serde_json::Value = serde_json::from_slice(&raw_bytes).unwrap();
+
+        assert_eq!(transformed_response, json_response(&fees));
+    }
+
+    #[test]
+    fn should_normalize_response_when_rounded_slot_not_in_range() {
+        let fees = [
+            PrioritizationFee {
+                slot: 100,
+                prioritization_fee: 100,
+            },
+            PrioritizationFee {
+                slot: 200,
+                prioritization_fee: 200,
+            },
+            PrioritizationFee {
+                slot: 301,
+                prioritization_fee: 300,
+            },
+        ];
+
+        let transform = ResponseTransform::GetRecentPrioritizationFees {
+            max_slot_rounding_error: RoundingError::new(10),
+            max_num_slots: 100,
+        };
+        let mut raw_bytes = serde_json::to_vec(&json_response(&fees)).unwrap();
+        transform.apply(&mut raw_bytes);
+        let transformed_response: serde_json::Value = serde_json::from_slice(&raw_bytes).unwrap();
+
+        assert_eq!(transformed_response, json_response(&fees[0..2]));
     }
 
     proptest! {
@@ -425,12 +468,7 @@ mod get_recent_prioritization_fees {
 
         #[test]
         fn should_normalize_get_recent_prioritization_fees_response(fees in arb_prioritization_fees(337346483..=337346632)) {
-            let raw_response = json!({
-                "jsonrpc": "2.0",
-                "result": fees.clone(),
-                "id": 1
-            });
-
+            let raw_response = json_response(&fees);
             let transform = ResponseTransform::GetRecentPrioritizationFees {
                 max_slot_rounding_error: RoundingError::new(20),
                 max_num_slots: 100,
@@ -448,11 +486,7 @@ mod get_recent_prioritization_fees {
 
             prop_assert_eq!(
                 transformed_response,
-                json!({
-                    "jsonrpc": "2.0",
-                    "result": expected_fees,
-                    "id": 1
-                })
+                json_response(&expected_fees)
             )
         }
 
@@ -473,22 +507,14 @@ mod get_recent_prioritization_fees {
             };
 
             let fees_bytes = {
-               let raw_response = json!({
-                    "jsonrpc": "2.0",
-                    "result": fees.clone(),
-                    "id": 1
-                });
+               let raw_response = json_response(&fees);
                 let mut raw_bytes = serde_json::to_vec(&raw_response).unwrap();
                 transform.apply(&mut raw_bytes);
                 raw_bytes
             };
 
             let shuffled_fees_bytes = {
-               let raw_response = json!({
-                    "jsonrpc": "2.0",
-                    "result": shuffled_fees,
-                    "id": 1
-                });
+               let raw_response = json_response(&shuffled_fees);
                 let mut raw_bytes = serde_json::to_vec(&raw_response).unwrap();
                 transform.apply(&mut raw_bytes);
                 raw_bytes
@@ -518,6 +544,14 @@ mod get_recent_prioritization_fees {
                     }
                 })
                 .collect::<Vec<_>>()
+        })
+    }
+
+    fn json_response<T: Serialize>(fees: &[T]) -> serde_json::Value {
+        json!({
+            "jsonrpc": "2.0",
+            "result": fees,
+            "id": 1
         })
     }
 }

@@ -19,7 +19,7 @@ use solana_compute_budget_interface::ComputeBudgetInstruction;
 use solana_hash::Hash;
 use solana_keypair::Keypair;
 use solana_program::system_instruction;
-use solana_pubkey::{pubkey, Pubkey};
+use solana_pubkey::Pubkey;
 use solana_rpc_client_api::config::{RpcBlockConfig, RpcTransactionConfig};
 use solana_rpc_client_api::response::RpcPrioritizationFee;
 use solana_signature::Signature;
@@ -80,8 +80,7 @@ async fn should_get_recent_prioritization_fees() {
     let transaction_amount = 1;
     for micro_lamports in 1..=NUM_TRANSACTIONS {
         let modify_cu_ix = ComputeBudgetInstruction::set_compute_unit_limit(1_000_000);
-        let add_priority_fee_ix =
-            ComputeBudgetInstruction::set_compute_unit_price(micro_lamports as u64);
+        let add_priority_fee_ix = ComputeBudgetInstruction::set_compute_unit_price(micro_lamports);
         let transfer_ix =
             system_instruction::transfer(&sender.pubkey(), &recipient.pubkey(), transaction_amount);
         let blockhash = setup.solana_client.get_latest_blockhash().unwrap();

@@ -31,6 +31,7 @@ pub enum ResponseTransform {
         #[n(0)]
         max_slot_rounding_error: RoundingError,
         #[n(1)]
+        // TODO XC-326: rename to max_length
         max_num_slots: u8,
     },
     #[n(4)]
@@ -98,21 +99,24 @@ impl ResponseTransform {
                                 // [API](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees),
                                 // although examples and manual testing show that the response is sorted by increasing number of slot.
                                 // To avoid any problem, we enforce the sorting.
-                                fees.sort_unstable_by_key(|fee| fee.slot);
+                                fees.sort_unstable_by(|fee, other_fee| {
+                                    other_fee.slot.cmp(&fee.slot) //sort by decreasing order of slot
+                                });
                                 let max_rounded_slot = max_slot_rounding_error.round(
-                                    fees.last()
+                                    fees.first()
                                         .expect(
                                             "BUG: recent prioritization fees should be non-empty",
                                         )
                                         .slot,
                                 );
-                                let min_slot =
-                                    max_rounded_slot.saturating_sub((max_num_slots - 1) as u64);
-                                fees.retain(|fee| {
-                                    min_slot <= fee.slot && fee.slot <= max_rounded_slot
-                                });
-                                assert!(fees.len() <= *max_num_slots as usize,
-                                        "BUG: expected prioritization fees to have at most {max_num_slots} elements, but got {}", fees.len());
+
+                                fees = fees
+                                    .into_iter()
+                                    .skip_while(|fee| fee.slot > max_rounded_slot)
+                                    .take(*max_num_slots as usize)
+                                    .collect();
+
+                                fees = fees.into_iter().rev().collect();
                             }
 
                             *body_bytes = serde_json::to_vec(&JsonRpcResponse::from_ok(id, fees))
