@@ -484,10 +484,10 @@ impl<Runtime, Params, CandidOutput, Output>
         self
     }
 
-    /// Change the maximum number of slots for a `getRecentPrioritizationFees` request.
-    pub fn with_max_num_slots(mut self, num_slots: u8) -> Self {
+    /// Change the maximum number of entries for a `getRecentPrioritizationFees` response.
+    pub fn with_max_length(mut self, len: u8) -> Self {
         let config = self.request.rpc_config_mut().get_or_insert_default();
-        config.max_num_slots = Some(num_slots);
+        config.max_length = Some(len);
         self
     }
 }

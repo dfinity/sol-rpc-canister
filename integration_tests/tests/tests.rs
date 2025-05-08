@@ -1108,7 +1108,7 @@ mod get_recent_prioritization_fees_tests {
             .get_recent_prioritization_fees()
             .for_writable_accounts([USDC_PUBLIC_KEY])
             .with_max_slot_rounding_error(10)
-            .with_max_num_slots(5)
+            .with_max_length(5)
             .send()
             .await
             .expect_consistent();

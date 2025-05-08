@@ -31,8 +31,7 @@ pub enum ResponseTransform {
         #[n(0)]
         max_slot_rounding_error: RoundingError,
         #[n(1)]
-        // TODO XC-326: rename to max_length
-        max_num_slots: u8,
+        max_length: u8,
     },
     #[n(4)]
     GetSlot(#[n(0)] RoundingError),
@@ -80,7 +79,7 @@ impl ResponseTransform {
             }
             Self::GetRecentPrioritizationFees {
                 max_slot_rounding_error,
-                max_num_slots,
+                max_length,
             } => {
                 if let Ok(response) =
                     from_slice::<JsonRpcResponse<Vec<PrioritizationFee>>>(body_bytes)
@@ -94,7 +93,7 @@ impl ResponseTransform {
                             // "Currently, a node's prioritization-fee cache stores data from up to 150 blocks."
                             // Manual testing shows that the result seems to always contain 150 elements,
                             // also for not used addresses.
-                            if fees.is_empty() || max_num_slots == &0 {
+                            if fees.is_empty() || max_length == &0 {
                                 fees.clear();
                             } else {
                                 // The order of the prioritization fees in the response is not specified in the
@@ -115,7 +114,7 @@ impl ResponseTransform {
                                 fees = fees
                                     .into_iter()
                                     .skip_while(|fee| fee.slot > max_rounded_slot)
-                                    .take(*max_num_slots as usize)
+                                    .take(*max_length as usize)
                                     .collect();
 
                                 fees = fees.into_iter().rev().collect();

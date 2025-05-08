@@ -345,28 +345,28 @@ mod get_recent_prioritization_fees {
             (
                 ResponseTransform::GetRecentPrioritizationFees {
                     max_slot_rounding_error: RoundingError::new(2),
-                    max_num_slots: 2,
+                    max_length: 2,
                 },
                 prioritization_fees(vec![3, 4]),
             ),
             (
                 ResponseTransform::GetRecentPrioritizationFees {
                     max_slot_rounding_error: RoundingError::new(2),
-                    max_num_slots: 0,
+                    max_length: 0,
                 },
                 prioritization_fees(vec![]),
             ),
             (
                 ResponseTransform::GetRecentPrioritizationFees {
                     max_slot_rounding_error: RoundingError::new(2),
-                    max_num_slots: u8::MAX,
+                    max_length: u8::MAX,
                 },
                 prioritization_fees(vec![1, 2, 3, 4]),
             ),
             (
                 ResponseTransform::GetRecentPrioritizationFees {
                     max_slot_rounding_error: RoundingError::new(10),
-                    max_num_slots: 2,
+                    max_length: 2,
                 },
                 prioritization_fees(vec![]),
             ),
@@ -385,7 +385,7 @@ mod get_recent_prioritization_fees {
         let raw_response = json_response::<PrioritizationFee>(&[]);
         let transform = ResponseTransform::GetRecentPrioritizationFees {
             max_slot_rounding_error: RoundingError::new(2),
-            max_num_slots: 2,
+            max_length: 2,
         };
         let original_bytes = serde_json::to_vec(&raw_response).unwrap();
         let mut transformed_bytes = original_bytes.clone();
@@ -416,7 +416,7 @@ mod get_recent_prioritization_fees {
 
         let transform = ResponseTransform::GetRecentPrioritizationFees {
             max_slot_rounding_error: RoundingError::new(10),
-            max_num_slots: 100,
+            max_length: 100,
         };
         let mut raw_bytes = serde_json::to_vec(&json_response(&fees)).unwrap();
         transform.apply(&mut raw_bytes);
@@ -444,7 +444,7 @@ mod get_recent_prioritization_fees {
 
         let transform = ResponseTransform::GetRecentPrioritizationFees {
             max_slot_rounding_error: RoundingError::new(10),
-            max_num_slots: 100,
+            max_length: 100,
         };
         let mut raw_bytes = serde_json::to_vec(&json_response(&fees)).unwrap();
         transform.apply(&mut raw_bytes);
@@ -458,7 +458,7 @@ mod get_recent_prioritization_fees {
         fn should_be_nop_when_failed_to_deserialize(original_bytes in  prop::collection::vec(any::<u8>(), 0..1000)) {
             let transform = ResponseTransform::GetRecentPrioritizationFees {
                 max_slot_rounding_error: RoundingError::new(2),
-                max_num_slots: 2,
+                max_length: 2,
             };
             let mut transformed_bytes = original_bytes.clone();
             transform.apply(&mut transformed_bytes);
@@ -471,7 +471,7 @@ mod get_recent_prioritization_fees {
             let raw_response = json_response(&fees);
             let transform = ResponseTransform::GetRecentPrioritizationFees {
                 max_slot_rounding_error: RoundingError::new(20),
-                max_num_slots: 100,
+                max_length: 100,
             };
             let mut raw_bytes = serde_json::to_vec(&raw_response).unwrap();
             transform.apply(&mut raw_bytes);
@@ -503,7 +503,7 @@ mod get_recent_prioritization_fees {
             };
             let transform = ResponseTransform::GetRecentPrioritizationFees {
                 max_slot_rounding_error: RoundingError::new(20),
-                max_num_slots: 100,
+                max_length: 100,
             };
 
             let fees_bytes = {

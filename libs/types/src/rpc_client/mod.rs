@@ -157,8 +157,8 @@ pub struct GetRecentPrioritizationFeesRpcConfig {
     pub max_slot_rounding_error: Option<u64>,
 
     /// TODO
-    #[serde(rename = "maxNumSlots")]
-    pub max_num_slots: Option<u8>,
+    #[serde(rename = "maxLength")]
+    pub max_length: Option<u8>,
 }
 
 impl From<RpcConfig> for GetRecentPrioritizationFeesRpcConfig {

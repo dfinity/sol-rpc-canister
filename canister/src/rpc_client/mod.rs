@@ -218,7 +218,7 @@ impl GetRecentPrioritizationFeesRequest {
                     .max_slot_rounding_error
                     .map(RoundingError::new)
                     .unwrap_or_default(),
-                max_num_slots: config.max_num_slots.unwrap_or(100),
+                max_length: config.max_length.unwrap_or(100),
             },
             ReductionStrategy::from(consensus_strategy),
         ))
