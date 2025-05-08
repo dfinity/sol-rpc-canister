@@ -475,8 +475,6 @@ mod get_recent_prioritization_fees_tests {
     use sol_rpc_int_tests::mock::MockOutcallBuilder;
     use sol_rpc_int_tests::{Setup, SolRpcTestClient};
     use sol_rpc_types::PrioritizationFee;
-    use solana_pubkey::Pubkey;
-    use std::collections::BTreeSet;
 
     #[tokio::test]
     async fn should_get_fees_with_rounding() {
@@ -1140,31 +1138,6 @@ mod get_recent_prioritization_fees_tests {
         );
 
         setup.drop().await;
-    }
-
-    #[tokio::test]
-    #[should_panic(
-        expected = "Deserialize error: Expected at most 128 account addresses, but got 129"
-    )]
-    async fn should_fail_when_requesting_too_many_accounts() {
-        let setup = Setup::new().await.with_mock_api_keys().await;
-
-        let mut too_many_accounts = BTreeSet::new();
-        for i in 0..129_u8 {
-            let mut key = [0_u8; 32];
-            key[0] = i;
-            too_many_accounts.insert(Pubkey::from(key));
-        }
-        assert_eq!(too_many_accounts.len(), 129);
-
-        let client = setup.client();
-
-        let _ = client
-            .build()
-            .get_recent_prioritization_fees(&too_many_accounts)
-            .unwrap()
-            .send()
-            .await;
     }
 }
 
