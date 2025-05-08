@@ -189,10 +189,14 @@ pub struct GetRecentPrioritizationFeesRpcConfig {
     pub max_slot_rounding_error: Option<u64>,
 
     /// Limit the number of returned priority fees.
-    /// Valid numbers are 1-150, default is 100.
+    ///
+    /// A Solana validator returns at most 150 entries, so that bigger values are possible but not useful.
+    /// MUST be non-zero to avoid useless call.
+    /// Default value is 100.
     /// Increasing that value can help in estimating the current priority fee
     /// but will reduce the likelihood of nodes reaching consensus.
     #[serde(rename = "maxLength")]
+    // TODO XC-326: Use a wrapper type to implement Candid on `NonZeroU8` to prohibit the value 0.
     pub max_length: Option<u8>,
 }
 
