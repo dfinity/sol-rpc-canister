@@ -459,7 +459,42 @@ impl<R> SolRpcClient<R> {
     ///
     /// # Examples
     ///
-    /// Too many keys
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster};
+    /// use solana_pubkey::pubkey;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use sol_rpc_types::{MultiRpcResult, PrioritizationFee, TokenAmount};
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(vec![PrioritizationFee{slot: 338637772, prioritization_fee: 166667}])))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let fees = client
+    ///     .get_recent_prioritization_fees(&[pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")])
+    ///     .unwrap()
+    ///     .with_max_length(1)
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent();
+    ///
+    /// assert_eq!
+    ///     (fees,
+    ///     Ok(vec![ PrioritizationFee {
+    ///         slot: 338637772,
+    ///         prioritization_fee: 166667
+    ///     }]));
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// The number of account addresses that can be passed to
+    /// [`getRecentPrioritizationFees`](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees)
+    /// is limited to 128. More accounts result in an error.
     ///
     /// ```rust
     ///
@@ -484,8 +519,6 @@ impl<R> SolRpcClient<R> {
     /// let err = client.get_recent_prioritization_fees(&too_many_accounts).unwrap_err();
     /// assert_matches!(err, RpcError::ValidationError(_));
     /// ```
-    ///
-    /// TODO XC-326: rust example
     pub fn get_recent_prioritization_fees<'a, I>(
         &self,
         addresses: I,
