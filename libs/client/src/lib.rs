@@ -126,18 +126,20 @@ pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 use std::fmt::Debug;
 
 use crate::request::{
-    GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetSlotRequest,
-    GetTokenAccountBalanceRequest, GetTransactionRequest, JsonRequest, SendTransactionRequest,
+    GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetSignatureStatusesRequest,
+    GetSlotRequest, GetTokenAccountBalanceRequest, GetTransactionRequest, JsonRequest,
+    SendTransactionRequest,
 };
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams, GetSlotParams,
-    GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport, RpcConfig,
-    RpcSources, SendTransactionParams, Signature, SolanaCluster, SupportedRpcProvider,
-    SupportedRpcProviderId, TokenAmount, TransactionDetails, TransactionInfo,
+    CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
+    GetSignatureStatusesParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
+    GetTransactionParams, Lamport, RpcConfig, RpcSources, SendTransactionParams, Signature,
+    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TokenAmount, TransactionDetails,
+    TransactionInfo, TransactionStatus,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_clock::Slot;
@@ -448,6 +450,32 @@ impl<R> SolRpcClient<R> {
         RequestBuilder::new(
             self.clone(),
             GetTokenAccountBalanceRequest::new(params.into()),
+            10_000_000_000,
+        )
+    }
+
+    /// Call `getSignatureStatuses` on the SOL RPC canister.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// // TODO XC-291
+    /// ```
+    pub fn get_signature_statuses(
+        &self,
+        params: impl Into<GetSignatureStatusesParams>,
+    ) -> RequestBuilder<
+        R,
+        RpcConfig,
+        GetSignatureStatusesParams,
+        sol_rpc_types::MultiRpcResult<Vec<Option<TransactionStatus>>>,
+        sol_rpc_types::MultiRpcResult<
+            Vec<Option<solana_transaction_status_client_types::TransactionStatus>>,
+        >,
+    > {
+        RequestBuilder::new(
+            self.clone(),
+            GetSignatureStatusesRequest::new(params.into()),
             10_000_000_000,
         )
     }

@@ -815,6 +815,9 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::GetBlock => {
                     check(client.get_block(577996)).await;
                 }
+                SolRpcEndpoint::GetSignatureStatuses => {
+                    check(client.get_signature_statuses(vec![some_signature().to_string()])).await;
+                }
                 SolRpcEndpoint::GetTransaction => {
                     check(client.get_transaction(some_signature())).await;
                 }
@@ -864,6 +867,9 @@ mod cycles_cost_tests {
                 }
                 SolRpcEndpoint::GetBlock => {
                     check(client.get_block(577996)).await;
+                }
+                SolRpcEndpoint::GetSignatureStatuses => {
+                    check(client.get_signature_statuses(vec![some_signature().to_string()])).await;
                 }
                 SolRpcEndpoint::GetTokenAccountBalance => {
                     check(client.get_token_account_balance(USDC_PUBLIC_KEY)).await;
@@ -972,6 +978,14 @@ mod cycles_cost_tests {
                 }
                 SolRpcEndpoint::GetBlock => {
                     check(&setup, client.get_block(577996), 1_791_868_000).await;
+                }
+                SolRpcEndpoint::GetSignatureStatuses => {
+                    check(
+                        &setup,
+                        client.get_signature_statuses(vec![some_signature().to_string()]),
+                        0,
+                    )
+                    .await;
                 }
                 SolRpcEndpoint::GetSlot => {
                     check(
@@ -1153,6 +1167,12 @@ mod get_token_account_balance_tests {
 
         setup.drop().await;
     }
+}
+
+
+
+mod get_signature_statuses_tests {
+    // TODO XC-291
 }
 
 fn assert_within(actual: u128, expected: u128, percentage_error: u8) {

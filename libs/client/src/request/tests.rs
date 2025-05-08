@@ -38,6 +38,9 @@ fn should_set_correct_commitment_level() {
                     Some(GetBlockCommitmentLevel::Confirmed)
                 );
             }
+            SolRpcEndpoint::GetSignatureStatuses => {
+                // No commitment level in request parameters
+            }
             SolRpcEndpoint::GetSlot => {
                 let builder = client_with_commitment_level.get_slot();
                 assert_eq!(

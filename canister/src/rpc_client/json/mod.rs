@@ -165,6 +165,42 @@ pub struct GetBlockConfig {
 
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(into = "(Vec<String>, Option<GetSignatureStatusesConfig>)")]
+pub struct GetSignatureStatusesParams(Vec<String>, Option<GetSignatureStatusesConfig>);
+
+impl GetSignatureStatusesParams {
+    pub fn num_signatures(&self) -> usize {
+        self.0.len()
+    }
+}
+
+impl From<sol_rpc_types::GetSignatureStatusesParams> for GetSignatureStatusesParams {
+    fn from(params: sol_rpc_types::GetSignatureStatusesParams) -> Self {
+        let config = if params.is_default_config() {
+            None
+        } else {
+            Some(GetSignatureStatusesConfig {
+                search_transaction_history: params.search_transaction_history,
+            })
+        };
+        Self(params.signatures, config)
+    }
+}
+
+impl From<GetSignatureStatusesParams> for (Vec<String>, Option<GetSignatureStatusesConfig>) {
+    fn from(params: GetSignatureStatusesParams) -> Self {
+        (params.0, params.1)
+    }
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct GetSignatureStatusesConfig {
+    pub search_transaction_history: Option<bool>,
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(into = "(String, Option<GetTokenAccountBalanceConfig>)")]
 pub struct GetTokenAccountBalanceParams(String, Option<GetTokenAccountBalanceConfig>);
 

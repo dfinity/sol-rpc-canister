@@ -173,6 +173,36 @@ pub enum TransactionDetails {
     None,
 }
 
+/// The parameters for a Solana [`getSignatureStatuses`](https://solana.com/docs/rpc/http/getsignaturestatuses) RPC method call.
+#[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
+pub struct GetSignatureStatusesParams {
+    /// An array of transaction signatures to confirm, as base-58 encoded strings (up to a maximum of 256)
+    pub signatures: Vec<Signature>,
+    /// If set to true, a Solana node will search its ledger cache for any signatures not found in the recent status cache.
+    #[serde(rename = "searchTransactionHistory")]
+    pub search_transaction_history: Option<bool>,
+}
+
+impl GetSignatureStatusesParams {
+    /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
+    pub fn is_default_config(&self) -> bool {
+        let GetSignatureStatusesParams {
+            signatures: _,
+            search_transaction_history,
+        } = &self;
+        search_transaction_history.is_none()
+    }
+}
+
+impl From<Vec<Signature>> for GetSignatureStatusesParams {
+    fn from(signatures: Vec<Signature>) -> Self {
+        Self {
+            signatures,
+            search_transaction_history: None,
+        }
+    }
+}
+
 /// The parameters for a Solana [`getSlot`](https://solana.com/docs/rpc/http/getslot) RPC method call.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
 pub struct GetSlotParams {
