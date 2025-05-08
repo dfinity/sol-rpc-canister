@@ -1105,8 +1105,8 @@ mod get_recent_prioritization_fees_tests {
                 MockOutcallBuilder::new(200, response_body(2)).with_request_body(request_body(2)),
             ])
             .build()
-            .get_recent_prioritization_fees()
-            .for_writable_accounts([USDC_PUBLIC_KEY])
+            .get_recent_prioritization_fees(&[USDC_PUBLIC_KEY])
+            .unwrap()
             .with_max_slot_rounding_error(10)
             .with_max_length(5)
             .send()
@@ -1161,8 +1161,8 @@ mod get_recent_prioritization_fees_tests {
 
         let _ = client
             .build()
-            .get_recent_prioritization_fees()
-            .for_writable_accounts(too_many_accounts)
+            .get_recent_prioritization_fees(&too_many_accounts)
+            .unwrap()
             .send()
             .await;
     }
@@ -1516,7 +1516,7 @@ mod cycles_cost_tests {
                     check(client.get_block(577996)).await;
                 }
                 SolRpcEndpoint::GetRecentPrioritizationFees => {
-                    check(client.get_recent_prioritization_fees()).await
+                    check(client.get_recent_prioritization_fees(&[]).unwrap()).await
                 }
                 SolRpcEndpoint::GetTransaction => {
                     check(client.get_transaction(some_signature())).await;
@@ -1569,7 +1569,7 @@ mod cycles_cost_tests {
                     check(client.get_block(577996)).await;
                 }
                 SolRpcEndpoint::GetRecentPrioritizationFees => {
-                    check(client.get_recent_prioritization_fees()).await;
+                    check(client.get_recent_prioritization_fees(&[]).unwrap()).await;
                 }
                 SolRpcEndpoint::GetTokenAccountBalance => {
                     check(client.get_token_account_balance(USDC_PUBLIC_KEY)).await;
@@ -1683,7 +1683,7 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::GetRecentPrioritizationFees => {
                     check(
                         &setup,
-                        client.get_recent_prioritization_fees(),
+                        client.get_recent_prioritization_fees(&[]).unwrap(),
                         2_378_204_800,
                     )
                     .await;

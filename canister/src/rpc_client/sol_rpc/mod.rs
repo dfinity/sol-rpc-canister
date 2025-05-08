@@ -91,8 +91,8 @@ impl ResponseTransform {
                             // [API](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees),
                             // which simply mentions
                             // "Currently, a node's prioritization-fee cache stores data from up to 150 blocks."
-                            // Manual testing shows that the result seems to always contain 150 elements,
-                            // also for not used addresses.
+                            // Manual testing shows that the result seems to always contain 150 elements on mainnet (also for not used addresses)
+                            // but not necessarily when using a local validator.
                             if fees.is_empty() || max_length == &0 {
                                 fees.clear();
                             } else {

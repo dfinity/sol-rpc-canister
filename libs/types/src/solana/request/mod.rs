@@ -175,19 +175,19 @@ pub enum TransactionDetails {
 
 /// The parameters for a Solana [`getRecentPrioritizationFees`](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees) RPC method call.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
-#[serde(try_from = "Vec<Pubkey>", into = "[Vec<Pubkey>; 1]")]
-pub struct GetRecentPrioritizationFeesParams(pub Vec<Pubkey>);
+#[serde(try_from = "Vec<Pubkey>")]
+pub struct GetRecentPrioritizationFeesParams(Vec<Pubkey>);
 
 impl TryFrom<Vec<Pubkey>> for GetRecentPrioritizationFeesParams {
-    type Error = String;
+    type Error = RpcError;
 
     fn try_from(accounts: Vec<Pubkey>) -> Result<Self, Self::Error> {
         const MAX_NUM_ACCOUNTS: usize = 128;
         if accounts.len() > MAX_NUM_ACCOUNTS {
-            return Err(format!(
+            return Err(RpcError::ValidationError(format!(
                 "Expected at most {MAX_NUM_ACCOUNTS} account addresses, but got {}",
                 accounts.len()
-            ));
+            )));
         }
         Ok(Self(accounts))
     }
@@ -199,9 +199,9 @@ impl From<solana_pubkey::Pubkey> for GetRecentPrioritizationFeesParams {
     }
 }
 
-impl From<GetRecentPrioritizationFeesParams> for [Vec<Pubkey>; 1] {
+impl From<GetRecentPrioritizationFeesParams> for Vec<Pubkey> {
     fn from(value: GetRecentPrioritizationFeesParams) -> Self {
-        [value.0]
+        value.0
     }
 }
 

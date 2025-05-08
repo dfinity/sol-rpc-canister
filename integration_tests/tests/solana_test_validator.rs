@@ -116,8 +116,8 @@ async fn should_get_recent_prioritization_fees() {
                     .expect("Failed to get recent prioritization fees")
             },
             |ic| async move {
-                ic.get_recent_prioritization_fees()
-                    .for_writable_accounts(vec![account])
+                ic.get_recent_prioritization_fees(&[account])
+                    .unwrap()
                     .with_max_length(150)
                     .with_max_slot_rounding_error(1)
                     .send()

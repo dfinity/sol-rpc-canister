@@ -185,11 +185,11 @@ impl SolRpcRequest for GetBlockRequest {
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct GetRecentPrioritizationFeesRequest(Option<GetRecentPrioritizationFeesParams>);
+pub struct GetRecentPrioritizationFeesRequest(GetRecentPrioritizationFeesParams);
 
 impl SolRpcRequest for GetRecentPrioritizationFeesRequest {
     type Config = GetRecentPrioritizationFeesRpcConfig;
-    type Params = Option<GetRecentPrioritizationFeesParams>;
+    type Params = GetRecentPrioritizationFeesParams;
     type CandidOutput = sol_rpc_types::MultiRpcResult<Vec<PrioritizationFee>>;
     type Output = Self::CandidOutput;
 
@@ -201,6 +201,12 @@ impl SolRpcRequest for GetRecentPrioritizationFeesRequest {
         // [getRecentPrioritizationFees](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees)
         // does not use commitment levels
         self.0
+    }
+}
+
+impl From<GetRecentPrioritizationFeesParams> for GetRecentPrioritizationFeesRequest {
+    fn from(value: GetRecentPrioritizationFeesParams) -> Self {
+        Self(value)
     }
 }
 
@@ -350,7 +356,7 @@ pub struct RequestBuilder<Runtime, Config, Params, CandidOutput, Output> {
 pub type GetRecentPrioritizationFeesRequestBuilder<R> = RequestBuilder<
     R,
     GetRecentPrioritizationFeesRpcConfig,
-    Option<GetRecentPrioritizationFeesParams>,
+    GetRecentPrioritizationFeesParams,
     sol_rpc_types::MultiRpcResult<Vec<PrioritizationFee>>,
     sol_rpc_types::MultiRpcResult<Vec<PrioritizationFee>>,
 >;
@@ -466,23 +472,6 @@ impl<R: Runtime, Config, Params, CandidOutput, Output>
         self.client
             .execute_request::<Config, Params, CandidOutput, Output>(self.request)
             .await
-    }
-}
-
-impl<Runtime, Config, CandidOutput, Output>
-    RequestBuilder<Runtime, Config, Option<GetRecentPrioritizationFeesParams>, CandidOutput, Output>
-{
-    /// Add an account to look up for a `getRecentPrioritizationFees` request.
-    ///
-    /// The response to a `getRecentPrioritizationFees` request reflects a fee to land
-    /// a transaction locking all of the provided accounts as writable.
-    pub fn for_writable_accounts<I>(mut self, accounts: I) -> Self
-    where
-        I: IntoIterator<Item = solana_pubkey::Pubkey>,
-    {
-        let params = self.request.params_mut().get_or_insert_default();
-        params.0.extend(accounts.into_iter().map(|a| a.to_string()));
-        self
     }
 }
 

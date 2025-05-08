@@ -25,9 +25,9 @@ use ic_cdk::api::management_canister::http_request::{
 };
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
-    ConsensusStrategy, GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
-    GetSlotRpcConfig, Lamport, PrioritizationFee, ProviderError, RpcConfig, RpcError, RpcResult,
-    RpcSource, RpcSources, Signature, TransactionDetails,
+    ConsensusStrategy, GetRecentPrioritizationFeesRpcConfig, GetSlotRpcConfig, Lamport,
+    PrioritizationFee, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource, RpcSources,
+    Signature, TransactionDetails,
 };
 use solana_clock::Slot;
 use std::{fmt::Debug, marker::PhantomData};
@@ -195,10 +195,10 @@ impl GetSlotRequest {
 }
 
 pub type GetRecentPrioritizationFeesRequest =
-    MultiRpcRequest<GetRecentPrioritizationFeesParams, Vec<PrioritizationFee>>;
+    MultiRpcRequest<json::GetRecentPrioritizationFeesParams, Vec<PrioritizationFee>>;
 
 impl GetRecentPrioritizationFeesRequest {
-    pub fn get_recent_prioritization_fees<Params: Into<GetRecentPrioritizationFeesParams>>(
+    pub fn get_recent_prioritization_fees<Params: Into<json::GetRecentPrioritizationFeesParams>>(
         rpc_sources: RpcSources,
         config: GetRecentPrioritizationFeesRpcConfig,
         params: Params,

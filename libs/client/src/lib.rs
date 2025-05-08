@@ -135,10 +135,11 @@ use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams, GetSlotParams,
-    GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport, RpcConfig,
-    RpcSources, SendTransactionParams, Signature, SolanaCluster, SupportedRpcProvider,
-    SupportedRpcProviderId, TokenAmount, TransactionDetails, TransactionInfo,
+    CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
+    GetRecentPrioritizationFeesParams, GetSlotParams, GetSlotRpcConfig,
+    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, RpcConfig, RpcError, RpcSources,
+    SendTransactionParams, Signature, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    TokenAmount, TransactionDetails, TransactionInfo,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_clock::Slot;
@@ -458,13 +459,51 @@ impl<R> SolRpcClient<R> {
     ///
     /// # Examples
     ///
+    /// Too many keys
+    ///
+    /// ```rust
+    ///
+    /// use std::collections::BTreeSet;
+    /// use assert_matches::assert_matches;
+    /// use solana_pubkey::Pubkey;
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster, RpcError};
+    ///
+    /// let client = SolRpcClient::builder_for_ic()
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let mut too_many_accounts = BTreeSet::new();
+    /// for i in 0..129_u8 {
+    ///     let mut key = [0_u8; 32];
+    ///     key[0] = i;
+    ///     too_many_accounts.insert(Pubkey::from(key));
+    /// }
+    /// assert_eq!(too_many_accounts.len(), 129);
+    ///
+    /// let err = client.get_recent_prioritization_fees(&too_many_accounts).unwrap_err();
+    /// assert_matches!(err, RpcError::ValidationError(_));
+    /// ```
+    ///
     /// TODO XC-326: rust example
-    pub fn get_recent_prioritization_fees(&self) -> GetRecentPrioritizationFeesRequestBuilder<R> {
-        RequestBuilder::new(
+    pub fn get_recent_prioritization_fees<'a, I>(
+        &self,
+        addresses: I,
+    ) -> Result<GetRecentPrioritizationFeesRequestBuilder<R>, RpcError>
+    where
+        I: IntoIterator<Item = &'a solana_pubkey::Pubkey>,
+    {
+        let params = GetRecentPrioritizationFeesParams::try_from(
+            addresses
+                .into_iter()
+                .map(|a| a.to_string())
+                .collect::<Vec<_>>(),
+        )?;
+        Ok(RequestBuilder::new(
             self.clone(),
-            GetRecentPrioritizationFeesRequest::default(),
+            GetRecentPrioritizationFeesRequest::from(params),
             10_000_000_000,
-        )
+        ))
     }
 
     /// Call `getSlot` on the SOL RPC canister.

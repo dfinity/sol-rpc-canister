@@ -4141,6 +4141,7 @@ dependencies = [
 name = "sol_rpc_client"
 version = "0.1.0"
 dependencies = [
+ "assert_matches",
  "async-trait",
  "candid",
  "ic-cdk",
