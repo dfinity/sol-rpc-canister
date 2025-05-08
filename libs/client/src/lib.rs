@@ -186,6 +186,7 @@ pub trait Runtime {
 }
 
 /// Client to interact with the SOL RPC canister.
+#[derive(Debug)]
 pub struct SolRpcClient<R> {
     config: Arc<ClientConfig<R>>,
 }

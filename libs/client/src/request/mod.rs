@@ -366,6 +366,18 @@ impl<Runtime, Config: Clone, Params: Clone, CandidOutput, Output> Clone
     }
 }
 
+impl<Runtime: Debug, Config: Debug, Params: Debug, CandidOutput, Output> Debug
+    for RequestBuilder<Runtime, Config, Params, CandidOutput, Output>
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let RequestBuilder { client, request } = &self;
+        f.debug_struct("RequestBuilder")
+            .field("client", client)
+            .field("request", request)
+            .finish()
+    }
+}
+
 impl<Runtime, Config, Params, CandidOutput, Output>
     RequestBuilder<Runtime, Config, Params, CandidOutput, Output>
 {
