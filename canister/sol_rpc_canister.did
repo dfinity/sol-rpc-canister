@@ -339,6 +339,10 @@ type GetBalanceParams = record {
 // 1_000_000_000 Lamports is 1 SOL
 type Lamport = nat64;
 
+// Micro-lamports are used for the calculation of prioritization fees.
+// 1_000_000 MicroLamport == 1 Lamport
+type MicroLamport = nat64;
+
 // Represents an aggregated result from multiple RPC calls to the `getBalance` Solana RPC method.
 type MultiGetBalanceResult = variant {
     Consistent : GetBalanceResult;
@@ -593,7 +597,7 @@ type MultiGetTransactionResult = variant {
 
 type PrioritizationFee = record {
     slot: Slot;
-    prioritizationFee: nat64
+    prioritizationFee: MicroLamport
 };
 
 // Represents the result of a call to the `getSlot` Solana RPC method.
