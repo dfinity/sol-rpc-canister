@@ -21,15 +21,16 @@ pub use solana::{
     request::{
         CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
         GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams, GetSlotParams,
-        GetTransactionEncoding, GetTransactionParams, SendTransactionEncoding,
-        SendTransactionParams, TransactionDetails,
+        GetTokenAccountBalanceParams, GetTransactionEncoding, GetTransactionParams,
+        SendTransactionEncoding, SendTransactionParams, TransactionDetails,
     },
     transaction::{
         error::{InstructionError, TransactionError},
         instruction::{CompiledInstruction, InnerInstructions, Instruction},
         reward::{Reward, RewardType},
-        EncodedTransaction, LoadedAddresses, TransactionBinaryEncoding, TransactionInfo,
-        TransactionReturnData, TransactionStatusMeta, TransactionTokenBalance, TransactionVersion,
+        EncodedTransaction, LoadedAddresses, TokenAmount, TransactionBinaryEncoding,
+        TransactionInfo, TransactionReturnData, TransactionStatusMeta, TransactionTokenBalance,
+        TransactionVersion,
     },
     Blockhash, ConfirmedBlock, Lamport, PrioritizationFee, Pubkey, Signature, Slot, Timestamp,
 };

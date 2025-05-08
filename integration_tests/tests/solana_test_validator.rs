@@ -402,6 +402,11 @@ async fn should_get_balance() {
     assert_eq!(compare_balances(&setup, publickey).await, 10_000_000_000);
 }
 
+#[tokio::test(flavor = "multi_thread")]
+async fn should_get_token_account_balance() {
+    // TODO XC-325: Add test for `getTokenAccountBalance` (requires some SPL test infrastructure)
+}
+
 fn solana_rpc_client_get_account(
     pubkey: &Pubkey,
     sol: &RpcClient,

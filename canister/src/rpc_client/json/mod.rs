@@ -165,6 +165,36 @@ pub struct GetBlockConfig {
 
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(into = "(String, Option<GetTokenAccountBalanceConfig>)")]
+pub struct GetTokenAccountBalanceParams(String, Option<GetTokenAccountBalanceConfig>);
+
+#[skip_serializing_none]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct GetTokenAccountBalanceConfig {
+    pub commitment: Option<CommitmentLevel>,
+}
+
+impl From<sol_rpc_types::GetTokenAccountBalanceParams> for GetTokenAccountBalanceParams {
+    fn from(params: sol_rpc_types::GetTokenAccountBalanceParams) -> Self {
+        Self(
+            params.pubkey,
+            params
+                .commitment
+                .map(|commitment| GetTokenAccountBalanceConfig {
+                    commitment: Some(commitment),
+                }),
+        )
+    }
+}
+
+impl From<GetTokenAccountBalanceParams> for (String, Option<GetTokenAccountBalanceConfig>) {
+    fn from(value: GetTokenAccountBalanceParams) -> Self {
+        (value.0, value.1)
+    }
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(into = "(String, Option<GetTransactionConfig>)")]
 pub struct GetTransactionParams(String, Option<GetTransactionConfig>);
 

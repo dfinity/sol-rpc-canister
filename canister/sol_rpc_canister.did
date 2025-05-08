@@ -602,6 +602,23 @@ type MultiGetSlotResult = variant {
     Inconsistent : vec record { RpcSource; GetSlotResult };
 };
 
+// The parameters for a Solana `getTokenAccountBalance` RPC method call.
+type GetTokenAccountBalanceParams = record {
+  // Pubkey of token account to query, as base-58 encoded string.
+  pubkey: Pubkey;
+  // The commitment describes how finalized a block is at that point in time.
+  commitment: opt CommitmentLevel;
+};
+
+// Represents the result of a call to the `getTokenAccountBalance` Solana RPC method.
+type GetTokenAccountBalanceResult = variant { Ok : TokenAmount; Err : RpcError };
+
+// Represents an aggregated result from multiple RPC calls to the `getTokenAccountBalance` Solana RPC method.
+type MultiGetTokenAccountBalanceResult = variant {
+    Consistent : GetTokenAccountBalanceResult;
+    Inconsistent : vec record { RpcSource; GetTokenAccountBalanceResult };
+};
+
 // Represents the result of a call to the `sendTransaction` Solana RPC method.
 type SendTransactionResult = variant { Ok : Signature; Err : RpcError };
 
@@ -690,11 +707,11 @@ service : (InstallArgs,) -> {
   // The caller is the controller or a principal specified in `InstallArgs::manage_api_keys`.
   updateApiKeys : (vec record { SupportedProvider; opt text }) -> ();
 
-  // Call the Solana `getAccountInfo` RPC method and return the resulting slot.
+  // Call the Solana `getAccountInfo` RPC method and return the resulting info.
   getAccountInfo : (RpcSources, opt RpcConfig, GetAccountInfoParams) -> (MultiGetAccountInfoResult);
   getAccountInfoCyclesCost : (RpcSources, opt RpcConfig, GetAccountInfoParams) -> (RequestCostResult) query;
 
-  // Call the Solana `getBalance` RPC method and return the resulting block.
+  // Call the Solana `getBalance` RPC method and return the resulting balance.
   getBalance : (RpcSources, opt RpcConfig, GetBalanceParams) -> (MultiGetBalanceResult);
   getBalanceCyclesCost : (RpcSources, opt RpcConfig, GetBalanceParams) -> (RequestCostResult) query;
 
@@ -710,7 +727,12 @@ service : (InstallArgs,) -> {
   getSlot : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (MultiGetSlotResult);
   getSlotCyclesCost : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (RequestCostResult) query;
 
-  // Call the Solana `getTransaction` RPC method and return the resulting slot.
+  // Call the Solana `getTokenAccountBalance` RPC method and return the resulting balance.
+  // If the account does not exist, this method will return a JSON-RPC error.
+  getTokenAccountBalance : (RpcSources, opt RpcConfig, GetTokenAccountBalanceParams) -> (MultiGetTokenAccountBalanceResult);
+  getTokenAccountBalanceCyclesCost : (RpcSources, opt RpcConfig, GetTokenAccountBalanceParams) -> (RequestCostResult) query;
+
+  // Call the Solana `getTransaction` RPC method and return the resulting transaction.
   getTransaction : (RpcSources, opt RpcConfig, GetTransactionParams) -> (MultiGetTransactionResult);
   getTransactionCyclesCost : (RpcSources, opt RpcConfig, GetTransactionParams) -> (RequestCostResult) query;
 

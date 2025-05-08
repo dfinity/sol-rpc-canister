@@ -7,10 +7,11 @@ use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams,
     GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
-    GetRecentPrioritizationFeesRpcConfig, GetSlotParams, GetSlotRpcConfig, GetTransactionParams,
-    Lamport, PrioritizationFee, RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature,
-    TransactionInfo,
+    GetRecentPrioritizationFeesRpcConfig, GetSlotParams, GetSlotRpcConfig,
+    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, PrioritizationFee, RpcConfig,
+    RpcResult, RpcSources, SendTransactionParams, Signature, TokenAmount, TransactionInfo,
 };
+use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_clock::Slot;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
 use std::fmt::{Debug, Formatter};
@@ -47,6 +48,8 @@ pub enum SolRpcEndpoint {
     GetRecentPrioritizationFees,
     /// `getSlot` endpoint.
     GetSlot,
+    /// `getTokenAccountBalance` endpoint.
+    GetTokenAccountBalance,
     /// `getTransaction` endpoint.
     GetTransaction,
     /// `jsonRequest` endpoint.
@@ -64,6 +67,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetBlock => "getBlock",
             SolRpcEndpoint::GetRecentPrioritizationFees => "getRecentPrioritizationFees",
             SolRpcEndpoint::GetSlot => "getSlot",
+            SolRpcEndpoint::GetTokenAccountBalance => "getTokenAccountBalance",
             SolRpcEndpoint::GetTransaction => "getTransaction",
             SolRpcEndpoint::JsonRequest => "jsonRequest",
             SolRpcEndpoint::SendTransaction => "sendTransaction",
@@ -79,6 +83,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetRecentPrioritizationFees => "getRecentPrioritizationFeesCyclesCost",
             SolRpcEndpoint::GetSlot => "getSlotCyclesCost",
             SolRpcEndpoint::GetTransaction => "getTransactionCyclesCost",
+            SolRpcEndpoint::GetTokenAccountBalance => "getTokenAccountBalanceCyclesCost",
             SolRpcEndpoint::JsonRequest => "jsonRequestCyclesCost",
             SolRpcEndpoint::SendTransaction => "sendTransactionCyclesCost",
         }
@@ -224,6 +229,32 @@ impl SolRpcRequest for GetSlotRequest {
                 ..Default::default()
             });
         }
+        params
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct GetTokenAccountBalanceRequest(GetTokenAccountBalanceParams);
+
+impl GetTokenAccountBalanceRequest {
+    pub fn new(params: GetTokenAccountBalanceParams) -> Self {
+        Self(params)
+    }
+}
+
+impl SolRpcRequest for GetTokenAccountBalanceRequest {
+    type Config = RpcConfig;
+    type Params = GetTokenAccountBalanceParams;
+    type CandidOutput = sol_rpc_types::MultiRpcResult<TokenAmount>;
+    type Output = sol_rpc_types::MultiRpcResult<UiTokenAmount>;
+
+    fn endpoint(&self) -> SolRpcEndpoint {
+        SolRpcEndpoint::GetTokenAccountBalance
+    }
+
+    fn params(self, default_commitment_level: Option<CommitmentLevel>) -> Self::Params {
+        let mut params = self.0;
+        set_default(default_commitment_level, &mut params.commitment);
         params
     }
 }

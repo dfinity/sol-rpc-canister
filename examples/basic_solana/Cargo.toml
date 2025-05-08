@@ -19,7 +19,6 @@ ic-cdk = { workspace = true }
 ic-ed25519 = { workspace = true }
 num = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
 sol_rpc_client = { path = "../../libs/client" }
 sol_rpc_types = { path = "../../libs/types" }
 solana-account-decoder-client-types = { workspace = true }

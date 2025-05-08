@@ -86,6 +86,7 @@ GET_ACCOUNT_INFO_PARAMS="(
 CYCLES=$(dfx canister call sol_rpc getAccountInfoCyclesCost "$GET_ACCOUNT_INFO_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
 dfx canister call sol_rpc getAccountInfo "$GET_ACCOUNT_INFO_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
 
+# Get the USDC mint account balance on Mainnet with a 2-out-of-3 strategy
 GET_BALANCE_PARAMS="(
   variant { Default = variant { Mainnet } },
   opt record {
@@ -102,3 +103,20 @@ GET_BALANCE_PARAMS="(
 )"
 CYCLES=$(dfx canister call sol_rpc getBalanceCyclesCost "$GET_BALANCE_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
 dfx canister call sol_rpc getBalance "$GET_BALANCE_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
+
+# Get the USDC issuer (Circle) token account balance on Mainnet with a 2-out-of-3 strategy
+GET_TOKEN_ACCOUNT_BALANCE_PARAMS="(
+  variant { Default = variant { Mainnet } },
+  opt record {
+    responseConsensus = opt variant {
+      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+    };
+    responseSizeEstimate = null;
+  },
+  record {
+    pubkey = \"3emsAVdmGKERbHjmGfQ6oZ1e35dkf5iYcS6U4CPKFVaa\";
+    commitment = null;
+  },
+)"
+CYCLES=$(dfx canister call sol_rpc getTokenAccountBalanceCyclesCost "$GET_TOKEN_ACCOUNT_BALANCE_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
+dfx canister call sol_rpc getTokenAccountBalance "$GET_TOKEN_ACCOUNT_BALANCE_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1

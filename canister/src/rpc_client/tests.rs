@@ -5,19 +5,18 @@ use crate::rpc_client::{
 use serde::Serialize;
 use serde_json::json;
 use sol_rpc_types::{
-    CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams,
+    CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
     GetBlockCommitmentLevel, GetBlockParams, GetSlotParams, GetSlotRpcConfig,
-    GetTransactionEncoding, GetTransactionParams, RpcConfig, RpcSources, SendTransactionEncoding,
-    SendTransactionParams, SolanaCluster, TransactionDetails,
+    GetTokenAccountBalanceParams, GetTransactionEncoding, GetTransactionParams, RpcConfig,
+    RpcSources, SendTransactionEncoding, SendTransactionParams, SolanaCluster, TransactionDetails,
 };
 
 mod request_serialization_tests {
     use super::*;
-    use sol_rpc_types::GetBalanceParams;
 
     #[test]
     fn should_serialize_get_account_info_request() {
-        assert_serialized(
+        assert_params_eq(
             GetAccountInfoRequest::get_account_info(
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
@@ -26,7 +25,7 @@ mod request_serialization_tests {
             .unwrap(),
             json!(["11111111111111111111111111111111", null]),
         );
-        assert_serialized(
+        assert_params_eq(
             GetAccountInfoRequest::get_account_info(
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
@@ -55,7 +54,7 @@ mod request_serialization_tests {
 
     #[test]
     fn should_serialize_get_slot_request() {
-        assert_serialized(
+        assert_params_eq(
             GetSlotRequest::get_slot(
                 RpcSources::Default(SolanaCluster::Mainnet),
                 GetSlotRpcConfig::default(),
@@ -64,7 +63,7 @@ mod request_serialization_tests {
             .unwrap(),
             json!([null]),
         );
-        assert_serialized(
+        assert_params_eq(
             GetSlotRequest::get_slot(
                 RpcSources::Default(SolanaCluster::Mainnet),
                 GetSlotRpcConfig::default(),
@@ -86,7 +85,7 @@ mod request_serialization_tests {
     #[test]
     fn should_serialize_get_transaction_request() {
         let signature = solana_signature::Signature::default().to_string();
-        assert_serialized(
+        assert_params_eq(
             GetTransactionRequest::get_transaction(
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
@@ -95,7 +94,7 @@ mod request_serialization_tests {
             .unwrap(),
             json!([signature, null]),
         );
-        assert_serialized(
+        assert_params_eq(
             GetTransactionRequest::get_transaction(
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
@@ -121,7 +120,7 @@ mod request_serialization_tests {
     #[test]
     fn should_serialize_get_balance_request() {
         let pubkey = solana_pubkey::Pubkey::default();
-        assert_serialized(
+        assert_params_eq(
             MultiRpcRequest::get_balance(
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
@@ -131,7 +130,7 @@ mod request_serialization_tests {
             json!([pubkey.to_string(), null]),
         );
 
-        assert_serialized(
+        assert_params_eq(
             MultiRpcRequest::get_balance(
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
@@ -155,8 +154,38 @@ mod request_serialization_tests {
     }
 
     #[test]
+    fn should_serialize_get_token_account_balance_request() {
+        let pubkey = solana_pubkey::Pubkey::default();
+        assert_params_eq(
+            MultiRpcRequest::get_token_account_balance(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetTokenAccountBalanceParams::from(pubkey),
+            )
+            .unwrap(),
+            json!([pubkey.to_string(), null]),
+        );
+
+        assert_params_eq(
+            MultiRpcRequest::get_token_account_balance(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetTokenAccountBalanceParams {
+                    pubkey: pubkey.to_string(),
+                    commitment: Some(CommitmentLevel::Confirmed),
+                },
+            )
+            .unwrap(),
+            json!([
+                pubkey.to_string(),
+                {"commitment": "confirmed"}
+            ]),
+        );
+    }
+
+    #[test]
     fn should_serialize_get_block_request() {
-        assert_serialized(
+        assert_params_eq(
             GetBlockRequest::get_block(
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
@@ -168,7 +197,7 @@ mod request_serialization_tests {
                 {"rewards": false, "transactionDetails": "none"}
             ]),
         );
-        assert_serialized(
+        assert_params_eq(
             GetBlockRequest::get_block(
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
@@ -195,7 +224,7 @@ mod request_serialization_tests {
     #[test]
     fn should_serialize_send_transaction_request() {
         let transaction = "4F9ksKhLSgn9e7ugVnAmRpRXL9kjke4TT96FNDxMiUNc5KVDz8p1yuv";
-        assert_serialized(
+        assert_params_eq(
             SendTransactionRequest::send_transaction(
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
@@ -215,7 +244,7 @@ mod request_serialization_tests {
         params.skip_preflight = Some(true);
         params.preflight_commitment = Some(CommitmentLevel::Processed);
         params.min_context_slot = Some(456);
-        assert_serialized(
+        assert_params_eq(
             SendTransactionRequest::send_transaction(
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
@@ -235,7 +264,7 @@ mod request_serialization_tests {
         );
     }
 
-    fn assert_serialized<Params: Serialize, Output>(
+    fn assert_params_eq<Params: Serialize, Output>(
         request: MultiRpcRequest<Params, Output>,
         serialized: serde_json::Value,
     ) {

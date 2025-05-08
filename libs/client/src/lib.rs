@@ -127,8 +127,8 @@ use std::fmt::Debug;
 
 use crate::request::{
     GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetRecentPrioritizationFeesRequest,
-    GetRecentPrioritizationFeesRequestBuilder, GetSlotRequest, GetTransactionRequest, JsonRequest,
-    SendTransactionRequest,
+    GetRecentPrioritizationFeesRequestBuilder, GetSlotRequest, GetTokenAccountBalanceRequest,
+    GetTransactionRequest, JsonRequest, SendTransactionRequest,
 };
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
@@ -136,10 +136,11 @@ use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams, GetSlotParams,
-    GetSlotRpcConfig, GetTransactionParams, Lamport, RpcConfig, RpcSources, SendTransactionParams,
-    Signature, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TransactionDetails,
-    TransactionInfo,
+    GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport, RpcConfig,
+    RpcSources, SendTransactionParams, Signature, SolanaCluster, SupportedRpcProvider,
+    SupportedRpcProviderId, TokenAmount, TransactionDetails, TransactionInfo,
 };
+use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_clock::Slot;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
 use std::sync::Arc;
@@ -395,6 +396,61 @@ impl<R> SolRpcClient<R> {
             TransactionDetails::None => 10_000_000_000,
         };
         RequestBuilder::new(self.clone(), GetBlockRequest::new(params), cycles)
+    }
+
+    /// Call `getTokenAccountBalance` on the SOL RPC canister.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster};
+    /// use solana_pubkey::pubkey;
+    /// use solana_account_decoder_client_types::token::UiTokenAmount;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use sol_rpc_types::{MultiRpcResult, TokenAmount};
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(TokenAmount {
+    /// #       ui_amount: Some(251153323.575906),
+    /// #       decimals: 6,
+    /// #       amount: "251153323575906".to_string(),
+    /// #       ui_amount_string: "251153323.575906".to_string(),
+    /// #    })))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let balance = client
+    ///     .get_token_account_balance(pubkey!("3emsAVdmGKERbHjmGfQ6oZ1e35dkf5iYcS6U4CPKFVaa"))
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent();
+    ///
+    /// assert_eq!(balance, Ok(UiTokenAmount {
+    ///         ui_amount: Some(251153323.575906),
+    ///         decimals: 6,
+    ///         amount: "251153323575906".to_string(),
+    ///         ui_amount_string: "251153323.575906".to_string(),
+    /// }));
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn get_token_account_balance(
+        &self,
+        params: impl Into<GetTokenAccountBalanceParams>,
+    ) -> RequestBuilder<
+        R,
+        RpcConfig,
+        GetTokenAccountBalanceParams,
+        sol_rpc_types::MultiRpcResult<TokenAmount>,
+        sol_rpc_types::MultiRpcResult<UiTokenAmount>,
+    > {
+        RequestBuilder::new(
+            self.clone(),
+            GetTokenAccountBalanceRequest::new(params.into()),
+            10_000_000_000,
+        )
     }
 
     /// Call `getRecentPrioritizationFees` on the SOL RPC canister.

@@ -48,6 +48,13 @@ fn should_set_correct_commitment_level() {
                     Some(CommitmentLevel::Confirmed)
                 );
             }
+            SolRpcEndpoint::GetTokenAccountBalance => {
+                let builder = client_with_commitment_level.get_token_account_balance(pubkey);
+                assert_eq!(
+                    builder.request.params.commitment,
+                    Some(CommitmentLevel::Confirmed)
+                );
+            }
             SolRpcEndpoint::GetTransaction => {
                 let builder = client_with_commitment_level.get_transaction("tspfR5p1PFphquz4WzDb7qM4UhJdgQXkEZtW88BykVEdX2zL2kBT9kidwQBviKwQuA3b6GMCR1gknHvzQ3r623T".parse::<Signature>().unwrap());
                 assert_eq!(

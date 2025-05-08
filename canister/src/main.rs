@@ -15,9 +15,9 @@ use sol_rpc_canister::{
 use sol_rpc_types::{
     AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
     GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig, GetSlotParams,
-    GetSlotRpcConfig, GetTransactionParams, Lamport, MultiRpcResult, PrioritizationFee, RpcAccess,
-    RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot, SupportedRpcProvider,
-    SupportedRpcProviderId, TransactionInfo,
+    GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport, MultiRpcResult,
+    PrioritizationFee, RpcAccess, RpcConfig, RpcResult, RpcSources, SendTransactionParams,
+    Signature, Slot, SupportedRpcProvider, SupportedRpcProviderId, TokenAmount, TransactionInfo,
 };
 use std::str::FromStr;
 
@@ -221,6 +221,33 @@ async fn get_slot_cycles_cost(
     )?
     .cycles_cost()
     .await
+}
+
+#[update(name = "getTokenAccountBalance")]
+#[candid_method(rename = "getTokenAccountBalance")]
+async fn get_token_account_balance(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: GetTokenAccountBalanceParams,
+) -> MultiRpcResult<TokenAmount> {
+    let request =
+        MultiRpcRequest::get_token_account_balance(source, config.unwrap_or_default(), params);
+    send_multi(request).await.into()
+}
+
+#[query(name = "getTokenAccountBalanceCyclesCost")]
+#[candid_method(query, rename = "getTokenAccountBalanceCyclesCost")]
+async fn get_token_account_balance_cycles_cost(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: GetTokenAccountBalanceParams,
+) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
+    MultiRpcRequest::get_token_account_balance(source, config.unwrap_or_default(), params)?
+        .cycles_cost()
+        .await
 }
 
 #[update(name = "getTransaction")]

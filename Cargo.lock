@@ -284,7 +284,6 @@ dependencies = [
  "num 0.4.3",
  "pocket-ic",
  "serde",
- "serde_json",
  "sol_rpc_client",
  "sol_rpc_types",
  "solana-account-decoder-client-types",
