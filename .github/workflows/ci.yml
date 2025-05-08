@@ -116,7 +116,6 @@ jobs:
           cargo build --manifest-path examples/basic_solana/Cargo.toml --target wasm32-unknown-unknown --no-default-features --profile canister-release 
           cargo test --locked --package basic_solana
 
-
       - name: 'Test sol_rpc_int_tests'
         run: cargo test --locked --package sol_rpc_int_tests -- --test-threads 2 --nocapture
 
