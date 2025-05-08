@@ -77,7 +77,7 @@ pub struct TransactionStatus {
     pub slot: u64,
     /// Number of blocks since signature confirmation, [`None`] if rooted, as well as finalized by
     /// a supermajority of the cluster.
-    pub confirmations: Option<usize>,
+    pub confirmations: Option<u32>,
     /// *DEPRECATED*: Transaction status:
     ///  * [`Ok(())`] - Transaction was successful
     ///  * [`Err(err)`] - Transaction failed with [`TransactionError`] `err`
@@ -96,7 +96,7 @@ impl From<solana_transaction_status_client_types::TransactionStatus> for Transac
     fn from(status: solana_transaction_status_client_types::TransactionStatus) -> Self {
         Self {
             slot: status.slot,
-            confirmations: status.confirmations,
+            confirmations: status.confirmations.map(|c| c as u32),
             status: status.status.map_err(TransactionError::from),
             err: status.err.map(TransactionError::from),
             confirmation_status: status
@@ -110,7 +110,7 @@ impl From<TransactionStatus> for solana_transaction_status_client_types::Transac
     fn from(status: TransactionStatus) -> Self {
         Self {
             slot: status.slot,
-            confirmations: status.confirmations,
+            confirmations: status.confirmations.map(|c| c as usize),
             status: status
                 .status
                 .map_err(solana_transaction_error::TransactionError::from),

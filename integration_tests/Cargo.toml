@@ -11,7 +11,7 @@ license.workspace = true
 async-trait = { workspace = true }
 candid = { workspace = true }
 canhttp = { workspace = true }
-canlog = {workspace = true}
+canlog = { workspace = true }
 const_format = { workspace = true }
 ic-cdk = { workspace = true }
 ic-http-types = { workspace = true }
@@ -41,7 +41,10 @@ solana-transaction-status-client-types = { workspace = true }
 
 [dev-dependencies]
 assert_matches = { workspace = true }
+derivative = { workspace = true }
+derive_more = { workspace = true }
 futures = { workspace = true }
 solana-client = { workspace = true }
+solana-transaction-error = { workspace = true }
 strum = { workspace = true }
 tokio = { workspace = true }

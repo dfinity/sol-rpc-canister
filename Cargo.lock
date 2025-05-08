@@ -1112,6 +1112,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "derivative"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fcc3dd5e9e9c0b295d6e1e4d811fb6f157d5ffd784b8d202fc62eac8035a770b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "derive_more"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4165,6 +4176,8 @@ dependencies = [
  "canhttp",
  "canlog",
  "const_format",
+ "derivative",
+ "derive_more",
  "futures",
  "ic-cdk",
  "ic-http-types",
@@ -4191,6 +4204,7 @@ dependencies = [
  "solana-signature",
  "solana-signer",
  "solana-transaction",
+ "solana-transaction-error",
  "solana-transaction-status-client-types",
  "strum 0.27.1",
  "tokio",

@@ -816,7 +816,7 @@ mod cycles_cost_tests {
                     check(client.get_block(577996)).await;
                 }
                 SolRpcEndpoint::GetSignatureStatuses => {
-                    check(client.get_signature_statuses(vec![some_signature().to_string()])).await;
+                    check(client.get_signature_statuses(vec![some_signature()])).await;
                 }
                 SolRpcEndpoint::GetTransaction => {
                     check(client.get_transaction(some_signature())).await;
@@ -869,7 +869,7 @@ mod cycles_cost_tests {
                     check(client.get_block(577996)).await;
                 }
                 SolRpcEndpoint::GetSignatureStatuses => {
-                    check(client.get_signature_statuses(vec![some_signature().to_string()])).await;
+                    check(client.get_signature_statuses(vec![some_signature()])).await;
                 }
                 SolRpcEndpoint::GetTokenAccountBalance => {
                     check(client.get_token_account_balance(USDC_PUBLIC_KEY)).await;
@@ -982,7 +982,7 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::GetSignatureStatuses => {
                     check(
                         &setup,
-                        client.get_signature_statuses(vec![some_signature().to_string()]),
+                        client.get_signature_statuses(vec![some_signature()]),
                         0,
                     )
                     .await;
@@ -1169,10 +1169,68 @@ mod get_token_account_balance_tests {
     }
 }
 
-
-
 mod get_signature_statuses_tests {
-    // TODO XC-291
+    use super::*;
+
+    #[tokio::test]
+    async fn should_get_signature_statuses() {
+        fn request_body(id: u8) -> serde_json::Value {
+            json!({
+                "jsonrpc": "2.0",
+                "id": Id::from(ConstantSizeId::from(id)),
+                "method": "getSignatureStatuses",
+                "params": [
+                    [some_signature().to_string(), another_signature().to_string()]
+                ],
+            })
+        }
+
+        fn response_body(id: u8) -> serde_json::Value {
+            json!({
+                "id": Id::from(ConstantSizeId::from(id)),
+                "jsonrpc": "2.0",
+                "result": {
+                    // context should be filtered out by transform
+                    "context": { "slot": 334048531 + id as u64, "apiVersion": "2.1.9" },
+                    "value": [
+                          {
+                            "slot": 48,
+                            "confirmations": 6,
+                            "err": null,
+                            "status": { "Ok": null },
+                            "confirmationStatus": "finalized"
+                          },
+                          null
+                    ]
+                },
+            })
+        }
+
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
+            let client = setup.client().with_rpc_sources(sources);
+
+            let results = client
+                .mock_http_sequence(vec![
+                    MockOutcallBuilder::new(200, response_body(first_id))
+                        .with_request_body(request_body(first_id)),
+                    MockOutcallBuilder::new(200, response_body(first_id + 1))
+                        .with_request_body(request_body(first_id + 1)),
+                    MockOutcallBuilder::new(200, response_body(first_id + 2))
+                        .with_request_body(request_body(first_id + 2)),
+                ])
+                .build()
+                .get_signature_statuses(vec![some_signature(), another_signature()])
+                .send()
+                .await
+                .expect_consistent();
+
+            assert_eq!(results, Ok(vec![]));
+        }
+
+        setup.drop().await;
+    }
 }
 
 fn assert_within(actual: u128, expected: u128, percentage_error: u8) {
@@ -1202,6 +1260,13 @@ fn some_transaction() -> solana_transaction::Transaction {
 fn some_signature() -> solana_signature::Signature {
     solana_signature::Signature::from_str(
         "MMNPdhf4gW6pPkAtNdJKAroAC7HjaxXLE2CWNeeDtLzYEaBYrvbNzD2TSdYMsoakyD8w88YjwypAgSUYKsU4tVb",
+    )
+    .unwrap()
+}
+
+fn another_signature() -> solana_signature::Signature {
+    solana_signature::Signature::from_str(
+        "4XLJdFbdYYzzBMqvji9bq6ZgzRx5G9edjkJQGprMoAarJSbNbbHt1DTCZqcA7mYk4bJPgC6w7tFjYEtw1jJJSdyw",
     )
     .unwrap()
 }

@@ -194,10 +194,13 @@ impl GetSignatureStatusesParams {
     }
 }
 
-impl From<Vec<Signature>> for GetSignatureStatusesParams {
-    fn from(signatures: Vec<Signature>) -> Self {
+impl From<Vec<solana_signature::Signature>> for GetSignatureStatusesParams {
+    fn from(signatures: Vec<solana_signature::Signature>) -> Self {
         Self {
-            signatures,
+            signatures: signatures
+                .into_iter()
+                .map(|signature| signature.to_string())
+                .collect(),
             search_transaction_history: None,
         }
     }

@@ -9,9 +9,10 @@ use ic_cdk::{
     query,
 };
 use minicbor::{Decode, Encode};
-use serde::{de::DeserializeOwned, Serialize};
-use serde_json::{from_slice, to_vec, Value};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde_json::{from_slice, from_value, to_vec, Value};
 use solana_clock::Slot;
+use solana_transaction_status_client_types::TransactionStatus;
 use std::fmt::Debug;
 
 /// Describes a payload transformation to execute before passing the HTTP response to consensus.
@@ -25,6 +26,7 @@ pub enum ResponseTransform {
     GetBalance,
     #[n(2)]
     GetBlock,
+    // TODO XC-291: Add rounding for confirmations field in transaction statuses returned
     #[n(3)]
     GetSignatureStatuses,
     #[n(4)]
@@ -37,6 +39,13 @@ pub enum ResponseTransform {
     SendTransaction,
     #[n(8)]
     Raw,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct SolanaResult<T> {
+    // This field is always ignore.
+    pub context: Value,
+    pub value: T,
 }
 
 impl ResponseTransform {

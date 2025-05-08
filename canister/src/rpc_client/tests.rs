@@ -1,14 +1,15 @@
 use crate::rpc_client::{
-    GetAccountInfoRequest, GetBlockRequest, GetSlotRequest, GetTransactionRequest, MultiRpcRequest,
-    SendTransactionRequest,
+    GetAccountInfoRequest, GetBlockRequest, GetSignatureStatusesRequest, GetSlotRequest,
+    GetTransactionRequest, MultiRpcRequest, SendTransactionRequest,
 };
 use serde::Serialize;
 use serde_json::json;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
-    GetBlockCommitmentLevel, GetBlockParams, GetSlotParams, GetSlotRpcConfig,
-    GetTokenAccountBalanceParams, GetTransactionEncoding, GetTransactionParams, RpcConfig,
-    RpcSources, SendTransactionEncoding, SendTransactionParams, SolanaCluster, TransactionDetails,
+    GetBlockCommitmentLevel, GetBlockParams, GetSignatureStatusesParams, GetSlotParams,
+    GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionEncoding, GetTransactionParams,
+    RpcConfig, RpcSources, SendTransactionEncoding, SendTransactionParams, SolanaCluster,
+    TransactionDetails,
 };
 
 mod request_serialization_tests {
@@ -79,6 +80,34 @@ mod request_serialization_tests {
                     "minContextSlot": 123
                 },
             ]),
+        );
+    }
+
+    #[test]
+    fn should_serialize_get_signature_statuses_request() {
+        assert_params_eq(
+            GetSignatureStatusesRequest::get_signature_statuses(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetSignatureStatusesParams {
+                    signatures: vec![],
+                    search_transaction_history: None,
+                },
+            )
+            .unwrap(),
+            json!([[], null]),
+        );
+        assert_params_eq(
+            GetSignatureStatusesRequest::get_signature_statuses(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetSignatureStatusesParams {
+                    signatures: vec![],
+                    search_transaction_history: None,
+                },
+            )
+                .unwrap(),
+            json!([[], null]),
         );
     }
 

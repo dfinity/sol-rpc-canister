@@ -202,7 +202,7 @@ impl SolRpcRequest for GetSignatureStatusesRequest {
     >;
 
     fn endpoint(&self) -> SolRpcEndpoint {
-        SolRpcEndpoint::GetSlot
+        SolRpcEndpoint::GetSignatureStatuses
     }
 
     fn params(self, _default_commitment_level: Option<CommitmentLevel>) -> Self::Params {

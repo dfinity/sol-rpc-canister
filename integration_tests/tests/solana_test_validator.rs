@@ -2,6 +2,8 @@
 //! and the SOL RPC client that uses the SOL RPC canister that uses the local validator as JSON RPC provider.
 //! Excepted for timing differences, the same behavior should be observed.
 
+use derivative::Derivative;
+use derive_more::From;
 use futures::future;
 use pocket_ic::PocketIcBuilder;
 use sol_rpc_client::SolRpcClient;
@@ -22,7 +24,11 @@ use solana_rpc_client_api::config::{RpcBlockConfig, RpcTransactionConfig};
 use solana_signature::Signature;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
-use solana_transaction_status_client_types::UiTransactionEncoding;
+use solana_transaction_error::TransactionError;
+use solana_transaction_status_client_types::{
+    TransactionConfirmationStatus, UiTransactionEncoding,
+};
+use std::iter::zip;
 use std::{
     future::Future,
     str::FromStr,
@@ -307,11 +313,86 @@ async fn should_get_balance() {
     setup.confirm_transaction(&tx);
 
     assert_eq!(compare_balances(&setup, publickey).await, 10_000_000_000);
+
+    setup.setup.drop().await;
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn should_get_token_account_balance() {
     // TODO XC-325: Add test for `getTokenAccountBalance` (requires some SPL test infrastructure)
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn should_get_signature_statuses() {
+    let setup = Setup::new().await;
+
+    let signatures = vec![
+        // Generate a transaction and get the signature
+        setup
+            .solana_client
+            .request_airdrop(&Keypair::new().pubkey(), 10_000_000_000)
+            .expect("Error while requesting airdrop"),
+        // An arbitrary signature not corresponding to any transaction
+        Signature::from([57u8; 64]),
+    ];
+    let signatures_copy = signatures.clone();
+
+    setup.confirm_transaction(&signatures[0]);
+
+    let (sol_res, ic_res) = setup
+        .compare_client(
+            |sol| {
+                sol.get_signature_statuses(&signatures)
+                    .expect("Failed to get signature statuses")
+                    .value
+            },
+            |ic| async move {
+                ic.get_signature_statuses(signatures_copy)
+                    .send()
+                    .await
+                    .expect_consistent()
+                    .unwrap_or_else(|e| panic!("`getSignatureStatuses` call failed: {e}"))
+            },
+        )
+        .await;
+
+    // To compare the results from the Solana client and the IC client, define a new type for which
+    // equality allows the value of TransactionStatus#confirmations to differ a little bit to allow
+    // for varying values due to the time delay between fetching both results.
+    #[derive(Derivative)]
+    #[derivative(PartialEq)]
+    pub struct TransactionStatus {
+        pub slot: u64,
+        pub confirmations: Option<Confirmations>,
+        pub status: Result<(), TransactionError>,
+        pub err: Option<TransactionError>,
+        pub confirmation_status: Option<TransactionConfirmationStatus>,
+    }
+
+    #[derive(From)]
+    pub struct Confirmations(usize);
+
+    impl PartialEq for Confirmations {
+        fn eq(&self, other: &Self) -> bool {
+            self.0.abs_diff(other.0) < 20
+        }
+    }
+
+    impl From<solana_transaction_status_client_types::TransactionStatus> for TransactionStatus {
+        fn from(status: solana_transaction_status_client_types::TransactionStatus) -> Self {
+            Self {
+                slot: status.slot,
+                confirmations: status.confirmations.map(Confirmations::from),
+                status: status.status,
+                err: status.err,
+                confirmation_status: status.confirmation_status,
+            }
+        }
+    }
+
+    assert_eq!(sol_res, ic_res);
+
+    setup.setup.drop().await;
 }
 
 fn solana_rpc_client_get_account(

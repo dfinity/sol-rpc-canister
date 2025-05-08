@@ -12,7 +12,13 @@ use sol_rpc_canister::{
     providers::{get_provider, PROVIDERS},
     rpc_client::MultiRpcRequest,
 };
-use sol_rpc_types::{AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams, GetBlockParams, GetSignatureStatusesParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport, MultiRpcResult, RpcAccess, RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot, SupportedRpcProvider, SupportedRpcProviderId, TokenAmount, TransactionInfo, TransactionStatus};
+use sol_rpc_types::{
+    AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
+    GetSignatureStatusesParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
+    GetTransactionParams, Lamport, MultiRpcResult, RpcAccess, RpcConfig, RpcResult, RpcSources,
+    SendTransactionParams, Signature, Slot, SupportedRpcProvider, SupportedRpcProviderId,
+    TokenAmount, TransactionInfo, TransactionStatus,
+};
 use std::str::FromStr;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
@@ -154,13 +160,10 @@ async fn get_block_cycles_cost(
 async fn get_signature_statuses(
     source: RpcSources,
     config: Option<RpcConfig>,
-    params: Option<GetSignatureStatusesParams>,
+    params: GetSignatureStatusesParams,
 ) -> MultiRpcResult<Vec<Option<TransactionStatus>>> {
-    let request = MultiRpcRequest::get_signature_statuses(
-        source,
-        config.unwrap_or_default(),
-        params.unwrap_or_default(),
-    );
+    let request =
+        MultiRpcRequest::get_signature_statuses(source, config.unwrap_or_default(), params);
     send_multi(request).await.into()
 }
 
@@ -169,16 +172,12 @@ async fn get_signature_statuses(
 async fn get_signature_statuses_cycles_cost(
     source: RpcSources,
     config: Option<RpcConfig>,
-    params: Option<GetSignatureStatusesParams>,
+    params: GetSignatureStatusesParams,
 ) -> RpcResult<u128> {
     if read_state(State::is_demo_mode_active) {
         return Ok(0);
     }
-    MultiRpcRequest::get_signature_statuses(
-        source,
-        config.unwrap_or_default(),
-        params.unwrap_or_default(),
-    )?
+    MultiRpcRequest::get_signature_statuses(source, config.unwrap_or_default(), params)?
         .cycles_cost()
         .await
 }
