@@ -45,10 +45,6 @@ async fn should_get_slot() {
             |sol| sol.get_slot().expect("Failed to get slot"),
             |ic| async move {
                 ic.get_slot()
-                    .with_params(GetSlotParams {
-                        commitment: Some(CommitmentLevel::Confirmed),
-                        ..GetSlotParams::default()
-                    })
                     .send()
                     .await
                     .expect_consistent()
@@ -190,7 +186,7 @@ async fn should_get_transaction() {
                     &signature,
                     RpcTransactionConfig {
                         encoding: Some(UiTransactionEncoding::Base64),
-                        commitment: Some(CommitmentConfig::confirmed()),
+                        commitment: None,
                         max_supported_transaction_version: None,
                     },
                 )
@@ -199,7 +195,6 @@ async fn should_get_transaction() {
             |ic| async move {
                 let mut params: GetTransactionParams = signature.into();
                 params.encoding = Some(GetTransactionEncoding::Base64);
-                params.commitment = Some(CommitmentLevel::Confirmed);
                 ic.get_transaction(params)
                     .send()
                     .await
@@ -249,13 +244,10 @@ async fn should_send_transaction() {
         blockhash,
     );
 
-    let mut params: SendTransactionParams = transaction.clone().try_into().unwrap();
-    params.preflight_commitment = Some(CommitmentLevel::Confirmed);
-
     // Don't compare the result to the Solana validator since a transaction can only be submitted once.
     let transaction_id = setup
         .icp_client()
-        .send_transaction(params)
+        .send_transaction(transaction)
         .send()
         .await
         .expect_consistent()
@@ -286,9 +278,6 @@ async fn should_get_balance() {
                 |sol| sol.get_balance(&account).expect("Failed to get balance"),
                 |ic| async move {
                     ic.get_balance(pubkey)
-                        .modify_params(|params| {
-                            params.commitment = Some(CommitmentLevel::Confirmed)
-                        })
                         .send()
                         .await
                         .expect_consistent()
@@ -327,9 +316,6 @@ async fn should_get_token_account_balance() {
                 },
                 |ic| async move {
                     ic.get_token_account_balance(pubkey)
-                        .modify_params(|params| {
-                            params.commitment = Some(CommitmentLevel::Confirmed)
-                        })
                         .send()
                         .await
                         .expect_consistent()
@@ -431,7 +417,10 @@ impl Setup {
     }
 
     fn icp_client(&self) -> SolRpcClient<PocketIcLiveModeRuntime> {
-        self.setup.client_live_mode().build()
+        self.setup
+            .client_live_mode()
+            .with_default_commitment_level(CommitmentLevel::Confirmed)
+            .build()
     }
 
     async fn compare_client<'a, Sol, SolOutput, Icp, IcpOutput, Fut>(
