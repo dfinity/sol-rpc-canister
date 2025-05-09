@@ -7,8 +7,10 @@ keywords: [ advanced, rust, solana, sol, integration, solana integration ]
 ## Overview
 
 This tutorial will walk you through how to deploy a simple smart contract on the Internet Computer
-(known as [canisters](https://internetcomputer.org/docs/building-apps/essentials/canisters)) **that can control digital assets**
+(known as [canisters](https://internetcomputer.org/docs/building-apps/essentials/canisters)) **that can control digital
+assets**
 on the Solana blockchain:
+
 1. SOL, the native currency on Solana;
 2. any other token (known as [SPL tokens](https://solana.com/docs/tokens)).
 
@@ -19,7 +21,8 @@ the [threshold EdDSA](https://internetcomputer.org/docs/current/developer-docs/s
 and [HTTPs outcalls](https://internetcomputer.org/docs/current/developer-docs/smart-contracts/advanced-features/https-outcalls/https-outcalls-overview)
 features of the Internet Computer.
 
-For a deeper understanding of the ICP < > SOL integration, see the [chain fusion overview](https://internetcomputer.org/docs/building-apps/chain-fusion/overview).
+For a deeper understanding of the ICP < > SOL integration, see
+the [chain fusion overview](https://internetcomputer.org/docs/building-apps/chain-fusion/overview).
 
 ## Prerequisites
 
@@ -49,15 +52,15 @@ equivalent of "gas" on other blockchains).
 ### Deploy the smart contract to the Internet Computer
 
 ```bash
-dfx deploy --ic basic_solana --argument (opt record { solana_network = opt variant {Devnet}; ed25519_key_name = opt variant {TestKey1}; sol_rpc_canister_id = null })
+dfx deploy --ic basic_solana --argument ( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { TestKey1 }; sol_rpc_canister_id = null } )
 ```
 
 #### What this does
 
-- `dfx deploy` tells the command line interface to `deploy` the smart contract
-- `--ic` tells the command line to deploy the smart contract to the mainnet ICP blockchain
-- `--argument (opt record { solana_network = opt variant {Devnet}; ed25519_key_name = opt variant {TestKey1}; sol_rpc_canister_id = null })`
-  initializes the smart contract with the provided arguments:
+- `dfx deploy` tells the command line interface to `deploy` the smart contract.
+- `--ic` tells the command line to deploy the smart contract to the mainnet ICP blockchain. You may also omit this flag to deploy the basic example locally instead (in this case you will also have to change the `sol_rpc_canister_id` to that of a locally deployed canister). **Warning:** local testing hides some of the complexities involved with deployment on the IC. Most notably, only a single instance of the canister is used meaning that consensus issues due to Solana's fast block time may be hidden, and RPC providers that are only IPv4 compatible may be used which is not the case on the IC where IPv6 compatibility is required.
+- `--argument (record { solana_network = opt variant {Devnet}; ed25519_key_name = opt variant {TestKey1}; sol_rpc_canister_id = null })`
+initializes the smart contract with the provided arguments:
     - `solana_network = opt variant {Devnet}`: the canister uses
       the [Solana Devnet](https://solana.com/docs/core/clusters)
       network.
