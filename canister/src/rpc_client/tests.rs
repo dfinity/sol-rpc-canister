@@ -13,6 +13,7 @@ use sol_rpc_types::{
 
 mod request_serialization_tests {
     use super::*;
+    use solana_pubkey::pubkey;
 
     #[test]
     fn should_serialize_get_account_info_request() {
@@ -30,7 +31,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 GetAccountInfoParams {
-                    pubkey: "11111111111111111111111111111111".to_string(),
+                    pubkey: pubkey!("11111111111111111111111111111111").into(),
                     commitment: Some(CommitmentLevel::Processed),
                     encoding: Some(GetAccountInfoEncoding::Base58),
                     data_slice: Some(DataSlice {
@@ -135,7 +136,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 GetBalanceParams {
-                    pubkey: pubkey.to_string(),
+                    pubkey: pubkey.into(),
                     commitment: Some(CommitmentLevel::Confirmed),
                     min_context_slot: Some(42),
                 },
@@ -171,7 +172,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 GetTokenAccountBalanceParams {
-                    pubkey: pubkey.to_string(),
+                    pubkey: pubkey.into(),
                     commitment: Some(CommitmentLevel::Confirmed),
                 },
             )

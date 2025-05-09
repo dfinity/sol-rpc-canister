@@ -15,9 +15,6 @@ pub type Lamport = u64;
 /// A Solana base58-encoded [blockhash](https://solana.com/de/docs/references/terminology#blockhash).
 pub type Blockhash = String;
 
-/// A Solana base58-encoded [pubkey](https://solana.com/de/docs/references/terminology#public-key-pubkey).
-pub type Pubkey = String;
-
 /// A Solana base58-encoded [signature](https://solana.com/docs/references/terminology#signature).
 pub type Signature = String;
 
@@ -80,3 +77,88 @@ impl From<ConfirmedBlock> for solana_transaction_status_client_types::UiConfirme
         }
     }
 }
+
+macro_rules! impl_candid {
+    ($name: ident($data: ty), $error: ty) => {
+        #[doc = concat!("Candid wrapper around `", stringify!($data), "`. ")]
+        #[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
+        #[serde(try_from = "String", into = "String")]
+        pub struct $name($data);
+
+        impl std::fmt::Display for $name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "{}", self.0)
+            }
+        }
+
+        impl std::fmt::Debug for $name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "{:?}", self.0)
+            }
+        }
+
+        impl From<$data> for $name {
+            fn from(value: $data) -> Self {
+                Self(value)
+            }
+        }
+
+        impl From<&$data> for $name {
+            fn from(value: &$data) -> Self {
+                Self(*value)
+            }
+        }
+
+        impl From<$name> for $data {
+            fn from(value: $name) -> Self {
+                value.0
+            }
+        }
+
+        impl AsRef<[u8]> for $name {
+            fn as_ref(&self) -> &[u8] {
+                self.0.as_ref()
+            }
+        }
+
+        impl CandidType for $name {
+            fn _ty() -> candid::types::Type {
+                String::_ty()
+            }
+
+            fn idl_serialize<S>(&self, serializer: S) -> Result<(), S::Error>
+            where
+                S: candid::types::Serializer,
+            {
+                serializer.serialize_text(&self.to_string())
+            }
+        }
+
+        impl std::str::FromStr for $name {
+            type Err = $error;
+
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                s.parse::<$data>().map(Self)
+            }
+        }
+
+        impl TryFrom<String> for $name {
+            type Error = $error;
+
+            fn try_from(value: String) -> Result<Self, Self::Error> {
+                value.parse()
+            }
+        }
+
+        impl From<$name> for String {
+            fn from(value: $name) -> Self {
+                value.to_string()
+            }
+        }
+    };
+}
+
+impl_candid!(
+    Pubkey(solana_pubkey::Pubkey),
+    solana_pubkey::ParsePubkeyError
+);

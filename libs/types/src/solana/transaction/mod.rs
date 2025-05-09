@@ -287,8 +287,12 @@ impl From<solana_transaction_status_client_types::UiTransactionTokenBalance>
             account_index: balance.account_index,
             mint: balance.mint,
             ui_token_amount: balance.ui_token_amount.into(),
-            owner: balance.owner.into(),
-            program_id: balance.program_id.into(),
+            owner: balance
+                .owner
+                .map(|v| v.parse().expect("BUG: invalid public key")),
+            program_id: balance
+                .program_id
+                .map(|v| v.parse().expect("BUG: invalid public key")),
         }
     }
 }
@@ -301,8 +305,8 @@ impl From<TransactionTokenBalance>
             account_index: balance.account_index,
             mint: balance.mint,
             ui_token_amount: balance.ui_token_amount.into(),
-            owner: balance.owner.into(),
-            program_id: balance.program_id.into(),
+            owner: balance.owner.map(|v| v.to_string()).into(),
+            program_id: balance.program_id.map(|v| v.to_string()).into(),
         }
     }
 }
@@ -356,8 +360,16 @@ pub struct LoadedAddresses {
 impl From<solana_transaction_status_client_types::UiLoadedAddresses> for LoadedAddresses {
     fn from(addresses: solana_transaction_status_client_types::UiLoadedAddresses) -> Self {
         Self {
-            writable: addresses.writable,
-            readonly: addresses.readonly,
+            writable: addresses
+                .writable
+                .into_iter()
+                .map(|v| v.parse().expect("BUG: invalid public key"))
+                .collect(),
+            readonly: addresses
+                .readonly
+                .into_iter()
+                .map(|v| v.parse().expect("BUG: invalid public key"))
+                .collect(),
         }
     }
 }
@@ -365,8 +377,16 @@ impl From<solana_transaction_status_client_types::UiLoadedAddresses> for LoadedA
 impl From<LoadedAddresses> for solana_transaction_status_client_types::UiLoadedAddresses {
     fn from(addresses: LoadedAddresses) -> Self {
         Self {
-            writable: addresses.writable,
-            readonly: addresses.readonly,
+            writable: addresses
+                .writable
+                .into_iter()
+                .map(|v| v.to_string())
+                .collect(),
+            readonly: addresses
+                .readonly
+                .into_iter()
+                .map(|v| v.to_string())
+                .collect(),
         }
     }
 }
@@ -385,7 +405,10 @@ impl From<UiTransactionReturnData> for TransactionReturnData {
     fn from(return_data: UiTransactionReturnData) -> Self {
         let (data, encoding) = return_data.data;
         Self {
-            program_id: return_data.program_id,
+            program_id: return_data
+                .program_id
+                .parse()
+                .expect("BUG: invalid public key"),
             data: match encoding {
                 UiReturnDataEncoding::Base64 => data,
             },
@@ -396,7 +419,7 @@ impl From<UiTransactionReturnData> for TransactionReturnData {
 impl From<TransactionReturnData> for UiTransactionReturnData {
     fn from(return_data: TransactionReturnData) -> Self {
         Self {
-            program_id: return_data.program_id,
+            program_id: return_data.program_id.to_string(),
             data: (return_data.data, UiReturnDataEncoding::Base64),
         }
     }
