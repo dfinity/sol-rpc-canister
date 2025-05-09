@@ -186,7 +186,7 @@ async fn should_get_transaction() {
                     &signature,
                     RpcTransactionConfig {
                         encoding: Some(UiTransactionEncoding::Base64),
-                        commitment: None,
+                        commitment: Some(CommitmentConfig::confirmed()),
                         max_supported_transaction_version: None,
                     },
                 )
