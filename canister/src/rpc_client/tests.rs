@@ -106,7 +106,7 @@ mod request_serialization_tests {
                     search_transaction_history: None,
                 },
             )
-                .unwrap(),
+            .unwrap(),
             json!([[], null]),
         );
     }

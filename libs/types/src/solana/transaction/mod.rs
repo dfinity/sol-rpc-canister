@@ -69,15 +69,15 @@ impl From<TransactionInfo> for EncodedConfirmedTransactionWithStatusMeta {
     }
 }
 
-/// Solana transaction status as returned by the [`getSignatureStatuses`](https://solana.com/de/docs/rpc/http/getsignaturestatuses) RPC
-/// method.
+/// Solana transaction status as returned by the [`getSignatureStatuses`](https://solana.com/de/docs/rpc/http/getsignaturestatuses)
+/// RPC method.
+///
+/// *WARNING*: The optional `confirmations` field in the `getSignatureStatuses` response is not
+///     included in this type since it is ignored when processing the RPC response.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct TransactionStatus {
     /// The slot the transaction was processed.
     pub slot: u64,
-    /// Number of blocks since signature confirmation, [`None`] if rooted, as well as finalized by
-    /// a supermajority of the cluster.
-    pub confirmations: Option<u32>,
     /// *DEPRECATED*: Transaction status:
     ///  * [`Ok(())`] - Transaction was successful
     ///  * [`Err(err)`] - Transaction failed with [`TransactionError`] `err`
@@ -96,7 +96,6 @@ impl From<solana_transaction_status_client_types::TransactionStatus> for Transac
     fn from(status: solana_transaction_status_client_types::TransactionStatus) -> Self {
         Self {
             slot: status.slot,
-            confirmations: status.confirmations.map(|c| c as u32),
             status: status.status.map_err(TransactionError::from),
             err: status.err.map(TransactionError::from),
             confirmation_status: status
@@ -110,7 +109,7 @@ impl From<TransactionStatus> for solana_transaction_status_client_types::Transac
     fn from(status: TransactionStatus) -> Self {
         Self {
             slot: status.slot,
-            confirmations: status.confirmations.map(|c| c as usize),
+            confirmations: None,
             status: status
                 .status
                 .map_err(solana_transaction_error::TransactionError::from),

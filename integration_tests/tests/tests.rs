@@ -21,6 +21,7 @@ use solana_account_decoder_client_types::{
 };
 use solana_pubkey::pubkey;
 use solana_signer::Signer;
+use solana_transaction_status_client_types::{TransactionConfirmationStatus, TransactionStatus};
 use std::{fmt::Debug, iter::zip, str::FromStr};
 use strum::IntoEnumIterator;
 
@@ -983,7 +984,7 @@ mod cycles_cost_tests {
                     check(
                         &setup,
                         client.get_signature_statuses(vec![some_signature()]),
-                        0,
+                        1_744_458_400,
                     )
                     .await;
                 }
@@ -1180,7 +1181,10 @@ mod get_signature_statuses_tests {
                 "id": Id::from(ConstantSizeId::from(id)),
                 "method": "getSignatureStatuses",
                 "params": [
-                    [some_signature().to_string(), another_signature().to_string()]
+                    [some_signature().to_string(), another_signature().to_string()],
+                    {
+                        "searchTransactionHistory": true
+                    }
                 ],
             })
         }
@@ -1195,6 +1199,7 @@ mod get_signature_statuses_tests {
                     "value": [
                           {
                             "slot": 48,
+                            // confirmations should be filtered out by transform
                             "confirmations": 6,
                             "err": null,
                             "status": { "Ok": null },
@@ -1222,11 +1227,24 @@ mod get_signature_statuses_tests {
                 ])
                 .build()
                 .get_signature_statuses(vec![some_signature(), another_signature()])
+                .modify_params(|params| params.search_transaction_history = Some(true))
                 .send()
                 .await
                 .expect_consistent();
 
-            assert_eq!(results, Ok(vec![]));
+            assert_eq!(
+                results,
+                Ok(vec![
+                    Some(TransactionStatus {
+                        slot: 48,
+                        confirmations: None,
+                        status: Ok(()),
+                        err: None,
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized),
+                    }),
+                    None,
+                ])
+            );
         }
 
         setup.drop().await;

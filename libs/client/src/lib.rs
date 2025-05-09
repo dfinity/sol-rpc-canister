@@ -459,8 +459,62 @@ impl<R> SolRpcClient<R> {
     /// # Examples
     ///
     /// ```rust
-    /// // TODO XC-291
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster};
+    /// use solana_instruction::error::InstructionError;
+    /// use solana_transaction_error::TransactionError;
+    /// use solana_transaction_status_client_types::{TransactionConfirmationStatus, TransactionStatus};
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use sol_rpc_types::MultiRpcResult;
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(vec![
+    /// #        Some(sol_rpc_types::TransactionStatus {
+    /// #            slot: 338837593,
+    /// #            status: Ok(()),
+    /// #            err: None,
+    /// #            confirmation_status: Some(sol_rpc_types::TransactionConfirmationStatus::Finalized),
+    /// #        }),
+    /// #        Some(sol_rpc_types::TransactionStatus {
+    /// #            slot: 338838881,
+    /// #            status: Err(sol_rpc_types::TransactionError::InstructionError(2, sol_rpc_types::InstructionError::GenericError)),
+    /// #            err: Some(sol_rpc_types::TransactionError::InstructionError(2, sol_rpc_types::InstructionError::GenericError)),
+    /// #            confirmation_status: Some(sol_rpc_types::TransactionConfirmationStatus::Finalized),
+    /// #        }),
+    /// #    ])))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let statuses = client
+    ///     .get_signature_statuses(vec![
+    ///         "5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y",
+    ///         "FAAHyQpENs991w9BR7jpwzyXk74jhQWzbsSbjs4NJWkYeL6nggNfT5baWy6eBNLSuqfiiYRGfEC5bhwxUVBZamB"
+    ///     ])
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent();
+    ///
+    /// assert_eq!(statuses, Ok(vec![
+    ///     Some(TransactionStatus {
+    ///         slot: 338837593,
+    ///         confirmations: None,
+    ///         status: Ok(()),
+    ///         err: None,
+    ///         confirmation_status: Some(TransactionConfirmationStatus::Finalized),
+    ///     }),
+    ///     Some(TransactionStatus {
+    ///         slot: 338838881,
+    ///         confirmations: None,
+    ///         status: Err(TransactionError::InstructionError(2, InstructionError::GenericError)),
+    ///         err: Some(TransactionError::InstructionError(2, InstructionError::GenericError)),
+    ///         confirmation_status: Some(TransactionConfirmationStatus::Finalized),
+    ///     }),
+    /// ]));
+    /// # Ok(())
+    /// # }
     /// ```
+    #[allow(clippy::type_complexity)]
     pub fn get_signature_statuses(
         &self,
         params: impl Into<GetSignatureStatusesParams>,

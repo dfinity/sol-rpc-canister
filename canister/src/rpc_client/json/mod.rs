@@ -196,6 +196,7 @@ impl From<GetSignatureStatusesParams> for (Vec<String>, Option<GetSignatureStatu
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GetSignatureStatusesConfig {
+    #[serde(rename = "searchTransactionHistory")]
     pub search_transaction_history: Option<bool>,
 }
 

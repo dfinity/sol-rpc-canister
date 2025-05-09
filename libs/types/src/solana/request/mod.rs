@@ -194,8 +194,8 @@ impl GetSignatureStatusesParams {
     }
 }
 
-impl From<Vec<solana_signature::Signature>> for GetSignatureStatusesParams {
-    fn from(signatures: Vec<solana_signature::Signature>) -> Self {
+impl<T: ToString> From<Vec<T>> for GetSignatureStatusesParams {
+    fn from(signatures: Vec<T>) -> Self {
         Self {
             signatures: signatures
                 .into_iter()

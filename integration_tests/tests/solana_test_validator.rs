@@ -2,8 +2,6 @@
 //! and the SOL RPC client that uses the SOL RPC canister that uses the local validator as JSON RPC provider.
 //! Excepted for timing differences, the same behavior should be observed.
 
-use derivative::Derivative;
-use derive_more::From;
 use futures::future;
 use pocket_ic::PocketIcBuilder;
 use sol_rpc_client::SolRpcClient;
@@ -12,6 +10,7 @@ use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoEncoding, GetAccountInfoParams, GetBlockCommitmentLevel,
     GetBlockParams, GetSlotParams, GetTransactionEncoding, GetTransactionParams, InstallArgs,
     Lamport, OverrideProvider, RegexSubstitution, SendTransactionParams, TransactionDetails,
+    TransactionStatus,
 };
 use solana_account_decoder_client_types::UiAccount;
 use solana_client::rpc_client::{RpcClient as SolanaRpcClient, RpcClient};
@@ -24,11 +23,7 @@ use solana_rpc_client_api::config::{RpcBlockConfig, RpcTransactionConfig};
 use solana_signature::Signature;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
-use solana_transaction_error::TransactionError;
-use solana_transaction_status_client_types::{
-    TransactionConfirmationStatus, UiTransactionEncoding,
-};
-use std::iter::zip;
+use solana_transaction_status_client_types::UiTransactionEncoding;
 use std::{
     future::Future,
     str::FromStr,
@@ -356,41 +351,18 @@ async fn should_get_signature_statuses() {
         )
         .await;
 
-    // To compare the results from the Solana client and the IC client, define a new type for which
-    // equality allows the value of TransactionStatus#confirmations to differ a little bit to allow
-    // for varying values due to the time delay between fetching both results.
-    #[derive(Derivative)]
-    #[derivative(PartialEq)]
-    pub struct TransactionStatus {
-        pub slot: u64,
-        pub confirmations: Option<Confirmations>,
-        pub status: Result<(), TransactionError>,
-        pub err: Option<TransactionError>,
-        pub confirmation_status: Option<TransactionConfirmationStatus>,
-    }
-
-    #[derive(From)]
-    pub struct Confirmations(usize);
-
-    impl PartialEq for Confirmations {
-        fn eq(&self, other: &Self) -> bool {
-            self.0.abs_diff(other.0) < 20
-        }
-    }
-
-    impl From<solana_transaction_status_client_types::TransactionStatus> for TransactionStatus {
-        fn from(status: solana_transaction_status_client_types::TransactionStatus) -> Self {
-            Self {
-                slot: status.slot,
-                confirmations: status.confirmations.map(Confirmations::from),
-                status: status.status,
-                err: status.err,
-                confirmation_status: status.confirmation_status,
-            }
-        }
-    }
-
-    assert_eq!(sol_res, ic_res);
+    // Convert to sol_rpc_type::TransactionStatus to avoid comparing TransactionStatus#confirmations
+    // which changes fast and hence is usually different for both calls
+    assert_eq!(
+        sol_res
+            .into_iter()
+            .map(|maybe_status| maybe_status.map(TransactionStatus::from))
+            .collect::<Vec<_>>(),
+        ic_res
+            .into_iter()
+            .map(|maybe_status| maybe_status.map(TransactionStatus::from))
+            .collect::<Vec<_>>()
+    );
 
     setup.setup.drop().await;
 }

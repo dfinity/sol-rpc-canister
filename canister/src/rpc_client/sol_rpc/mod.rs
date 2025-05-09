@@ -10,7 +10,7 @@ use ic_cdk::{
 };
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use serde_json::{from_slice, from_value, to_vec, Value};
+use serde_json::{from_slice, to_vec, Value};
 use solana_clock::Slot;
 use solana_transaction_status_client_types::TransactionStatus;
 use std::fmt::Debug;
@@ -26,7 +26,6 @@ pub enum ResponseTransform {
     GetBalance,
     #[n(2)]
     GetBlock,
-    // TODO XC-291: Add rounding for confirmations field in transaction statuses returned
     #[n(3)]
     GetSignatureStatuses,
     #[n(4)]
@@ -41,18 +40,23 @@ pub enum ResponseTransform {
     Raw,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct SolanaResult<T> {
-    // This field is always ignore.
-    pub context: Value,
-    pub value: T,
-}
-
 impl ResponseTransform {
     fn apply(&self, body_bytes: &mut Vec<u8>) {
+        #[derive(Clone, Debug, Deserialize, Serialize)]
+        pub struct SolanaRpcResult<T> {
+            // This field is always ignored since it contains the fast-changing current
+            // slot value for which consensus cannot generally be reached across nodes.
+            context: Value,
+            pub value: T,
+        }
+
+        fn ignore_context<T>(value: SolanaRpcResult<T>) -> T {
+            value.value
+        }
+
         fn canonicalize_response<T, R>(body_bytes: &mut Vec<u8>, f: impl FnOnce(T) -> R)
         where
-            T: Serialize + DeserializeOwned,
+            T: Serialize + DeserializeOwned + Debug,
             R: Serialize + DeserializeOwned,
         {
             if let Ok(response) = from_slice::<JsonRpcResponse<T>>(body_bytes) {
@@ -64,15 +68,13 @@ impl ResponseTransform {
 
         match self {
             Self::GetAccountInfo => {
-                canonicalize_response::<Value, Option<Value>>(body_bytes, |result| {
-                    match result["value"].clone() {
-                        Value::Null => None,
-                        value => Some(value),
-                    }
-                });
+                canonicalize_response::<SolanaRpcResult<Option<Value>>, Option<Value>>(
+                    body_bytes,
+                    ignore_context,
+                );
             }
             Self::GetBalance => {
-                canonicalize_response::<Value, Value>(body_bytes, |result| result["value"].clone());
+                canonicalize_response::<SolanaRpcResult<Value>, Value>(body_bytes, ignore_context);
             }
             Self::GetBlock => {
                 canonicalize_response::<Value, Option<Value>>(body_bytes, |result| match result {
@@ -81,7 +83,21 @@ impl ResponseTransform {
                 });
             }
             Self::GetSignatureStatuses => {
-                canonicalize_response::<Value, Value>(body_bytes, |result| result["value"].clone());
+                canonicalize_response::<
+                    SolanaRpcResult<Vec<Option<TransactionStatus>>>,
+                    Vec<Option<TransactionStatus>>,
+                >(body_bytes, |statuses| {
+                    statuses
+                        .value
+                        .into_iter()
+                        .map(|maybe_status| {
+                            maybe_status.map(|mut status| {
+                                status.confirmations = None;
+                                status
+                            })
+                        })
+                        .collect()
+                });
             }
             Self::GetSlot(rounding_error) => {
                 canonicalize_response::<Slot, Slot>(body_bytes, |slot| rounding_error.round(slot));
@@ -93,7 +109,7 @@ impl ResponseTransform {
                 });
             }
             Self::GetTokenAccountBalance => {
-                canonicalize_response::<Value, Value>(body_bytes, |result| result["value"].clone());
+                canonicalize_response::<SolanaRpcResult<Value>, Value>(body_bytes, ignore_context);
             }
             Self::SendTransaction => {
                 canonicalize_response::<String, String>(body_bytes, std::convert::identity);
