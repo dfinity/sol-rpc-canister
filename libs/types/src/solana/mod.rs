@@ -15,9 +15,6 @@ pub type Lamport = u64;
 /// A Solana base58-encoded [blockhash](https://solana.com/de/docs/references/terminology#blockhash).
 pub type Blockhash = String;
 
-/// A Solana base58-encoded [pubkey](https://solana.com/de/docs/references/terminology#public-key-pubkey).
-pub type Pubkey = String;
-
 /// A Solana base58-encoded [signature](https://solana.com/docs/references/terminology#signature).
 pub type Signature = String;
 
@@ -106,6 +103,12 @@ macro_rules! impl_candid {
             }
         }
 
+        impl From<&$data> for $name {
+            fn from(value: &$data) -> Self {
+                Self(*value)
+            }
+        }
+
         impl From<$name> for $data {
             fn from(value: $name) -> Self {
                 value.0
@@ -156,6 +159,6 @@ macro_rules! impl_candid {
 }
 
 impl_candid!(
-    Pubkey2(solana_pubkey::Pubkey),
+    Pubkey(solana_pubkey::Pubkey),
     solana_pubkey::ParsePubkeyError
 );

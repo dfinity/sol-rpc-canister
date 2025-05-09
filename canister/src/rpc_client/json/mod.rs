@@ -56,7 +56,7 @@ impl From<sol_rpc_types::GetAccountInfoParams> for GetAccountInfoParams {
                 min_context_slot: params.min_context_slot,
             })
         };
-        Self(params.pubkey, config)
+        Self(params.pubkey.to_string(), config)
     }
 }
 
@@ -106,7 +106,7 @@ impl From<sol_rpc_types::GetBalanceParams> for GetBalanceParams {
         } else {
             None
         };
-        GetBalanceParams(pubkey, config)
+        GetBalanceParams(pubkey.to_string(), config)
     }
 }
 
@@ -177,7 +177,7 @@ pub struct GetTokenAccountBalanceConfig {
 impl From<sol_rpc_types::GetTokenAccountBalanceParams> for GetTokenAccountBalanceParams {
     fn from(params: sol_rpc_types::GetTokenAccountBalanceParams) -> Self {
         Self(
-            params.pubkey,
+            params.pubkey.to_string(),
             params
                 .commitment
                 .map(|commitment| GetTokenAccountBalanceConfig {
