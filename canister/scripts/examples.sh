@@ -43,7 +43,25 @@ GET_BLOCK_PARAMS="(
 )"
 CYCLES=$(dfx canister call sol_rpc getBlockCyclesCost "$GET_BLOCK_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
 GET_BLOCK_OUTPUT=$(dfx canister call sol_rpc getBlock "$GET_BLOCK_PARAMS" $FLAGS --output json --with-cycles "$CYCLES" || exit 1)
-SIGNATURE=$(jq --raw-output '.Consistent.Ok[0].signatures[0][0]' <<< "$GET_BLOCK_OUTPUT")
+FIRST_SIGNATURE=$(jq --raw-output '.Consistent.Ok[0].signatures[0][0]' <<< "$GET_BLOCK_OUTPUT")
+SECOND_SIGNATURE=$(jq --raw-output '.Consistent.Ok[0].signatures[0][2]' <<< "$GET_BLOCK_OUTPUT")
+
+# Fetch the statuses of the first two transactions in the received block
+GET_SIGNATURE_STATUSES_PARAMS="(
+  variant { Default = variant { Mainnet } },
+  opt record {
+    responseConsensus = opt variant {
+      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+    };
+    responseSizeEstimate = null;
+  },
+  record {
+    signatures = vec { \"${FIRST_SIGNATURE}\", \"{$SECOND_SIGNATURE}\" };
+    searchTransactionHistory = null;
+  },
+)"
+CYCLES=$(dfx canister call sol_rpc getSignatureStatusesCyclesCost "$GET_SIGNATURE_STATUSES_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
+dfx canister call sol_rpc getSignatureStatuses "$GET_SIGNATURE_STATUSES_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
 
 # Fetch the first transaction in the retrieved block
 GET_TRANSACTION_PARAMS="(
@@ -55,7 +73,7 @@ GET_TRANSACTION_PARAMS="(
     responseSizeEstimate = null;
   },
   record {
-    signature = \"${SIGNATURE}\";
+    signature = \"${FIRST_SIGNATURE}\";
     commitment = opt variant { finalized };
     encoding = opt variant{ base64 };
     maxSupportedTransactionVersion = opt (0 : nat8);
