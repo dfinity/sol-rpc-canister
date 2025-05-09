@@ -84,8 +84,8 @@ pub struct TransactionStatus {
     pub status: Result<(), TransactionError>,
     /// Error if transaction failed, [`None`] if transaction succeeded.
     pub err: Option<TransactionError>,
-    /// The transaction's cluster confirmation status; Either [`TransactionConfirmationStatus::processed`],
-    /// [`TransactionConfirmationStatus::confirmed`], or [`TransactionConfirmationStatus::finalized`].
+    /// The transaction's cluster confirmation status; Either [`TransactionConfirmationStatus::Processed`],
+    /// [`TransactionConfirmationStatus::Confirmed`], or [`TransactionConfirmationStatus::Finalized`].
     /// See [Commitment](https://solana.com/docs/rpc#configuring-state-commitment) for more on
     /// optimistic confirmation.
     #[serde(rename = "confirmationStatus")]
