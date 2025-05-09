@@ -8,8 +8,8 @@ use sol_rpc_client::SolRpcClient;
 use sol_rpc_int_tests::{spl, PocketIcLiveModeRuntime};
 use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoEncoding, GetAccountInfoParams, GetBlockCommitmentLevel,
-    GetBlockParams, GetSlotParams, GetTransactionEncoding, GetTransactionParams, InstallArgs,
-    Lamport, OverrideProvider, RegexSubstitution, SendTransactionParams, TransactionDetails,
+    GetBlockParams, GetTransactionEncoding, GetTransactionParams, InstallArgs, Lamport,
+    OverrideProvider, RegexSubstitution, TransactionDetails,
 };
 use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
 use solana_client::rpc_client::{RpcClient as SolanaRpcClient, RpcClient};
