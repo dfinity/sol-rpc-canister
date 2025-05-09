@@ -11,6 +11,7 @@ use ic_cdk::{
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{from_slice, to_vec, Value};
+use sol_rpc_types::PrioritizationFee;
 use solana_clock::Slot;
 use std::fmt::Debug;
 
@@ -26,14 +27,21 @@ pub enum ResponseTransform {
     #[n(2)]
     GetBlock,
     #[n(3)]
-    GetSlot(#[n(0)] RoundingError),
+    GetRecentPrioritizationFees {
+        #[n(0)]
+        max_slot_rounding_error: RoundingError,
+        #[n(1)]
+        max_length: u8,
+    },
     #[n(4)]
-    GetTokenAccountBalance,
+    GetSlot(#[n(0)] RoundingError),
     #[n(5)]
-    GetTransaction,
+    GetTokenAccountBalance,
     #[n(6)]
-    SendTransaction,
+    GetTransaction,
     #[n(7)]
+    SendTransaction,
+    #[n(8)]
     Raw,
 }
 
@@ -68,6 +76,68 @@ impl ResponseTransform {
                     Value::Null => None,
                     value => Some(value),
                 });
+            }
+            Self::GetRecentPrioritizationFees {
+                max_slot_rounding_error,
+                max_length,
+            } => {
+                if let Ok(response) =
+                    from_slice::<JsonRpcResponse<Vec<PrioritizationFee>>>(body_bytes)
+                {
+                    let (id, result) = response.into_parts();
+                    match result {
+                        Ok(mut fees) => {
+                            // The exact number of elements for the returned priority fees is not really specified in the
+                            // [API](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees),
+                            // which simply mentions
+                            // "Currently, a node's prioritization-fee cache stores data from up to 150 blocks."
+                            // Manual testing shows that the result seems to always contain 150 elements on mainnet (also for not used addresses)
+                            // but not necessarily when using a local validator.
+                            if fees.is_empty() || max_length == &0 {
+                                fees.clear();
+                            } else {
+                                // The order of the prioritization fees in the response is not specified in the
+                                // [API](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees),
+                                // although examples and manual testing show that the response is sorted by increasing number of slot.
+                                // To avoid any problem, we enforce the sorting.
+                                fees.sort_unstable_by(|fee, other_fee| {
+                                    other_fee.slot.cmp(&fee.slot) //sort by decreasing order of slot
+                                });
+                                let max_rounded_slot = max_slot_rounding_error.round(
+                                    fees.first()
+                                        .expect(
+                                            "BUG: recent prioritization fees should be non-empty",
+                                        )
+                                        .slot,
+                                );
+
+                                fees = fees
+                                    .into_iter()
+                                    .skip_while(|fee| fee.slot > max_rounded_slot)
+                                    .take(*max_length as usize)
+                                    .collect();
+
+                                fees = fees.into_iter().rev().collect();
+                            }
+
+                            *body_bytes = serde_json::to_vec(&JsonRpcResponse::from_ok(id, fees))
+                                .expect(
+                                "BUG: failed to serialize previously deserialized JsonRpcResponse",
+                            );
+                        }
+                        Err(json_rpc_error) => {
+                            // canonicalize json representation
+                            *body_bytes = serde_json::to_vec(&JsonRpcResponse::<
+                                Vec<PrioritizationFee>,
+                            >::from_error(
+                                id, json_rpc_error
+                            ))
+                            .expect(
+                                "BUG: failed to serialize previously deserialized JsonRpcResponse",
+                            )
+                        }
+                    }
+                }
             }
             Self::GetSlot(rounding_error) => {
                 canonicalize_response::<Slot, Slot>(body_bytes, |slot| rounding_error.round(slot));
