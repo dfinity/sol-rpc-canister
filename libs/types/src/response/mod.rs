@@ -1,6 +1,6 @@
 use crate::{
     solana::account::AccountInfo, ConfirmedBlock, RpcResult, RpcSource, Signature, TokenAmount,
-    TransactionInfo,
+    TransactionInfo, TransactionStatus,
 };
 use candid::CandidType;
 use serde::Deserialize;
@@ -148,5 +148,38 @@ impl From<MultiRpcResult<TokenAmount>> for MultiRpcResult<UiTokenAmount> {
 impl From<MultiRpcResult<UiTokenAmount>> for MultiRpcResult<TokenAmount> {
     fn from(result: MultiRpcResult<UiTokenAmount>) -> Self {
         result.map(TokenAmount::from)
+    }
+}
+
+impl From<MultiRpcResult<Vec<Option<TransactionStatus>>>>
+    for MultiRpcResult<Vec<Option<solana_transaction_status_client_types::TransactionStatus>>>
+{
+    fn from(result: MultiRpcResult<Vec<Option<TransactionStatus>>>) -> Self {
+        result.map(|statuses| {
+            statuses
+                .into_iter()
+                .map(|maybe_status| {
+                    maybe_status
+                        .map(solana_transaction_status_client_types::TransactionStatus::from)
+                })
+                .collect()
+        })
+    }
+}
+
+impl From<MultiRpcResult<Vec<Option<solana_transaction_status_client_types::TransactionStatus>>>>
+    for MultiRpcResult<Vec<Option<TransactionStatus>>>
+{
+    fn from(
+        result: MultiRpcResult<
+            Vec<Option<solana_transaction_status_client_types::TransactionStatus>>,
+        >,
+    ) -> Self {
+        result.map(|statuses| {
+            statuses
+                .into_iter()
+                .map(|maybe_status| maybe_status.map(TransactionStatus::from))
+                .collect()
+        })
     }
 }

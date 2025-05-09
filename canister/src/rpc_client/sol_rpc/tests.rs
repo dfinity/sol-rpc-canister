@@ -271,13 +271,99 @@ mod normalization_tests {
         );
     }
 
+    #[test]
+    fn should_normalize_get_signature_statuses_response() {
+        assert_normalized_equal(
+            &ResponseTransform::GetSignatureStatuses,
+            r#"{
+                "context": { "apiVersion": "2.0.15", "slot": 341197053 },
+                "value": [
+                    {
+                        "err": null,
+                        "confirmations": 27,
+                        "status": { "Ok": null },
+                        "slot": 48,
+                        "confirmationStatus": "finalized"
+                    },
+                    {
+                        "slot": 987,
+                        "err": "AccountInUse",
+                        "confirmations": null,
+                        "confirmationStatus": "processed",
+                        "status": { "Err": "AccountInUse" }
+                    },
+                    null
+                ]
+            }"#,
+            r#"{
+                "context": { "apiVersion": "2.0.15", "slot": 341197053 },
+                "value": [
+                    {
+                        "slot": 48,
+                        "confirmations": null,
+                        "err": null,
+                        "status": { "Ok": null },
+                        "confirmationStatus": "finalized"
+                    },
+                    {
+                        "slot": 987,
+                        "confirmations": null,
+                        "err": "AccountInUse",
+                        "status": { "Err": "AccountInUse" },
+                        "confirmationStatus": "processed"
+                    },
+                    null
+                ]
+            }"#,
+        );
+    }
+
+    proptest! {
+        #[test]
+        fn should_ignore_get_signature_statuses_context_and_confirmations(slot1: u64, slot2: u64, confirmations1: usize, confirmations2: usize) {
+            assert_normalized_equal(
+                &ResponseTransform::GetSignatureStatuses,
+                json!({
+                    "context": { "apiVersion": "2.0.15", "slot": slot1 },
+                    "value": [
+                        {
+                            "slot": 48,
+                            "confirmations": confirmations1,
+                            "err": null,
+                            "status": {
+                                "Ok": null
+                            },
+                            "confirmationStatus": "finalized"
+                        },
+                        null
+                    ]
+                }).to_string(),
+                json!({
+                    "context": { "apiVersion": "2.0.15", "slot": slot2 },
+                    "value": [
+                        {
+                            "slot": 48,
+                            "confirmations": confirmations2,
+                            "err": null,
+                            "status": {
+                                "Ok": null
+                            },
+                            "confirmationStatus": "finalized"
+                        },
+                        null
+                    ]
+                }).to_string(),
+            );
+        }
+    }
+
     fn assert_normalized(transform: &ResponseTransform, result: &str, expected: Value) {
         let expected_response = to_vec(&JsonRpcResponse::from_ok(Id::Number(1), expected)).unwrap();
         let normalized_response = normalize_result(transform, result);
         assert_eq!(
             expected_response,
             normalized_response,
-            "expected {:?}, actual: {:?}",
+            "expected: {:?}, actual: {:?}",
             from_slice::<Value>(&expected_response),
             from_slice::<Value>(&normalized_response),
         );
@@ -297,9 +383,14 @@ mod normalization_tests {
         left: impl AsRef<str>,
         right: impl AsRef<str>,
     ) {
+        let normalized_left = normalize_result(transform, left.as_ref());
+        let normalized_right = normalize_result(transform, right.as_ref());
         assert_eq!(
-            normalize_result(transform, left.as_ref()),
-            normalize_result(transform, right.as_ref())
+            normalized_left,
+            normalized_right,
+            "Normalized values are not equal:\n  left: {:?}\n right: {:?}",
+            from_slice::<Value>(&normalized_left),
+            from_slice::<Value>(&normalized_right),
         );
     }
 

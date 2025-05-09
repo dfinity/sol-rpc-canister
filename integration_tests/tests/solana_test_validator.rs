@@ -10,6 +10,7 @@ use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoEncoding, GetAccountInfoParams, GetBlockCommitmentLevel,
     GetBlockParams, GetSlotParams, GetTransactionEncoding, GetTransactionParams, InstallArgs,
     Lamport, OverrideProvider, RegexSubstitution, SendTransactionParams, TransactionDetails,
+    TransactionStatus,
 };
 use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
 use solana_client::rpc_client::{RpcClient as SolanaRpcClient, RpcClient};
@@ -313,6 +314,8 @@ async fn should_get_balance() {
     setup.confirm_transaction(&tx);
 
     assert_eq!(compare_balances(&setup, publickey).await, 10_000_000_000);
+
+    setup.setup.drop().await;
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -372,6 +375,56 @@ async fn should_get_token_account_balance() {
             ui_amount_string: "0.000001".to_string()
         }
     );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn should_get_signature_statuses() {
+    let setup = Setup::new().await;
+
+    let signatures = vec![
+        // Generate a transaction and get the signature
+        setup
+            .solana_client
+            .request_airdrop(&Keypair::new().pubkey(), 10_000_000_000)
+            .expect("Error while requesting airdrop"),
+        // An arbitrary signature not corresponding to any transaction
+        Signature::from([57u8; 64]),
+    ];
+    let signatures_copy = signatures.clone();
+
+    setup.confirm_transaction(&signatures[0]);
+
+    let (sol_res, ic_res) = setup
+        .compare_client(
+            |sol| {
+                sol.get_signature_statuses(&signatures)
+                    .expect("Failed to get signature statuses")
+                    .value
+            },
+            |ic| async move {
+                ic.get_signature_statuses(signatures_copy)
+                    .send()
+                    .await
+                    .expect_consistent()
+                    .unwrap_or_else(|e| panic!("`getSignatureStatuses` call failed: {e}"))
+            },
+        )
+        .await;
+
+    // Convert to sol_rpc_type::TransactionStatus to avoid comparing TransactionStatus#confirmations
+    // which changes fast and hence is usually different for both calls
+    assert_eq!(
+        sol_res
+            .into_iter()
+            .map(|maybe_status| maybe_status.map(TransactionStatus::from))
+            .collect::<Vec<_>>(),
+        ic_res
+            .into_iter()
+            .map(|maybe_status| maybe_status.map(TransactionStatus::from))
+            .collect::<Vec<_>>()
+    );
+
+    setup.setup.drop().await;
 }
 
 fn solana_rpc_client_get_account(
