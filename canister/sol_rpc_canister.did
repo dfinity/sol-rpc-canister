@@ -185,7 +185,8 @@ type GetAccountInfoParams = record {
   minContextSlot: opt nat64;
 };
 
-// Address of a Solana account as a base-58 encoded string.
+// Address of a Solana account.
+// This is a base-58 encoded string with at most 44 characters.
 // Example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 type Pubkey = text;
 

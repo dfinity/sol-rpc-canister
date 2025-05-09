@@ -23,7 +23,7 @@ pub struct Reward {
 impl From<solana_transaction_status_client_types::Reward> for Reward {
     fn from(reward: solana_transaction_status_client_types::Reward) -> Self {
         Self {
-            pubkey: reward.pubkey,
+            pubkey: reward.pubkey.parse().expect("BUG: invalid public key"),
             lamports: reward.lamports,
             post_balance: reward.post_balance,
             reward_type: reward.reward_type.map(Into::into),
@@ -35,7 +35,7 @@ impl From<solana_transaction_status_client_types::Reward> for Reward {
 impl From<Reward> for solana_transaction_status_client_types::Reward {
     fn from(reward: Reward) -> Self {
         Self {
-            pubkey: reward.pubkey,
+            pubkey: reward.pubkey.to_string(),
             lamports: reward.lamports,
             post_balance: reward.post_balance,
             reward_type: reward.reward_type.map(Into::into),

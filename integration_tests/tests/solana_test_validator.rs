@@ -66,7 +66,7 @@ async fn should_get_account_info() {
     let setup = Setup::new().await;
     let pubkey = Pubkey::from_str("11111111111111111111111111111111").unwrap();
     let params = GetAccountInfoParams {
-        pubkey: pubkey.to_string(),
+        pubkey: pubkey.into(),
         commitment: None,
         encoding: Some(GetAccountInfoEncoding::Base64),
         data_slice: None,
