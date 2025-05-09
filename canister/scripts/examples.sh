@@ -56,7 +56,7 @@ GET_SIGNATURE_STATUSES_PARAMS="(
     responseSizeEstimate = null;
   },
   record {
-    signatures = vec { \"${FIRST_SIGNATURE}\", \"{$SECOND_SIGNATURE}\" };
+    signatures = vec { \"${FIRST_SIGNATURE}\"; \"{$SECOND_SIGNATURE}\" };
     searchTransactionHistory = null;
   },
 )"
