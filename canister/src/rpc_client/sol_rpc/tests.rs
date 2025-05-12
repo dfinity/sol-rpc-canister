@@ -532,14 +532,14 @@ mod get_recent_prioritization_fees {
             };
 
             let sorted_fees_bytes = {
-               let raw_response = json_response(&fees);
+                let raw_response = json_response(&fees);
                 let mut raw_bytes = serde_json::to_vec(&raw_response).unwrap();
                 transform.apply(&mut raw_bytes);
                 raw_bytes
             };
 
             let shuffled_fees_bytes = {
-               let raw_response = json_response(&shuffled_fees);
+                let raw_response = json_response(&shuffled_fees);
                 let mut raw_bytes = serde_json::to_vec(&raw_response).unwrap();
                 transform.apply(&mut raw_bytes);
                 raw_bytes
