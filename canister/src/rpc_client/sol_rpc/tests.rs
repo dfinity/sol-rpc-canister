@@ -5,6 +5,7 @@ use serde_json::{from_slice, json, to_vec, Value};
 
 mod normalization_tests {
     use super::*;
+    use strum::IntoEnumIterator;
 
     #[test]
     fn should_normalize_raw_response() {
@@ -269,6 +270,30 @@ mod normalization_tests {
                     "value": 1000000
                 }"#,
         );
+    }
+
+    #[test]
+    fn should_normalize_json_rpc_error() {
+        fn normalize_json(transform: &ResponseTransform, response: &str) -> Vec<u8> {
+            let mut bytes = response.bytes().collect();
+            transform.apply(&mut bytes);
+            bytes
+        }
+
+        for transform in ResponseTransform::iter() {
+            let left = r#"{ "jsonrpc": "2.0", "error": { "code": -32602, "message": "Invalid param: could not find account" }, "id": 1 }"#;
+            let right = r#"{ "error": { "message": "Invalid param: could not find account", "code": -32602 }, "id": 1, "jsonrpc": "2.0" }"#;
+            let normalized_left = normalize_json(&transform, left);
+            let normalized_right = normalize_json(&transform, right);
+
+            assert_eq!(normalized_left, normalized_right);
+            assert_eq!(
+                serde_json::from_slice::<serde_json::Value>(&normalized_left).unwrap(),
+                json!(
+                    { "jsonrpc": "2.0", "error": { "code": -32602, "message": "Invalid param: could not find account" }, "id": 1 }
+                )
+            );
+        }
     }
 
     fn assert_normalized(transform: &ResponseTransform, result: &str, expected: Value) {

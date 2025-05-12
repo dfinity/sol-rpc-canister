@@ -14,11 +14,12 @@ use serde_json::{from_slice, to_vec, Value};
 use sol_rpc_types::PrioritizationFee;
 use solana_clock::Slot;
 use std::fmt::Debug;
+use strum::EnumIter;
 
 /// Describes a payload transformation to execute before passing the HTTP response to consensus.
 /// The purpose of these transformations is to ensure that the response encoding is deterministic
 /// (the field order is the same).
-#[derive(Clone, Debug, Decode, Encode)]
+#[derive(Clone, Debug, Decode, Encode, EnumIter)]
 pub enum ResponseTransform {
     #[n(0)]
     GetAccountInfo,
