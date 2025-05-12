@@ -48,15 +48,21 @@ pub enum ResponseTransform {
 
 impl ResponseTransform {
     fn apply(&self, body_bytes: &mut Vec<u8>) {
+        fn serialize_if_ok<T>(body_bytes: &mut Vec<u8>, response: &JsonRpcResponse<T>)
+        where
+            T: Serialize,
+        {
+            if let Ok(bytes) = serde_json::to_vec(response) {
+                *body_bytes = bytes
+            }
+        }
         fn canonicalize_response<T, R>(body_bytes: &mut Vec<u8>, f: impl FnOnce(T) -> R)
         where
             T: Serialize + DeserializeOwned,
             R: Serialize + DeserializeOwned,
         {
             if let Ok(response) = from_slice::<JsonRpcResponse<T>>(body_bytes) {
-                if let Ok(bytes) = to_vec(&response.map(f)) {
-                    *body_bytes = bytes
-                }
+                serialize_if_ok(body_bytes, &response.map(f))
             }
         }
 
@@ -120,22 +126,16 @@ impl ResponseTransform {
 
                                 fees = fees.into_iter().rev().collect();
                             }
-
-                            *body_bytes = serde_json::to_vec(&JsonRpcResponse::from_ok(id, fees))
-                                .expect(
-                                "BUG: failed to serialize previously deserialized JsonRpcResponse",
-                            );
+                            serialize_if_ok(body_bytes, &JsonRpcResponse::from_ok(id, fees));
                         }
                         Err(json_rpc_error) => {
-                            // canonicalize json representation
-                            *body_bytes = serde_json::to_vec(&JsonRpcResponse::<
-                                Vec<PrioritizationFee>,
-                            >::from_error(
-                                id, json_rpc_error
-                            ))
-                            .expect(
-                                "BUG: failed to serialize previously deserialized JsonRpcResponse",
-                            )
+                            serialize_if_ok(
+                                body_bytes,
+                                &JsonRpcResponse::<Vec<PrioritizationFee>>::from_error(
+                                    id,
+                                    json_rpc_error,
+                                ),
+                            );
                         }
                     }
                 }
