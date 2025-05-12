@@ -531,7 +531,7 @@ mod get_recent_prioritization_fees {
                 max_length: 100,
             };
 
-            let fees_bytes = {
+            let sorted_fees_bytes = {
                let raw_response = json_response(&fees);
                 let mut raw_bytes = serde_json::to_vec(&raw_response).unwrap();
                 transform.apply(&mut raw_bytes);
@@ -545,7 +545,7 @@ mod get_recent_prioritization_fees {
                 raw_bytes
             };
 
-            assert_eq!(fees_bytes, shuffled_fees_bytes);
+            assert_eq!(sorted_fees_bytes, shuffled_fees_bytes);
         }
     }
 
