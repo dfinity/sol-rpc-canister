@@ -165,7 +165,7 @@ impl From<RpcConfig> for GetSlotRpcConfig {
 /// ```
 /// Similarly to the necessary rounding used for `getSlot`,
 /// achieving consensus for `getRecentPrioritizationFees` requires selecting a subset of those slots
-/// that can be seen my a super-majority of the nodes, which is done as follows:
+/// that can be seen by a super-majority of the nodes, which is done as follows:
 /// 1. `max_slot_rounding_error`: round down the slot with the maximum value.
 ///    The selected subset will only contain priority fees for slots that are smaller or equal to the rounded-down slot.
 /// 2. `max_length`: limit the size of the selected subset by removing priority fees for the older slots.
