@@ -10,7 +10,7 @@ use ic_cdk::{
 };
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
-use serde_json::{from_slice, to_vec, Value};
+use serde_json::{from_slice, Value};
 use sol_rpc_types::PrioritizationFee;
 use solana_clock::Slot;
 use std::fmt::Debug;
