@@ -595,8 +595,12 @@ type MultiGetTransactionResult = variant {
     Inconsistent : vec record { RpcSource; GetTransactionResult };
 };
 
+// Prioritization fee returned by `getRecentPrioritizationFees`.
 type PrioritizationFee = record {
+    // Slot in which the fee was observed.
     slot: Slot;
+    // The per-compute-unit fee paid by at least one successfully landed transaction,
+    // specified in increments of micro-lamports.
     prioritizationFee: MicroLamport
 };
 
