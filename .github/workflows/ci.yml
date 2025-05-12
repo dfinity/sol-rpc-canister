@@ -117,7 +117,7 @@ jobs:
           cargo test --locked --package basic_solana
 
       - name: 'Test sol_rpc_int_tests'
-        run: cargo test --locked --package sol_rpc_int_tests --exclude end_to_end -- --test-threads 2 --nocapture
+        run: cargo test --locked --package sol_rpc_int_tests -- --test-threads 2 --nocapture
 
   end-to-end-tests:
     needs: [ reproducible-build ]
@@ -181,4 +181,4 @@ jobs:
           recipient_keypair: ${{ secrets.recipient_keypair }}
 
       - name: "Run end-to-end integration tests"
-        run: cargo test --locked --package sol_rpc_int_tests --test end_to_end -- --test-threads 2 --nocapture
+        run: cargo test --locked --package sol_rpc_int_tests --test end_to_end -- --test-threads 2 --nocapture --include-ignored
