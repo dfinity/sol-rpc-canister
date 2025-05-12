@@ -14,6 +14,8 @@ use solana_signer::Signer;
 use solana_transaction::Transaction;
 use std::{env, str::FromStr, time::Duration};
 
+// This test should be run together with end-to-end tests, not other integration tests
+#[ignore]
 #[tokio::test(flavor = "multi_thread")]
 async fn should_send_transaction() {
     let setup = Setup::new();
