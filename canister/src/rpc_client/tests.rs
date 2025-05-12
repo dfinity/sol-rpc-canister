@@ -13,6 +13,7 @@ use sol_rpc_types::{
 
 mod request_serialization_tests {
     use super::*;
+    use sol_rpc_types::Signature;
     use solana_pubkey::pubkey;
 
     #[test]
@@ -100,7 +101,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 GetTransactionParams {
-                    signature: solana_signature::Signature::default().to_string(),
+                    signature: Signature::default(),
                     commitment: Some(CommitmentLevel::Confirmed),
                     max_supported_transaction_version: Some(2),
                     encoding: Some(GetTransactionEncoding::Base64),

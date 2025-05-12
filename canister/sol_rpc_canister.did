@@ -190,7 +190,8 @@ type GetAccountInfoParams = record {
 // Example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 type Pubkey = text;
 
-// Ed25519 signature as a base-58 encoded string.
+// Ed25519 signature.
+// This is a base-58 encoded string with at most 88 characters.
 // Example: "5LrcE2f6uvydKRquEJ8xp19heGxSvqsVbcqUeFoiWbXe8JNip7ftPQNTAVPyTK7ijVdpkzmKKaAQR7MWMmujAhXD"
 type Signature = text;
 

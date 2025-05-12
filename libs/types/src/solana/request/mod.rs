@@ -261,7 +261,7 @@ impl GetTransactionParams {
 impl From<solana_signature::Signature> for GetTransactionParams {
     fn from(signature: solana_signature::Signature) -> Self {
         Self {
-            signature: signature.to_string(),
+            signature: signature.into(),
             commitment: None,
             max_supported_transaction_version: None,
             encoding: None,

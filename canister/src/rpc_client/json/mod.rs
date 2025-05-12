@@ -209,7 +209,7 @@ impl From<sol_rpc_types::GetTransactionParams> for GetTransactionParams {
                 encoding: params.encoding,
             })
         };
-        Self(params.signature, config)
+        Self(params.signature.to_string(), config)
     }
 }
 

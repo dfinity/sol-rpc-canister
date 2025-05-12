@@ -15,9 +15,6 @@ pub type Lamport = u64;
 /// A Solana base58-encoded [blockhash](https://solana.com/de/docs/references/terminology#blockhash).
 pub type Blockhash = String;
 
-/// A Solana base58-encoded [signature](https://solana.com/docs/references/terminology#signature).
-pub type Signature = String;
-
 /// Unix timestamp (seconds since the Unix epoch).
 ///
 /// This type is defined as an unsigned integer to align with the Solana JSON-RPC interface,
@@ -56,7 +53,11 @@ impl From<solana_transaction_status_client_types::UiConfirmedBlock> for Confirme
             parent_slot: block.parent_slot,
             block_time: block.block_time,
             block_height: block.block_height,
-            signatures: block.signatures,
+            signatures: block.signatures.map(|sigs| {
+                sigs.into_iter()
+                    .map(|sig| sig.parse().expect("BUG: invalid signature"))
+                    .collect()
+            }),
         }
     }
 }
@@ -69,7 +70,9 @@ impl From<ConfirmedBlock> for solana_transaction_status_client_types::UiConfirme
             blockhash: block.blockhash,
             parent_slot: block.parent_slot,
             transactions: None,
-            signatures: block.signatures,
+            signatures: block
+                .signatures
+                .map(|sigs| sigs.into_iter().map(|sig| sig.to_string()).collect()),
             rewards: None,
             num_reward_partitions: None,
             block_time: block.block_time,
@@ -94,6 +97,12 @@ macro_rules! impl_candid {
         impl std::fmt::Debug for $name {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 write!(f, "{:?}", self.0)
+            }
+        }
+
+        impl Default for $name {
+            fn default() -> Self {
+                Self(<$data>::default())
             }
         }
 
@@ -161,4 +170,9 @@ macro_rules! impl_candid {
 impl_candid!(
     Pubkey(solana_pubkey::Pubkey),
     solana_pubkey::ParsePubkeyError
+);
+
+impl_candid!(
+    Signature(solana_signature::Signature),
+    solana_signature::ParseSignatureError
 );
