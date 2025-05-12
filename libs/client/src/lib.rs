@@ -497,7 +497,6 @@ impl<R> SolRpcClient<R> {
     /// is limited to 128. More accounts result in an error.
     ///
     /// ```rust
-    ///
     /// use std::collections::BTreeSet;
     /// use assert_matches::assert_matches;
     /// use solana_pubkey::Pubkey;
