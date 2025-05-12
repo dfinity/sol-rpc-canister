@@ -507,12 +507,9 @@ impl<R> SolRpcClient<R> {
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
-    /// let mut too_many_accounts = BTreeSet::new();
-    /// for i in 0..129_u8 {
-    ///     let mut key = [0_u8; 32];
-    ///     key[0] = i;
-    ///     too_many_accounts.insert(Pubkey::from(key));
-    /// }
+    /// let too_many_accounts: BTreeSet<Pubkey> = (0..129_u8)
+    ///     .map(|i| Pubkey::from([i; 32]))
+    ///     .collect();
     /// assert_eq!(too_many_accounts.len(), 129);
     ///
     /// let err = client.get_recent_prioritization_fees(&too_many_accounts).unwrap_err();
