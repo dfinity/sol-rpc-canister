@@ -123,8 +123,7 @@ pub mod fixtures;
 mod request;
 
 pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
-use std::borrow::Borrow;
-use std::fmt::Debug;
+use std::{borrow::Borrow, fmt::Debug};
 
 use crate::request::{
     GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetSignatureStatusesRequest,

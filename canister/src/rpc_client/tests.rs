@@ -114,7 +114,7 @@ mod request_serialization_tests {
                 [
                     "5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y",
                     "FAAHyQpENs991w9BR7jpwzyXk74jhQWzbsSbjs4NJWkYeL6nggNfT5baWy6eBNLSuqfiiYRGfEC5bhwxUVBZamB"
-                ], 
+                ],
                 {
                     "searchTransactionHistory": true,
                 }
