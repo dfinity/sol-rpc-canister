@@ -4186,6 +4186,7 @@ dependencies = [
  "solana-client",
  "solana-commitment-config",
  "solana-hash",
+ "solana-instruction",
  "solana-keypair",
  "solana-program",
  "solana-pubkey",

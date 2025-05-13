@@ -25,8 +25,9 @@ use std::{
 };
 
 pub mod mock;
-use crate::mock::MockOutcallBuilder;
-use mock::MockOutcall;
+pub mod spl;
+
+use mock::{MockOutcall, MockOutcallBuilder};
 
 const DEFAULT_MAX_RESPONSE_BYTES: u64 = 2_000_000;
 const MAX_TICKS: usize = 10;
