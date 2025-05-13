@@ -1,4 +1,4 @@
-use ic_agent::{identity::BasicIdentity, Agent};
+use ic_agent::{identity::Secp256k1Identity, Agent};
 use pocket_ic::management_canister::CanisterId;
 use serde_json::json;
 use sol_rpc_client::{ClientBuilder, SolRpcClient};
@@ -13,7 +13,6 @@ use solana_signature::Signature;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
 use std::{env, str::FromStr, time::Duration};
-use ic_agent::identity::Secp256k1Identity;
 
 // This test should be run together with end-to-end tests, not other integration tests
 #[ignore]
