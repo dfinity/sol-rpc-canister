@@ -14,6 +14,8 @@ use solana_signer::Signer;
 use solana_transaction::Transaction;
 use std::{env, str::FromStr, time::Duration};
 
+const DEFAULT_IC_GATEWAY: &str = "https://icp0.io";
+
 // This test should be run together with end-to-end tests, not other integration tests
 #[ignore]
 #[tokio::test(flavor = "multi_thread")]
@@ -87,6 +89,7 @@ impl Setup {
     fn new() -> Self {
         Self {
             agent: Agent::builder()
+                .with_url(DEFAULT_IC_GATEWAY)
                 .with_identity({
                     Secp256k1Identity::from_pem(env("DFX_DEPLOY_KEY").as_bytes())
                         .expect("Unable to import identity from PEM file")
