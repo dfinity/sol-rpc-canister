@@ -1,4 +1,3 @@
-use futures::TryFutureExt;
 use ic_agent::{identity::Secp256k1Identity, Agent};
 use pocket_ic::management_canister::CanisterId;
 use serde_json::json;
