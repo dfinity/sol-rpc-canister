@@ -428,8 +428,8 @@ mod get_recent_prioritization_fees {
     // 2) Locally with solana-test-validator, the range is often not continuous, e.g.
     // RpcPrioritizationFee { slot: 5183, prioritization_fee: 150 }, RpcPrioritizationFee { slot: 5321, prioritization_fee: 0 }
     //
-    // The non-continuity is probably because 
-    // [not all slots have a block](https://docs.chainstack.com/docs/understanding-the-difference-between-blocks-and-slots-on-solana)/
+    // The non-continuity is probably because
+    // [not all slots have a block](https://docs.chainstack.com/docs/understanding-the-difference-between-blocks-and-slots-on-solana).
     #[test]
     fn should_normalize_response_with_non_contiguous_slots() {
         let range_1 = [PrioritizationFee {
