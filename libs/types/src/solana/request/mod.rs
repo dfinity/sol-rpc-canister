@@ -184,17 +184,6 @@ pub struct GetSignatureStatusesParams {
     pub search_transaction_history: Option<bool>,
 }
 
-impl GetSignatureStatusesParams {
-    /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
-    pub fn is_default_config(&self) -> bool {
-        let GetSignatureStatusesParams {
-            signatures: _,
-            search_transaction_history,
-        } = &self;
-        search_transaction_history.is_none()
-    }
-}
-
 impl<S: Borrow<solana_signature::Signature>> TryFrom<Vec<S>> for GetSignatureStatusesParams {
     type Error = RpcError;
 

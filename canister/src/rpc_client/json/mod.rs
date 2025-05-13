@@ -1,3 +1,4 @@
+use derive_more::From;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use sol_rpc_types::{
@@ -176,14 +177,12 @@ impl GetSignatureStatusesParams {
 
 impl From<sol_rpc_types::GetSignatureStatusesParams> for GetSignatureStatusesParams {
     fn from(params: sol_rpc_types::GetSignatureStatusesParams) -> Self {
-        let config = if params.is_default_config() {
-            None
-        } else {
-            Some(GetSignatureStatusesConfig {
-                search_transaction_history: params.search_transaction_history.unwrap_or_default(),
-            })
-        };
-        Self(params.signatures, config)
+        Self(
+            params.signatures,
+            params
+                .search_transaction_history
+                .map(GetSignatureStatusesConfig::from),
+        )
     }
 }
 
@@ -194,7 +193,7 @@ impl From<GetSignatureStatusesParams> for (Vec<String>, Option<GetSignatureStatu
 }
 
 #[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, From)]
 pub struct GetSignatureStatusesConfig {
     #[serde(rename = "searchTransactionHistory")]
     pub search_transaction_history: bool,
