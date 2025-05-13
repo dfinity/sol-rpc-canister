@@ -13,6 +13,7 @@ use solana_signature::Signature;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
 use std::{env, str::FromStr, time::Duration};
+use ic_agent::identity::Secp256k1Identity;
 
 // This test should be run together with end-to-end tests, not other integration tests
 #[ignore]
@@ -88,7 +89,7 @@ impl Setup {
         Self {
             agent: Agent::builder()
                 .with_identity({
-                    BasicIdentity::from_pem(env("DFX_DEPLOY_KEY").as_bytes())
+                    Secp256k1Identity::from_pem(env("DFX_DEPLOY_KEY").as_bytes())
                         .expect("Unable to import identity from PEM file")
                 })
                 .build()
