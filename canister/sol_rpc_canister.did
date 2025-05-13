@@ -185,9 +185,15 @@ type GetAccountInfoParams = record {
   minContextSlot: opt nat64;
 };
 
-// Address of a Solana account.
+// Address of a [Solana account][acc].
+//
 // This is a base-58 encoded string with at most 44 characters.
+// Some account addresses are ed25519 public keys. Often, though, account addresses do not
+// have corresponding secret keys as with [program derived addresses][pdas].
 // Example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+//
+// [acc]: https://solana.com/docs/core/accounts
+// [pdas]: https://solana.com/docs/core/cpi#program-derived-addresses
 type Pubkey = text;
 
 // Ed25519 signature.

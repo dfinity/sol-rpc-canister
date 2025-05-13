@@ -81,7 +81,7 @@ impl From<ConfirmedBlock> for solana_transaction_status_client_types::UiConfirme
 macro_rules! impl_candid {
     ($name: ident($data: ty), $error: ty) => {
         #[doc = concat!("Candid wrapper around `", stringify!($data), "`. ")]
-        #[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
+        #[derive(Clone, Default, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
         #[serde(try_from = "String", into = "String")]
         pub struct $name($data);
 
@@ -94,12 +94,6 @@ macro_rules! impl_candid {
         impl std::fmt::Debug for $name {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 write!(f, "{:?}", self.0)
-            }
-        }
-
-        impl Default for $name {
-            fn default() -> Self {
-                Self(<$data>::default())
             }
         }
 
