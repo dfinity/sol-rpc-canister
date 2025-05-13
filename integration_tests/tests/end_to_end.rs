@@ -3,7 +3,9 @@ use pocket_ic::management_canister::CanisterId;
 use serde_json::json;
 use sol_rpc_client::{ClientBuilder, SolRpcClient};
 use sol_rpc_int_tests::IcAgentRuntime;
-use sol_rpc_types::{CommitmentLevel, RpcSources, SolanaCluster};
+use sol_rpc_types::{
+    CommitmentLevel, RpcSource, RpcSources, SolanaCluster, SupportedRpcProviderId,
+};
 use solana_commitment_config::CommitmentConfig;
 use solana_hash::Hash;
 use solana_keypair::Keypair;
@@ -123,7 +125,11 @@ impl Setup {
 
     fn client(&self) -> SolRpcClient<IcAgentRuntime> {
         self.client_builder()
-            .with_rpc_sources(RpcSources::Default(SolanaCluster::Devnet))
+            .with_rpc_sources(RpcSources::Custom(vec![
+                RpcSource::Supported(SupportedRpcProviderId::AnkrDevnet),
+                RpcSource::Supported(SupportedRpcProviderId::AlchemyDevnet),
+                RpcSource::Supported(SupportedRpcProviderId::HeliusDevnet),
+            ]))
             .with_default_commitment_level(CommitmentLevel::Confirmed)
             .build()
     }
