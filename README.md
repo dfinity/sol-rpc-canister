@@ -117,6 +117,8 @@ The SOL RPC canister reaches the Solana JSON-RPC providers using [HTTPS outcalls
    1. Use a [durable nonce](https://solana.com/de/developers/guides/advanced/introduction-to-durable-nonces) instead of a blockhash.
    2. Retrieve a recent blockhash by first retrieving a recent slot with `getSlot` and then getting the block (which includes the blockhash) with `getBlock`.
 
+[//]: # (TODO: XC-339: mention also `getSignatureStatuses#confirmations`)
+
 ## Reproducible Build
 
 The SOL RPC canister supports [reproducible builds](https://internetcomputer.org/docs/current/developer-docs/smart-contracts/test/reproducible-builds):

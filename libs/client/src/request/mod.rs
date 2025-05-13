@@ -3,6 +3,7 @@ mod tests;
 
 use crate::{Runtime, SolRpcClient};
 use candid::CandidType;
+use derive_more::From;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams,
@@ -184,14 +185,8 @@ impl SolRpcRequest for GetBlockRequest {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, From)]
 pub struct GetSignatureStatusesRequest(GetSignatureStatusesParams);
-
-impl GetSignatureStatusesRequest {
-    pub fn new(params: GetSignatureStatusesParams) -> Self {
-        Self(params)
-    }
-}
 
 impl SolRpcRequest for GetSignatureStatusesRequest {
     type Config = RpcConfig;
@@ -207,6 +202,24 @@ impl SolRpcRequest for GetSignatureStatusesRequest {
 
     fn params(self, _default_commitment_level: Option<CommitmentLevel>) -> Self::Params {
         self.0
+    }
+}
+
+pub type GetSignatureStatusesRequestBuilder<R> = RequestBuilder<
+    R,
+    RpcConfig,
+    GetSignatureStatusesParams,
+    sol_rpc_types::MultiRpcResult<Vec<Option<TransactionStatus>>>,
+    sol_rpc_types::MultiRpcResult<
+        Vec<Option<solana_transaction_status_client_types::TransactionStatus>>,
+    >,
+>;
+
+impl<R> GetSignatureStatusesRequestBuilder<R> {
+    /// Change the `searchTransactionHistory` parameter for a `getSignatureStatuses` request.
+    pub fn with_search_transaction_history(mut self, search_transaction_history: bool) -> Self {
+        self.request.params.search_transaction_history = Some(search_transaction_history);
+        self
     }
 }
 

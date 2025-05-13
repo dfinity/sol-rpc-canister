@@ -571,10 +571,12 @@ type TransactionTokenBalance = record {
 // Solana transaction status as returned by the `getSignatureStatuses` RPC method.
 //
 // *WARNING*: The optional `confirmations` field in the `getSignatureStatuses` response is not
-//   included in this type since it is ignored when processing the RPC response.
+//   included in this type. This value is ignored when processing the RPC response because it
+//   changes with every Solana block (approximately every 400ms) which is too quick to achieve
+//   consensus between the different nodes performing the request.
 type TransactionStatus = record {
     // The slot the transaction was processed.
-    slot: nat64;
+    slot: Slot;
     // *DEPRECATED*: Transaction status:
     //  * Ok - Transaction was successful
     //  * Err - Transaction failed with `TransactionError`

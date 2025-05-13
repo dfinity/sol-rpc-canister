@@ -321,28 +321,28 @@ async fn should_get_token_account_balance() {
 async fn should_get_signature_statuses() {
     let setup = Setup::new().await;
 
-    let signatures = vec![
+    let signatures = {
         // Generate a transaction and get the signature
-        setup
+        let sig_1 = setup
             .solana_client
             .request_airdrop(&Keypair::new().pubkey(), 10_000_000_000)
-            .expect("Error while requesting airdrop"),
+            .expect("Error while requesting airdrop");
+        setup.confirm_transaction(&sig_1);
         // An arbitrary signature not corresponding to any transaction
-        Signature::from([57u8; 64]),
-    ];
-    let signatures_copy = signatures.clone();
-
-    setup.confirm_transaction(&signatures[0]);
+        let sig_2 = Signature::from([57u8; 64]);
+        &vec![sig_1, sig_2]
+    };
 
     let (sol_res, ic_res) = setup
         .compare_client(
             |sol| {
-                sol.get_signature_statuses(&signatures)
+                sol.get_signature_statuses(signatures)
                     .expect("Failed to get signature statuses")
                     .value
             },
             |ic| async move {
-                ic.get_signature_statuses(signatures_copy)
+                ic.get_signature_statuses(signatures)
+                    .unwrap()
                     .send()
                     .await
                     .expect_consistent()

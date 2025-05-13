@@ -2,6 +2,7 @@ use crate::{solana::Pubkey, RpcError, Signature, Slot};
 use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
+use std::borrow::Borrow;
 
 /// The parameters for a Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method call.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
@@ -194,15 +195,24 @@ impl GetSignatureStatusesParams {
     }
 }
 
-impl<T: ToString> From<Vec<T>> for GetSignatureStatusesParams {
-    fn from(signatures: Vec<T>) -> Self {
-        Self {
+impl<S: Borrow<solana_signature::Signature>> TryFrom<Vec<S>> for GetSignatureStatusesParams {
+    type Error = RpcError;
+
+    fn try_from(signatures: Vec<S>) -> Result<Self, Self::Error> {
+        const MAX_NUM_SIGNATURES: usize = 256;
+        if signatures.len() > MAX_NUM_SIGNATURES {
+            return Err(RpcError::ValidationError(format!(
+                "Expected at most {MAX_NUM_SIGNATURES} signatures, but got {}",
+                signatures.len()
+            )));
+        }
+        Ok(Self {
             signatures: signatures
                 .into_iter()
-                .map(|signature| signature.to_string())
+                .map(|s| s.borrow().to_string())
                 .collect(),
             search_transaction_history: None,
-        }
+        })
     }
 }
 

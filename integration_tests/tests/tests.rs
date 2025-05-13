@@ -817,7 +817,12 @@ mod cycles_cost_tests {
                     check(client.get_block(577996)).await;
                 }
                 SolRpcEndpoint::GetSignatureStatuses => {
-                    check(client.get_signature_statuses(vec![some_signature()])).await;
+                    check(
+                        client
+                            .get_signature_statuses(vec![some_signature()])
+                            .unwrap(),
+                    )
+                    .await;
                 }
                 SolRpcEndpoint::GetTransaction => {
                     check(client.get_transaction(some_signature())).await;
@@ -870,7 +875,12 @@ mod cycles_cost_tests {
                     check(client.get_block(577996)).await;
                 }
                 SolRpcEndpoint::GetSignatureStatuses => {
-                    check(client.get_signature_statuses(vec![some_signature()])).await;
+                    check(
+                        client
+                            .get_signature_statuses(vec![some_signature()])
+                            .unwrap(),
+                    )
+                    .await;
                 }
                 SolRpcEndpoint::GetTokenAccountBalance => {
                     check(client.get_token_account_balance(USDC_PUBLIC_KEY)).await;
@@ -983,7 +993,9 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::GetSignatureStatuses => {
                     check(
                         &setup,
-                        client.get_signature_statuses(vec![some_signature()]),
+                        client
+                            .get_signature_statuses(vec![some_signature()])
+                            .unwrap(),
                         1_744_458_400,
                     )
                     .await;
@@ -1227,7 +1239,8 @@ mod get_signature_statuses_tests {
                 ])
                 .build()
                 .get_signature_statuses(vec![some_signature(), another_signature()])
-                .modify_params(|params| params.search_transaction_history = Some(true))
+                .unwrap()
+                .with_search_transaction_history(true)
                 .send()
                 .await
                 .expect_consistent();

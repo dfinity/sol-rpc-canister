@@ -102,12 +102,23 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 GetSignatureStatusesParams {
-                    signatures: vec![],
-                    search_transaction_history: None,
+                    signatures: vec![
+                        "5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y".to_string(),
+                        "FAAHyQpENs991w9BR7jpwzyXk74jhQWzbsSbjs4NJWkYeL6nggNfT5baWy6eBNLSuqfiiYRGfEC5bhwxUVBZamB".to_string()
+                    ],
+                    search_transaction_history: Some(true),
                 },
             )
-            .unwrap(),
-            json!([[], null]),
+                .unwrap(),
+            json!([
+                [
+                    "5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y",
+                    "FAAHyQpENs991w9BR7jpwzyXk74jhQWzbsSbjs4NJWkYeL6nggNfT5baWy6eBNLSuqfiiYRGfEC5bhwxUVBZamB"
+                ], 
+                {
+                    "searchTransactionHistory": true,
+                }
+            ]),
         );
     }
 

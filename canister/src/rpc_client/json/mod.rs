@@ -180,7 +180,7 @@ impl From<sol_rpc_types::GetSignatureStatusesParams> for GetSignatureStatusesPar
             None
         } else {
             Some(GetSignatureStatusesConfig {
-                search_transaction_history: params.search_transaction_history,
+                search_transaction_history: params.search_transaction_history.unwrap_or_default(),
             })
         };
         Self(params.signatures, config)
@@ -197,7 +197,7 @@ impl From<GetSignatureStatusesParams> for (Vec<String>, Option<GetSignatureStatu
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GetSignatureStatusesConfig {
     #[serde(rename = "searchTransactionHistory")]
-    pub search_transaction_history: Option<bool>,
+    pub search_transaction_history: bool,
 }
 
 #[skip_serializing_none]
