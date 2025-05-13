@@ -166,9 +166,7 @@ impl TryFrom<UiTransactionStatusMeta> for TransactionStatusMeta {
             log_messages: meta.log_messages.into(),
             pre_token_balances: meta.pre_token_balances.map(try_from_vec).transpose()?,
             post_token_balances: meta.post_token_balances.map(try_from_vec).transpose()?,
-            rewards: meta
-                .rewards
-                .map(|rewards| rewards.into_iter().map(Into::into).collect()),
+            rewards: meta.rewards.map(try_from_vec).transpose()?,
             loaded_addresses: meta
                 .loaded_addresses
                 .map(LoadedAddresses::try_from)

@@ -1,4 +1,4 @@
-use crate::Pubkey;
+use crate::{Pubkey, RpcError};
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
 
@@ -20,18 +20,21 @@ pub struct Reward {
     pub commission: Option<u8>,
 }
 
-impl From<solana_transaction_status_client_types::Reward> for Reward {
-    fn from(reward: solana_transaction_status_client_types::Reward) -> Self {
-        Self {
-            pubkey: reward.pubkey.parse().expect("BUG: invalid public key"),
+impl TryFrom<solana_transaction_status_client_types::Reward> for Reward {
+    type Error = RpcError;
+
+    fn try_from(
+        reward: solana_transaction_status_client_types::Reward,
+    ) -> Result<Self, Self::Error> {
+        Ok(Self {
+            pubkey: reward.pubkey.parse()?,
             lamports: reward.lamports,
             post_balance: reward.post_balance,
             reward_type: reward.reward_type.map(Into::into),
             commission: reward.commission,
-        }
+        })
     }
 }
-
 impl From<Reward> for solana_transaction_status_client_types::Reward {
     fn from(reward: Reward) -> Self {
         Self {
