@@ -12,9 +12,6 @@ pub type Slot = u64;
 /// A Solana [Lamport](https://solana.com/de/docs/references/terminology#lamport).
 pub type Lamport = u64;
 
-/// A Solana base58-encoded [blockhash](https://solana.com/de/docs/references/terminology#blockhash).
-pub type Blockhash = String;
-
 /// Unix timestamp (seconds since the Unix epoch).
 ///
 /// This type is defined as an unsigned integer to align with the Solana JSON-RPC interface,
@@ -28,9 +25,9 @@ pub struct ConfirmedBlock {
     /// The blockhash of this block's parent, as base-58 encoded string; if the parent block is not
     /// available due to ledger cleanup, this field will return "11111111111111111111111111111111".
     #[serde(rename = "previousBlockhash")]
-    pub previous_blockhash: Blockhash,
+    pub previous_blockhash: Hash,
     /// The blockhash of this block, as base-58 encoded string.
-    pub blockhash: Blockhash,
+    pub blockhash: Hash,
     /// The slot index of this block's parent.
     #[serde(rename = "parentSlot")]
     pub parent_slot: u64,
@@ -48,8 +45,8 @@ pub struct ConfirmedBlock {
 impl From<solana_transaction_status_client_types::UiConfirmedBlock> for ConfirmedBlock {
     fn from(block: solana_transaction_status_client_types::UiConfirmedBlock) -> Self {
         Self {
-            previous_blockhash: block.previous_blockhash,
-            blockhash: block.blockhash,
+            previous_blockhash: block.previous_blockhash.parse().expect("BUG: invalid hash"),
+            blockhash: block.blockhash.parse().expect("BUG: invalid hash"),
             parent_slot: block.parent_slot,
             block_time: block.block_time,
             block_height: block.block_height,
@@ -66,8 +63,8 @@ impl From<solana_transaction_status_client_types::UiConfirmedBlock> for Confirme
 impl From<ConfirmedBlock> for solana_transaction_status_client_types::UiConfirmedBlock {
     fn from(block: ConfirmedBlock) -> Self {
         Self {
-            previous_blockhash: block.previous_blockhash,
-            blockhash: block.blockhash,
+            previous_blockhash: block.previous_blockhash.to_string(),
+            blockhash: block.blockhash.to_string(),
             parent_slot: block.parent_slot,
             transactions: None,
             signatures: block
@@ -176,3 +173,5 @@ impl_candid!(
     Signature(solana_signature::Signature),
     solana_signature::ParseSignatureError
 );
+
+impl_candid!(Hash(solana_hash::Hash), solana_hash::ParseHashError);

@@ -32,5 +32,5 @@ pub use solana::{
         TransactionInfo, TransactionReturnData, TransactionStatusMeta, TransactionTokenBalance,
         TransactionVersion,
     },
-    Blockhash, ConfirmedBlock, Lamport, Pubkey, Signature, Slot, Timestamp,
+    ConfirmedBlock, Hash, Lamport, Pubkey, Signature, Slot, Timestamp,
 };

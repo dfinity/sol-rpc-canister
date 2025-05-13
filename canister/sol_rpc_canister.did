@@ -195,9 +195,10 @@ type Pubkey = text;
 // Example: "5LrcE2f6uvydKRquEJ8xp19heGxSvqsVbcqUeFoiWbXe8JNip7ftPQNTAVPyTK7ijVdpkzmKKaAQR7MWMmujAhXD"
 type Signature = text;
 
-// A Solana blockhash as a bse58-encoded string.
+// A Solana hash.
+// This is a base-58 encoded string with at most 44 characters.
 // Example: "DzfXchZJoLMG3cNftcf2sw7qatkkuwQf4xH15N5wkKAb"
-type Blockhash = text;
+type Hash = text;
 
 // Solana account info.
 type AccountInfo = record {
@@ -354,9 +355,9 @@ type Timestamp = int64;
 type ConfirmedBlock = record {
     // The blockhash of this block's parent, as base-58 encoded string; if the parent block is not
     // available due to ledger cleanup, this field will return "11111111111111111111111111111111".
-    previousBlockhash: Blockhash;
+    previousBlockhash: Hash;
     // The blockhash of this block, as base-58 encoded string.
-    blockhash: Blockhash;
+    blockhash: Hash;
     // The slot index of this block's parent.
     parentSlot: nat64;
     // Estimated production time.

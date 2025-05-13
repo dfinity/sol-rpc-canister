@@ -4212,6 +4212,7 @@ dependencies = [
  "solana-account",
  "solana-account-decoder-client-types",
  "solana-commitment-config",
+ "solana-hash",
  "solana-instruction",
  "solana-message",
  "solana-pubkey",
