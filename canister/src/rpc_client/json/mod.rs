@@ -165,12 +165,12 @@ pub struct GetBlockConfig {
 
 #[skip_serializing_none]
 #[derive(Serialize, Clone, Debug)]
-#[serde(into = "[Vec<Pubkey>; 1]")]
+#[serde(into = "(Vec<Pubkey>,)")]
 pub struct GetRecentPrioritizationFeesParams(Vec<Pubkey>);
 
-impl From<GetRecentPrioritizationFeesParams> for [Vec<Pubkey>; 1] {
+impl From<GetRecentPrioritizationFeesParams> for (Vec<Pubkey>,) {
     fn from(value: GetRecentPrioritizationFeesParams) -> Self {
-        [value.0]
+        (value.0,)
     }
 }
 
