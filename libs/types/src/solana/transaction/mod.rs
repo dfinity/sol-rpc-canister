@@ -2,6 +2,7 @@ pub mod error;
 pub mod instruction;
 pub mod reward;
 
+use crate::solana::{parse_opt, parse_vec, try_from_vec};
 use crate::{Pubkey, RpcError, Slot, Timestamp};
 use candid::{CandidType, Deserialize};
 use error::TransactionError;
@@ -161,27 +162,21 @@ impl TryFrom<UiTransactionStatusMeta> for TransactionStatusMeta {
             fee: meta.fee,
             pre_balances: meta.pre_balances,
             post_balances: meta.post_balances,
-            inner_instructions: meta
-                .inner_instructions
-                .map(|instructions| {
-                    instructions
-                        .into_iter()
-                        .map(InnerInstructions::try_from)
-                        .collect::<Result<Vec<InnerInstructions>, Self::Error>>()
-                })
-                .transpose()?,
+            inner_instructions: meta.inner_instructions.map(try_from_vec).transpose()?,
             log_messages: meta.log_messages.into(),
-            pre_token_balances: meta
-                .pre_token_balances
-                .map(|balances| balances.into_iter().map(Into::into).collect()),
-            post_token_balances: meta
-                .post_token_balances
-                .map(|balances| balances.into_iter().map(Into::into).collect()),
+            pre_token_balances: meta.pre_token_balances.map(try_from_vec).transpose()?,
+            post_token_balances: meta.post_token_balances.map(try_from_vec).transpose()?,
             rewards: meta
                 .rewards
                 .map(|rewards| rewards.into_iter().map(Into::into).collect()),
-            loaded_addresses: meta.loaded_addresses.map(Into::into),
-            return_data: meta.return_data.map(Into::into),
+            loaded_addresses: meta
+                .loaded_addresses
+                .map(LoadedAddresses::try_from)
+                .transpose()?,
+            return_data: meta
+                .return_data
+                .map(TransactionReturnData::try_from)
+                .transpose()?,
             compute_units_consumed: meta.compute_units_consumed.into(),
         })
     }
@@ -279,21 +274,20 @@ pub struct TransactionTokenBalance {
     pub program_id: Option<Pubkey>,
 }
 
-impl From<solana_transaction_status_client_types::UiTransactionTokenBalance>
+impl TryFrom<solana_transaction_status_client_types::UiTransactionTokenBalance>
     for TransactionTokenBalance
 {
-    fn from(balance: solana_transaction_status_client_types::UiTransactionTokenBalance) -> Self {
-        Self {
+    type Error = RpcError;
+    fn try_from(
+        balance: solana_transaction_status_client_types::UiTransactionTokenBalance,
+    ) -> Result<Self, Self::Error> {
+        Ok(Self {
             account_index: balance.account_index,
             mint: balance.mint,
             ui_token_amount: balance.ui_token_amount.into(),
-            owner: balance
-                .owner
-                .map(|v| v.parse().expect("BUG: invalid public key")),
-            program_id: balance
-                .program_id
-                .map(|v| v.parse().expect("BUG: invalid public key")),
-        }
+            owner: parse_opt(balance.owner)?,
+            program_id: parse_opt(balance.program_id)?,
+        })
     }
 }
 
@@ -357,20 +351,15 @@ pub struct LoadedAddresses {
     pub readonly: Vec<Pubkey>,
 }
 
-impl From<solana_transaction_status_client_types::UiLoadedAddresses> for LoadedAddresses {
-    fn from(addresses: solana_transaction_status_client_types::UiLoadedAddresses) -> Self {
-        Self {
-            writable: addresses
-                .writable
-                .into_iter()
-                .map(|v| v.parse().expect("BUG: invalid public key"))
-                .collect(),
-            readonly: addresses
-                .readonly
-                .into_iter()
-                .map(|v| v.parse().expect("BUG: invalid public key"))
-                .collect(),
-        }
+impl TryFrom<solana_transaction_status_client_types::UiLoadedAddresses> for LoadedAddresses {
+    type Error = RpcError;
+    fn try_from(
+        addresses: solana_transaction_status_client_types::UiLoadedAddresses,
+    ) -> Result<Self, Self::Error> {
+        Ok(Self {
+            writable: parse_vec(addresses.writable)?,
+            readonly: parse_vec(addresses.readonly)?,
+        })
     }
 }
 
@@ -401,18 +390,17 @@ pub struct TransactionReturnData {
     pub data: String,
 }
 
-impl From<UiTransactionReturnData> for TransactionReturnData {
-    fn from(return_data: UiTransactionReturnData) -> Self {
+impl TryFrom<UiTransactionReturnData> for TransactionReturnData {
+    type Error = RpcError;
+
+    fn try_from(return_data: UiTransactionReturnData) -> Result<Self, Self::Error> {
         let (data, encoding) = return_data.data;
-        Self {
-            program_id: return_data
-                .program_id
-                .parse()
-                .expect("BUG: invalid public key"),
+        Ok(Self {
+            program_id: return_data.program_id.parse()?,
             data: match encoding {
                 UiReturnDataEncoding::Base64 => data,
             },
-        }
+        })
     }
 }
 

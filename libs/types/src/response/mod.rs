@@ -112,7 +112,7 @@ impl From<MultiRpcResult<Option<ConfirmedBlock>>> for MultiRpcResult<Option<UiCo
 
 impl From<MultiRpcResult<Option<UiConfirmedBlock>>> for MultiRpcResult<Option<ConfirmedBlock>> {
     fn from(result: MultiRpcResult<Option<UiConfirmedBlock>>) -> Self {
-        result.map(|maybe_block| maybe_block.map(|block| block.into()))
+        result.and_then(|maybe_block| maybe_block.map(ConfirmedBlock::try_from).transpose())
     }
 }
 
