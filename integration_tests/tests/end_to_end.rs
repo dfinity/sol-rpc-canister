@@ -3,7 +3,9 @@ use pocket_ic::management_canister::CanisterId;
 use serde_json::json;
 use sol_rpc_client::{ClientBuilder, SolRpcClient};
 use sol_rpc_int_tests::IcAgentRuntime;
-use sol_rpc_types::{CommitmentLevel, RpcSource, RpcSources, SupportedRpcProviderId};
+use sol_rpc_types::{
+    CommitmentLevel, ConsensusStrategy, RpcConfig, RpcSource, RpcSources, SupportedRpcProviderId,
+};
 use solana_commitment_config::CommitmentConfig;
 use solana_hash::Hash;
 use solana_keypair::Keypair;
@@ -128,6 +130,13 @@ impl Setup {
                 RpcSource::Supported(SupportedRpcProviderId::AlchemyDevnet),
                 RpcSource::Supported(SupportedRpcProviderId::HeliusDevnet),
             ]))
+            .with_rpc_config(RpcConfig {
+                response_consensus: Some(ConsensusStrategy::Threshold {
+                    min: 2,
+                    total: None,
+                }),
+                ..RpcConfig::default()
+            })
             .with_default_commitment_level(CommitmentLevel::Confirmed)
             .build()
     }
@@ -152,7 +161,7 @@ impl Setup {
                 continue;
             }
             let status = statuses[0].as_ref().unwrap();
-            if status.satisfies_commitment(CommitmentConfig::confirmed()) && status.status.is_ok() {
+            if status.satisfies_commitment(CommitmentConfig::confirmed()) & &status.status.is_ok() {
                 return;
             }
             tokio::time::sleep(Duration::from_millis(400)).await;
@@ -164,10 +173,10 @@ impl Setup {
         let _airdrop_tx = self
             .client()
             .json_request(json!({
-                "jsonrpc": "2.0",
-                "id": 1,
-                "method": "requestAirdrop",
-                "params": [account.to_string(), amount]
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "requestAirdrop",
+            "params": [account.to_string(), amount]
             }))
             .send()
             .await;
