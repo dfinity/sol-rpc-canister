@@ -1,3 +1,4 @@
+use futures::TryFutureExt;
 use ic_agent::{identity::Secp256k1Identity, Agent};
 use pocket_ic::management_canister::CanisterId;
 use serde_json::json;
@@ -22,8 +23,15 @@ const DEFAULT_IC_GATEWAY: &str = "https://icp0.io";
 async fn should_send_transaction() {
     let setup = Setup::new();
 
-    let sender = Keypair::from_bytes(env("SOLANA_SENDER_PRIVATE_KEY_BYTES").as_ref()).unwrap();
-    let recipient = Keypair::from_bytes(env("SOLANA_RECEIVER_PRIVATE_KEY_BYTES").as_ref()).unwrap();
+    fn load_keypair(key: &str) -> Keypair {
+        serde_json::from_str(&env(key))
+            .map_err(|e| e.to_string())
+            .and_then(|value| Keypair::from_bytes(value).map_err(|e| e.to_string()))
+            .unwrap_or_else(|e| panic!("Unable to parse bytes stored in environment variable '{key}' as a valid keypair: {e}"))
+    }
+
+    let sender = load_keypair("SOLANA_SENDER_PRIVATE_KEY_BYTES");
+    let recipient = load_keypair("SOLANA_RECEIVER_PRIVATE_KEY_BYTES");
 
     let sender_balance_before = setup.fund_account(&sender.pubkey(), 1_000_000_000).await;
     let recipient_balance_before = setup.fund_account(&recipient.pubkey(), 1_000_000_000).await;
