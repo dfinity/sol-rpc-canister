@@ -36,3 +36,7 @@ solana-transaction-status-client-types = { workspace = true }
 strum = { workspace = true }
 thiserror = { workspace = true }
 url = { workspace = true }
+
+[dev-dependencies]
+bs58 = {workspace = true}
+proptest = {workspace = true}

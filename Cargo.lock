@@ -4202,10 +4202,12 @@ version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
  "bincode",
+ "bs58",
  "candid",
  "canlog",
  "derive_more",
  "ic-cdk",
+ "proptest",
  "regex",
  "serde",
  "serde_json",

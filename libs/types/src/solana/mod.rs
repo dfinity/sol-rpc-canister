@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 pub mod account;
 pub mod request;
 pub mod transaction;
