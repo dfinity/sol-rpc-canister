@@ -424,9 +424,12 @@ mod get_recent_prioritization_fees {
     // The API of [getRecentPrioritizationFees](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees)
     // does not specify whether the array of prioritization fees includes a range of continuous slots.
     // The following was observed:
-    // 1) On mainnet: the range seems always continuous (e.g., for slots 337346483..=337346632), also for not used addresses
-    // 2) Locally with solana-test-validator, the range is not necessarily continuous, e.g.
+    // 1) On mainnet: the range seems most of the time continuous (e.g., for slots 337346483..=337346632), also for not used addresses
+    // 2) Locally with solana-test-validator, the range is often not continuous, e.g.
     // RpcPrioritizationFee { slot: 5183, prioritization_fee: 150 }, RpcPrioritizationFee { slot: 5321, prioritization_fee: 0 }
+    //
+    // The non-continuity is probably because 
+    // [not all slots have a block](https://docs.chainstack.com/docs/understanding-the-difference-between-blocks-and-slots-on-solana)/
     #[test]
     fn should_normalize_response_with_non_contiguous_slots() {
         let range_1 = [PrioritizationFee {
