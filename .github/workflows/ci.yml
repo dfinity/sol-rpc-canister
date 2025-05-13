@@ -175,10 +175,9 @@ jobs:
         working-directory: canister/ci
         run: cat e2e_examples.log | grep -q -e Inconsistent && exit 1 || exit 0
 
-      - name: "Import account keypairs"
-        env:
-          sender_keypair: ${{ secrets.sender_keypair }}
-          recipient_keypair: ${{ secrets.recipient_keypair }}
-
       - name: "Run end-to-end integration tests"
+        env:
+          SOLANA_SENDER_PRIVATE_KEY_BYTES: ${{ secrets.SOLANA_SENDER_PRIVATE_KEY_BYTES }}
+          SOLANA_RECEIVER_PRIVATE_KEY_BYTES: ${{ secrets.SOLANA_RECEIVER_PRIVATE_KEY_BYTES }}
+          DFX_DEPLOY_KEY: ${{ secrets.DFX_DEPLOY_KEY }}
         run: cargo test --locked --package sol_rpc_int_tests --test end_to_end -- --test-threads 2 --nocapture --include-ignored

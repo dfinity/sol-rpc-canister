@@ -20,8 +20,8 @@ use std::{env, str::FromStr, time::Duration};
 async fn should_send_transaction() {
     let setup = Setup::new();
 
-    let sender = Keypair::from_base58_string(&env("sender_keypair"));
-    let recipient = Keypair::from_base58_string(&env("recipient_keypair"));
+    let sender = Keypair::from_bytes(env("SOLANA_SENDER_PRIVATE_KEY_BYTES").as_ref()).unwrap();
+    let recipient = Keypair::from_bytes(env("SOLANA_RECEIVER_PRIVATE_KEY_BYTES").as_ref()).unwrap();
 
     let sender_balance_before = setup.fund_account(&sender.pubkey(), 1_000_000_000).await;
     let recipient_balance_before = setup.fund_account(&recipient.pubkey(), 1_000_000_000).await;
