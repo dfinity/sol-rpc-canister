@@ -48,13 +48,18 @@ pub enum ResponseTransform {
 
 impl ResponseTransform {
     fn apply(&self, body_bytes: &mut Vec<u8>) {
-        fn serialize_if_ok<T>(body_bytes: &mut Vec<u8>, response: &JsonRpcResponse<T>)
+        fn update_body<T>(body_bytes: &mut Vec<u8>, response: &JsonRpcResponse<T>)
         where
             T: Serialize,
         {
             if let Ok(bytes) = serde_json::to_vec(response) {
                 *body_bytes = bytes
             }
+            // If the serialization fails, this would typically be the sign of a bug,
+            // since deserialization was successfully done before calling that method.
+            // However, since this code path is called in a query method as part of the HTTPs transform,
+            // we prefer avoiding panicking since this would be hard to debug and could theoretically affect
+            // all calls.
         }
         fn canonicalize_response<T, R>(body_bytes: &mut Vec<u8>, f: impl FnOnce(T) -> R)
         where
@@ -62,7 +67,7 @@ impl ResponseTransform {
             R: Serialize + DeserializeOwned,
         {
             if let Ok(response) = from_slice::<JsonRpcResponse<T>>(body_bytes) {
-                serialize_if_ok(body_bytes, &response.map(f))
+                update_body(body_bytes, &response.map(f))
             }
         }
 
@@ -126,10 +131,10 @@ impl ResponseTransform {
 
                                 fees = fees.into_iter().rev().collect();
                             }
-                            serialize_if_ok(body_bytes, &JsonRpcResponse::from_ok(id, fees));
+                            update_body(body_bytes, &JsonRpcResponse::from_ok(id, fees));
                         }
                         Err(json_rpc_error) => {
-                            serialize_if_ok(
+                            update_body(
                                 body_bytes,
                                 &JsonRpcResponse::<Vec<PrioritizationFee>>::from_error(
                                     id,
