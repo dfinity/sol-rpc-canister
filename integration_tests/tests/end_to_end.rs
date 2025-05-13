@@ -161,7 +161,7 @@ impl Setup {
                 continue;
             }
             let status = statuses[0].as_ref().unwrap();
-            if status.satisfies_commitment(CommitmentConfig::confirmed()) & &status.status.is_ok() {
+            if status.satisfies_commitment(CommitmentConfig::confirmed()) & status.status.is_ok() {
                 return;
             }
             tokio::time::sleep(Duration::from_millis(400)).await;
