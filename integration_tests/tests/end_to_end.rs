@@ -3,9 +3,7 @@ use pocket_ic::management_canister::CanisterId;
 use serde_json::json;
 use sol_rpc_client::{ClientBuilder, SolRpcClient};
 use sol_rpc_int_tests::IcAgentRuntime;
-use sol_rpc_types::{
-    CommitmentLevel, RpcSource, RpcSources, SolanaCluster, SupportedRpcProviderId,
-};
+use sol_rpc_types::{CommitmentLevel, RpcSource, RpcSources, SupportedRpcProviderId};
 use solana_commitment_config::CommitmentConfig;
 use solana_hash::Hash;
 use solana_keypair::Keypair;
