@@ -23,10 +23,12 @@ async fn should_send_transaction() {
     let setup = Setup::new();
 
     fn load_keypair(key: &str) -> Keypair {
-        serde_json::from_str(&env(key))
-            .map_err(|e| e.to_string())
-            .and_then(|value| Keypair::from_bytes(value).map_err(|e| e.to_string()))
-            .unwrap_or_else(|e| panic!("Unable to parse bytes stored in environment variable '{key}' as a valid keypair: {e}"))
+        fn try_load_keypair(key: &str) -> Result<Keypair, String> {
+            let value = env(key);
+            let bytes = serde_json::from_str::<Vec<u8>>(&value).map_err(|e| e.to_string())?;
+            Keypair::from_bytes(bytes.as_ref()).map_err(|e| e.to_string())
+        }
+        try_load_keypair(key).unwrap_or_else(|e| panic!("Unable to parse bytes stored in environment variable '{key}' as a valid keypair: {e}"))
     }
 
     let sender = load_keypair("SOLANA_SENDER_PRIVATE_KEY_BYTES");
