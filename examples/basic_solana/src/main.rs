@@ -36,10 +36,10 @@ pub async fn solana_account(owner: Option<Principal>) -> String {
 }
 
 #[update]
-pub async fn nonce_account(owner: Option<Principal>) -> String {
+pub async fn nonce_account(owner: Option<Principal>) -> sol_rpc_types::Pubkey {
     let owner = owner.unwrap_or_else(validate_caller_not_anonymous);
     let wallet = SolanaWallet::new(owner).await;
-    wallet.derived_nonce_account().to_string()
+    wallet.derived_nonce_account().as_ref().into()
 }
 
 #[update]
@@ -64,12 +64,12 @@ pub async fn get_balance(account: Option<String>) -> Nat {
 }
 
 #[update]
-pub async fn get_nonce(account: Option<String>) -> String {
+pub async fn get_nonce(account: Option<sol_rpc_types::Pubkey>) -> sol_rpc_types::Hash {
     let account = account.unwrap_or(nonce_account(None).await);
 
     // Fetch the account info with the data encoded in base64 format
     // TODO XC-347: use method from client to retrieve nonce
-    let mut params = GetAccountInfoParams::from_encoded_pubkey(account);
+    let mut params = GetAccountInfoParams::from_pubkey(account);
     params.encoding = Some(GetAccountInfoEncoding::Base64);
     let account_data = client()
         .get_account_info(params)
@@ -94,7 +94,9 @@ pub async fn get_nonce(account: Option<String>) -> String {
         .state()
     {
         solana_nonce::state::State::Uninitialized => panic!("Nonce account is uninitialized"),
-        solana_nonce::state::State::Initialized(data) => data.blockhash().to_string(),
+        solana_nonce::state::State::Initialized(data) => {
+            sol_rpc_types::Hash::from(data.blockhash())
+        }
     }
 }
 
@@ -285,8 +287,7 @@ pub async fn send_sol_with_durable_nonce(
         system_instruction::transfer(payer.as_ref(), &recipient, amount),
     ];
 
-    let blockhash = Hash::from_str(&get_nonce(Some(nonce_account.to_string())).await)
-        .expect("Unable to parse nonce as blockhash");
+    let blockhash = Hash::from(get_nonce(Some(nonce_account.as_ref().into())).await);
 
     let message = Message::new_with_blockhash(instructions, Some(payer.as_ref()), &blockhash);
     let signatures = vec![wallet.sign_with_ed25519(&message, &payer).await];
