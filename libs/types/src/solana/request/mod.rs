@@ -202,7 +202,7 @@ impl TryFrom<Vec<Pubkey>> for GetRecentPrioritizationFeesParams {
 
 impl From<solana_pubkey::Pubkey> for GetRecentPrioritizationFeesParams {
     fn from(value: solana_pubkey::Pubkey) -> Self {
-        Self(vec![value.to_string()])
+        Self(vec![Pubkey::from(value)])
     }
 }
 

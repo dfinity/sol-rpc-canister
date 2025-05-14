@@ -137,9 +137,9 @@ use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
     GetRecentPrioritizationFeesParams, GetSlotParams, GetSlotRpcConfig,
-    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, RpcConfig, RpcError, RpcSources,
-    SendTransactionParams, Signature, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
-    TokenAmount, TransactionDetails, TransactionInfo,
+    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, Pubkey, RpcConfig, RpcError,
+    RpcSources, SendTransactionParams, Signature, SolanaCluster, SupportedRpcProvider,
+    SupportedRpcProviderId, TokenAmount, TransactionDetails, TransactionInfo,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_clock::Slot;
@@ -523,10 +523,7 @@ impl<R> SolRpcClient<R> {
         I: IntoIterator<Item = &'a solana_pubkey::Pubkey>,
     {
         let params = GetRecentPrioritizationFeesParams::try_from(
-            addresses
-                .into_iter()
-                .map(|a| a.to_string())
-                .collect::<Vec<_>>(),
+            addresses.into_iter().map(Pubkey::from).collect::<Vec<_>>(),
         )?;
         Ok(RequestBuilder::new(
             self.clone(),
