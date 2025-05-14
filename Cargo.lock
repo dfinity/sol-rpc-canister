@@ -4214,6 +4214,8 @@ dependencies = [
  "canlog",
  "derive_more",
  "ic-cdk",
+ "proptest",
+ "rand 0.7.3",
  "regex",
  "serde",
  "serde_json",

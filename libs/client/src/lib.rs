@@ -594,6 +594,32 @@ impl<R> SolRpcClient<R> {
     /// # Ok(())
     /// # }
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// The number of signatures that can be passed to
+    /// [`getSignatureStatuses`](https://solana.com/de/docs/rpc/http/getsignaturestatuses)
+    /// is limited to 256. More signatures result in an error.
+    ///
+    /// ```rust
+    /// use std::collections::BTreeSet;
+    /// use assert_matches::assert_matches;
+    /// use solana_signature::Signature;
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster, RpcError};
+    ///
+    /// let client = SolRpcClient::builder_for_ic()
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let too_many_signatures: BTreeSet<Signature> = (0..257)
+    ///     .map(|i| Signature::from([i as u8; 64]))
+    ///     .collect();
+    /// assert_eq!(too_many_signatures.len(), 257);
+    ///
+    /// let err = client.get_signature_statuses(&too_many_signatures).unwrap_err();
+    /// assert_matches!(err, RpcError::ValidationError(_));
+    /// ```
     pub fn get_signature_statuses<I, S>(
         &self,
         signatures: I,

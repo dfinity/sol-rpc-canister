@@ -1899,7 +1899,7 @@ mod get_signature_statuses_tests {
                           {
                             "slot": 48,
                             // confirmations should be filtered out by transform
-                            "confirmations": 6,
+                            "confirmations": id,
                             "err": null,
                             "status": { "Ok": null },
                             "confirmationStatus": "finalized"

@@ -17,7 +17,7 @@ mod get_signature_statuses_params_tests {
     }
 
     #[test]
-    fn should_not_deserialize_when_too_many_pubkeys() {
+    fn should_not_deserialize() {
         let params = json!({
             "signatures": vec!["5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y"; 256 + 1]
         });
@@ -45,7 +45,7 @@ mod get_recent_prioritization_fees_params_tests {
     }
 
     #[test]
-    fn should_not_deserialize_when_too_many_pubkeys() {
+    fn should_not_deserialize() {
         let params = json!(vec![
             "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
             128 + 1
