@@ -602,7 +602,7 @@ impl<R> SolRpcClient<R> {
     /// is limited to 256. More signatures result in an error.
     ///
     /// ```rust
-    /// use std::collections::BTreeSet;
+    /// use std::{str::FromStr, collections::BTreeSet};
     /// use assert_matches::assert_matches;
     /// use solana_signature::Signature;
     /// use sol_rpc_client::SolRpcClient;
@@ -612,8 +612,13 @@ impl<R> SolRpcClient<R> {
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
-    /// let too_many_signatures: BTreeSet<Signature> = (0..=257)
-    ///     .map(|i| Signature::from([i as u8; 64]))
+    /// let too_many_signatures: BTreeSet<Signature> = (0..257_u16)
+    ///     .map(|i| {
+    ///         let mut bytes = [0; 64];
+    ///         bytes[0] = (i >> 8) as u8;
+    ///         bytes[1] = (i & 0xff) as u8;
+    ///         Signature::from(bytes)
+    ///     })
     ///     .collect();
     /// assert_eq!(too_many_signatures.len(), 257);
     ///
