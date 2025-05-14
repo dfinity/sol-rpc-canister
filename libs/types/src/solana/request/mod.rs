@@ -1,8 +1,10 @@
 #[cfg(test)]
 mod tests;
 
-use crate::solana::VecWithMaxLen;
-use crate::{solana::Pubkey, RpcError, Signature, Slot};
+use crate::{
+    solana::{Pubkey, VecWithMaxLen},
+    RpcError, Signature, Slot,
+};
 use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
 use candid::{CandidType, Deserialize};
 use serde::Serialize;

@@ -46,7 +46,10 @@ mod get_recent_prioritization_fees_params_tests {
 
     #[test]
     fn should_not_deserialize_when_too_many_pubkeys() {
-        let params = json!(vec!["EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"; 128 + 1]);
+        let params = json!(vec![
+            "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+            128 + 1
+        ]);
 
         let result = GetRecentPrioritizationFeesParams::deserialize(&params);
 
