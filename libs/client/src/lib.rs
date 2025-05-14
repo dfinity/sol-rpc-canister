@@ -122,9 +122,6 @@
 pub mod fixtures;
 mod request;
 
-pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
-use std::{borrow::Borrow, fmt::Debug};
-
 use crate::request::{
     GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetRecentPrioritizationFeesRequest,
     GetRecentPrioritizationFeesRequestBuilder, GetSignatureStatusesRequest,
@@ -134,17 +131,18 @@ use crate::request::{
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
+pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
     GetRecentPrioritizationFeesParams, GetSignatureStatusesParams, GetSlotParams, GetSlotRpcConfig,
-    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, RpcConfig, RpcResult, RpcSources,
-    SendTransactionParams, Signature, Slot, SolanaCluster, SupportedRpcProvider,
+    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, Pubkey, RpcConfig, RpcResult,
+    RpcSources, SendTransactionParams, Signature, Slot, SolanaCluster, SupportedRpcProvider,
     SupportedRpcProviderId, TokenAmount, TransactionDetails, TransactionInfo,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
-use std::sync::Arc;
+use std::{fmt::Debug, sync::Arc};
 
 /// The principal identifying the productive Solana RPC canister under NNS control.
 ///
@@ -522,8 +520,9 @@ impl<R> SolRpcClient<R> {
     where
         I: IntoIterator<Item = &'a solana_pubkey::Pubkey>,
     {
-        let params =
-            GetRecentPrioritizationFeesParams::try_from(addresses.into_iter().collect::<Vec<_>>())?;
+        let params = GetRecentPrioritizationFeesParams::try_from(
+            addresses.into_iter().map(Pubkey::from).collect::<Vec<_>>(),
+        )?;
         Ok(RequestBuilder::new(
             self.clone(),
             GetRecentPrioritizationFeesRequest::from(params),
@@ -625,13 +624,12 @@ impl<R> SolRpcClient<R> {
     /// let err = client.get_signature_statuses(&too_many_signatures).unwrap_err();
     /// assert_matches!(err, RpcError::ValidationError(_));
     /// ```
-    pub fn get_signature_statuses<I, S>(
+    pub fn get_signature_statuses<'a, I>(
         &self,
         signatures: I,
     ) -> RpcResult<GetSignatureStatusesRequestBuilder<R>>
     where
-        I: IntoIterator<Item = S>,
-        S: Borrow<solana_signature::Signature>,
+        I: IntoIterator<Item = &'a solana_signature::Signature>,
     {
         let signatures = signatures.into_iter().collect::<Vec<_>>();
         let num_signatures = signatures.len();

@@ -1492,12 +1492,7 @@ mod cycles_cost_tests {
                     check(client.get_recent_prioritization_fees(&[]).unwrap()).await
                 }
                 SolRpcEndpoint::GetSignatureStatuses => {
-                    check(
-                        client
-                            .get_signature_statuses(vec![some_signature()])
-                            .unwrap(),
-                    )
-                    .await;
+                    check(client.get_signature_statuses(&[some_signature()]).unwrap()).await;
                 }
                 SolRpcEndpoint::GetTransaction => {
                     check(client.get_transaction(some_signature())).await;
@@ -1553,12 +1548,7 @@ mod cycles_cost_tests {
                     check(client.get_recent_prioritization_fees(&[]).unwrap()).await;
                 }
                 SolRpcEndpoint::GetSignatureStatuses => {
-                    check(
-                        client
-                            .get_signature_statuses(vec![some_signature()])
-                            .unwrap(),
-                    )
-                    .await;
+                    check(client.get_signature_statuses(&[some_signature()]).unwrap()).await;
                 }
                 SolRpcEndpoint::GetTokenAccountBalance => {
                     check(client.get_token_account_balance(USDC_PUBLIC_KEY)).await;
@@ -1680,9 +1670,7 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::GetSignatureStatuses => {
                     check(
                         &setup,
-                        client
-                            .get_signature_statuses(vec![some_signature()])
-                            .unwrap(),
+                        client.get_signature_statuses(&[some_signature()]).unwrap(),
                         1_744_458_400,
                     )
                     .await;
@@ -1925,7 +1913,7 @@ mod get_signature_statuses_tests {
                         .with_request_body(request_body(first_id + 2)),
                 ])
                 .build()
-                .get_signature_statuses(vec![some_signature(), another_signature()])
+                .get_signature_statuses(&[some_signature(), another_signature()])
                 .unwrap()
                 .with_search_transaction_history(true)
                 .send()

@@ -2,7 +2,7 @@
 mod tests;
 
 use candid::CandidType;
-use derive_more::From;
+use derive_more::{From, Into};
 use ic_cdk::api::call::RejectionCode;
 pub use ic_cdk::api::management_canister::http_request::HttpHeader;
 use regex::Regex;
@@ -29,6 +29,24 @@ pub enum RpcError {
     /// A validation error occurred.
     #[error("Validation error: {0}")]
     ValidationError(String),
+}
+
+impl From<solana_pubkey::ParsePubkeyError> for RpcError {
+    fn from(e: solana_pubkey::ParsePubkeyError) -> Self {
+        RpcError::ValidationError(format!("Invalid public key: {e}"))
+    }
+}
+
+impl From<solana_signature::ParseSignatureError> for RpcError {
+    fn from(e: solana_signature::ParseSignatureError) -> Self {
+        RpcError::ValidationError(format!("Invalid signature: {e}"))
+    }
+}
+
+impl From<solana_hash::ParseHashError> for RpcError {
+    fn from(e: solana_hash::ParseHashError) -> Self {
+        RpcError::ValidationError(format!("Invalid hash: {e}"))
+    }
 }
 
 /// An error with an RPC provider.
@@ -117,7 +135,7 @@ pub struct GetSlotRpcConfig {
     /// this error threshold. This is done to achieve consensus between nodes on the value
     /// of the latest slot despite the fast Solana block time.
     #[serde(rename = "roundingError")]
-    pub rounding_error: Option<u64>,
+    pub rounding_error: Option<RoundingError>,
 }
 
 impl From<GetSlotRpcConfig> for RpcConfig {
@@ -186,7 +204,7 @@ pub struct GetRecentPrioritizationFeesRpcConfig {
     /// Increasing that value will reduce the freshness of the returned prioritization fees
     /// but increase the likelihood of nodes reaching consensus.
     #[serde(rename = "maxSlotRoundingError")]
-    pub max_slot_rounding_error: Option<u64>,
+    pub max_slot_rounding_error: Option<RoundingError>,
 
     /// Limit the number of returned priority fees.
     ///
@@ -436,4 +454,80 @@ pub struct OverrideProvider {
     /// The regular expression used to override the [`RpcEndpoint`] in when the [`OverrideProvider`] is applied.
     #[serde(rename = "overrideUrl")]
     pub override_url: Option<RegexSubstitution>,
+}
+
+/// This type defines a rounding error to use when fetching the current
+/// [slot](https://solana.com/docs/references/terminology#slot) from Solana using the JSON-RPC
+/// interface, meaning slots will be rounded down to the nearest multiple of this error when
+/// being fetched.
+///
+/// This is done to achieve consensus on the HTTP outcalls whose responses contain Solana slots
+/// despite Solana's fast blocktime and hence fast-changing slot value. However, this solution
+/// does not guarantee consensus on the slot value across nodes and different consensus rates
+/// will be achieved depending on the rounding error value used. A higher rounding error will
+/// lead to a higher consensus rate, but also means the slot value may differ more from the actual
+/// value on the Solana blockchain. This means, for example, that setting a large rounding error
+/// and then fetching the corresponding block with the Solana
+/// [`getBlock`](https://solana.com/docs/rpc/http/getblock) RPC method can result in obtaining a
+/// block whose hash is too old to use in a valid Solana transaction (see more details about using
+/// recent blockhashes [here](https://solana.com/developers/guides/advanced/confirmation#how-does-transaction-expiration-work).
+///
+/// The default value given by [`RoundingError::default`]
+/// has been experimentally shown to achieve a high HTTP outcall consensus rate.
+///
+/// See the [`RoundingError::round`] method for more details and examples.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    CandidType,
+    From,
+    Into,
+    Serialize,
+    Deserialize,
+)]
+#[serde(transparent)]
+pub struct RoundingError(u64);
+
+impl Default for RoundingError {
+    fn default() -> Self {
+        Self(20)
+    }
+}
+
+impl AsRef<u64> for RoundingError {
+    fn as_ref(&self) -> &u64 {
+        &self.0
+    }
+}
+
+impl RoundingError {
+    /// Create a new instance of [`RoundingError`] with the given value.
+    pub fn new(rounding_error: u64) -> Self {
+        Self(rounding_error)
+    }
+
+    /// Round the given value down to the nearest multiple of the rounding error.
+    /// A rounding error of 0 or 1 leads to this method returning the input unchanged.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_types::RoundingError;
+    ///
+    /// assert_eq!(RoundingError::new(0).round(19), 19);
+    /// assert_eq!(RoundingError::new(1).round(19), 19);
+    /// assert_eq!(RoundingError::new(10).round(19), 10);
+    /// assert_eq!(RoundingError::new(20).round(19), 0);
+    /// ```
+    pub fn round(&self, slot: u64) -> u64 {
+        match self.0 {
+            0 | 1 => slot,
+            n => (slot / n) * n,
+        }
+    }
 }

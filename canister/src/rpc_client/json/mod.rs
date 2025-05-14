@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetBlockCommitmentLevel,
-    GetTransactionEncoding, Pubkey, SendTransactionEncoding, Slot, TransactionDetails,
+    GetTransactionEncoding, Pubkey, SendTransactionEncoding, Signature, Slot, TransactionDetails,
 };
 use solana_transaction_status_client_types::UiTransactionEncoding;
 
@@ -57,7 +57,7 @@ impl From<sol_rpc_types::GetAccountInfoParams> for GetAccountInfoParams {
                 min_context_slot: params.min_context_slot,
             })
         };
-        Self(params.pubkey, config)
+        Self(params.pubkey.to_string(), config)
     }
 }
 
@@ -107,7 +107,7 @@ impl From<sol_rpc_types::GetBalanceParams> for GetBalanceParams {
         } else {
             None
         };
-        GetBalanceParams(pubkey, config)
+        GetBalanceParams(pubkey.to_string(), config)
     }
 }
 
@@ -183,8 +183,8 @@ impl From<sol_rpc_types::GetRecentPrioritizationFeesParams> for GetRecentPriorit
 
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(Vec<String>, Option<GetSignatureStatusesConfig>)")]
-pub struct GetSignatureStatusesParams(Vec<String>, Option<GetSignatureStatusesConfig>);
+#[serde(into = "(Vec<Signature>, Option<GetSignatureStatusesConfig>)")]
+pub struct GetSignatureStatusesParams(Vec<Signature>, Option<GetSignatureStatusesConfig>);
 
 impl GetSignatureStatusesParams {
     pub fn num_signatures(&self) -> usize {
@@ -203,7 +203,7 @@ impl From<sol_rpc_types::GetSignatureStatusesParams> for GetSignatureStatusesPar
     }
 }
 
-impl From<GetSignatureStatusesParams> for (Vec<String>, Option<GetSignatureStatusesConfig>) {
+impl From<GetSignatureStatusesParams> for (Vec<Signature>, Option<GetSignatureStatusesConfig>) {
     fn from(params: GetSignatureStatusesParams) -> Self {
         (params.0, params.1)
     }
@@ -230,7 +230,7 @@ pub struct GetTokenAccountBalanceConfig {
 impl From<sol_rpc_types::GetTokenAccountBalanceParams> for GetTokenAccountBalanceParams {
     fn from(params: sol_rpc_types::GetTokenAccountBalanceParams) -> Self {
         Self(
-            params.pubkey,
+            params.pubkey.to_string(),
             params
                 .commitment
                 .map(|commitment| GetTokenAccountBalanceConfig {
@@ -262,7 +262,7 @@ impl From<sol_rpc_types::GetTransactionParams> for GetTransactionParams {
                 encoding: params.encoding,
             })
         };
-        Self(params.signature, config)
+        Self(params.signature.to_string(), config)
     }
 }
 

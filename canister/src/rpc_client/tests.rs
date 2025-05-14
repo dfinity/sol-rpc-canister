@@ -8,9 +8,11 @@ use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
     GetBlockCommitmentLevel, GetBlockParams, GetSignatureStatusesParams, GetSlotParams,
     GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionEncoding, GetTransactionParams,
-    RpcConfig, RpcSources, SendTransactionEncoding, SendTransactionParams, SolanaCluster,
-    TransactionDetails,
+    RpcConfig, RpcSources, SendTransactionEncoding, SendTransactionParams, Signature,
+    SolanaCluster, TransactionDetails,
 };
+use solana_pubkey::pubkey;
+use std::str::FromStr;
 
 mod request_serialization_tests {
     use super::*;
@@ -31,7 +33,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 GetAccountInfoParams {
-                    pubkey: "11111111111111111111111111111111".to_string(),
+                    pubkey: pubkey!("11111111111111111111111111111111").into(),
                     commitment: Some(CommitmentLevel::Processed),
                     encoding: Some(GetAccountInfoEncoding::Base58),
                     data_slice: Some(DataSlice {
@@ -103,8 +105,8 @@ mod request_serialization_tests {
                 RpcConfig::default(),
                 GetSignatureStatusesParams {
                     signatures: vec![
-                        "5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y".to_string(),
-                        "FAAHyQpENs991w9BR7jpwzyXk74jhQWzbsSbjs4NJWkYeL6nggNfT5baWy6eBNLSuqfiiYRGfEC5bhwxUVBZamB".to_string()
+                        Signature::from_str("5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y").unwrap(),
+                        Signature::from_str("FAAHyQpENs991w9BR7jpwzyXk74jhQWzbsSbjs4NJWkYeL6nggNfT5baWy6eBNLSuqfiiYRGfEC5bhwxUVBZamB").unwrap()
                     ].try_into().unwrap(),
                     search_transaction_history: Some(true),
                 },
@@ -139,7 +141,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 GetTransactionParams {
-                    signature: solana_signature::Signature::default().to_string(),
+                    signature: Signature::default(),
                     commitment: Some(CommitmentLevel::Confirmed),
                     max_supported_transaction_version: Some(2),
                     encoding: Some(GetTransactionEncoding::Base64),
@@ -175,7 +177,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 GetBalanceParams {
-                    pubkey: pubkey.to_string(),
+                    pubkey: pubkey.into(),
                     commitment: Some(CommitmentLevel::Confirmed),
                     min_context_slot: Some(42),
                 },
@@ -211,7 +213,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 GetTokenAccountBalanceParams {
-                    pubkey: pubkey.to_string(),
+                    pubkey: pubkey.into(),
                     commitment: Some(CommitmentLevel::Confirmed),
                 },
             )

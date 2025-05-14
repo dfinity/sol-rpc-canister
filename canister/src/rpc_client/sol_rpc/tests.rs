@@ -1,7 +1,16 @@
-use crate::{rpc_client::sol_rpc::ResponseTransform, types::RoundingError};
+use crate::rpc_client::sol_rpc::ResponseTransform;
 use canhttp::http::json::{Id, JsonRpcResponse};
-use proptest::proptest;
+use proptest::{
+    array::uniform32,
+    prelude::{any, prop, Strategy},
+    prop_assert_eq, proptest,
+};
+use rand::prelude::SliceRandom;
+use rand_chacha::{rand_core::SeedableRng, ChaCha20Rng};
+use serde::Serialize;
 use serde_json::{from_slice, json, to_vec, Value};
+use sol_rpc_types::{PrioritizationFee, RoundingError, Slot};
+use std::ops::RangeInclusive;
 use strum::IntoEnumIterator;
 
 mod normalization_tests {
@@ -428,19 +437,7 @@ mod normalization_tests {
 }
 
 mod get_recent_prioritization_fees {
-    use crate::{rpc_client::sol_rpc::ResponseTransform, types::RoundingError};
-    use proptest::{
-        arbitrary::any,
-        array::uniform32,
-        prelude::{prop, Strategy},
-        prop_assert_eq, proptest,
-    };
-    use rand::prelude::SliceRandom;
-    use rand_chacha::{rand_core::SeedableRng, ChaCha20Rng};
-    use serde::Serialize;
-    use serde_json::json;
-    use sol_rpc_types::{PrioritizationFee, Slot};
-    use std::ops::RangeInclusive;
+    use super::*;
 
     #[test]
     fn should_normalize_response_with_less_than_150_entries() {
@@ -565,9 +562,9 @@ mod get_recent_prioritization_fees {
             max_slot_rounding_error: RoundingError::new(10),
             max_length: 100,
         };
-        let mut raw_bytes = serde_json::to_vec(&json_response(&fees)).unwrap();
+        let mut raw_bytes = to_vec(&json_response(&fees)).unwrap();
         transform.apply(&mut raw_bytes);
-        let transformed_response: serde_json::Value = serde_json::from_slice(&raw_bytes).unwrap();
+        let transformed_response: Value = from_slice(&raw_bytes).unwrap();
 
         assert_eq!(transformed_response, json_response(&fees[0..2]));
     }

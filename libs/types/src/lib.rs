@@ -18,8 +18,8 @@ pub use response::MultiRpcResult;
 pub use rpc_client::{
     ConsensusStrategy, GetRecentPrioritizationFeesRpcConfig, GetSlotRpcConfig, HttpHeader,
     HttpOutcallError, JsonRpcError, OverrideProvider, ProviderError, RegexString,
-    RegexSubstitution, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource,
-    RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    RegexSubstitution, RoundingError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
+    RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use serde::Serialize;
 pub use solana::{
@@ -39,7 +39,7 @@ pub use solana::{
         TransactionConfirmationStatus, TransactionInfo, TransactionReturnData, TransactionStatus,
         TransactionStatusMeta, TransactionTokenBalance, TransactionVersion,
     },
-    Blockhash, ConfirmedBlock, Lamport, PrioritizationFee, Pubkey, Signature, Slot, Timestamp,
+    ConfirmedBlock, Hash, Lamport, PrioritizationFee, Pubkey, Signature, Slot, Timestamp,
 };
 
 /// A vector with a maximum capacity.

@@ -5,7 +5,6 @@ use crate::{solana::Pubkey, RpcError, Signature, Slot, VecWithMaxLen};
 use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
-use std::borrow::Borrow;
 
 /// The parameters for a Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method call.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
@@ -40,10 +39,10 @@ impl GetAccountInfoParams {
             && min_context_slot.is_none()
     }
 
-    /// Parameters for a `getAccountInfo` request with the given pubkey already base58-encoded.
-    pub fn from_encoded_pubkey(pubkey: String) -> Self {
+    /// Parameters for a `getAccountInfo` request with the given pubkey.
+    pub fn from_pubkey<P: Into<Pubkey>>(pubkey: P) -> Self {
         Self {
-            pubkey,
+            pubkey: pubkey.into(),
             commitment: None,
             encoding: None,
             data_slice: None,
@@ -54,7 +53,7 @@ impl GetAccountInfoParams {
 
 impl From<solana_pubkey::Pubkey> for GetAccountInfoParams {
     fn from(pubkey: solana_pubkey::Pubkey) -> Self {
-        Self::from_encoded_pubkey(pubkey.to_string())
+        Self::from_pubkey(pubkey)
     }
 }
 
@@ -88,7 +87,7 @@ pub struct DataSlice {
 }
 
 /// The parameters for a Solana [`getBalance`](https://solana.com/docs/rpc/http/getbalance) RPC method call.
-#[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub struct GetBalanceParams {
     /// The public key of the account to query formatted as a base-58 string.
     pub pubkey: Pubkey,
@@ -99,13 +98,20 @@ pub struct GetBalanceParams {
     pub min_context_slot: Option<u64>,
 }
 
-impl From<solana_pubkey::Pubkey> for GetBalanceParams {
-    fn from(pubkey: solana_pubkey::Pubkey) -> Self {
+impl GetBalanceParams {
+    /// Parameters for a `getBalance` request with the given pubkey.
+    pub fn from_pubkey<P: Into<Pubkey>>(pubkey: P) -> Self {
         Self {
-            pubkey: pubkey.to_string(),
+            pubkey: pubkey.into(),
             commitment: None,
             min_context_slot: None,
         }
+    }
+}
+
+impl From<solana_pubkey::Pubkey> for GetBalanceParams {
+    fn from(pubkey: solana_pubkey::Pubkey) -> Self {
+        Self::from_pubkey(pubkey)
     }
 }
 
@@ -181,14 +187,14 @@ pub enum TransactionDetails {
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
 pub struct GetRecentPrioritizationFeesParams(VecWithMaxLen<Pubkey, 128>);
 
-impl<P: Borrow<solana_pubkey::Pubkey>> TryFrom<Vec<P>> for GetRecentPrioritizationFeesParams {
+impl<P: Into<Pubkey>> TryFrom<Vec<P>> for GetRecentPrioritizationFeesParams {
     type Error = RpcError;
 
     fn try_from(pubkeys: Vec<P>) -> Result<Self, Self::Error> {
         Ok(Self(
             pubkeys
                 .into_iter()
-                .map(|s| s.borrow().to_string())
+                .map(Into::into)
                 .collect::<Vec<_>>()
                 .try_into()?,
         ))
@@ -197,7 +203,7 @@ impl<P: Borrow<solana_pubkey::Pubkey>> TryFrom<Vec<P>> for GetRecentPrioritizati
 
 impl From<solana_pubkey::Pubkey> for GetRecentPrioritizationFeesParams {
     fn from(value: solana_pubkey::Pubkey) -> Self {
-        Self(VecWithMaxLen::try_from(vec![value.to_string()]).unwrap())
+        Self(VecWithMaxLen::try_from(vec![Pubkey::from(value)]).unwrap())
     }
 }
 
@@ -217,14 +223,14 @@ pub struct GetSignatureStatusesParams {
     pub search_transaction_history: Option<bool>,
 }
 
-impl<S: Borrow<solana_signature::Signature>> TryFrom<Vec<S>> for GetSignatureStatusesParams {
+impl<S: Into<Signature>> TryFrom<Vec<S>> for GetSignatureStatusesParams {
     type Error = RpcError;
 
     fn try_from(signatures: Vec<S>) -> Result<Self, Self::Error> {
         Ok(Self {
             signatures: signatures
                 .into_iter()
-                .map(|s| s.borrow().to_string())
+                .map(Into::into)
                 .collect::<Vec<_>>()
                 .try_into()?,
             search_transaction_history: None,
@@ -254,7 +260,7 @@ impl GetSlotParams {
 }
 
 /// The parameters for a Solana [`getTokenAccountBalance`](https://solana.com/docs/rpc/http/gettokenaccountbalance) RPC method call.
-#[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub struct GetTokenAccountBalanceParams {
     /// The public key of the token account to query formatted as a base-58 string.
     pub pubkey: Pubkey,
@@ -262,12 +268,19 @@ pub struct GetTokenAccountBalanceParams {
     pub commitment: Option<CommitmentLevel>,
 }
 
-impl From<solana_pubkey::Pubkey> for GetTokenAccountBalanceParams {
-    fn from(pubkey: solana_pubkey::Pubkey) -> Self {
+impl GetTokenAccountBalanceParams {
+    /// Parameters for a `getTokenAccountBalance` request with the given pubkey.
+    pub fn from_pubkey<P: Into<Pubkey>>(pubkey: P) -> Self {
         Self {
-            pubkey: pubkey.to_string(),
+            pubkey: pubkey.into(),
             commitment: None,
         }
+    }
+}
+
+impl From<solana_pubkey::Pubkey> for GetTokenAccountBalanceParams {
+    fn from(pubkey: solana_pubkey::Pubkey) -> Self {
+        Self::from_pubkey(pubkey)
     }
 }
 
@@ -306,7 +319,7 @@ impl GetTransactionParams {
 impl From<solana_signature::Signature> for GetTransactionParams {
     fn from(signature: solana_signature::Signature) -> Self {
         Self {
-            signature: signature.to_string(),
+            signature: signature.into(),
             commitment: None,
             max_supported_transaction_version: None,
             encoding: None,

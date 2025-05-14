@@ -1,3 +1,4 @@
+pub mod cbor;
 pub mod json;
 mod sol_rpc;
 #[cfg(test)]
@@ -11,7 +12,6 @@ use crate::{
     metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider, Providers},
     rpc_client::sol_rpc::ResponseTransform,
-    types::RoundingError,
 };
 use canhttp::{
     http::json::JsonRpcRequest,
@@ -207,10 +207,7 @@ impl GetSlotRequest {
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(1024 + HEADER_SIZE_LIMIT);
-        let rounding_error = config
-            .rounding_error
-            .map(RoundingError::from)
-            .unwrap_or_default();
+        let rounding_error = config.rounding_error.unwrap_or_default();
 
         Ok(MultiRpcRequest::new(
             providers,
@@ -242,10 +239,7 @@ impl GetRecentPrioritizationFeesRequest {
             JsonRpcRequest::new("getRecentPrioritizationFees", params.into()),
             max_response_bytes,
             ResponseTransform::GetRecentPrioritizationFees {
-                max_slot_rounding_error: config
-                    .max_slot_rounding_error
-                    .map(RoundingError::new)
-                    .unwrap_or_default(),
+                max_slot_rounding_error: config.max_slot_rounding_error.unwrap_or_default(),
                 max_length: config.max_length.unwrap_or(100),
             },
             ReductionStrategy::from(consensus_strategy),
