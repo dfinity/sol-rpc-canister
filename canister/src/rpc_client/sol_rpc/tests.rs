@@ -1,10 +1,11 @@
-use crate::{rpc_client::sol_rpc::ResponseTransform, types::RoundingError};
+use crate::rpc_client::sol_rpc::ResponseTransform;
 use canhttp::http::json::{Id, JsonRpcResponse};
 use proptest::proptest;
 use serde_json::{from_slice, json, to_vec, Value};
 
 mod normalization_tests {
     use super::*;
+    use sol_rpc_types::RoundingError;
     use strum::IntoEnumIterator;
 
     #[test]
@@ -338,7 +339,6 @@ mod normalization_tests {
 
 mod get_recent_prioritization_fees {
     use crate::rpc_client::sol_rpc::ResponseTransform;
-    use crate::types::RoundingError;
     use proptest::arbitrary::any;
     use proptest::array::uniform32;
     use proptest::prelude::{prop, Strategy};
@@ -348,7 +348,7 @@ mod get_recent_prioritization_fees {
     use rand_chacha::ChaCha20Rng;
     use serde::Serialize;
     use serde_json::json;
-    use sol_rpc_types::{PrioritizationFee, Slot};
+    use sol_rpc_types::{PrioritizationFee, RoundingError, Slot};
     use std::ops::RangeInclusive;
 
     #[test]

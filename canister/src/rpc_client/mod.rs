@@ -11,7 +11,6 @@ use crate::{
     metrics::MetricRpcMethod,
     providers::{request_builder, resolve_rpc_provider, Providers},
     rpc_client::sol_rpc::ResponseTransform,
-    types::RoundingError,
 };
 use canhttp::{
     http::json::JsonRpcRequest,
@@ -26,8 +25,8 @@ use ic_cdk::api::management_canister::http_request::{
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
     ConsensusStrategy, GetRecentPrioritizationFeesRpcConfig, GetSlotRpcConfig, Lamport,
-    PrioritizationFee, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource, RpcSources,
-    Signature, TransactionDetails,
+    PrioritizationFee, ProviderError, RoundingError, RpcConfig, RpcError, RpcResult, RpcSource,
+    RpcSources, Signature, TransactionDetails,
 };
 use solana_clock::Slot;
 use std::{fmt::Debug, marker::PhantomData};
