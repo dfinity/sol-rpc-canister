@@ -27,9 +27,9 @@ pub use solana::{
     request::{
         CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
         GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
-        GetSignatureStatusesParams, GetSlotParams, GetTokenAccountBalanceParams,
-        GetTransactionEncoding, GetTransactionParams, SendTransactionEncoding,
-        SendTransactionParams, TransactionDetails,
+        GetSignatureStatusesParams, GetSignaturesForAddressLimit, GetSignaturesForAddressParams,
+        GetSlotParams, GetTokenAccountBalanceParams, GetTransactionEncoding, GetTransactionParams,
+        SendTransactionEncoding, SendTransactionParams, TransactionDetails,
     },
     transaction::{
         error::{InstructionError, TransactionError},
