@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests;
 
-use crate::types::RoundingError;
 use candid::candid_method;
 use canhttp::http::json::JsonRpcResponse;
 use ic_cdk::{
@@ -11,7 +10,7 @@ use ic_cdk::{
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{from_slice, Value};
-use sol_rpc_types::PrioritizationFee;
+use sol_rpc_types::{PrioritizationFee, RoundingError};
 use solana_clock::Slot;
 use std::fmt::Debug;
 use strum::EnumIter;
@@ -29,13 +28,13 @@ pub enum ResponseTransform {
     GetBlock,
     #[n(3)]
     GetRecentPrioritizationFees {
-        #[n(0)]
+        #[cbor(n(0), with = "crate::rpc_client::cbor::rounding_error")]
         max_slot_rounding_error: RoundingError,
         #[n(1)]
         max_length: u8,
     },
     #[n(4)]
-    GetSlot(#[n(0)] RoundingError),
+    GetSlot(#[cbor(n(0), with = "crate::rpc_client::cbor::rounding_error")] RoundingError),
     #[n(5)]
     GetTokenAccountBalance,
     #[n(6)]

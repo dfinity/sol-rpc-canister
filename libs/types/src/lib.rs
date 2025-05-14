@@ -13,8 +13,8 @@ pub use response::MultiRpcResult;
 pub use rpc_client::{
     ConsensusStrategy, GetRecentPrioritizationFeesRpcConfig, GetSlotRpcConfig, HttpHeader,
     HttpOutcallError, JsonRpcError, OverrideProvider, ProviderError, RegexString,
-    RegexSubstitution, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource,
-    RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    RegexSubstitution, RoundingError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
+    RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
 pub use solana::{
     account::{AccountData, AccountEncoding, AccountInfo, ParsedAccount},
