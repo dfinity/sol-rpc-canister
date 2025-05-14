@@ -174,6 +174,38 @@ pub enum TransactionDetails {
     None,
 }
 
+/// The parameters for a Solana [`getRecentPrioritizationFees`](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees) RPC method call.
+#[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
+#[serde(try_from = "Vec<Pubkey>")]
+pub struct GetRecentPrioritizationFeesParams(Vec<Pubkey>);
+
+impl TryFrom<Vec<Pubkey>> for GetRecentPrioritizationFeesParams {
+    type Error = RpcError;
+
+    fn try_from(accounts: Vec<Pubkey>) -> Result<Self, Self::Error> {
+        const MAX_NUM_ACCOUNTS: usize = 128;
+        if accounts.len() > MAX_NUM_ACCOUNTS {
+            return Err(RpcError::ValidationError(format!(
+                "Expected at most {MAX_NUM_ACCOUNTS} account addresses, but got {}",
+                accounts.len()
+            )));
+        }
+        Ok(Self(accounts))
+    }
+}
+
+impl From<solana_pubkey::Pubkey> for GetRecentPrioritizationFeesParams {
+    fn from(value: solana_pubkey::Pubkey) -> Self {
+        Self(vec![value.to_string()])
+    }
+}
+
+impl From<GetRecentPrioritizationFeesParams> for Vec<Pubkey> {
+    fn from(value: GetRecentPrioritizationFeesParams) -> Self {
+        value.0
+    }
+}
+
 /// The parameters for a Solana [`getSignatureStatuses`](https://solana.com/docs/rpc/http/getsignaturestatuses) RPC method call.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
 pub struct GetSignatureStatusesParams {

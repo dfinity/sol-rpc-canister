@@ -25,6 +25,24 @@ CYCLES=$(dfx canister call sol_rpc getSlotCyclesCost "$GET_SLOT_PARAMS" $FLAGS -
 GET_SLOT_OUTPUT=$(dfx canister call sol_rpc getSlot "$GET_SLOT_PARAMS" $FLAGS --output json --with-cycles "$CYCLES" || exit 1)
 SLOT=$(jq --raw-output '.Consistent.Ok' <<< "$GET_SLOT_OUTPUT")
 
+
+# Get the recent prioritization fees on Mainnet with a 2-out-of-3 strategy for USDC
+GET_RECENT_PRIORITIZATION_FEES_PARAMS="(
+  variant { Default = variant { Mainnet } },
+  opt record {
+    responseConsensus = opt variant {
+      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+    };
+    responseSizeEstimate = null;
+    maxSlotRoundingError = opt (20 : nat64);
+    maxLength = opt (100 : nat8);
+  },
+  opt vec { \"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v\" },
+)"
+CYCLES=$(dfx canister call sol_rpc getRecentPrioritizationFeesCyclesCost "$GET_RECENT_PRIORITIZATION_FEES_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
+GET_RECENT_PRIORITIZATION_FEES_OUTPUT=$(dfx canister call sol_rpc getRecentPrioritizationFees "$GET_RECENT_PRIORITIZATION_FEES_PARAMS" $FLAGS --output json --with-cycles "$CYCLES" || exit 1)
+GET_RECENT_PRIORITIZATION_FEES=$(jq --raw-output '.Consistent.Ok' <<< "$GET_RECENT_PRIORITIZATION_FEES_OUTPUT")
+
 # Fetch the latest finalized block
 GET_BLOCK_PARAMS="(
   variant { Default = variant { Mainnet } },

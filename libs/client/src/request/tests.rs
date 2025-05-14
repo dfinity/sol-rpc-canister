@@ -38,8 +38,11 @@ fn should_set_correct_commitment_level() {
                     Some(GetBlockCommitmentLevel::Confirmed)
                 );
             }
+            SolRpcEndpoint::GetRecentPrioritizationFees => {
+                // no op, GetRecentPrioritizationFees does not use commitment level
+            }
             SolRpcEndpoint::GetSignatureStatuses => {
-                // No commitment level in request parameters
+                // no op, GetSignatureStatuses does not use commitment level
             }
             SolRpcEndpoint::GetSlot => {
                 let builder = client_with_commitment_level.get_slot();

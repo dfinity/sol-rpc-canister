@@ -29,4 +29,5 @@ sol_rpc_types = { version = "0.1.0", path = "../types" }
 strum = { workspace = true }
 
 [dev-dependencies]
+assert_matches = { workspace = true }
 tokio = { workspace = true, features = ["full"] }

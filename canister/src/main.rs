@@ -14,10 +14,11 @@ use sol_rpc_canister::{
 };
 use sol_rpc_types::{
     AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
+    GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
     GetSignatureStatusesParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
-    GetTransactionParams, Lamport, MultiRpcResult, RpcAccess, RpcConfig, RpcResult, RpcSources,
-    SendTransactionParams, Signature, Slot, SupportedRpcProvider, SupportedRpcProviderId,
-    TokenAmount, TransactionInfo, TransactionStatus,
+    GetTransactionParams, Lamport, MultiRpcResult, PrioritizationFee, RpcAccess, RpcConfig,
+    RpcResult, RpcSources, SendTransactionParams, Signature, Slot, SupportedRpcProvider,
+    SupportedRpcProviderId, TokenAmount, TransactionInfo, TransactionStatus,
 };
 use std::str::FromStr;
 
@@ -153,6 +154,40 @@ async fn get_block_cycles_cost(
     MultiRpcRequest::get_block(source, config.unwrap_or_default(), params)?
         .cycles_cost()
         .await
+}
+
+#[update(name = "getRecentPrioritizationFees")]
+#[candid_method(rename = "getRecentPrioritizationFees")]
+async fn get_recent_prioritization_fees(
+    source: RpcSources,
+    config: Option<GetRecentPrioritizationFeesRpcConfig>,
+    params: Option<GetRecentPrioritizationFeesParams>,
+) -> MultiRpcResult<Vec<PrioritizationFee>> {
+    let request = MultiRpcRequest::get_recent_prioritization_fees(
+        source,
+        config.unwrap_or_default(),
+        params.unwrap_or_default(),
+    );
+    send_multi(request).await
+}
+
+#[query(name = "getRecentPrioritizationFeesCyclesCost")]
+#[candid_method(query, rename = "getRecentPrioritizationFeesCyclesCost")]
+async fn get_recent_prioritization_fees_cycles_cost(
+    source: RpcSources,
+    config: Option<GetRecentPrioritizationFeesRpcConfig>,
+    params: Option<GetRecentPrioritizationFeesParams>,
+) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
+    MultiRpcRequest::get_recent_prioritization_fees(
+        source,
+        config.unwrap_or_default(),
+        params.unwrap_or_default(),
+    )?
+    .cycles_cost()
+    .await
 }
 
 #[update(name = "getSignatureStatuses")]

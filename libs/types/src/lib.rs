@@ -11,18 +11,19 @@ mod solana;
 pub use lifecycle::{InstallArgs, Mode, NumSubnetNodes};
 pub use response::MultiRpcResult;
 pub use rpc_client::{
-    ConsensusStrategy, GetSlotRpcConfig, HttpHeader, HttpOutcallError, JsonRpcError,
-    OverrideProvider, ProviderError, RegexString, RegexSubstitution, RpcAccess, RpcAuth, RpcConfig,
-    RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider,
-    SupportedRpcProviderId,
+    ConsensusStrategy, GetRecentPrioritizationFeesRpcConfig, GetSlotRpcConfig, HttpHeader,
+    HttpOutcallError, JsonRpcError, OverrideProvider, ProviderError, RegexString,
+    RegexSubstitution, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource,
+    RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
 pub use solana::{
     account::{AccountData, AccountEncoding, AccountInfo, ParsedAccount},
     request::{
         CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
-        GetBlockCommitmentLevel, GetBlockParams, GetSignatureStatusesParams, GetSlotParams,
-        GetTokenAccountBalanceParams, GetTransactionEncoding, GetTransactionParams,
-        SendTransactionEncoding, SendTransactionParams, TransactionDetails,
+        GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
+        GetSignatureStatusesParams, GetSlotParams, GetTokenAccountBalanceParams,
+        GetTransactionEncoding, GetTransactionParams, SendTransactionEncoding,
+        SendTransactionParams, TransactionDetails,
     },
     transaction::{
         error::{InstructionError, TransactionError},
@@ -32,5 +33,5 @@ pub use solana::{
         TransactionConfirmationStatus, TransactionInfo, TransactionReturnData, TransactionStatus,
         TransactionStatusMeta, TransactionTokenBalance, TransactionVersion,
     },
-    Blockhash, ConfirmedBlock, Lamport, Pubkey, Signature, Slot, Timestamp,
+    Blockhash, ConfirmedBlock, Lamport, PrioritizationFee, Pubkey, Signature, Slot, Timestamp,
 };

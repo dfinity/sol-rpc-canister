@@ -9,11 +9,12 @@ use sol_rpc_int_tests::{spl, PocketIcLiveModeRuntime};
 use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoEncoding, GetAccountInfoParams, GetBlockCommitmentLevel,
     GetBlockParams, GetTransactionEncoding, GetTransactionParams, InstallArgs, Lamport,
-    OverrideProvider, RegexSubstitution, TransactionDetails, TransactionStatus,
+    OverrideProvider, PrioritizationFee, RegexSubstitution, TransactionDetails, TransactionStatus,
 };
 use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
 use solana_client::rpc_client::{RpcClient as SolanaRpcClient, RpcClient};
 use solana_commitment_config::CommitmentConfig;
+use solana_compute_budget_interface::ComputeBudgetInstruction;
 use solana_hash::Hash;
 use solana_keypair::Keypair;
 use solana_program::{
@@ -21,13 +22,17 @@ use solana_program::{
     system_instruction, sysvar,
 };
 use solana_pubkey::{pubkey, Pubkey};
-use solana_rpc_client_api::config::{RpcBlockConfig, RpcTransactionConfig};
+use solana_rpc_client_api::{
+    config::{RpcBlockConfig, RpcTransactionConfig},
+    response::RpcPrioritizationFee,
+};
 use solana_signature::Signature;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
 use solana_transaction_status_client_types::UiTransactionEncoding;
 use std::{
     future::Future,
+    iter::zip,
     str::FromStr,
     thread,
     thread::sleep,
@@ -57,6 +62,95 @@ async fn should_get_slot() {
         sol_res.abs_diff(ic_res) < 20,
         "Difference is too large between slot {sol_res} from Solana client and slot {ic_res} from the SOL RPC canister"
     );
+
+    setup.setup.drop().await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn should_get_recent_prioritization_fees() {
+    const BASE_FEE_PER_SIGNATURE_LAMPORTS: u64 = 5000;
+    const NUM_TRANSACTIONS: u64 = 10;
+
+    let setup = Setup::new().await;
+
+    let (sender, sender_balance_before) = setup.generate_keypair_and_fund_account();
+    let (recipient, _recipient_balance_before) = setup.generate_keypair_and_fund_account();
+
+    // Generate some transactions with priority fees to ensure that
+    // 1) There are some slots
+    // 2) Priority fee is not always 0
+    let mut transactions = Vec::with_capacity(NUM_TRANSACTIONS as usize);
+    let transaction_amount = 1;
+    for micro_lamports in 1..=NUM_TRANSACTIONS {
+        let modify_cu_ix = ComputeBudgetInstruction::set_compute_unit_limit(1_000_000);
+        let add_priority_fee_ix = ComputeBudgetInstruction::set_compute_unit_price(micro_lamports);
+        let transfer_ix =
+            system_instruction::transfer(&sender.pubkey(), &recipient.pubkey(), transaction_amount);
+        let blockhash = setup.solana_client.get_latest_blockhash().unwrap();
+        let transaction = Transaction::new_signed_with_payer(
+            &[modify_cu_ix, add_priority_fee_ix, transfer_ix],
+            Some(&sender.pubkey()),
+            &[&sender],
+            blockhash,
+        );
+        let signature = setup
+            .solana_client
+            .send_and_confirm_transaction(&transaction)
+            .unwrap();
+        println!("Sent transaction {micro_lamports}: {signature}");
+        transactions.push(signature);
+    }
+
+    let spent_lamports = NUM_TRANSACTIONS * transaction_amount //amount sent
+            + NUM_TRANSACTIONS * BASE_FEE_PER_SIGNATURE_LAMPORTS //base fee
+            + NUM_TRANSACTIONS * (NUM_TRANSACTIONS+1) / 2; //prioritization_fee = 1 µL * CUL / 1_000_000 + .. + NUM_TRANSACTIONS * CUL / 1_000_000 and compute unit limit was set to 1 million.
+    assert_eq!(
+        sender_balance_before - setup.solana_client.get_balance(&sender.pubkey()).unwrap(),
+        spent_lamports
+    );
+
+    setup.confirm_transaction(transactions.last().unwrap());
+
+    let account = sender.pubkey();
+    let (sol_res, ic_res) = setup
+        .compare_client(
+            |sol| {
+                sol.get_recent_prioritization_fees(&[account])
+                    .expect("Failed to get recent prioritization fees")
+            },
+            |ic| async move {
+                ic.get_recent_prioritization_fees(&[account])
+                    .unwrap()
+                    .with_max_length(150)
+                    .with_max_slot_rounding_error(1)
+                    .send()
+                    .await
+                    .expect_consistent()
+                    .unwrap_or_else(|e| panic!("`getRecentPrioritizationFees` call failed: {e}"))
+            },
+        )
+        .await;
+
+    assert_eq!(
+        sol_res.len(),
+        ic_res.len(),
+        "SOL results {:?}, ICP results {:?}",
+        sol_res,
+        ic_res
+    );
+    for (fees_sol, fees_ic) in zip(sol_res, ic_res) {
+        let RpcPrioritizationFee {
+            slot: slot_sol,
+            prioritization_fee: prioritization_fee_sol,
+        } = fees_sol;
+        let PrioritizationFee {
+            slot: slot_ic,
+            prioritization_fee: prioritization_fee_ic,
+        } = fees_ic;
+
+        assert_eq!(slot_sol, slot_ic);
+        assert_eq!(prioritization_fee_sol, prioritization_fee_ic)
+    }
 
     setup.setup.drop().await;
 }
