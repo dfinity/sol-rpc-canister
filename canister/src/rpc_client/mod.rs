@@ -26,8 +26,8 @@ use ic_cdk::api::management_canister::http_request::{
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
     ConsensusStrategy, GetRecentPrioritizationFeesRpcConfig, GetSlotRpcConfig, Lamport,
-    PrioritizationFee, ProviderError, RoundingError, RpcConfig, RpcError, RpcResult, RpcSource,
-    RpcSources, Signature, TransactionDetails,
+    PrioritizationFee, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource, RpcSources,
+    Signature, TransactionDetails,
 };
 use solana_clock::Slot;
 use std::{fmt::Debug, marker::PhantomData};
@@ -179,10 +179,7 @@ impl GetSlotRequest {
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(1024 + HEADER_SIZE_LIMIT);
-        let rounding_error = config
-            .rounding_error
-            .map(RoundingError::from)
-            .unwrap_or_default();
+        let rounding_error = config.rounding_error.unwrap_or_default();
 
         Ok(MultiRpcRequest::new(
             providers,
@@ -214,10 +211,7 @@ impl GetRecentPrioritizationFeesRequest {
             JsonRpcRequest::new("getRecentPrioritizationFees", params.into()),
             max_response_bytes,
             ResponseTransform::GetRecentPrioritizationFees {
-                max_slot_rounding_error: config
-                    .max_slot_rounding_error
-                    .map(RoundingError::new)
-                    .unwrap_or_default(),
+                max_slot_rounding_error: config.max_slot_rounding_error.unwrap_or_default(),
                 max_length: config.max_length.unwrap_or(100),
             },
             ReductionStrategy::from(consensus_strategy),

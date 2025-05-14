@@ -117,7 +117,7 @@ pub struct GetSlotRpcConfig {
     /// this error threshold. This is done to achieve consensus between nodes on the value
     /// of the latest slot despite the fast Solana block time.
     #[serde(rename = "roundingError")]
-    pub rounding_error: Option<u64>,
+    pub rounding_error: Option<RoundingError>,
 }
 
 impl From<GetSlotRpcConfig> for RpcConfig {
@@ -186,7 +186,7 @@ pub struct GetRecentPrioritizationFeesRpcConfig {
     /// Increasing that value will reduce the freshness of the returned prioritization fees
     /// but increase the likelihood of nodes reaching consensus.
     #[serde(rename = "maxSlotRoundingError")]
-    pub max_slot_rounding_error: Option<u64>,
+    pub max_slot_rounding_error: Option<RoundingError>,
 
     /// Limit the number of returned priority fees.
     ///
@@ -458,7 +458,21 @@ pub struct OverrideProvider {
 /// has been experimentally shown to achieve a high HTTP outcall consensus rate.
 ///
 /// See the [`RoundingError::round`] method for more details and examples.
-#[derive(Debug, Clone, Copy, Eq, Ord, PartialEq, PartialOrd, From, Into)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    CandidType,
+    From,
+    Into,
+    Serialize,
+    Deserialize,
+)]
+#[serde(transparent)]
 pub struct RoundingError(u64);
 
 impl Default for RoundingError {

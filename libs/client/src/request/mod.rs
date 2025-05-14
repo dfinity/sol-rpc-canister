@@ -8,8 +8,9 @@ use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams,
     GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
     GetRecentPrioritizationFeesRpcConfig, GetSlotParams, GetSlotRpcConfig,
-    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, PrioritizationFee, RpcConfig,
-    RpcResult, RpcSources, SendTransactionParams, Signature, TokenAmount, TransactionInfo,
+    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, PrioritizationFee, RoundingError,
+    RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, TokenAmount,
+    TransactionInfo,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_clock::Slot;
@@ -479,9 +480,12 @@ impl<Runtime, Params, CandidOutput, Output>
     RequestBuilder<Runtime, GetRecentPrioritizationFeesRpcConfig, Params, CandidOutput, Output>
 {
     /// Change the rounding error for the maximum slot value for a `getRecentPrioritizationFees` request.
-    pub fn with_max_slot_rounding_error(mut self, rounding_error: u64) -> Self {
+    pub fn with_max_slot_rounding_error<T: Into<RoundingError>>(
+        mut self,
+        rounding_error: T,
+    ) -> Self {
         let config = self.request.rpc_config_mut().get_or_insert_default();
-        config.max_slot_rounding_error = Some(rounding_error);
+        config.max_slot_rounding_error = Some(rounding_error.into());
         self
     }
 
@@ -497,9 +501,9 @@ impl<Runtime, Params, CandidOutput, Output>
     RequestBuilder<Runtime, GetSlotRpcConfig, Params, CandidOutput, Output>
 {
     /// Change the rounding error for `getSlot` request.
-    pub fn with_rounding_error(mut self, rounding_error: u64) -> Self {
+    pub fn with_rounding_error<T: Into<RoundingError>>(mut self, rounding_error: T) -> Self {
         let config = self.request.rpc_config_mut().get_or_insert_default();
-        config.rounding_error = Some(rounding_error);
+        config.rounding_error = Some(rounding_error.into());
         self
     }
 }
