@@ -31,6 +31,24 @@ pub enum RpcError {
     ValidationError(String),
 }
 
+impl From<solana_pubkey::ParsePubkeyError> for RpcError {
+    fn from(e: solana_pubkey::ParsePubkeyError) -> Self {
+        RpcError::ValidationError(format!("Invalid public key: {e}"))
+    }
+}
+
+impl From<solana_signature::ParseSignatureError> for RpcError {
+    fn from(e: solana_signature::ParseSignatureError) -> Self {
+        RpcError::ValidationError(format!("Invalid signature: {e}"))
+    }
+}
+
+impl From<solana_hash::ParseHashError> for RpcError {
+    fn from(e: solana_hash::ParseHashError) -> Self {
+        RpcError::ValidationError(format!("Invalid hash: {e}"))
+    }
+}
+
 /// An error with an RPC provider.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Deserialize, Error)]
 pub enum ProviderError {

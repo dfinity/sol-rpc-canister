@@ -8,7 +8,7 @@ use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
 use solana_transaction_status_client_types::{
     EncodedConfirmedTransactionWithStatusMeta, UiConfirmedBlock,
 };
-use std::{fmt::Debug, str::FromStr};
+use std::fmt::Debug;
 
 /// Represents an aggregated result from multiple RPC calls to different RPC providers.
 /// The results are aggregated using a [`crate::ConsensusStrategy`].
@@ -88,10 +88,7 @@ impl<T: Debug> MultiRpcResult<T> {
 
 impl From<MultiRpcResult<Signature>> for MultiRpcResult<solana_signature::Signature> {
     fn from(result: MultiRpcResult<Signature>) -> Self {
-        result.map(|transaction_id| {
-            solana_signature::Signature::from_str(&transaction_id)
-                .expect("Unable to parse signature")
-        })
+        result.map(solana_signature::Signature::from)
     }
 }
 
@@ -115,7 +112,7 @@ impl From<MultiRpcResult<Option<ConfirmedBlock>>> for MultiRpcResult<Option<UiCo
 
 impl From<MultiRpcResult<Option<UiConfirmedBlock>>> for MultiRpcResult<Option<ConfirmedBlock>> {
     fn from(result: MultiRpcResult<Option<UiConfirmedBlock>>) -> Self {
-        result.map(|maybe_block| maybe_block.map(|block| block.into()))
+        result.and_then(|maybe_block| maybe_block.map(ConfirmedBlock::try_from).transpose())
     }
 }
 
