@@ -14,10 +14,11 @@ use sol_rpc_canister::{
 };
 use sol_rpc_types::{
     AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
-    GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig, GetSlotParams,
-    GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport, MultiRpcResult,
-    PrioritizationFee, RpcAccess, RpcConfig, RpcResult, RpcSources, SendTransactionParams,
-    Signature, Slot, SupportedRpcProvider, SupportedRpcProviderId, TokenAmount, TransactionInfo,
+    GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
+    GetSignatureStatusesParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
+    GetTransactionParams, Lamport, MultiRpcResult, PrioritizationFee, RpcAccess, RpcConfig,
+    RpcResult, RpcSources, SendTransactionParams, Signature, Slot, SupportedRpcProvider,
+    SupportedRpcProviderId, TokenAmount, TransactionInfo, TransactionStatus,
 };
 use std::str::FromStr;
 
@@ -187,6 +188,33 @@ async fn get_recent_prioritization_fees_cycles_cost(
     )?
     .cycles_cost()
     .await
+}
+
+#[update(name = "getSignatureStatuses")]
+#[candid_method(rename = "getSignatureStatuses")]
+async fn get_signature_statuses(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: GetSignatureStatusesParams,
+) -> MultiRpcResult<Vec<Option<TransactionStatus>>> {
+    let request =
+        MultiRpcRequest::get_signature_statuses(source, config.unwrap_or_default(), params);
+    send_multi(request).await.into()
+}
+
+#[query(name = "getSignatureStatusesCyclesCost")]
+#[candid_method(query, rename = "getSignatureStatusesCyclesCost")]
+async fn get_signature_statuses_cycles_cost(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: GetSignatureStatusesParams,
+) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
+    MultiRpcRequest::get_signature_statuses(source, config.unwrap_or_default(), params)?
+        .cycles_cost()
+        .await
 }
 
 #[update(name = "getSlot")]

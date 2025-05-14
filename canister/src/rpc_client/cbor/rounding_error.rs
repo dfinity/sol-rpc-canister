@@ -1,5 +1,7 @@
-use minicbor::decode::Decoder;
-use minicbor::encode::{Encoder, Write};
+use minicbor::{
+    decode::Decoder,
+    encode::{Encoder, Write},
+};
 use sol_rpc_types::RoundingError;
 
 pub fn decode<Ctx>(

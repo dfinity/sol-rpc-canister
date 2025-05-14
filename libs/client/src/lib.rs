@@ -122,29 +122,27 @@
 pub mod fixtures;
 mod request;
 
-pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
-use std::fmt::Debug;
-
 use crate::request::{
     GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetRecentPrioritizationFeesRequest,
-    GetRecentPrioritizationFeesRequestBuilder, GetSlotRequest, GetTokenAccountBalanceRequest,
+    GetRecentPrioritizationFeesRequestBuilder, GetSignatureStatusesRequest,
+    GetSignatureStatusesRequestBuilder, GetSlotRequest, GetTokenAccountBalanceRequest,
     GetTransactionRequest, JsonRequest, SendTransactionRequest,
 };
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
+pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
-    GetRecentPrioritizationFeesParams, GetSlotParams, GetSlotRpcConfig,
-    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, Pubkey, RpcConfig, RpcError,
-    RpcSources, SendTransactionParams, Signature, SolanaCluster, SupportedRpcProvider,
+    GetRecentPrioritizationFeesParams, GetSignatureStatusesParams, GetSlotParams, GetSlotRpcConfig,
+    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, Pubkey, RpcConfig, RpcResult,
+    RpcSources, SendTransactionParams, Signature, Slot, SolanaCluster, SupportedRpcProvider,
     SupportedRpcProviderId, TokenAmount, TransactionDetails, TransactionInfo,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
-use solana_clock::Slot;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
-use std::sync::Arc;
+use std::{fmt::Debug, sync::Arc};
 
 /// The principal identifying the productive Solana RPC canister under NNS control.
 ///
@@ -518,7 +516,7 @@ impl<R> SolRpcClient<R> {
     pub fn get_recent_prioritization_fees<'a, I>(
         &self,
         addresses: I,
-    ) -> Result<GetRecentPrioritizationFeesRequestBuilder<R>, RpcError>
+    ) -> RpcResult<GetRecentPrioritizationFeesRequestBuilder<R>>
     where
         I: IntoIterator<Item = &'a solana_pubkey::Pubkey>,
     {
@@ -529,6 +527,116 @@ impl<R> SolRpcClient<R> {
             self.clone(),
             GetRecentPrioritizationFeesRequest::from(params),
             10_000_000_000,
+        ))
+    }
+
+    /// Call `getSignatureStatuses` on the SOL RPC canister.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster};
+    /// use solana_instruction::error::InstructionError;
+    /// use solana_signature::Signature;
+    /// use solana_transaction_error::TransactionError;
+    /// use solana_transaction_status_client_types::{TransactionConfirmationStatus, TransactionStatus};
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use std::str::FromStr;
+    /// # use sol_rpc_types::MultiRpcResult;
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(vec![
+    /// #        Some(sol_rpc_types::TransactionStatus {
+    /// #            slot: 338837593,
+    /// #            status: Ok(()),
+    /// #            err: None,
+    /// #            confirmation_status: Some(sol_rpc_types::TransactionConfirmationStatus::Finalized),
+    /// #        }),
+    /// #        Some(sol_rpc_types::TransactionStatus {
+    /// #            slot: 338838881,
+    /// #            status: Err(sol_rpc_types::TransactionError::InstructionError(2, sol_rpc_types::InstructionError::GenericError)),
+    /// #            err: Some(sol_rpc_types::TransactionError::InstructionError(2, sol_rpc_types::InstructionError::GenericError)),
+    /// #            confirmation_status: Some(sol_rpc_types::TransactionConfirmationStatus::Finalized),
+    /// #        }),
+    /// #    ])))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let statuses = client
+    ///     .get_signature_statuses(&[
+    ///         Signature::from_str("5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y").unwrap(),
+    ///         Signature::from_str("FAAHyQpENs991w9BR7jpwzyXk74jhQWzbsSbjs4NJWkYeL6nggNfT5baWy6eBNLSuqfiiYRGfEC5bhwxUVBZamB").unwrap()
+    ///     ])
+    ///     .expect("Invalid `getSignatureStatuses` request parameters")
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent();
+    ///
+    /// assert_eq!(statuses, Ok(vec![
+    ///     Some(TransactionStatus {
+    ///         slot: 338837593,
+    ///         confirmations: None,
+    ///         status: Ok(()),
+    ///         err: None,
+    ///         confirmation_status: Some(TransactionConfirmationStatus::Finalized),
+    ///     }),
+    ///     Some(TransactionStatus {
+    ///         slot: 338838881,
+    ///         confirmations: None,
+    ///         status: Err(TransactionError::InstructionError(2, InstructionError::GenericError)),
+    ///         err: Some(TransactionError::InstructionError(2, InstructionError::GenericError)),
+    ///         confirmation_status: Some(TransactionConfirmationStatus::Finalized),
+    ///     }),
+    /// ]));
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// The number of signatures that can be passed to
+    /// [`getSignatureStatuses`](https://solana.com/de/docs/rpc/http/getsignaturestatuses)
+    /// is limited to 256. More signatures result in an error.
+    ///
+    /// ```rust
+    /// use std::{str::FromStr, collections::BTreeSet};
+    /// use assert_matches::assert_matches;
+    /// use solana_signature::Signature;
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster, RpcError};
+    ///
+    /// let client = SolRpcClient::builder_for_ic()
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let too_many_signatures: BTreeSet<Signature> = (0..257_u16)
+    ///     .map(|i| {
+    ///         let mut bytes = [0; 64];
+    ///         bytes[0] = (i >> 8) as u8;
+    ///         bytes[1] = (i & 0xff) as u8;
+    ///         Signature::from(bytes)
+    ///     })
+    ///     .collect();
+    /// assert_eq!(too_many_signatures.len(), 257);
+    ///
+    /// let err = client.get_signature_statuses(&too_many_signatures).unwrap_err();
+    /// assert_matches!(err, RpcError::ValidationError(_));
+    /// ```
+    pub fn get_signature_statuses<'a, I>(
+        &self,
+        signatures: I,
+    ) -> RpcResult<GetSignatureStatusesRequestBuilder<R>>
+    where
+        I: IntoIterator<Item = &'a solana_signature::Signature>,
+    {
+        let signatures = signatures.into_iter().collect::<Vec<_>>();
+        let num_signatures = signatures.len();
+        Ok(RequestBuilder::new(
+            self.clone(),
+            GetSignatureStatusesRequest::from(GetSignatureStatusesParams::try_from(signatures)?),
+            2_000_000_000 + num_signatures as u128 * 1_000_000, // TODO XC-338: Check heuristic
         ))
     }
 

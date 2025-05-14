@@ -1,12 +1,20 @@
 use crate::rpc_client::sol_rpc::ResponseTransform;
 use canhttp::http::json::{Id, JsonRpcResponse};
-use proptest::proptest;
+use proptest::{
+    array::uniform32,
+    prelude::{any, prop, Strategy},
+    prop_assert_eq, proptest,
+};
+use rand::prelude::SliceRandom;
+use rand_chacha::{rand_core::SeedableRng, ChaCha20Rng};
+use serde::Serialize;
 use serde_json::{from_slice, json, to_vec, Value};
+use sol_rpc_types::{PrioritizationFee, RoundingError, Slot};
+use std::ops::RangeInclusive;
+use strum::IntoEnumIterator;
 
 mod normalization_tests {
     use super::*;
-    use sol_rpc_types::RoundingError;
-    use strum::IntoEnumIterator;
 
     #[test]
     fn should_normalize_raw_response() {
@@ -274,6 +282,92 @@ mod normalization_tests {
     }
 
     #[test]
+    fn should_normalize_get_signature_statuses_response() {
+        assert_normalized_equal(
+            &ResponseTransform::GetSignatureStatuses,
+            r#"{
+                "context": { "apiVersion": "2.0.15", "slot": 341197053 },
+                "value": [
+                    {
+                        "err": null,
+                        "confirmations": 27,
+                        "status": { "Ok": null },
+                        "slot": 48,
+                        "confirmationStatus": "finalized"
+                    },
+                    {
+                        "slot": 987,
+                        "err": "AccountInUse",
+                        "confirmations": null,
+                        "confirmationStatus": "processed",
+                        "status": { "Err": "AccountInUse" }
+                    },
+                    null
+                ]
+            }"#,
+            r#"{
+                "context": { "apiVersion": "2.0.15", "slot": 341197053 },
+                "value": [
+                    {
+                        "slot": 48,
+                        "confirmations": null,
+                        "err": null,
+                        "status": { "Ok": null },
+                        "confirmationStatus": "finalized"
+                    },
+                    {
+                        "slot": 987,
+                        "confirmations": null,
+                        "err": "AccountInUse",
+                        "status": { "Err": "AccountInUse" },
+                        "confirmationStatus": "processed"
+                    },
+                    null
+                ]
+            }"#,
+        );
+    }
+
+    proptest! {
+        #[test]
+        fn should_ignore_get_signature_statuses_context_and_confirmations(slot1: u64, slot2: u64, confirmations1: usize, confirmations2: usize) {
+            assert_normalized_equal(
+                &ResponseTransform::GetSignatureStatuses,
+                json!({
+                    "context": { "apiVersion": "2.0.15", "slot": slot1 },
+                    "value": [
+                        {
+                            "slot": 48,
+                            "confirmations": confirmations1,
+                            "err": null,
+                            "status": {
+                                "Ok": null
+                            },
+                            "confirmationStatus": "finalized"
+                        },
+                        null
+                    ]
+                }).to_string(),
+                json!({
+                    "context": { "apiVersion": "2.0.15", "slot": slot2 },
+                    "value": [
+                        {
+                            "slot": 48,
+                            "confirmations": confirmations2,
+                            "err": null,
+                            "status": {
+                                "Ok": null
+                            },
+                            "confirmationStatus": "finalized"
+                        },
+                        null
+                    ]
+                }).to_string(),
+            );
+        }
+    }
+
+    #[test]
     fn should_normalize_json_rpc_error() {
         fn normalize_json(transform: &ResponseTransform, response: &str) -> Vec<u8> {
             let mut bytes = response.bytes().collect();
@@ -303,7 +397,7 @@ mod normalization_tests {
         assert_eq!(
             expected_response,
             normalized_response,
-            "expected {:?}, actual: {:?}",
+            "expected: {:?}, actual: {:?}",
             from_slice::<Value>(&expected_response),
             from_slice::<Value>(&normalized_response),
         );
@@ -323,9 +417,14 @@ mod normalization_tests {
         left: impl AsRef<str>,
         right: impl AsRef<str>,
     ) {
+        let normalized_left = normalize_result(transform, left.as_ref());
+        let normalized_right = normalize_result(transform, right.as_ref());
         assert_eq!(
-            normalize_result(transform, left.as_ref()),
-            normalize_result(transform, right.as_ref())
+            normalized_left,
+            normalized_right,
+            "Normalized values are not equal:\n  left: {:?}\n right: {:?}",
+            from_slice::<Value>(&normalized_left),
+            from_slice::<Value>(&normalized_right),
         );
     }
 
@@ -338,18 +437,7 @@ mod normalization_tests {
 }
 
 mod get_recent_prioritization_fees {
-    use crate::rpc_client::sol_rpc::ResponseTransform;
-    use proptest::arbitrary::any;
-    use proptest::array::uniform32;
-    use proptest::prelude::{prop, Strategy};
-    use proptest::{prop_assert_eq, proptest};
-    use rand::prelude::SliceRandom;
-    use rand_chacha::rand_core::SeedableRng;
-    use rand_chacha::ChaCha20Rng;
-    use serde::Serialize;
-    use serde_json::json;
-    use sol_rpc_types::{PrioritizationFee, RoundingError, Slot};
-    use std::ops::RangeInclusive;
+    use super::*;
 
     #[test]
     fn should_normalize_response_with_less_than_150_entries() {
@@ -474,9 +562,9 @@ mod get_recent_prioritization_fees {
             max_slot_rounding_error: RoundingError::new(10),
             max_length: 100,
         };
-        let mut raw_bytes = serde_json::to_vec(&json_response(&fees)).unwrap();
+        let mut raw_bytes = to_vec(&json_response(&fees)).unwrap();
         transform.apply(&mut raw_bytes);
-        let transformed_response: serde_json::Value = serde_json::from_slice(&raw_bytes).unwrap();
+        let transformed_response: Value = from_slice(&raw_bytes).unwrap();
 
         assert_eq!(transformed_response, json_response(&fees[0..2]));
     }

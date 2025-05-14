@@ -1,20 +1,21 @@
 use crate::rpc_client::{
-    GetAccountInfoRequest, GetBlockRequest, GetSlotRequest, GetTransactionRequest, MultiRpcRequest,
-    SendTransactionRequest,
+    GetAccountInfoRequest, GetBlockRequest, GetSignatureStatusesRequest, GetSlotRequest,
+    GetTransactionRequest, MultiRpcRequest, SendTransactionRequest,
 };
 use serde::Serialize;
 use serde_json::json;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
-    GetBlockCommitmentLevel, GetBlockParams, GetSlotParams, GetSlotRpcConfig,
-    GetTokenAccountBalanceParams, GetTransactionEncoding, GetTransactionParams, RpcConfig,
-    RpcSources, SendTransactionEncoding, SendTransactionParams, SolanaCluster, TransactionDetails,
+    GetBlockCommitmentLevel, GetBlockParams, GetSignatureStatusesParams, GetSlotParams,
+    GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionEncoding, GetTransactionParams,
+    RpcConfig, RpcSources, SendTransactionEncoding, SendTransactionParams, Signature,
+    SolanaCluster, TransactionDetails,
 };
+use solana_pubkey::pubkey;
+use std::str::FromStr;
 
 mod request_serialization_tests {
     use super::*;
-    use sol_rpc_types::Signature;
-    use solana_pubkey::pubkey;
 
     #[test]
     fn should_serialize_get_account_info_request() {
@@ -80,6 +81,45 @@ mod request_serialization_tests {
                     "commitment": "finalized",
                     "minContextSlot": 123
                 },
+            ]),
+        );
+    }
+
+    #[test]
+    fn should_serialize_get_signature_statuses_request() {
+        assert_params_eq(
+            GetSignatureStatusesRequest::get_signature_statuses(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetSignatureStatusesParams {
+                    signatures: vec![].try_into().unwrap(),
+                    search_transaction_history: None,
+                },
+            )
+            .unwrap(),
+            json!([[], null]),
+        );
+        assert_params_eq(
+            GetSignatureStatusesRequest::get_signature_statuses(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetSignatureStatusesParams {
+                    signatures: vec![
+                        Signature::from_str("5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y").unwrap(),
+                        Signature::from_str("FAAHyQpENs991w9BR7jpwzyXk74jhQWzbsSbjs4NJWkYeL6nggNfT5baWy6eBNLSuqfiiYRGfEC5bhwxUVBZamB").unwrap()
+                    ].try_into().unwrap(),
+                    search_transaction_history: Some(true),
+                },
+            )
+                .unwrap(),
+            json!([
+                [
+                    "5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y",
+                    "FAAHyQpENs991w9BR7jpwzyXk74jhQWzbsSbjs4NJWkYeL6nggNfT5baWy6eBNLSuqfiiYRGfEC5bhwxUVBZamB"
+                ],
+                {
+                    "searchTransactionHistory": true,
+                }
             ]),
         );
     }

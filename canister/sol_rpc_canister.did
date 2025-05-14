@@ -66,7 +66,7 @@ type GetSlotRpcConfig = record {
 // that can be seen my a super-majority of the nodes, which is done as follows:
 // 1) `maxSlotRoundingError`: round down the slot with the maximum value.
 //    The selected subset will only contain priority fees for slots that are smaller or equal to the rounded down slot.
-// 2) `maxLength`: limit the size of the selected subset by removing priority fees for the older slots (lower values). 
+// 2) `maxLength`: limit the size of the selected subset by removing priority fees for the older slots (lower values).
 type GetRecentPrioritizationFeesRpcConfig = record {
   responseSizeEstimate : opt nat64;
   responseConsensus : opt ConsensusStrategy;
@@ -420,19 +420,23 @@ type CompiledInstruction = record {
   programIdIndex : nat8;
   stackHeight : opt nat32;
 };
+
 // Encoding of a Solana transaction.
 type EncodedTransaction = variant {
   binary : record { text; variant { base58; base64 } };
   legacyBinary : text;
 };
+
 // Specific operation executed by a Solana transaction.
 type Instruction = variant { compiled : CompiledInstruction };
+
 // List of inner instructions executed by a Solana transaction.
 // See the [Solana documentation](https://solana.com/de/docs/rpc/json-structures#inner-instructions) for more details.
 type InnerInstructions = record {
   instructions : vec Instruction;
   index : nat8;
 };
+
 // Errors that can occur during the execution of a specific instruction within a Solana transaction.
 // See the [Solana documentation](https://github.com/solana-labs/solana/blob/7700cb3128c1f19820de67b81aa45d18f73d2ac0/sdk/program/src/instruction.rs#L33) for more details.
 type InstructionError = variant {
@@ -491,8 +495,10 @@ type InstructionError = variant {
   ReadonlyLamportChange;
   InsufficientFunds;
 };
+
 // Transaction addresses loaded from address lookup tables.
 type LoadedAddresses = record { writable : vec Pubkey; readonly : vec Pubkey };
+
 // Reward or penalty applied to an account for fees, rent, voting, or staking activity.
 type Reward = record {
   lamports : int64;
@@ -501,6 +507,7 @@ type Reward = record {
   rewardType : opt variant { fee; rent; voting; staking };
   postBalance : nat64;
 };
+
 // A human-readable representation of a token amount.
 type TokenAmount = record {
   decimals : nat8;
@@ -555,6 +562,7 @@ type TransactionError = variant {
   CommitCancelled;
   BlockhashNotFound;
 };
+
 // The result of a Solana `getTransaction` RPC method call.
 type TransactionInfo = record {
   // Estimated production time, as Unix timestamp (seconds since the Unix epoch) of when the transaction was processed.
@@ -570,6 +578,7 @@ type TransactionInfo = record {
   // Undefined if `maxSupportedTransactionVersion` is not set in request params.
   version : opt variant { legacy; number : nat8 };
 };
+
 // Transaction status metadata.
 // See the [Solana documentation](https://solana.com/docs/rpc/json-structures#transaction-status-metadata) for more details.
 type TransactionStatusMeta = record {
@@ -586,6 +595,7 @@ type TransactionStatusMeta = record {
   preTokenBalances : opt vec TransactionTokenBalance;
   computeUnitsConsumed : opt nat64;
 };
+
 // Balance of a specific SPL token account.
 type TransactionTokenBalance = record {
   owner : opt Pubkey;
@@ -593,6 +603,43 @@ type TransactionTokenBalance = record {
   programId : opt Pubkey;
   accountIndex : nat8;
   uiTokenAmount : TokenAmount;
+};
+
+// Solana transaction status as returned by the `getSignatureStatuses` RPC method.
+//
+// *WARNING*: The optional `confirmations` field in the `getSignatureStatuses` response is not
+//   included in this type. This value is ignored when processing the RPC response because it
+//   changes with every Solana block (approximately every 400ms) which is too quick to achieve
+//   consensus between the different nodes performing the request.
+type TransactionStatus = record {
+    // The slot the transaction was processed.
+    slot: Slot;
+    // *DEPRECATED*: Transaction status:
+    //  * Ok - Transaction was successful
+    //  * Err - Transaction failed with `TransactionError`
+    status: variant { Ok; Err : TransactionError };
+    // Error if transaction failed, null if transaction succeeded.
+    err: opt TransactionError;
+    // The transaction's cluster confirmation status; Either `processed`, `confirmed`, or `finalized`.
+    // See [Commitment](https://solana.com/docs/rpc#configuring-state-commitment) for more on
+    // optimistic confirmation.
+    confirmationStatus: opt TransactionConfirmationStatus;
+};
+
+// A Solana transaction confirmation status.
+type TransactionConfirmationStatus = variant {
+  processed;
+  confirmed;
+  finalized;
+};
+
+// Represents the result of a call to the `getSignatureStatuses` Solana RPC method.
+type GetSignatureStatusesResult = variant { Ok : vec opt TransactionStatus; Err : RpcError };
+
+// Represents an aggregated result from multiple RPC calls to the `getSignatureStatuses` Solana RPC method.
+type MultiGetSignatureStatusesResult = variant {
+    Consistent : GetSignatureStatusesResult;
+    Inconsistent : vec record { RpcSource; GetSignatureStatusesResult };
 };
 
 // Represents the result of a call to the `getTransaction` Solana RPC method.
@@ -670,6 +717,14 @@ type CommitmentLevel = variant {
 // The parameters for a call to the `getRecentPrioritizationFees` Solana RPC method.
 // An array of Account addresses (up to a maximum of 128 addresses), as base-58 encoded strings.
 type GetRecentPrioritizationFeesParams =  vec Pubkey;
+
+// The parameters for a call to the `getSignatureStatuses` Solana RPC method.
+type GetSignatureStatusesParams = record {
+    // An array of transaction signatures to confirm, as base-58 encoded strings (up to a maximum of 256)
+    signatures: vec Signature;
+    // If set to true, a Solana node will search its ledger cache for any signatures not found in the recent status cache.
+    searchTransactionHistory: opt bool;
+};
 
 // The parameters for a call to the `getSlot` Solana RPC method.
 type GetSlotParams = record {
@@ -750,10 +805,14 @@ service : (InstallArgs,) -> {
   // Call the Solana `getBlock` RPC method and return the resulting block.
   getBlock : (RpcSources, opt RpcConfig, GetBlockParams) -> (MultiGetBlockResult);
   getBlockCyclesCost : (RpcSources, opt RpcConfig, GetBlockParams) -> (RequestCostResult) query;
-  
+
   // Call the Solana `getRecentPrioritizationFees` RPC method and return the resulting slot.
   getRecentPrioritizationFees : (RpcSources, opt GetRecentPrioritizationFeesRpcConfig, opt GetRecentPrioritizationFeesParams) -> (MultiGetRecentPrioritizationFeesResult);
   getRecentPrioritizationFeesCyclesCost : (RpcSources, opt GetRecentPrioritizationFeesRpcConfig, opt GetRecentPrioritizationFeesParams) ->  (RequestCostResult) query;
+
+  // Call the Solana `getSignatureStatuses` RPC method and return the resulting statuses.
+  getSignatureStatuses : (RpcSources, opt RpcConfig, GetSignatureStatusesParams) -> (MultiGetSignatureStatusesResult);
+  getSignatureStatusesCyclesCost : (RpcSources, opt RpcConfig, GetSignatureStatusesParams) -> (RequestCostResult) query;
 
   // Call the Solana `getSlot` RPC method and return the resulting slot.
   getSlot : (RpcSources, opt GetSlotRpcConfig, opt GetSlotParams) -> (MultiGetSlotResult);

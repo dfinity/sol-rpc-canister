@@ -8,8 +8,7 @@ pub mod transaction;
 use crate::RpcError;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::fmt::Debug;
-use std::str::FromStr;
+use std::{fmt::Debug, str::FromStr};
 
 /// A Solana [slot](https://solana.com/docs/references/terminology#slot).
 pub type Slot = u64;

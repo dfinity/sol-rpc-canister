@@ -22,6 +22,7 @@ use solana_account_decoder_client_types::{
 };
 use solana_pubkey::pubkey;
 use solana_signer::Signer;
+use solana_transaction_status_client_types::{TransactionConfirmationStatus, TransactionStatus};
 use std::{fmt::Debug, iter::zip, str::FromStr};
 use strum::IntoEnumIterator;
 
@@ -472,8 +473,7 @@ mod get_recent_prioritization_fees_tests {
     use crate::USDC_PUBLIC_KEY;
     use canhttp::http::json::ConstantSizeId;
     use serde_json::json;
-    use sol_rpc_int_tests::mock::MockOutcallBuilder;
-    use sol_rpc_int_tests::{Setup, SolRpcTestClient};
+    use sol_rpc_int_tests::{mock::MockOutcallBuilder, Setup, SolRpcTestClient};
     use sol_rpc_types::PrioritizationFee;
 
     #[tokio::test]
@@ -1491,6 +1491,9 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::GetRecentPrioritizationFees => {
                     check(client.get_recent_prioritization_fees(&[]).unwrap()).await
                 }
+                SolRpcEndpoint::GetSignatureStatuses => {
+                    check(client.get_signature_statuses(&[some_signature()]).unwrap()).await;
+                }
                 SolRpcEndpoint::GetTransaction => {
                     check(client.get_transaction(some_signature())).await;
                 }
@@ -1543,6 +1546,9 @@ mod cycles_cost_tests {
                 }
                 SolRpcEndpoint::GetRecentPrioritizationFees => {
                     check(client.get_recent_prioritization_fees(&[]).unwrap()).await;
+                }
+                SolRpcEndpoint::GetSignatureStatuses => {
+                    check(client.get_signature_statuses(&[some_signature()]).unwrap()).await;
                 }
                 SolRpcEndpoint::GetTokenAccountBalance => {
                     check(client.get_token_account_balance(USDC_PUBLIC_KEY)).await;
@@ -1658,6 +1664,14 @@ mod cycles_cost_tests {
                         &setup,
                         client.get_recent_prioritization_fees(&[]).unwrap(),
                         2_378_204_800,
+                    )
+                    .await;
+                }
+                SolRpcEndpoint::GetSignatureStatuses => {
+                    check(
+                        &setup,
+                        client.get_signature_statuses(&[some_signature()]).unwrap(),
+                        1_744_458_400,
                     )
                     .await;
                 }
@@ -1843,6 +1857,88 @@ mod get_token_account_balance_tests {
     }
 }
 
+mod get_signature_statuses_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn should_get_signature_statuses() {
+        fn request_body(id: u8) -> serde_json::Value {
+            json!({
+                "jsonrpc": "2.0",
+                "id": Id::from(ConstantSizeId::from(id)),
+                "method": "getSignatureStatuses",
+                "params": [
+                    [some_signature().to_string(), another_signature().to_string()],
+                    {
+                        "searchTransactionHistory": true
+                    }
+                ],
+            })
+        }
+
+        fn response_body(id: u8) -> serde_json::Value {
+            json!({
+                "id": Id::from(ConstantSizeId::from(id)),
+                "jsonrpc": "2.0",
+                "result": {
+                    // context should be filtered out by transform
+                    "context": { "slot": 334048531 + id as u64, "apiVersion": "2.1.9" },
+                    "value": [
+                          {
+                            "slot": 48,
+                            // confirmations should be filtered out by transform
+                            "confirmations": id,
+                            "err": null,
+                            "status": { "Ok": null },
+                            "confirmationStatus": "finalized"
+                          },
+                          null
+                    ]
+                },
+            })
+        }
+
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
+            let client = setup.client().with_rpc_sources(sources);
+
+            let results = client
+                .mock_http_sequence(vec![
+                    MockOutcallBuilder::new(200, response_body(first_id))
+                        .with_request_body(request_body(first_id)),
+                    MockOutcallBuilder::new(200, response_body(first_id + 1))
+                        .with_request_body(request_body(first_id + 1)),
+                    MockOutcallBuilder::new(200, response_body(first_id + 2))
+                        .with_request_body(request_body(first_id + 2)),
+                ])
+                .build()
+                .get_signature_statuses(&[some_signature(), another_signature()])
+                .unwrap()
+                .with_search_transaction_history(true)
+                .send()
+                .await
+                .expect_consistent();
+
+            assert_eq!(
+                results,
+                Ok(vec![
+                    Some(TransactionStatus {
+                        slot: 48,
+                        confirmations: None,
+                        status: Ok(()),
+                        err: None,
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized),
+                    }),
+                    None,
+                ])
+            );
+        }
+
+        setup.drop().await;
+    }
+}
+
 fn assert_within(actual: u128, expected: u128, percentage_error: u8) {
     assert!(percentage_error <= 100);
     let error_margin = expected.saturating_mul(percentage_error as u128) / 100;
@@ -1870,6 +1966,13 @@ fn some_transaction() -> solana_transaction::Transaction {
 fn some_signature() -> solana_signature::Signature {
     solana_signature::Signature::from_str(
         "MMNPdhf4gW6pPkAtNdJKAroAC7HjaxXLE2CWNeeDtLzYEaBYrvbNzD2TSdYMsoakyD8w88YjwypAgSUYKsU4tVb",
+    )
+    .unwrap()
+}
+
+fn another_signature() -> solana_signature::Signature {
+    solana_signature::Signature::from_str(
+        "4XLJdFbdYYzzBMqvji9bq6ZgzRx5G9edjkJQGprMoAarJSbNbbHt1DTCZqcA7mYk4bJPgC6w7tFjYEtw1jJJSdyw",
     )
     .unwrap()
 }

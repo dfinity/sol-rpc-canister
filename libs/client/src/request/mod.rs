@@ -3,17 +3,17 @@ mod tests;
 
 use crate::{Runtime, SolRpcClient};
 use candid::CandidType;
+use derive_more::From;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams,
     GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
-    GetRecentPrioritizationFeesRpcConfig, GetSlotParams, GetSlotRpcConfig,
-    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, PrioritizationFee, RoundingError,
-    RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, TokenAmount,
-    TransactionInfo,
+    GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams, GetSlotParams,
+    GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
+    PrioritizationFee, RoundingError, RpcConfig, RpcResult, RpcSources, SendTransactionParams,
+    Signature, Slot, TokenAmount, TransactionInfo, TransactionStatus,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
-use solana_clock::Slot;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
 use std::fmt::{Debug, Formatter};
 use strum::EnumIter;
@@ -47,6 +47,8 @@ pub enum SolRpcEndpoint {
     GetBlock,
     /// `getRecentPrioritizationFees` endpoint.
     GetRecentPrioritizationFees,
+    /// `getSignatureStatuses` endpoint.
+    GetSignatureStatuses,
     /// `getSlot` endpoint.
     GetSlot,
     /// `getTokenAccountBalance` endpoint.
@@ -67,6 +69,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetBalance => "getBalance",
             SolRpcEndpoint::GetBlock => "getBlock",
             SolRpcEndpoint::GetRecentPrioritizationFees => "getRecentPrioritizationFees",
+            SolRpcEndpoint::GetSignatureStatuses => "getSignatureStatuses",
             SolRpcEndpoint::GetSlot => "getSlot",
             SolRpcEndpoint::GetTokenAccountBalance => "getTokenAccountBalance",
             SolRpcEndpoint::GetTransaction => "getTransaction",
@@ -82,6 +85,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetBalance => "getBalanceCyclesCost",
             SolRpcEndpoint::GetBlock => "getBlockCyclesCost",
             SolRpcEndpoint::GetRecentPrioritizationFees => "getRecentPrioritizationFeesCyclesCost",
+            SolRpcEndpoint::GetSignatureStatuses => "getSignatureStatusesCyclesCost",
             SolRpcEndpoint::GetSlot => "getSlotCyclesCost",
             SolRpcEndpoint::GetTransaction => "getTransactionCyclesCost",
             SolRpcEndpoint::GetTokenAccountBalance => "getTokenAccountBalanceCyclesCost",
@@ -208,6 +212,44 @@ impl SolRpcRequest for GetRecentPrioritizationFeesRequest {
 impl From<GetRecentPrioritizationFeesParams> for GetRecentPrioritizationFeesRequest {
     fn from(value: GetRecentPrioritizationFeesParams) -> Self {
         Self(value)
+    }
+}
+
+#[derive(Debug, Clone, Default, From)]
+pub struct GetSignatureStatusesRequest(GetSignatureStatusesParams);
+
+impl SolRpcRequest for GetSignatureStatusesRequest {
+    type Config = RpcConfig;
+    type Params = GetSignatureStatusesParams;
+    type CandidOutput = sol_rpc_types::MultiRpcResult<Vec<Option<TransactionStatus>>>;
+    type Output = sol_rpc_types::MultiRpcResult<
+        Vec<Option<solana_transaction_status_client_types::TransactionStatus>>,
+    >;
+
+    fn endpoint(&self) -> SolRpcEndpoint {
+        SolRpcEndpoint::GetSignatureStatuses
+    }
+
+    fn params(self, _default_commitment_level: Option<CommitmentLevel>) -> Self::Params {
+        self.0
+    }
+}
+
+pub type GetSignatureStatusesRequestBuilder<R> = RequestBuilder<
+    R,
+    RpcConfig,
+    GetSignatureStatusesParams,
+    sol_rpc_types::MultiRpcResult<Vec<Option<TransactionStatus>>>,
+    sol_rpc_types::MultiRpcResult<
+        Vec<Option<solana_transaction_status_client_types::TransactionStatus>>,
+    >,
+>;
+
+impl<R> GetSignatureStatusesRequestBuilder<R> {
+    /// Change the `searchTransactionHistory` parameter for a `getSignatureStatuses` request.
+    pub fn with_search_transaction_history(mut self, search_transaction_history: bool) -> Self {
+        self.request.params.search_transaction_history = Some(search_transaction_history);
+        self
     }
 }
 

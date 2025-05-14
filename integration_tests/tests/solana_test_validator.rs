@@ -9,7 +9,7 @@ use sol_rpc_int_tests::{spl, PocketIcLiveModeRuntime};
 use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoEncoding, GetAccountInfoParams, GetBlockCommitmentLevel,
     GetBlockParams, GetTransactionEncoding, GetTransactionParams, InstallArgs, Lamport,
-    OverrideProvider, PrioritizationFee, RegexSubstitution, TransactionDetails,
+    OverrideProvider, PrioritizationFee, RegexSubstitution, TransactionDetails, TransactionStatus,
 };
 use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
 use solana_client::rpc_client::{RpcClient as SolanaRpcClient, RpcClient};
@@ -22,15 +22,17 @@ use solana_program::{
     system_instruction, sysvar,
 };
 use solana_pubkey::{pubkey, Pubkey};
-use solana_rpc_client_api::config::{RpcBlockConfig, RpcTransactionConfig};
-use solana_rpc_client_api::response::RpcPrioritizationFee;
+use solana_rpc_client_api::{
+    config::{RpcBlockConfig, RpcTransactionConfig},
+    response::RpcPrioritizationFee,
+};
 use solana_signature::Signature;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
 use solana_transaction_status_client_types::UiTransactionEncoding;
-use std::iter::zip;
 use std::{
     future::Future,
+    iter::zip,
     str::FromStr,
     thread,
     thread::sleep,
@@ -394,6 +396,8 @@ async fn should_get_balance() {
     setup.confirm_transaction(&tx);
 
     assert_eq!(compare_balances(&setup, publickey).await, 10_000_000_000);
+
+    setup.setup.drop().await;
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -450,6 +454,56 @@ async fn should_get_token_account_balance() {
             ui_amount_string: "0.000001".to_string()
         }
     );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn should_get_signature_statuses() {
+    let setup = Setup::new().await;
+
+    let signatures = {
+        // Generate a transaction and get the signature
+        let sig_1 = setup
+            .solana_client
+            .request_airdrop(&Keypair::new().pubkey(), 10_000_000_000)
+            .expect("Error while requesting airdrop");
+        setup.confirm_transaction(&sig_1);
+        // An arbitrary signature not corresponding to any transaction
+        let sig_2 = Signature::from([57u8; 64]);
+        &vec![sig_1, sig_2]
+    };
+
+    let (sol_res, ic_res) = setup
+        .compare_client(
+            |sol| {
+                sol.get_signature_statuses(signatures)
+                    .expect("Failed to get signature statuses")
+                    .value
+            },
+            |ic| async move {
+                ic.get_signature_statuses(signatures)
+                    .unwrap()
+                    .send()
+                    .await
+                    .expect_consistent()
+                    .unwrap_or_else(|e| panic!("`getSignatureStatuses` call failed: {e}"))
+            },
+        )
+        .await;
+
+    // Convert to sol_rpc_type::TransactionStatus to avoid comparing TransactionStatus#confirmations
+    // which changes fast and hence is usually different for both calls
+    assert_eq!(
+        sol_res
+            .into_iter()
+            .map(|maybe_status| maybe_status.map(TransactionStatus::from))
+            .collect::<Vec<_>>(),
+        ic_res
+            .into_iter()
+            .map(|maybe_status| maybe_status.map(TransactionStatus::from))
+            .collect::<Vec<_>>()
+    );
+
+    setup.setup.drop().await;
 }
 
 fn solana_rpc_client_get_account(

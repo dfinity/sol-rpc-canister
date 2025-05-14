@@ -13,14 +13,17 @@ include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
 [dependencies]
 async-trait = { workspace = true }
 candid = { workspace = true }
+derive_more = { workspace = true }
 ic-cdk = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 solana-account = { workspace = true }
 solana-account-decoder-client-types = { workspace = true }
 solana-clock = { workspace = true }
+solana-instruction = { workspace = true }
 solana-pubkey = { workspace = true }
 solana-signature = { workspace = true }
+solana-transaction-error = { workspace = true }
 solana-transaction-status-client-types = { workspace = true }
 sol_rpc_types = { version = "0.1.0", path = "../types" }
 strum = { workspace = true }

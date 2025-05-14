@@ -1,9 +1,11 @@
 mod impl_candid {
     use crate::{Hash, Pubkey, Signature};
     use candid::{CandidType, Decode, Encode};
-    use proptest::collection::SizeRange;
-    use proptest::prelude::{any, Strategy, TestCaseError};
-    use proptest::{prop_assert, prop_assert_eq, proptest};
+    use proptest::{
+        collection::SizeRange,
+        prelude::{any, Strategy, TestCaseError},
+        prop_assert, prop_assert_eq, proptest,
+    };
     use serde::de::DeserializeOwned;
     use std::str::FromStr;
 

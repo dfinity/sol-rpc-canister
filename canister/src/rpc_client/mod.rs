@@ -166,6 +166,34 @@ impl GetBlockRequest {
     }
 }
 
+pub type GetSignatureStatusesRequest = MultiRpcRequest<
+    json::GetSignatureStatusesParams,
+    Vec<Option<solana_transaction_status_client_types::TransactionStatus>>,
+>;
+
+impl GetSignatureStatusesRequest {
+    pub fn get_signature_statuses<Params: Into<json::GetSignatureStatusesParams>>(
+        rpc_sources: RpcSources,
+        config: RpcConfig,
+        params: Params,
+    ) -> Result<Self, ProviderError> {
+        let params = params.into();
+        let consensus_strategy = config.response_consensus.unwrap_or_default();
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let max_response_bytes = config
+            .response_size_estimate
+            .unwrap_or(128 + (params.num_signatures() as u64 * 256) + HEADER_SIZE_LIMIT);
+
+        Ok(MultiRpcRequest::new(
+            providers,
+            JsonRpcRequest::new("getSignatureStatuses", params),
+            max_response_bytes,
+            ResponseTransform::GetSignatureStatuses,
+            ReductionStrategy::from(consensus_strategy),
+        ))
+    }
+}
+
 pub type GetSlotRequest = MultiRpcRequest<json::GetSlotParams, Slot>;
 
 impl GetSlotRequest {

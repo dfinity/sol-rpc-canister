@@ -1,6 +1,8 @@
 use minicbor::{Decode, Encode};
-use proptest::prelude::{any, TestCaseError};
-use proptest::{prop_assert_eq, proptest};
+use proptest::{
+    prelude::{any, TestCaseError},
+    prop_assert_eq, proptest,
+};
 use sol_rpc_types::RoundingError;
 
 proptest! {

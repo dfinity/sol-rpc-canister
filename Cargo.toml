@@ -82,7 +82,6 @@ solana-rpc-client-nonce-utils = "2.2.0"
 solana-signature = "2.2.0"
 solana-signer = "2.2.0"
 solana-transaction = "2.2.0"
-solana-transaction-context = "2.2.0"
 solana-transaction-error = "2.2.0"
 solana-transaction-status-client-types = "2.2.0"
 strum = { version = "0.27.0", features = ["derive"] }

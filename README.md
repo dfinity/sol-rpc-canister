@@ -118,6 +118,7 @@ The SOL RPC canister reaches the Solana JSON-RPC providers using [HTTPS outcalls
    2. Retrieve a recent blockhash by first retrieving a recent slot with `getSlot` and then getting the block (which includes the blockhash) with `getBlock`.
 
 [//]: # (TODO: XC-326: mention also `getRecenPrioritizationFees`)
+[//]: # (TODO: XC-291: mention also `getSignatureStatuses#confirmations`)
 
 ## Reproducible Build
 

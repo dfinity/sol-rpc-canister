@@ -2,8 +2,10 @@ pub mod error;
 pub mod instruction;
 pub mod reward;
 
-use crate::solana::{parse_opt, parse_vec, try_from_vec};
-use crate::{Pubkey, RpcError, Slot, Timestamp};
+use crate::{
+    solana::{parse_opt, parse_vec, try_from_vec},
+    Pubkey, RpcError, Slot, Timestamp,
+};
 use candid::{CandidType, Deserialize};
 use error::TransactionError;
 use instruction::InnerInstructions;
@@ -66,6 +68,100 @@ impl From<TransactionInfo> for EncodedConfirmedTransactionWithStatusMeta {
                 version: transaction.version.map(Into::into),
             },
             block_time: transaction.block_time,
+        }
+    }
+}
+
+/// Solana transaction status as returned by the [`getSignatureStatuses`](https://solana.com/de/docs/rpc/http/getsignaturestatuses)
+/// RPC method.
+///
+/// *WARNING*: The optional `confirmations` field in the `getSignatureStatuses` response is not
+///     included in this type since it is ignored when processing the RPC response.
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
+pub struct TransactionStatus {
+    /// The slot the transaction was processed.
+    pub slot: u64,
+    /// *DEPRECATED*: Transaction status:
+    ///  * [`Ok(())`] - Transaction was successful
+    ///  * [`Err(err)`] - Transaction failed with [`TransactionError`] `err`
+    pub status: Result<(), TransactionError>,
+    /// Error if transaction failed, [`None`] if transaction succeeded.
+    pub err: Option<TransactionError>,
+    /// The transaction's cluster confirmation status; Either [`TransactionConfirmationStatus::Processed`],
+    /// [`TransactionConfirmationStatus::Confirmed`], or [`TransactionConfirmationStatus::Finalized`].
+    /// See [Commitment](https://solana.com/docs/rpc#configuring-state-commitment) for more on
+    /// optimistic confirmation.
+    #[serde(rename = "confirmationStatus")]
+    pub confirmation_status: Option<TransactionConfirmationStatus>,
+}
+
+impl From<solana_transaction_status_client_types::TransactionStatus> for TransactionStatus {
+    fn from(status: solana_transaction_status_client_types::TransactionStatus) -> Self {
+        Self {
+            slot: status.slot,
+            status: status.status.map_err(TransactionError::from),
+            err: status.err.map(TransactionError::from),
+            confirmation_status: status
+                .confirmation_status
+                .map(TransactionConfirmationStatus::from),
+        }
+    }
+}
+
+impl From<TransactionStatus> for solana_transaction_status_client_types::TransactionStatus {
+    fn from(status: TransactionStatus) -> Self {
+        Self {
+            slot: status.slot,
+            confirmations: None,
+            status: status
+                .status
+                .map_err(solana_transaction_error::TransactionError::from),
+            err: status
+                .err
+                .map(solana_transaction_error::TransactionError::from),
+            confirmation_status: status
+                .confirmation_status
+                .map(solana_transaction_status_client_types::TransactionConfirmationStatus::from),
+        }
+    }
+}
+
+/// A Solana transaction confirmation status. See [Commitment](https://solana.com/docs/rpc#configuring-state-commitment)
+/// for more on optimistic confirmation.
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
+pub enum TransactionConfirmationStatus {
+    /// See [`crate::CommitmentLevel::Processed`].
+    #[serde(rename = "processed")]
+    Processed,
+    /// See [`crate::CommitmentLevel::Confirmed`].
+    #[serde(rename = "confirmed")]
+    Confirmed,
+    /// See [`crate::CommitmentLevel::Finalized`].
+    #[serde(rename = "finalized")]
+    Finalized,
+}
+
+impl From<solana_transaction_status_client_types::TransactionConfirmationStatus>
+    for TransactionConfirmationStatus
+{
+    fn from(status: solana_transaction_status_client_types::TransactionConfirmationStatus) -> Self {
+        use solana_transaction_status_client_types::TransactionConfirmationStatus;
+        match status {
+            TransactionConfirmationStatus::Processed => Self::Processed,
+            TransactionConfirmationStatus::Confirmed => Self::Confirmed,
+            TransactionConfirmationStatus::Finalized => Self::Finalized,
+        }
+    }
+}
+
+impl From<TransactionConfirmationStatus>
+    for solana_transaction_status_client_types::TransactionConfirmationStatus
+{
+    fn from(status: TransactionConfirmationStatus) -> Self {
+        match status {
+            TransactionConfirmationStatus::Processed => Self::Processed,
+            TransactionConfirmationStatus::Confirmed => Self::Confirmed,
+            TransactionConfirmationStatus::Finalized => Self::Finalized,
         }
     }
 }

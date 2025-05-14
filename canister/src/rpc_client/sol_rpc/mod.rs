@@ -8,10 +8,11 @@ use ic_cdk::{
     query,
 };
 use minicbor::{Decode, Encode};
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::{from_slice, Value};
 use sol_rpc_types::{PrioritizationFee, RoundingError};
 use solana_clock::Slot;
+use solana_transaction_status_client_types::TransactionStatus;
 use std::fmt::Debug;
 use strum::EnumIter;
 
@@ -34,22 +35,36 @@ pub enum ResponseTransform {
         max_length: u8,
     },
     #[n(4)]
-    GetSlot(#[cbor(n(0), with = "crate::rpc_client::cbor::rounding_error")] RoundingError),
+    GetSignatureStatuses,
     #[n(5)]
-    GetTokenAccountBalance,
+    GetSlot(#[cbor(n(0), with = "crate::rpc_client::cbor::rounding_error")] RoundingError),
     #[n(6)]
-    GetTransaction,
+    GetTokenAccountBalance,
     #[n(7)]
-    SendTransaction,
+    GetTransaction,
     #[n(8)]
+    SendTransaction,
+    #[n(9)]
     Raw,
 }
 
 impl ResponseTransform {
     fn apply(&self, body_bytes: &mut Vec<u8>) {
+        #[derive(Clone, Debug, Deserialize, Serialize)]
+        pub struct SolanaRpcResult<T> {
+            // This field is always ignored since it contains the fast-changing current
+            // slot value for which consensus cannot generally be reached across nodes.
+            context: Value,
+            value: T,
+        }
+
+        fn ignore_context<T>(value: SolanaRpcResult<T>) -> T {
+            value.value
+        }
+
         fn canonicalize_response<T, R>(body_bytes: &mut Vec<u8>, f: impl FnOnce(T) -> R)
         where
-            T: Serialize + DeserializeOwned,
+            T: Serialize + DeserializeOwned + Debug,
             R: Serialize + DeserializeOwned,
         {
             if let Ok(response) = from_slice::<JsonRpcResponse<T>>(body_bytes) {
@@ -66,15 +81,13 @@ impl ResponseTransform {
 
         match self {
             Self::GetAccountInfo => {
-                canonicalize_response::<Value, Option<Value>>(body_bytes, |result| {
-                    match result["value"].clone() {
-                        Value::Null => None,
-                        value => Some(value),
-                    }
-                });
+                canonicalize_response::<SolanaRpcResult<Option<Value>>, Option<Value>>(
+                    body_bytes,
+                    ignore_context,
+                );
             }
             Self::GetBalance => {
-                canonicalize_response::<Value, Value>(body_bytes, |result| result["value"].clone());
+                canonicalize_response::<SolanaRpcResult<Value>, Value>(body_bytes, ignore_context);
             }
             Self::GetBlock => {
                 canonicalize_response::<Value, Option<Value>>(body_bytes, |result| match result {
@@ -89,7 +102,6 @@ impl ResponseTransform {
                 canonicalize_response::<Vec<PrioritizationFee>, Vec<PrioritizationFee>>(
                     body_bytes,
                     |mut fees| {
-                        // actual processing here
                         // The exact number of elements for the returned priority fees is not really specified in the
                         // [API](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees),
                         // which simply mentions
@@ -122,6 +134,22 @@ impl ResponseTransform {
                     },
                 );
             }
+            Self::GetSignatureStatuses => {
+                canonicalize_response::<
+                    SolanaRpcResult<Vec<Option<TransactionStatus>>>,
+                    Vec<Option<TransactionStatus>>,
+                >(body_bytes, |statuses| {
+                    ignore_context(statuses)
+                        .into_iter()
+                        .map(|maybe_status| {
+                            maybe_status.map(|mut status| {
+                                status.confirmations = None;
+                                status
+                            })
+                        })
+                        .collect()
+                });
+            }
             Self::GetSlot(rounding_error) => {
                 canonicalize_response::<Slot, Slot>(body_bytes, |slot| rounding_error.round(slot));
             }
@@ -132,7 +160,7 @@ impl ResponseTransform {
                 });
             }
             Self::GetTokenAccountBalance => {
-                canonicalize_response::<Value, Value>(body_bytes, |result| result["value"].clone());
+                canonicalize_response::<SolanaRpcResult<Value>, Value>(body_bytes, ignore_context);
             }
             Self::SendTransaction => {
                 canonicalize_response::<String, String>(body_bytes, std::convert::identity);

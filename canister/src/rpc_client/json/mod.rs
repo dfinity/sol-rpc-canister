@@ -1,8 +1,9 @@
+use derive_more::From;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetBlockCommitmentLevel,
-    GetTransactionEncoding, Pubkey, SendTransactionEncoding, Slot, TransactionDetails,
+    GetTransactionEncoding, Pubkey, SendTransactionEncoding, Signature, Slot, TransactionDetails,
 };
 use solana_transaction_status_client_types::UiTransactionEncoding;
 
@@ -178,6 +179,41 @@ impl From<sol_rpc_types::GetRecentPrioritizationFeesParams> for GetRecentPriorit
     fn from(value: sol_rpc_types::GetRecentPrioritizationFeesParams) -> Self {
         Self(value.into())
     }
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(into = "(Vec<Signature>, Option<GetSignatureStatusesConfig>)")]
+pub struct GetSignatureStatusesParams(Vec<Signature>, Option<GetSignatureStatusesConfig>);
+
+impl GetSignatureStatusesParams {
+    pub fn num_signatures(&self) -> usize {
+        self.0.len()
+    }
+}
+
+impl From<sol_rpc_types::GetSignatureStatusesParams> for GetSignatureStatusesParams {
+    fn from(params: sol_rpc_types::GetSignatureStatusesParams) -> Self {
+        Self(
+            params.signatures.into(),
+            params
+                .search_transaction_history
+                .map(GetSignatureStatusesConfig::from),
+        )
+    }
+}
+
+impl From<GetSignatureStatusesParams> for (Vec<Signature>, Option<GetSignatureStatusesConfig>) {
+    fn from(params: GetSignatureStatusesParams) -> Self {
+        (params.0, params.1)
+    }
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Clone, Debug, From)]
+pub struct GetSignatureStatusesConfig {
+    #[serde(rename = "searchTransactionHistory")]
+    pub search_transaction_history: bool,
 }
 
 #[skip_serializing_none]
