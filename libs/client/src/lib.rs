@@ -529,7 +529,7 @@ impl<R> SolRpcClient<R> {
         Ok(RequestBuilder::new(
             self.clone(),
             GetSignatureStatusesRequest::from(GetSignatureStatusesParams::try_from(signatures)?),
-            2_000_000_000 + num_signatures as u128 * 1_000_000, // TODO XC-339: Check heuristic
+            2_000_000_000 + num_signatures as u128 * 1_000_000, // TODO XC-338: Check heuristic
         ))
     }
 
