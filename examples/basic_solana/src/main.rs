@@ -64,7 +64,7 @@ pub async fn get_balance(account: Option<String>) -> Nat {
 }
 
 #[update]
-pub async fn get_nonce(account: Option<sol_rpc_types::Pubkey>) -> String {
+pub async fn get_nonce(account: Option<sol_rpc_types::Pubkey>) -> sol_rpc_types::Hash {
     let account = account.unwrap_or(nonce_account(None).await);
 
     // Fetch the account info with the data encoded in base64 format
@@ -94,7 +94,9 @@ pub async fn get_nonce(account: Option<sol_rpc_types::Pubkey>) -> String {
         .state()
     {
         solana_nonce::state::State::Uninitialized => panic!("Nonce account is uninitialized"),
-        solana_nonce::state::State::Initialized(data) => data.blockhash().to_string(),
+        solana_nonce::state::State::Initialized(data) => {
+            sol_rpc_types::Hash::from(data.blockhash())
+        }
     }
 }
 
@@ -285,8 +287,7 @@ pub async fn send_sol_with_durable_nonce(
         system_instruction::transfer(payer.as_ref(), &recipient, amount),
     ];
 
-    let blockhash = Hash::from_str(&get_nonce(Some(nonce_account.as_ref().into())).await)
-        .expect("Unable to parse nonce as blockhash");
+    let blockhash = Hash::from(get_nonce(Some(nonce_account.as_ref().into())).await);
 
     let message = Message::new_with_blockhash(instructions, Some(payer.as_ref()), &blockhash);
     let signatures = vec![wallet.sign_with_ed25519(&message, &payer).await];
