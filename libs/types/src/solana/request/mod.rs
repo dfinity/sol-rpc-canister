@@ -1,3 +1,7 @@
+#[cfg(test)]
+mod tests;
+
+use crate::solana::VecWithMaxLen;
 use crate::{solana::Pubkey, RpcError, Signature, Slot};
 use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
 use candid::{CandidType, Deserialize};
@@ -176,33 +180,31 @@ pub enum TransactionDetails {
 
 /// The parameters for a Solana [`getRecentPrioritizationFees`](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees) RPC method call.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
-#[serde(try_from = "Vec<Pubkey>")]
-pub struct GetRecentPrioritizationFeesParams(Vec<Pubkey>);
+pub struct GetRecentPrioritizationFeesParams(VecWithMaxLen<Pubkey, 128>);
 
-impl TryFrom<Vec<Pubkey>> for GetRecentPrioritizationFeesParams {
+impl<P: Borrow<solana_pubkey::Pubkey>> TryFrom<Vec<P>> for GetRecentPrioritizationFeesParams {
     type Error = RpcError;
 
-    fn try_from(accounts: Vec<Pubkey>) -> Result<Self, Self::Error> {
-        const MAX_NUM_ACCOUNTS: usize = 128;
-        if accounts.len() > MAX_NUM_ACCOUNTS {
-            return Err(RpcError::ValidationError(format!(
-                "Expected at most {MAX_NUM_ACCOUNTS} account addresses, but got {}",
-                accounts.len()
-            )));
-        }
-        Ok(Self(accounts))
+    fn try_from(pubkeys: Vec<P>) -> Result<Self, Self::Error> {
+        Ok(Self(
+            pubkeys
+                .into_iter()
+                .map(|s| s.borrow().to_string())
+                .collect::<Vec<_>>()
+                .try_into()?,
+        ))
     }
 }
 
 impl From<solana_pubkey::Pubkey> for GetRecentPrioritizationFeesParams {
     fn from(value: solana_pubkey::Pubkey) -> Self {
-        Self(vec![value.to_string()])
+        Self(VecWithMaxLen::try_from(vec![value.to_string()]).unwrap())
     }
 }
 
 impl From<GetRecentPrioritizationFeesParams> for Vec<Pubkey> {
     fn from(value: GetRecentPrioritizationFeesParams) -> Self {
-        value.0
+        value.0.into()
     }
 }
 
@@ -210,7 +212,7 @@ impl From<GetRecentPrioritizationFeesParams> for Vec<Pubkey> {
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
 pub struct GetSignatureStatusesParams {
     /// An array of transaction signatures to confirm, as base-58 encoded strings (up to a maximum of 256)
-    pub signatures: Vec<Signature>,
+    pub signatures: VecWithMaxLen<Signature, 256>,
     /// If set to true, a Solana node will search its ledger cache for any signatures not found in the recent status cache.
     #[serde(rename = "searchTransactionHistory")]
     pub search_transaction_history: Option<bool>,
@@ -220,18 +222,12 @@ impl<S: Borrow<solana_signature::Signature>> TryFrom<Vec<S>> for GetSignatureSta
     type Error = RpcError;
 
     fn try_from(signatures: Vec<S>) -> Result<Self, Self::Error> {
-        const MAX_NUM_SIGNATURES: usize = 256;
-        if signatures.len() > MAX_NUM_SIGNATURES {
-            return Err(RpcError::ValidationError(format!(
-                "Expected at most {MAX_NUM_SIGNATURES} signatures, but got {}",
-                signatures.len()
-            )));
-        }
         Ok(Self {
             signatures: signatures
                 .into_iter()
                 .map(|s| s.borrow().to_string())
-                .collect(),
+                .collect::<Vec<_>>()
+                .try_into()?,
             search_transaction_history: None,
         })
     }

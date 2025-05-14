@@ -195,7 +195,7 @@ impl GetSignatureStatusesParams {
 impl From<sol_rpc_types::GetSignatureStatusesParams> for GetSignatureStatusesParams {
     fn from(params: sol_rpc_types::GetSignatureStatusesParams) -> Self {
         Self(
-            params.signatures,
+            params.signatures.into(),
             params
                 .search_transaction_history
                 .map(GetSignatureStatusesConfig::from),

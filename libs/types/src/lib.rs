@@ -34,4 +34,5 @@ pub use solana::{
         TransactionStatusMeta, TransactionTokenBalance, TransactionVersion,
     },
     Blockhash, ConfirmedBlock, Lamport, PrioritizationFee, Pubkey, Signature, Slot, Timestamp,
+    VecWithMaxLen,
 };

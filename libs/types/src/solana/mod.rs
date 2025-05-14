@@ -2,6 +2,7 @@ pub mod account;
 pub mod request;
 pub mod transaction;
 
+use crate::RpcError;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
@@ -94,4 +95,29 @@ pub struct PrioritizationFee {
     /// specified in increments of micro-lamports (0.000001 lamports)
     #[serde(rename = "prioritizationFee")]
     pub prioritization_fee: MicroLamport,
+}
+
+/// A vector with a maximum capacity.
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq, Default)]
+#[serde(try_from = "Vec<T>")]
+pub struct VecWithMaxLen<T, const CAPACITY: usize>(Vec<T>);
+
+impl<T, const CAPACITY: usize> TryFrom<Vec<T>> for VecWithMaxLen<T, CAPACITY> {
+    type Error = RpcError;
+
+    fn try_from(value: Vec<T>) -> Result<Self, Self::Error> {
+        if value.len() > CAPACITY {
+            return Err(RpcError::ValidationError(format!(
+                "Expected at most {CAPACITY} items, but got {}",
+                value.len()
+            )));
+        }
+        Ok(Self(value))
+    }
+}
+
+impl<T, const CAPACITY: usize> From<VecWithMaxLen<T, CAPACITY>> for Vec<T> {
+    fn from(value: VecWithMaxLen<T, CAPACITY>) -> Self {
+        value.0
+    }
 }

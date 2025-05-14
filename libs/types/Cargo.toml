@@ -14,7 +14,7 @@ include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
 bincode = { workspace = true }
 base64 = { workspace = true }
 candid = { workspace = true }
-canlog = {workspace = true}
+canlog = { workspace = true }
 derive_more = { workspace = true }
 ic-cdk = { workspace = true }
 regex = { workspace = true }

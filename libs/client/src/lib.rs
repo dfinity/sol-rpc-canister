@@ -522,12 +522,8 @@ impl<R> SolRpcClient<R> {
     where
         I: IntoIterator<Item = &'a solana_pubkey::Pubkey>,
     {
-        let params = GetRecentPrioritizationFeesParams::try_from(
-            addresses
-                .into_iter()
-                .map(|a| a.to_string())
-                .collect::<Vec<_>>(),
-        )?;
+        let params =
+            GetRecentPrioritizationFeesParams::try_from(addresses.into_iter().collect::<Vec<_>>())?;
         Ok(RequestBuilder::new(
             self.clone(),
             GetRecentPrioritizationFeesRequest::from(params),
