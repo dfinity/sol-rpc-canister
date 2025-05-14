@@ -28,13 +28,13 @@ pub enum ResponseTransform {
     GetBlock,
     #[n(3)]
     GetRecentPrioritizationFees {
-        #[n(0)]
+        #[cbor(n(0), with = "crate::rpc_client::cbor::rounding_error")]
         max_slot_rounding_error: RoundingError,
         #[n(1)]
         max_length: u8,
     },
     #[n(4)]
-    GetSlot(#[n(0)] RoundingError),
+    GetSlot(#[cbor(n(0), with = "crate::rpc_client::cbor::rounding_error")] RoundingError),
     #[n(5)]
     GetTokenAccountBalance,
     #[n(6)]

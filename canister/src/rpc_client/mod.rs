@@ -1,3 +1,4 @@
+pub mod cbor;
 pub mod json;
 mod sol_rpc;
 #[cfg(test)]
