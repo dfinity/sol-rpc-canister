@@ -565,7 +565,7 @@ impl<R> SolRpcClient<R> {
     ///     .build();
     ///
     /// let statuses = client
-    ///     .get_signature_statuses(vec![
+    ///     .get_signature_statuses(&[
     ///         Signature::from_str("5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y").unwrap(),
     ///         Signature::from_str("FAAHyQpENs991w9BR7jpwzyXk74jhQWzbsSbjs4NJWkYeL6nggNfT5baWy6eBNLSuqfiiYRGfEC5bhwxUVBZamB").unwrap()
     ///     ])
