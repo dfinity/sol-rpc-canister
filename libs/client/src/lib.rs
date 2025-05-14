@@ -126,18 +126,20 @@ pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 use std::fmt::Debug;
 
 use crate::request::{
-    GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetSlotRequest,
-    GetTokenAccountBalanceRequest, GetTransactionRequest, JsonRequest, SendTransactionRequest,
+    GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetRecentPrioritizationFeesRequest,
+    GetRecentPrioritizationFeesRequestBuilder, GetSlotRequest, GetTokenAccountBalanceRequest,
+    GetTransactionRequest, JsonRequest, SendTransactionRequest,
 };
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams, GetSlotParams,
-    GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport, RpcConfig,
-    RpcSources, SendTransactionParams, Signature, SolanaCluster, SupportedRpcProvider,
-    SupportedRpcProviderId, TokenAmount, TransactionDetails, TransactionInfo,
+    CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
+    GetRecentPrioritizationFeesParams, GetSlotParams, GetSlotRpcConfig,
+    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, RpcConfig, RpcError, RpcSources,
+    SendTransactionParams, Signature, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    TokenAmount, TransactionDetails, TransactionInfo,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_clock::Slot;
@@ -185,6 +187,7 @@ pub trait Runtime {
 }
 
 /// Client to interact with the SOL RPC canister.
+#[derive(Debug)]
 pub struct SolRpcClient<R> {
     config: Arc<ClientConfig<R>>,
 }
@@ -450,6 +453,86 @@ impl<R> SolRpcClient<R> {
             GetTokenAccountBalanceRequest::new(params.into()),
             10_000_000_000,
         )
+    }
+
+    /// Call `getRecentPrioritizationFees` on the SOL RPC canister.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster};
+    /// use solana_pubkey::pubkey;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use sol_rpc_types::{MultiRpcResult, PrioritizationFee, TokenAmount};
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(vec![PrioritizationFee{slot: 338637772, prioritization_fee: 166667}])))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let fees = client
+    ///     .get_recent_prioritization_fees(&[pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")])
+    ///     .unwrap()
+    ///     .with_max_length(1)
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent();
+    ///
+    /// assert_eq!
+    ///     (fees,
+    ///     Ok(vec![ PrioritizationFee {
+    ///         slot: 338637772,
+    ///         prioritization_fee: 166667
+    ///     }]));
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// The number of account addresses that can be passed to
+    /// [`getRecentPrioritizationFees`](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees)
+    /// is limited to 128. More accounts result in an error.
+    ///
+    /// ```rust
+    /// use std::collections::BTreeSet;
+    /// use assert_matches::assert_matches;
+    /// use solana_pubkey::Pubkey;
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster, RpcError};
+    ///
+    /// let client = SolRpcClient::builder_for_ic()
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let too_many_accounts: BTreeSet<Pubkey> = (0..129_u8)
+    ///     .map(|i| Pubkey::from([i; 32]))
+    ///     .collect();
+    /// assert_eq!(too_many_accounts.len(), 129);
+    ///
+    /// let err = client.get_recent_prioritization_fees(&too_many_accounts).unwrap_err();
+    /// assert_matches!(err, RpcError::ValidationError(_));
+    /// ```
+    pub fn get_recent_prioritization_fees<'a, I>(
+        &self,
+        addresses: I,
+    ) -> Result<GetRecentPrioritizationFeesRequestBuilder<R>, RpcError>
+    where
+        I: IntoIterator<Item = &'a solana_pubkey::Pubkey>,
+    {
+        let params = GetRecentPrioritizationFeesParams::try_from(
+            addresses
+                .into_iter()
+                .map(|a| a.to_string())
+                .collect::<Vec<_>>(),
+        )?;
+        Ok(RequestBuilder::new(
+            self.clone(),
+            GetRecentPrioritizationFeesRequest::from(params),
+            10_000_000_000,
+        ))
     }
 
     /// Call `getSlot` on the SOL RPC canister.

@@ -157,6 +157,77 @@ impl From<RpcConfig> for GetSlotRpcConfig {
     }
 }
 
+/// Configures how to perform HTTP calls for the Solana `getRecentPrioritizationFees` RPC method.
+///
+/// The response to `getRecentPrioritizationFees` corresponds to a (non-necessarily continuous) range of slots associated
+/// with the priority fee for that slot and may include `processed` slots (a new `processed` slot is produced every ca. 400ms); e.g.
+/// ```json
+/// ...
+/// {
+///     "prioritizationFee": 166667,
+///     "slot": 338637772
+///},
+///{
+///    "prioritizationFee": 0,
+///    "slot": 338637773
+///},
+///{
+///    "prioritizationFee": 0,
+///    "slot": 338637774
+///},
+///{
+///    "prioritizationFee": 50000,
+///    "slot": 338637775
+///},
+/// ...
+/// ```
+/// Similarly to the necessary rounding used for `getSlot`,
+/// achieving consensus for `getRecentPrioritizationFees` requires selecting a subset of those slots
+/// that can be seen by a super-majority of the nodes, which is done as follows:
+/// 1. `max_slot_rounding_error`: round down the slot with the maximum value.
+///    The selected subset will only contain priority fees for slots that are smaller or equal to the rounded-down slot.
+/// 2. `max_length`: limit the size of the selected subset by removing priority fees for the older slots.
+#[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]
+pub struct GetRecentPrioritizationFeesRpcConfig {
+    /// Describes the expected (90th percentile) number of bytes in the HTTP response body.
+    /// This number should be less than `MAX_PAYLOAD_SIZE`.
+    #[serde(rename = "responseSizeEstimate")]
+    pub response_size_estimate: Option<u64>,
+
+    /// Round down the slot with the maximum value.
+    /// Increasing that value will reduce the freshness of the returned prioritization fees
+    /// but increase the likelihood of nodes reaching consensus.
+    #[serde(rename = "responseConsensus")]
+    pub response_consensus: Option<ConsensusStrategy>,
+
+    /// Round down the slot with the maximum value.
+    /// Increasing that value will reduce the freshness of the returned prioritization fees
+    /// but increase the likelihood of nodes reaching consensus.
+    #[serde(rename = "maxSlotRoundingError")]
+    pub max_slot_rounding_error: Option<u64>,
+
+    /// Limit the number of returned priority fees.
+    ///
+    /// A Solana validator returns at most 150 entries, so that bigger values are possible but not useful.
+    /// MUST be non-zero to avoid useless call.
+    /// Default value is 100.
+    /// Increasing that value can help in estimating the current priority fee
+    /// but will reduce the likelihood of nodes reaching consensus.
+    #[serde(rename = "maxLength")]
+    // TODO XC-326: Use a wrapper type to implement Candid on `NonZeroU8` to prohibit the value 0.
+    pub max_length: Option<u8>,
+}
+
+impl From<RpcConfig> for GetRecentPrioritizationFeesRpcConfig {
+    fn from(value: RpcConfig) -> Self {
+        GetRecentPrioritizationFeesRpcConfig {
+            response_size_estimate: value.response_size_estimate,
+            response_consensus: value.response_consensus,
+            ..Default::default()
+        }
+    }
+}
+
 /// Defines a consensus strategy for combining responses from different providers.
 #[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]
 pub enum ConsensusStrategy {
