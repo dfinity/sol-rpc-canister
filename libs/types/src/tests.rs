@@ -18,7 +18,7 @@ proptest! {
     }
 
     #[test]
-    fn should_deserialize(values in prop::collection::vec(any::<String>(), 0..100)) {
+    fn should_deserialize(values in prop::collection::vec(any::<String>(), 0..=100)) {
         let serialized = json!(values);
 
         let result = VecWithMaxLen::<String, 100>::deserialize(&serialized);

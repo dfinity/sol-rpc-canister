@@ -612,7 +612,7 @@ impl<R> SolRpcClient<R> {
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
-    /// let too_many_signatures: BTreeSet<Signature> = (0..257)
+    /// let too_many_signatures: BTreeSet<Signature> = (0..=257)
     ///     .map(|i| Signature::from([i as u8; 64]))
     ///     .collect();
     /// assert_eq!(too_many_signatures.len(), 257);
