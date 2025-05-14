@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetBlockCommitmentLevel,
-    GetTransactionEncoding, SendTransactionEncoding, Slot, TransactionDetails,
+    GetTransactionEncoding, Pubkey, SendTransactionEncoding, Slot, TransactionDetails,
 };
 use solana_transaction_status_client_types::UiTransactionEncoding;
 
@@ -161,6 +161,23 @@ pub struct GetBlockConfig {
     pub commitment: Option<GetBlockCommitmentLevel>,
     #[serde(rename = "maxSupportedTransactionVersion")]
     pub max_supported_transaction_version: Option<u8>,
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Clone, Debug)]
+#[serde(into = "(Vec<Pubkey>,)")]
+pub struct GetRecentPrioritizationFeesParams(Vec<Pubkey>);
+
+impl From<GetRecentPrioritizationFeesParams> for (Vec<Pubkey>,) {
+    fn from(value: GetRecentPrioritizationFeesParams) -> Self {
+        (value.0,)
+    }
+}
+
+impl From<sol_rpc_types::GetRecentPrioritizationFeesParams> for GetRecentPrioritizationFeesParams {
+    fn from(value: sol_rpc_types::GetRecentPrioritizationFeesParams) -> Self {
+        Self(value.into())
+    }
 }
 
 #[skip_serializing_none]

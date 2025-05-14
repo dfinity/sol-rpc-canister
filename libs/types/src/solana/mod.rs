@@ -12,6 +12,10 @@ pub type Slot = u64;
 /// A Solana [Lamport](https://solana.com/de/docs/references/terminology#lamport).
 pub type Lamport = u64;
 
+/// Within the compute budget, a quantity of micro-lamports is used in the calculation of prioritization fees.
+/// `1_000_000 MicroLamport == 1 Lamport`
+pub type MicroLamport = u64;
+
 /// A Solana base58-encoded [blockhash](https://solana.com/de/docs/references/terminology#blockhash).
 pub type Blockhash = String;
 
@@ -79,4 +83,15 @@ impl From<ConfirmedBlock> for solana_transaction_status_client_types::UiConfirme
             block_height: block.block_height,
         }
     }
+}
+
+/// An entry in the result of a Solana `getRecentPrioritizationFees` RPC method call.
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
+pub struct PrioritizationFee {
+    /// Slot in which the fee was observed.
+    pub slot: Slot,
+    /// The per-compute-unit fee paid by at least one successfully landed transaction,
+    /// specified in increments of micro-lamports (0.000001 lamports)
+    #[serde(rename = "prioritizationFee")]
+    pub prioritization_fee: MicroLamport,
 }
