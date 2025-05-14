@@ -127,7 +127,7 @@ impl Setup {
         self.client_builder()
             .with_rpc_sources(RpcSources::Custom(vec![
                 RpcSource::Supported(SupportedRpcProviderId::AnkrDevnet),
-                RpcSource::Supported(SupportedRpcProviderId::AlchemyDevnet),
+                RpcSource::Supported(SupportedRpcProviderId::DrpcDevnet),
                 RpcSource::Supported(SupportedRpcProviderId::HeliusDevnet),
             ]))
             .with_rpc_config(RpcConfig {
