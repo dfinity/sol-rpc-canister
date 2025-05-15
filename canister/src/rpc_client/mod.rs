@@ -187,7 +187,7 @@ impl GetSignaturesForAddressRequest {
         let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
         let max_response_bytes = config
             .response_size_estimate
-            .unwrap_or(128 + (params.get_limit() as u64 * 256) + HEADER_SIZE_LIMIT); // TODO XC-290: adapt coefficients
+            .unwrap_or((params.get_limit() as u64 * 256) + HEADER_SIZE_LIMIT);
 
         Ok(MultiRpcRequest::new(
             providers,

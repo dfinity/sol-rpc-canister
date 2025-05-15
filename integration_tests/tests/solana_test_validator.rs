@@ -531,7 +531,7 @@ async fn should_get_signatures_for_address() {
                         before: Some(before),
                         until: None,
                         limit: Some(10),
-                        commitment: None,
+                        commitment: Some(setup.solana_client.commitment()),
                     },
                 )
                 .unwrap_or_else(|e| panic!("Failed to get signatures for address: {e}"))
