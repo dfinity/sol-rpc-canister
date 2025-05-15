@@ -15,9 +15,9 @@ use sol_rpc_types::{
 use solana_pubkey::pubkey;
 use std::str::FromStr;
 
-const SOME_SIGNATURE: &'static str =
+const SOME_SIGNATURE: &str =
     "5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y";
-const ANOTHER_SIGNATURE: &'static str =
+const ANOTHER_SIGNATURE: &str =
     "FAAHyQpENs991w9BR7jpwzyXk74jhQWzbsSbjs4NJWkYeL6nggNfT5baWy6eBNLSuqfiiYRGfEC5bhwxUVBZamB";
 
 mod request_serialization_tests {
@@ -99,7 +99,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 GetSignaturesForAddressParams {
-                    pubkey: Pubkey::default().into(),
+                    pubkey: Pubkey::default(),
                     commitment: None,
                     min_context_slot: None,
                     limit: None,
@@ -115,12 +115,12 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 GetSignaturesForAddressParams {
-                    pubkey: Pubkey::default().into(),
+                    pubkey: Pubkey::default(),
                     commitment: Some(CommitmentLevel::Processed),
                     min_context_slot: Some(123),
                     limit: Some(10.try_into().unwrap()),
-                    before: Some(Signature::from_str(SOME_SIGNATURE).unwrap().into()),
-                    until: Some(Signature::from_str(ANOTHER_SIGNATURE).unwrap().into()),
+                    before: Some(Signature::from_str(SOME_SIGNATURE).unwrap()),
+                    until: Some(Signature::from_str(ANOTHER_SIGNATURE).unwrap()),
                 },
             )
             .unwrap(),
