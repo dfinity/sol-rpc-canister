@@ -13,6 +13,7 @@ mod solana;
 
 use candid::{CandidType, Deserialize};
 use derive_more::Into;
+
 pub use lifecycle::{InstallArgs, Mode, NumSubnetNodes};
 pub use response::MultiRpcResult;
 pub use rpc_client::{
@@ -35,9 +36,10 @@ pub use solana::{
         error::{InstructionError, TransactionError},
         instruction::{CompiledInstruction, InnerInstructions, Instruction},
         reward::{Reward, RewardType},
-        EncodedTransaction, LoadedAddresses, TokenAmount, TransactionBinaryEncoding,
-        TransactionConfirmationStatus, TransactionInfo, TransactionReturnData, TransactionStatus,
-        TransactionStatusMeta, TransactionTokenBalance, TransactionVersion,
+        ConfirmedTransactionStatusWithSignature, EncodedTransaction, LoadedAddresses, TokenAmount,
+        TransactionBinaryEncoding, TransactionConfirmationStatus, TransactionInfo,
+        TransactionReturnData, TransactionStatus, TransactionStatusMeta, TransactionTokenBalance,
+        TransactionVersion,
     },
     ConfirmedBlock, Hash, Lamport, PrioritizationFee, Pubkey, Signature, Slot, Timestamp,
 };

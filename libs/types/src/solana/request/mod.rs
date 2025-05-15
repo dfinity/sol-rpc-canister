@@ -235,17 +235,23 @@ pub struct GetSignaturesForAddressParams {
 /// The maximum number of transactions to return in the response of a
 /// [`getSignaturesForAddress`](https://solana.com/docs/rpc/http/getsignaturesforaddress) request.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
-#[serde(try_from = "u16")]
+#[serde(try_from = "u16", into = "u16")]
 pub struct GetSignaturesForAddressLimit(u16);
+
+impl GetSignaturesForAddressLimit {
+    /// The maximum number of transactions that can be returned by a `getSignaturesForAddress` call.
+    pub const MAX_LIMIT: u16 = 1000;
+}
 
 impl TryFrom<u16> for GetSignaturesForAddressLimit {
     type Error = RpcError;
 
     fn try_from(value: u16) -> Result<Self, Self::Error> {
         match value {
-            1..=1000 => Ok(Self(value)),
+            1..=Self::MAX_LIMIT => Ok(Self(value)),
             _ => Err(RpcError::ValidationError(format!(
-                "Expected a value between 1 and 1000, but got {}",
+                "Expected a value between 1 and {}, but got {}",
+                Self::MAX_LIMIT,
                 value
             ))),
         }

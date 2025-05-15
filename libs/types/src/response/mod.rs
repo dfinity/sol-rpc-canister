@@ -1,6 +1,6 @@
 use crate::{
-    solana::account::AccountInfo, ConfirmedBlock, RpcResult, RpcSource, Signature, TokenAmount,
-    TransactionInfo, TransactionStatus,
+    solana::account::AccountInfo, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
+    RpcResult, RpcSource, Signature, TokenAmount, TransactionInfo, TransactionStatus,
 };
 use candid::CandidType;
 use serde::Deserialize;

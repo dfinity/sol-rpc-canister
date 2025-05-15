@@ -25,9 +25,10 @@ use ic_cdk::api::management_canister::http_request::{
 };
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
-    ConsensusStrategy, GetRecentPrioritizationFeesRpcConfig, GetSlotRpcConfig, Lamport,
-    PrioritizationFee, ProviderError, RpcConfig, RpcError, RpcResult, RpcSource, RpcSources,
-    Signature, TransactionDetails,
+    ConfirmedTransactionStatusWithSignature, ConsensusStrategy,
+    GetRecentPrioritizationFeesRpcConfig, GetSlotRpcConfig, Lamport, PrioritizationFee,
+    ProviderError, RpcConfig, RpcError, RpcResult, RpcSource, RpcSources, Signature,
+    TransactionDetails,
 };
 use solana_clock::Slot;
 use std::{fmt::Debug, marker::PhantomData};
@@ -161,6 +162,38 @@ impl GetBlockRequest {
             JsonRpcRequest::new("getBlock", params),
             max_response_bytes,
             ResponseTransform::GetBlock,
+            ReductionStrategy::from(consensus_strategy),
+        ))
+    }
+}
+
+// TODO XC-290: The Solana client returns a vector containing
+//  `solana_rpc_client_api::response::RpcConfirmedTransactionStatusWithSignature`, however this
+//  crate (`solana_rpc_client_api`) cannot currently be used by canister code due to dependency
+//  problems. If the dependency problems are fixed, consider changing the response type.
+pub type GetSignaturesForAddressRequest = MultiRpcRequest<
+    json::GetSignaturesForAddressParams,
+    Vec<ConfirmedTransactionStatusWithSignature>,
+>;
+
+impl GetSignaturesForAddressRequest {
+    pub fn get_signatures_for_address<Params: Into<json::GetSignaturesForAddressParams>>(
+        rpc_sources: RpcSources,
+        config: RpcConfig,
+        params: Params,
+    ) -> Result<Self, ProviderError> {
+        let params = params.into();
+        let consensus_strategy = config.response_consensus.unwrap_or_default();
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let max_response_bytes = config
+            .response_size_estimate
+            .unwrap_or(128 + (params.get_limit() as u64 * 256) + HEADER_SIZE_LIMIT); // TODO XC-290: adapt coefficients
+
+        Ok(MultiRpcRequest::new(
+            providers,
+            JsonRpcRequest::new("getSignaturesForAddress", params),
+            max_response_bytes,
+            ResponseTransform::GetSignaturesForAddress,
             ReductionStrategy::from(consensus_strategy),
         ))
     }
