@@ -513,9 +513,12 @@ async fn should_get_signature_statuses() {
 async fn should_get_signatures_for_address() {
     let setup = Setup::new().await;
 
-    // Start searching backwards from this transaction. This ensures we can reach consensus,
-    // otherwise different nodes will get different results due to some of them including
+    // Start searching backwards from this transaction. This ensures the two clients get the
+    // same answer. Otherwise, they might get different results due to one of them including
     // transactions from more recent blocks than others.
+    // Also wait until this transaction is finalized, so that all transactions before it should
+    // be finalized as well. Otherwise, the confirmation status of some transactions might change
+    // while fetching them and the two clients might get different results.
     let before = setup
         .solana_client
         .request_airdrop(&Keypair::new().pubkey(), 10_000_000_000)
@@ -825,14 +828,23 @@ impl Setup {
     }
 
     fn confirm_transaction(&self, transaction_id: &Signature) {
+        self.confirm_transaction_with_commitment(transaction_id, self.solana_client.commitment())
+    }
+
+    fn confirm_transaction_with_commitment(
+        &self,
+        transaction_id: &Signature,
+        commitment: CommitmentConfig,
+    ) {
         // Wait until the transaction is confirmed
         let max_wait = Duration::from_secs(10);
         let start = Instant::now();
         loop {
             let confirmed = self
                 .solana_client
-                .confirm_transaction(transaction_id)
-                .expect("Error while getting transaction confirmation status");
+                .confirm_transaction_with_commitment(transaction_id, commitment)
+                .expect("Error while getting transaction confirmation status")
+                .value;
             if confirmed {
                 return;
             } else {
