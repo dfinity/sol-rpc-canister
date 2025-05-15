@@ -747,7 +747,7 @@ type CommitmentLevel = variant {
 type GetRecentPrioritizationFeesParams =  vec Pubkey;
 
 // The parameters for a call to the `getSignaturesForAddress` Solana RPC method.
-type GetSignatureStatusesParams = record {
+type GetSignaturesForAddressParams = record {
     // The account address.
     pubkey: Pubkey;
     // The commitment describes how finalized a block is at that point in time.
