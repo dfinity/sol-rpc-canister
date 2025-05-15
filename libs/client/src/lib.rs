@@ -122,15 +122,12 @@
 pub mod fixtures;
 mod request;
 
-use crate::{
-    request::{
-        GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest,
-        GetRecentPrioritizationFeesRequest, GetRecentPrioritizationFeesRequestBuilder,
-        GetSignatureStatusesRequest, GetSignatureStatusesRequestBuilder,
-        GetSignaturesForAddressRequest, GetSignaturesForAddressRequestBuilder, GetSlotRequest,
-        GetTokenAccountBalanceRequest, GetTransactionRequest, JsonRequest, SendTransactionRequest,
-    },
-    SolRpcEndpoint::GetSignaturesForAddress,
+use crate::request::{
+    GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetRecentPrioritizationFeesRequest,
+    GetRecentPrioritizationFeesRequestBuilder, GetSignatureStatusesRequest,
+    GetSignatureStatusesRequestBuilder, GetSignaturesForAddressRequest,
+    GetSignaturesForAddressRequestBuilder, GetSlotRequest, GetTokenAccountBalanceRequest,
+    GetTransactionRequest, JsonRequest, SendTransactionRequest,
 };
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
@@ -573,18 +570,13 @@ impl<R> SolRpcClient<R> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn get_signatures_for_address<'a, P>(
+    pub fn get_signatures_for_address(
         &self,
-        pubkey: P,
-    ) -> GetSignaturesForAddressRequestBuilder<R>
-    where
-        P: Into<solana_pubkey::Pubkey>,
-    {
+        params: impl Into<GetSignaturesForAddressParams>,
+    ) -> GetSignaturesForAddressRequestBuilder<R> {
         RequestBuilder::new(
             self.clone(),
-            GetSignaturesForAddressRequest::from(GetSignaturesForAddressParams::from(
-                pubkey.into(),
-            )),
+            GetSignaturesForAddressRequest::from(params.into()),
             2_000_000_000, // TODO XC-338: Check heuristic
         )
     }

@@ -7,9 +7,10 @@ use pocket_ic::PocketIcBuilder;
 use sol_rpc_client::SolRpcClient;
 use sol_rpc_int_tests::{spl, PocketIcLiveModeRuntime};
 use sol_rpc_types::{
-    CommitmentLevel, GetAccountInfoEncoding, GetAccountInfoParams, GetBlockCommitmentLevel,
-    GetBlockParams, GetTransactionEncoding, GetTransactionParams, InstallArgs, Lamport,
-    OverrideProvider, PrioritizationFee, RegexSubstitution, TransactionDetails, TransactionStatus,
+    CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetAccountInfoEncoding,
+    GetAccountInfoParams, GetBlockCommitmentLevel, GetBlockParams, GetTransactionEncoding,
+    GetTransactionParams, InstallArgs, Lamport, OverrideProvider, PrioritizationFee,
+    RegexSubstitution, TransactionDetails, TransactionStatus,
 };
 use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
 use solana_client::rpc_client::{RpcClient as SolanaRpcClient, RpcClient};
@@ -24,7 +25,7 @@ use solana_program::{
 use solana_pubkey::{pubkey, Pubkey};
 use solana_rpc_client_api::{
     config::{RpcBlockConfig, RpcTransactionConfig},
-    response::RpcPrioritizationFee,
+    response::{RpcConfirmedTransactionStatusWithSignature, RpcPrioritizationFee},
 };
 use solana_signature::Signature;
 use solana_signer::Signer;
@@ -102,8 +103,8 @@ async fn should_get_recent_prioritization_fees() {
     }
 
     let spent_lamports = NUM_TRANSACTIONS * transaction_amount //amount sent
-            + NUM_TRANSACTIONS * BASE_FEE_PER_SIGNATURE_LAMPORTS //base fee
-            + NUM_TRANSACTIONS * (NUM_TRANSACTIONS+1) / 2; //prioritization_fee = 1 µL * CUL / 1_000_000 + .. + NUM_TRANSACTIONS * CUL / 1_000_000 and compute unit limit was set to 1 million.
+        + NUM_TRANSACTIONS * BASE_FEE_PER_SIGNATURE_LAMPORTS //base fee
+        + NUM_TRANSACTIONS * (NUM_TRANSACTIONS + 1) / 2; //prioritization_fee = 1 µL * CUL / 1_000_000 + .. + NUM_TRANSACTIONS * CUL / 1_000_000 and compute unit limit was set to 1 million.
     assert_eq!(
         sender_balance_before - setup.solana_client.get_balance(&sender.pubkey()).unwrap(),
         spent_lamports
@@ -508,7 +509,51 @@ async fn should_get_signature_statuses() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn should_get_signatures_for_address() {
-    // TODO XC-290
+    let setup = Setup::new().await;
+
+    let (sol_res, ic_res) = setup
+        .compare_client(
+            |sol| {
+                sol.get_signatures_for_address(&Pubkey::default())
+                    .unwrap_or_else(|e| panic!("Failed to get signatures for address: {e}"))
+            },
+            |ic| async move {
+                ic.get_signatures_for_address(Pubkey::default())
+                    .send()
+                    .await
+                    .expect_consistent()
+                    .unwrap_or_else(|e| panic!("`getSignaturesForAddress` call failed: {e}"))
+                    .into_iter()
+                    .map(from_confirmed_transaction_status_with_signature)
+                    .collect::<Vec<_>>()
+            },
+        )
+        .await;
+
+    assert_eq!(sol_res, ic_res);
+
+    setup.setup.drop().await;
+}
+
+fn from_confirmed_transaction_status_with_signature(
+    status: ConfirmedTransactionStatusWithSignature,
+) -> RpcConfirmedTransactionStatusWithSignature {
+    let ConfirmedTransactionStatusWithSignature {
+        signature,
+        slot,
+        err,
+        memo,
+        block_time,
+        confirmation_status,
+    } = status;
+    RpcConfirmedTransactionStatusWithSignature {
+        signature: signature.into(),
+        slot,
+        err: err.map(Into::into),
+        memo,
+        block_time,
+        confirmation_status: confirmation_status.map(Into::into),
+    }
 }
 
 fn solana_rpc_client_get_account(

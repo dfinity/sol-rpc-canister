@@ -13,9 +13,9 @@ use sol_rpc_int_tests::{
     mock::MockOutcallBuilder, PocketIcRuntime, Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID,
 };
 use sol_rpc_types::{
-    CommitmentLevel, GetSlotParams, InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth,
-    RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster,
-    SupportedRpcProvider, SupportedRpcProviderId,
+    CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetSlotParams, InstallArgs, Mode,
+    ProviderError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource,
+    RpcSources, Slot, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use solana_account_decoder_client_types::{
     token::UiTokenAmount, UiAccount, UiAccountData, UiAccountEncoding,
@@ -1676,7 +1676,7 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::GetSignaturesForAddress => {
                     check(
                         &setup,
-                        client.get_signature_statuses(&[some_signature()]).unwrap(),
+                        client.get_signatures_for_address(USDC_PUBLIC_KEY),
                         0,
                     )
                     .await;
@@ -1958,7 +1958,71 @@ mod get_signatures_for_address_tests {
 
     #[tokio::test]
     async fn should_get_signatures_for_address() {
-        // TODO XC-290
+        fn request_body(id: u8) -> serde_json::Value {
+            json!({
+                "jsonrpc": "2.0",
+                "id": Id::from(ConstantSizeId::from(id)),
+                "method": "getSignaturesForAddress",
+                "params": [
+                    some_signature().to_string(),
+                    {
+                        "limit": 1,
+                    },
+                ],
+            })
+        }
+
+        fn response_body(id: u8) -> serde_json::Value {
+            json!({
+                "id": Id::from(ConstantSizeId::from(id)),
+                "jsonrpc": "2.0",
+                "result": [
+                    {
+                        "signature": some_signature().to_string(),
+                        "slot": 114,
+                        "err": null,
+                        "memo": null,
+                        "blockTime": null,
+                        "confirmationStatus": "finalized"
+                    },
+                ]
+            })
+        }
+
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
+            let client = setup.client().with_rpc_sources(sources);
+
+            let results = client
+                .mock_http_sequence(vec![
+                    MockOutcallBuilder::new(200, response_body(first_id))
+                        .with_request_body(request_body(first_id)),
+                    MockOutcallBuilder::new(200, response_body(first_id + 1))
+                        .with_request_body(request_body(first_id + 1)),
+                    MockOutcallBuilder::new(200, response_body(first_id + 2))
+                        .with_request_body(request_body(first_id + 2)),
+                ])
+                .build()
+                .get_signatures_for_address(USDC_PUBLIC_KEY)
+                .send()
+                .await
+                .expect_consistent();
+
+            assert_eq!(
+                results,
+                Ok(vec![ConfirmedTransactionStatusWithSignature {
+                    signature: some_signature().into(),
+                    slot: 114,
+                    err: None,
+                    memo: None,
+                    block_time: None,
+                    confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                }])
+            );
+        }
+
+        setup.drop().await;
     }
 }
 

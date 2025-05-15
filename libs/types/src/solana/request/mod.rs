@@ -232,8 +232,8 @@ pub struct GetSignaturesForAddressParams {
     pub until: Option<Signature>,
 }
 
-impl From<solana_pubkey::Pubkey> for GetSignaturesForAddressParams {
-    fn from(pubkey: solana_pubkey::Pubkey) -> Self {
+impl<P: Into<Pubkey>> From<P> for GetSignaturesForAddressParams {
+    fn from(pubkey: P) -> Self {
         Self {
             pubkey: pubkey.into(),
             commitment: None,
