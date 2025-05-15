@@ -172,7 +172,7 @@ GET_SIGNATURES_FOR_ADDRESS_PARAMS="(
     commitment = null;
     minContextSlot = null;
     limit = opt (10 : nat16);
-    before = opt ${FIRST_SIGNATURE};
+    before = opt \"${FIRST_SIGNATURE}\";
     until = null;
   },
 )"
