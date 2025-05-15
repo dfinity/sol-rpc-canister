@@ -200,7 +200,7 @@ async fn get_signatures_for_address(
 ) -> MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>> {
     let request =
         MultiRpcRequest::get_signatures_for_address(source, config.unwrap_or_default(), params);
-    send_multi(request).await.into()
+    send_multi(request).await
 }
 
 #[query(name = "getSignaturesForAddressCyclesCost")]
