@@ -1491,6 +1491,9 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::GetRecentPrioritizationFees => {
                     check(client.get_recent_prioritization_fees(&[]).unwrap()).await
                 }
+                SolRpcEndpoint::GetSignaturesForAddress => {
+                    check(client.get_signatures_for_address(USDC_PUBLIC_KEY)).await;
+                }
                 SolRpcEndpoint::GetSignatureStatuses => {
                     check(client.get_signature_statuses(&[some_signature()]).unwrap()).await;
                 }
@@ -1546,6 +1549,9 @@ mod cycles_cost_tests {
                 }
                 SolRpcEndpoint::GetRecentPrioritizationFees => {
                     check(client.get_recent_prioritization_fees(&[]).unwrap()).await;
+                }
+                SolRpcEndpoint::GetSignaturesForAddress => {
+                    check(client.get_signatures_for_address(USDC_PUBLIC_KEY)).await;
                 }
                 SolRpcEndpoint::GetSignatureStatuses => {
                     check(client.get_signature_statuses(&[some_signature()]).unwrap()).await;
@@ -1664,6 +1670,14 @@ mod cycles_cost_tests {
                         &setup,
                         client.get_recent_prioritization_fees(&[]).unwrap(),
                         2_378_204_800,
+                    )
+                    .await;
+                }
+                SolRpcEndpoint::GetSignaturesForAddress => {
+                    check(
+                        &setup,
+                        client.get_signature_statuses(&[some_signature()]).unwrap(),
+                        0,
                     )
                     .await;
                 }
@@ -1936,6 +1950,17 @@ mod get_signature_statuses_tests {
         }
 
         setup.drop().await;
+    }
+}
+
+
+
+mod get_signatures_for_address_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn should_get_signatures_for_address() {
+        // TODO XC-290
     }
 }
 

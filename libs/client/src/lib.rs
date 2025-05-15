@@ -125,9 +125,11 @@ mod request;
 use crate::request::{
     GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetRecentPrioritizationFeesRequest,
     GetRecentPrioritizationFeesRequestBuilder, GetSignatureStatusesRequest,
-    GetSignatureStatusesRequestBuilder, GetSlotRequest, GetTokenAccountBalanceRequest,
+    GetSignatureStatusesRequestBuilder, GetSignaturesForAddressRequest,
+    GetSignaturesForAddressRequestBuilder, GetSlotRequest, GetTokenAccountBalanceRequest,
     GetTransactionRequest, JsonRequest, SendTransactionRequest,
 };
+use crate::SolRpcEndpoint::GetSignaturesForAddress;
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
@@ -135,10 +137,11 @@ pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
-    GetRecentPrioritizationFeesParams, GetSignatureStatusesParams, GetSlotParams, GetSlotRpcConfig,
-    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, Pubkey, RpcConfig, RpcResult,
-    RpcSources, SendTransactionParams, Signature, Slot, SolanaCluster, SupportedRpcProvider,
-    SupportedRpcProviderId, TokenAmount, TransactionDetails, TransactionInfo,
+    GetRecentPrioritizationFeesParams, GetSignatureStatusesParams, GetSignaturesForAddressParams,
+    GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
+    Pubkey, RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot,
+    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TokenAmount, TransactionDetails,
+    TransactionInfo,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
@@ -528,6 +531,60 @@ impl<R> SolRpcClient<R> {
             GetRecentPrioritizationFeesRequest::from(params),
             10_000_000_000,
         ))
+    }
+
+    /// Call `getSignaturesForAddress` on the SOL RPC canister.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster};
+    /// use solana_instruction::error::InstructionError;
+    /// use solana_signature::Signature;
+    /// use solana_transaction_error::TransactionError;
+    /// use solana_transaction_status_client_types::{TransactionConfirmationStatus, TransactionStatus};
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use std::str::FromStr;
+    /// use solana_pubkey::pubkey;
+    /// # use sol_rpc_types::MultiRpcResult;
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(vec![
+    /// #       // TODO XC-290
+    /// #    ])))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let statuses = client
+    ///     .get_signatures_for_address(
+    ///         pubkey!("BJE5MMbqXjVwjAF7oxwPYXnTXDyspzZyt4vwenNw5ruG")
+    ///     )
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent();
+    ///
+    /// assert_eq!(statuses, Ok(vec![
+    ///     // TODO XC-290
+    /// ]));
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn get_signatures_for_address<'a, P>(
+        &self,
+        pubkey: P,
+    ) -> GetSignaturesForAddressRequestBuilder<R>
+    where
+        P: Into<solana_pubkey::Pubkey>,
+    {
+        RequestBuilder::new(
+            self.clone(),
+            GetSignaturesForAddressRequest::from(GetSignaturesForAddressParams::from(
+                pubkey.into(),
+            )),
+            2_000_000_000, // TODO XC-338: Check heuristic
+        )
     }
 
     /// Call `getSignatureStatuses` on the SOL RPC canister.

@@ -232,6 +232,19 @@ pub struct GetSignaturesForAddressParams {
     pub until: Option<Signature>,
 }
 
+impl From<solana_pubkey::Pubkey> for GetSignaturesForAddressParams {
+    fn from(pubkey: solana_pubkey::Pubkey) -> Self {
+        Self {
+            pubkey: pubkey.into(),
+            commitment: None,
+            min_context_slot: None,
+            limit: None,
+            before: None,
+            until: None,
+        }
+    }
+}
+
 /// The maximum number of transactions to return in the response of a
 /// [`getSignaturesForAddress`](https://solana.com/docs/rpc/http/getsignaturesforaddress) request.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]

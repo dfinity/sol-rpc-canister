@@ -6,12 +6,13 @@ use candid::CandidType;
 use derive_more::From;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    AccountInfo, CommitmentLevel, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams,
-    GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
-    GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams, GetSlotParams,
-    GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
-    PrioritizationFee, RoundingError, RpcConfig, RpcResult, RpcSources, SendTransactionParams,
-    Signature, Slot, TokenAmount, TransactionInfo, TransactionStatus,
+    AccountInfo, CommitmentLevel, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
+    GetAccountInfoParams, GetBalanceParams, GetBlockCommitmentLevel, GetBlockParams,
+    GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
+    GetSignatureStatusesParams, GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig,
+    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, PrioritizationFee, RoundingError,
+    RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot, TokenAmount,
+    TransactionInfo, TransactionStatus,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
@@ -47,6 +48,8 @@ pub enum SolRpcEndpoint {
     GetBlock,
     /// `getRecentPrioritizationFees` endpoint.
     GetRecentPrioritizationFees,
+    /// `getSignaturesForAddress` endpoint.
+    GetSignaturesForAddress,
     /// `getSignatureStatuses` endpoint.
     GetSignatureStatuses,
     /// `getSlot` endpoint.
@@ -70,6 +73,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetBlock => "getBlock",
             SolRpcEndpoint::GetRecentPrioritizationFees => "getRecentPrioritizationFees",
             SolRpcEndpoint::GetSignatureStatuses => "getSignatureStatuses",
+            SolRpcEndpoint::GetSignaturesForAddress => "getSignaturesForAddress",
             SolRpcEndpoint::GetSlot => "getSlot",
             SolRpcEndpoint::GetTokenAccountBalance => "getTokenAccountBalance",
             SolRpcEndpoint::GetTransaction => "getTransaction",
@@ -85,6 +89,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetBalance => "getBalanceCyclesCost",
             SolRpcEndpoint::GetBlock => "getBlockCyclesCost",
             SolRpcEndpoint::GetRecentPrioritizationFees => "getRecentPrioritizationFeesCyclesCost",
+            SolRpcEndpoint::GetSignaturesForAddress => "getSignaturesForAddressCyclesCost",
             SolRpcEndpoint::GetSignatureStatuses => "getSignatureStatusesCyclesCost",
             SolRpcEndpoint::GetSlot => "getSlotCyclesCost",
             SolRpcEndpoint::GetTransaction => "getTransactionCyclesCost",
@@ -214,6 +219,34 @@ impl From<GetRecentPrioritizationFeesParams> for GetRecentPrioritizationFeesRequ
         Self(value)
     }
 }
+
+#[derive(Debug, Clone, From)]
+pub struct GetSignaturesForAddressRequest(GetSignaturesForAddressParams);
+
+impl SolRpcRequest for GetSignaturesForAddressRequest {
+    type Config = RpcConfig;
+    type Params = GetSignaturesForAddressParams;
+    type CandidOutput = Self::Output;
+    type Output = sol_rpc_types::MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>;
+
+    fn endpoint(&self) -> SolRpcEndpoint {
+        SolRpcEndpoint::GetSignatureStatuses
+    }
+
+    fn params(self, default_commitment_level: Option<CommitmentLevel>) -> Self::Params {
+        let mut params = self.0;
+        set_default(default_commitment_level, &mut params.commitment);
+        params
+    }
+}
+
+pub type GetSignaturesForAddressRequestBuilder<R> = RequestBuilder<
+    R,
+    RpcConfig,
+    GetSignaturesForAddressParams,
+    sol_rpc_types::MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>,
+    sol_rpc_types::MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>,
+>;
 
 #[derive(Debug, Clone, Default, From)]
 pub struct GetSignatureStatusesRequest(GetSignatureStatusesParams);

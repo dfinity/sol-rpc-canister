@@ -264,6 +264,16 @@ mod request_serialization_tests {
     }
 
     #[test]
+    fn should_serialize_get_recent_prioritization_fees_request() {
+        // TODO XC-326
+    }
+
+    #[test]
+    fn should_serialize_get_signatures_for_address_request() {
+        // TODO XC-290
+    }
+
+    #[test]
     fn should_serialize_send_transaction_request() {
         let transaction = "4F9ksKhLSgn9e7ugVnAmRpRXL9kjke4TT96FNDxMiUNc5KVDz8p1yuv";
         assert_params_eq(

@@ -506,6 +506,11 @@ async fn should_get_signature_statuses() {
     setup.setup.drop().await;
 }
 
+#[tokio::test(flavor = "multi_thread")]
+async fn should_get_signatures_for_address () {
+    // TODO XC-290
+}
+
 fn solana_rpc_client_get_account(
     pubkey: &Pubkey,
     sol: &RpcClient,

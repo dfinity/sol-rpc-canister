@@ -79,19 +79,19 @@ pub struct ConfirmedTransactionStatusWithSignature {
     /// Transaction signature.
     pub signature: Signature,
     /// The slot that contains the block with the transaction.
-    slot: Slot,
+    pub slot: Slot,
     /// Error if transaction failed, [`None`] if transaction succeeded.
-    err: Option<TransactionError>,
+    pub err: Option<TransactionError>,
     /// Memo associated with the transaction, [`None`] if no memo is present.
-    memo: Option<String>,
+    pub memo: Option<String>,
     /// Estimated production time of when transaction was processed, [`None`] if not available.
     #[serde(rename = "blockTime")]
-    block_time: Option<Timestamp>,
+    pub block_time: Option<Timestamp>,
     /// The transaction's cluster confirmation status; Either `processed`, `confirmed`, or `finalized`.
     /// See [Commitment](https://solana.com/docs/rpc#configuring-state-commitment) for more on
     /// optimistic confirmation.
     #[serde(rename = "confirmationStatus")]
-    confirmation_status: Option<TransactionConfirmationStatus>,
+    pub confirmation_status: Option<TransactionConfirmationStatus>,
 }
 
 impl From<ConfirmedTransactionStatusWithSignature>
