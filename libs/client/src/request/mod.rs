@@ -230,7 +230,7 @@ impl SolRpcRequest for GetSignaturesForAddressRequest {
     type Output = sol_rpc_types::MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>;
 
     fn endpoint(&self) -> SolRpcEndpoint {
-        SolRpcEndpoint::GetSignatureStatuses
+        SolRpcEndpoint::GetSignaturesForAddress
     }
 
     fn params(self, default_commitment_level: Option<CommitmentLevel>) -> Self::Params {
