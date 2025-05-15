@@ -13,7 +13,9 @@ use sol_rpc_types::{
     RegexSubstitution, TransactionDetails, TransactionStatus,
 };
 use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
-use solana_client::rpc_client::{RpcClient as SolanaRpcClient, RpcClient};
+use solana_client::rpc_client::{
+    GetConfirmedSignaturesForAddress2Config, RpcClient as SolanaRpcClient, RpcClient,
+};
 use solana_commitment_config::CommitmentConfig;
 use solana_compute_budget_interface::ComputeBudgetInstruction;
 use solana_hash::Hash;
@@ -514,11 +516,21 @@ async fn should_get_signatures_for_address() {
     let (sol_res, ic_res) = setup
         .compare_client(
             |sol| {
-                sol.get_signatures_for_address(&Pubkey::default())
-                    .unwrap_or_else(|e| panic!("Failed to get signatures for address: {e}"))
+                sol.get_signatures_for_address_with_config(
+                    &Pubkey::default(),
+                    GetConfirmedSignaturesForAddress2Config {
+                        before: None,
+                        until: None,
+                        limit: Some(10),
+                        commitment: None,
+                    },
+                )
+                .unwrap_or_else(|e| panic!("Failed to get signatures for address: {e}"))
             },
             |ic| async move {
                 ic.get_signatures_for_address(Pubkey::default())
+                    .with_limit(10)
+                    .unwrap()
                     .send()
                     .await
                     .expect_consistent()
