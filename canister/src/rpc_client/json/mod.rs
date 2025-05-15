@@ -191,8 +191,7 @@ impl GetSignaturesForAddressParams {
     pub fn get_limit(&self) -> u16 {
         self.1
             .as_ref()
-            .map(|c| c.limit)
-            .flatten()
+            .and_then(|c| c.limit)
             .unwrap_or(GetSignaturesForAddressLimit::MAX_LIMIT)
     }
 }
