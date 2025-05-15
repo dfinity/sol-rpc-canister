@@ -122,14 +122,16 @@
 pub mod fixtures;
 mod request;
 
-use crate::request::{
-    GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetRecentPrioritizationFeesRequest,
-    GetRecentPrioritizationFeesRequestBuilder, GetSignatureStatusesRequest,
-    GetSignatureStatusesRequestBuilder, GetSignaturesForAddressRequest,
-    GetSignaturesForAddressRequestBuilder, GetSlotRequest, GetTokenAccountBalanceRequest,
-    GetTransactionRequest, JsonRequest, SendTransactionRequest,
+use crate::{
+    request::{
+        GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest,
+        GetRecentPrioritizationFeesRequest, GetRecentPrioritizationFeesRequestBuilder,
+        GetSignatureStatusesRequest, GetSignatureStatusesRequestBuilder,
+        GetSignaturesForAddressRequest, GetSignaturesForAddressRequestBuilder, GetSlotRequest,
+        GetTokenAccountBalanceRequest, GetTransactionRequest, JsonRequest, SendTransactionRequest,
+    },
+    SolRpcEndpoint::GetSignaturesForAddress,
 };
-use crate::SolRpcEndpoint::GetSignaturesForAddress;
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;

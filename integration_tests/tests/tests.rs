@@ -1953,8 +1953,6 @@ mod get_signature_statuses_tests {
     }
 }
 
-
-
 mod get_signatures_for_address_tests {
     use super::*;
 
