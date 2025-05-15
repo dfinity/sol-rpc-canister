@@ -1677,7 +1677,7 @@ mod cycles_cost_tests {
                     check(
                         &setup,
                         client.get_signatures_for_address(USDC_PUBLIC_KEY),
-                        0,
+                        22_601_010_400,
                     )
                     .await;
                 }
