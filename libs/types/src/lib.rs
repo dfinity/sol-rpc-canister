@@ -17,7 +17,7 @@ pub use lifecycle::{InstallArgs, Mode, NumSubnetNodes};
 pub use response::MultiRpcResult;
 pub use rpc_client::{
     ConsensusStrategy, GetRecentPrioritizationFeesRpcConfig, GetSlotRpcConfig, HttpHeader,
-    HttpOutcallError, JsonRpcError, OverrideProvider, ProviderError, RegexString,
+    HttpOutcallError, JsonRpcError, NonZeroU8, OverrideProvider, ProviderError, RegexString,
     RegexSubstitution, RoundingError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
     RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
