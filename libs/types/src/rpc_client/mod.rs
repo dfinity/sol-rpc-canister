@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests;
 
+use candid::types::{Serializer, Type, TypeInner};
 use candid::CandidType;
 use derive_more::{From, Into};
 use ic_cdk::api::call::RejectionCode;
@@ -8,6 +9,7 @@ pub use ic_cdk::api::management_canister::http_request::HttpHeader;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+use std::num::TryFromIntError;
 use strum::Display;
 use thiserror::Error;
 
@@ -529,5 +531,55 @@ impl RoundingError {
             0 | 1 => slot,
             n => (slot / n) * n,
         }
+    }
+}
+
+/// A wrapper around the primitive [`std::num::NonZeroU8`] to implement [`candid::CandidType`].
+///
+/// From the point of view of Candid, this is like a [`u8`], except that a zero value will fail to be deserialized.
+///
+/// # Examples
+///
+/// ```rust
+/// use candid::{Decode, Encode};
+/// use sol_rpc_types::NonZeroU8;
+///
+/// let one = 1_u8;
+/// let non_zero_one = NonZeroU8::try_from(one).unwrap();
+/// let encoded_one = Encode!(&one).unwrap();
+/// assert_eq!(encoded_one, Encode!(&non_zero_one).unwrap());
+/// assert_eq!(non_zero_one, Decode!(&encoded_one, NonZeroU8).unwrap());
+///
+/// let encoded_zero = Encode!(&0_u8).unwrap();
+/// assert!(Decode!(&encoded_zero, NonZeroU8).is_err());
+/// ```
+#[derive(Debug, Clone, Copy, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[serde(try_from = "u8", into = "u8")]
+pub struct NonZeroU8(std::num::NonZeroU8);
+
+impl CandidType for NonZeroU8 {
+    fn _ty() -> Type {
+        Type(TypeInner::Nat8.into())
+    }
+
+    fn idl_serialize<S>(&self, serializer: S) -> Result<(), S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_nat8(self.0.get())
+    }
+}
+
+impl From<NonZeroU8> for u8 {
+    fn from(value: NonZeroU8) -> Self {
+        value.0.get()
+    }
+}
+
+impl TryFrom<u8> for NonZeroU8 {
+    type Error = TryFromIntError;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        std::num::NonZeroU8::try_from(value).map(Self)
     }
 }
