@@ -507,7 +507,7 @@ async fn should_get_signature_statuses() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn should_get_signatures_for_address () {
+async fn should_get_signatures_for_address() {
     // TODO XC-290
 }
 
