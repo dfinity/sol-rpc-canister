@@ -3,7 +3,6 @@ pub mod instruction;
 pub mod reward;
 
 use crate::{
-    solana,
     solana::{parse_opt, parse_vec, try_from_vec},
     Pubkey, RpcError, Signature, Slot, Timestamp,
 };
