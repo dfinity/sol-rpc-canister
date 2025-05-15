@@ -22,6 +22,7 @@ const ANOTHER_SIGNATURE: &'static str =
 
 mod request_serialization_tests {
     use super::*;
+    use sol_rpc_types::{GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig};
 
     #[test]
     fn should_serialize_get_account_info_request() {
@@ -315,7 +316,32 @@ mod request_serialization_tests {
 
     #[test]
     fn should_serialize_get_recent_prioritization_fees_request() {
-        // TODO XC-326
+        assert_params_eq(
+            MultiRpcRequest::get_recent_prioritization_fees(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                GetRecentPrioritizationFeesRpcConfig::default(),
+                GetRecentPrioritizationFeesParams::default(),
+            )
+            .unwrap(),
+            json!([[]]),
+        );
+
+        assert_params_eq(
+            MultiRpcRequest::get_recent_prioritization_fees(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                GetRecentPrioritizationFeesRpcConfig::default(),
+                GetRecentPrioritizationFeesParams::try_from(vec![
+                    pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"),
+                    pubkey!("3emsAVdmGKERbHjmGfQ6oZ1e35dkf5iYcS6U4CPKFVaa"),
+                ])
+                .unwrap(),
+            )
+            .unwrap(),
+            json!([[
+                "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+                "3emsAVdmGKERbHjmGfQ6oZ1e35dkf5iYcS6U4CPKFVaa"
+            ]]),
+        );
     }
 
     #[test]
