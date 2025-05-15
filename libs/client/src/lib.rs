@@ -540,32 +540,43 @@ impl<R> SolRpcClient<R> {
     /// use sol_rpc_client::SolRpcClient;
     /// use sol_rpc_types::{RpcSources, SolanaCluster};
     /// use solana_instruction::error::InstructionError;
-    /// use solana_signature::Signature;
+    /// use solana_pubkey::pubkey;
     /// use solana_transaction_error::TransactionError;
-    /// use solana_transaction_status_client_types::{TransactionConfirmationStatus, TransactionStatus};
+    /// use sol_rpc_types::{ConfirmedTransactionStatusWithSignature, Signature, TransactionConfirmationStatus};
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # use std::str::FromStr;
-    /// use solana_pubkey::pubkey;
     /// # use sol_rpc_types::MultiRpcResult;
     /// let client = SolRpcClient::builder_for_ic()
     /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(vec![
-    /// #       // TODO XC-290
+    /// #       ConfirmedTransactionStatusWithSignature {
+    /// #           signature: Signature::from_str("5h6xBEauJ3PK6SWCZ1PGjBvj8vDdWG3KpwATGy1ARAXFSDwt8GFXM7W5Ncn16wmqokgpiKRLuS83KUxyZyv2sUYv").unwrap(),
+    /// #           slot: 114,
+    /// #           err: None,
+    /// #           memo: None,
+    /// #           block_time: None,
+    /// #           confirmation_status: Some(TransactionConfirmationStatus::Finalized),
+    /// #       }
     /// #    ])))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
     /// let statuses = client
-    ///     .get_signatures_for_address(
-    ///         pubkey!("BJE5MMbqXjVwjAF7oxwPYXnTXDyspzZyt4vwenNw5ruG")
-    ///     )
+    ///     .get_signatures_for_address(pubkey!("BJE5MMbqXjVwjAF7oxwPYXnTXDyspzZyt4vwenNw5ruG"))
     ///     .send()
     ///     .await
     ///     .expect_consistent();
     ///
     /// assert_eq!(statuses, Ok(vec![
-    ///     // TODO XC-290
+    ///     ConfirmedTransactionStatusWithSignature {
+    ///         signature: Signature::from_str("5h6xBEauJ3PK6SWCZ1PGjBvj8vDdWG3KpwATGy1ARAXFSDwt8GFXM7W5Ncn16wmqokgpiKRLuS83KUxyZyv2sUYv").unwrap(),
+    ///         slot: 114,
+    ///         err: None,
+    ///         memo: None,
+    ///         block_time: None,
+    ///         confirmation_status: Some(TransactionConfirmationStatus::Finalized),
+    ///     }
     /// ]));
     /// # Ok(())
     /// # }
