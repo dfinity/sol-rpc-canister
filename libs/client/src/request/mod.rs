@@ -9,10 +9,10 @@ use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
     GetAccountInfoParams, GetBalanceParams, GetBlockCommitmentLevel, GetBlockParams,
     GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
-    GetSignatureStatusesParams, GetSignaturesForAddressLimit, GetSignaturesForAddressParams,
-    GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
-    PrioritizationFee, RoundingError, RpcConfig, RpcError, RpcResult, RpcSources,
-    SendTransactionParams, Signature, Slot, TokenAmount, TransactionInfo, TransactionStatus,
+    GetSignatureStatusesParams, GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig,
+    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, PrioritizationFee, RoundingError,
+    RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot, TokenAmount,
+    TransactionInfo, TransactionStatus,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
@@ -247,19 +247,6 @@ pub type GetSignaturesForAddressRequestBuilder<R> = RequestBuilder<
     sol_rpc_types::MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>,
     sol_rpc_types::MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>,
 >;
-
-impl<R> GetSignaturesForAddressRequestBuilder<R> {
-    /// Change the `limit` parameter for a `getSignaturesForAddress` request.
-    pub fn with_limit<T>(mut self, limit: T) -> RpcResult<Self>
-    where
-        T: TryInto<GetSignaturesForAddressLimit>,
-        T::Error: Into<RpcError>,
-    {
-        let limit = limit.try_into().map_err(Into::into)?;
-        self.request.params.limit = Some(limit);
-        Ok(self)
-    }
-}
 
 #[derive(Debug, Clone, Default, From)]
 pub struct GetSignatureStatusesRequest(GetSignatureStatusesParams);

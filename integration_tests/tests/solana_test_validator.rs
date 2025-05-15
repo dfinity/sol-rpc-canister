@@ -513,13 +513,22 @@ async fn should_get_signature_statuses() {
 async fn should_get_signatures_for_address() {
     let setup = Setup::new().await;
 
+    // Start searching backwards from this transaction. This ensures we can reach consensus,
+    // otherwise different nodes will get different results due to some of them including
+    // transactions from more recent blocks than others.
+    let before = setup
+        .solana_client
+        .request_airdrop(&Keypair::new().pubkey(), 10_000_000_000)
+        .expect("Error while requesting airdrop");
+    setup.confirm_transaction(&before);
+
     let (sol_res, ic_res) = setup
         .compare_client(
             |sol| {
                 sol.get_signatures_for_address_with_config(
                     &Pubkey::default(),
                     GetConfirmedSignaturesForAddress2Config {
-                        before: None,
+                        before: Some(before),
                         until: None,
                         limit: Some(10),
                         commitment: None,
@@ -529,8 +538,10 @@ async fn should_get_signatures_for_address() {
             },
             |ic| async move {
                 ic.get_signatures_for_address(Pubkey::default())
-                    .with_limit(10)
-                    .unwrap()
+                    .modify_params(|params| {
+                        params.before = Some(before.into());
+                        params.limit = Some(10.try_into().unwrap());
+                    })
                     .send()
                     .await
                     .expect_consistent()
