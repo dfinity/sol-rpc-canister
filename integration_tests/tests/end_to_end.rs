@@ -150,7 +150,8 @@ impl Setup {
             }
             let statuses = self
                 .client()
-                .get_signature_statuses(vec![transaction_id])
+                .get_signature_statuses([transaction_id])
+                .unwrap()
                 .send()
                 .await
                 .expect_consistent()
