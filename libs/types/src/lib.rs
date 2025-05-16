@@ -44,10 +44,10 @@ pub use solana::{
 
 /// A vector with a maximum capacity.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq, Default, Into)]
-#[serde(try_from = "Vec<T>")]
-pub struct VecWithMaxLen<T, const CAPACITY: usize>(Vec<T>);
+#[serde(try_from = "Vec<T>", into = "Vec<T>")]
+pub struct VecWithMaxLen<T: Clone, const CAPACITY: usize>(Vec<T>);
 
-impl<T, const CAPACITY: usize> TryFrom<Vec<T>> for VecWithMaxLen<T, CAPACITY> {
+impl<T: Clone, const CAPACITY: usize> TryFrom<Vec<T>> for VecWithMaxLen<T, CAPACITY> {
     type Error = RpcError;
 
     fn try_from(value: Vec<T>) -> Result<Self, Self::Error> {
