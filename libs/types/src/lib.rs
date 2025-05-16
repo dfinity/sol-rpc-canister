@@ -39,7 +39,8 @@ pub use solana::{
         TransactionConfirmationStatus, TransactionInfo, TransactionReturnData, TransactionStatus,
         TransactionStatusMeta, TransactionTokenBalance, TransactionVersion,
     },
-    ConfirmedBlock, Hash, Lamport, PrioritizationFee, Pubkey, Signature, Slot, Timestamp,
+    ConfirmedBlock, Hash, Lamport, MicroLamport, PrioritizationFee, Pubkey, Signature, Slot,
+    Timestamp,
 };
 
 /// A vector with a maximum capacity.

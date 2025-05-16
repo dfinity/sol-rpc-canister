@@ -66,7 +66,7 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v4
       - name: 'Run unit tests'
-        run: cargo test --locked --workspace --exclude basic_solana --exclude sol_rpc_int_tests
+        run: cargo test --locked --workspace --exclude basic_solana --exclude sol_rpc_int_tests --exclude sol_rpc_e2e_tests
 
   integration-tests:
     needs: [ reproducible-build ]
@@ -115,7 +115,6 @@ jobs:
         run: |
           cargo build --manifest-path examples/basic_solana/Cargo.toml --target wasm32-unknown-unknown --no-default-features --profile canister-release 
           cargo test --locked --package basic_solana
-
 
       - name: 'Test sol_rpc_int_tests'
         run: cargo test --locked --package sol_rpc_int_tests -- --test-threads 2 --nocapture
@@ -175,3 +174,10 @@ jobs:
       - name: "Detect Inconsistent Results"
         working-directory: canister/ci
         run: cat e2e_examples.log | grep -q -e Inconsistent && exit 1 || exit 0
+
+      - name: "Run end-to-end tests"
+        env:
+          SOLANA_SENDER_PRIVATE_KEY_BYTES: ${{ secrets.SOLANA_SENDER_PRIVATE_KEY_BYTES }}
+          SOLANA_RECEIVER_PRIVATE_KEY_BYTES: ${{ secrets.SOLANA_RECEIVER_PRIVATE_KEY_BYTES }}
+          DFX_DEPLOY_KEY: ${{ secrets.DFX_DEPLOY_KEY }}
+        run: cargo test --locked --package sol_rpc_e2e_tests -- --test-threads 2 --nocapture

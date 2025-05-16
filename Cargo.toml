@@ -1,10 +1,13 @@
 [workspace]
 resolver = "2"
 members = [
-    "canister", "integration_tests",
+    "canister",
+    "end_to_end_tests",
+    "examples/basic_solana",
+    "integration_tests",
     "libs/client",
     "libs/types",
-    "examples/basic_solana"]
+]
 
 [workspace.package]
 authors = ["DFINITY Stiftung"]
@@ -43,6 +46,7 @@ futures = "0.3.31"
 getrandom = { version = "*", default-features = false, features = ["custom"] }
 hex = "0.4.3"
 http = "1.2.0"
+ic-agent = "0.40.0"
 ic-canister-log = "0.2.0"
 ic-cdk = "0.17.1"
 ic-http-types = "0.1.0"

@@ -100,8 +100,6 @@ GET_TRANSACTION_PARAMS="(
 CYCLES=$(dfx canister call sol_rpc getTransactionCyclesCost "$GET_TRANSACTION_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
 dfx canister call sol_rpc getTransaction "$GET_TRANSACTION_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
 
-# TODO XC-339: Add end-to-end test for `sendTransaction` using `getSlot` and `getBlock`
-
 # Get the USDC mint account info on Mainnet with a 2-out-of-3 strategy
 GET_ACCOUNT_INFO_PARAMS="(
   variant { Default = variant { Mainnet } },
