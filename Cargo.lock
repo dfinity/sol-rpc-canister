@@ -4480,7 +4480,6 @@ dependencies = [
  "candid",
  "ic-agent",
  "ic-cdk",
- "pocket-ic",
  "serde",
  "serde_json",
  "sol_rpc_client",

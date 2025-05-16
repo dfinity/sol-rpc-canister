@@ -2,7 +2,6 @@ use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Encode, Principal};
 use ic_agent::{identity::Secp256k1Identity, Agent};
 use ic_cdk::api::call::RejectionCode;
-use pocket_ic::management_canister::CanisterId;
 use serde::de::DeserializeOwned;
 use serde_json::json;
 use sol_rpc_client::{ClientBuilder, Runtime, SolRpcClient};
@@ -20,8 +19,8 @@ const DEFAULT_IC_GATEWAY: &str = "https://icp0.io";
 
 pub struct Setup {
     agent: Agent,
-    sol_rpc_canister_id: CanisterId,
-    wallet_canister_id: CanisterId,
+    sol_rpc_canister_id: Principal,
+    wallet_canister_id: Principal,
 }
 
 impl Setup {
@@ -35,8 +34,8 @@ impl Setup {
                 })
                 .build()
                 .expect("Could not build agent"),
-            sol_rpc_canister_id: CanisterId::from_text(env("sol_rpc_canister_id")).unwrap(),
-            wallet_canister_id: CanisterId::from_text(env("wallet_canister_id")).unwrap(),
+            sol_rpc_canister_id: Principal::from_text(env("sol_rpc_canister_id")).unwrap(),
+            wallet_canister_id: Principal::from_text(env("wallet_canister_id")).unwrap(),
         }
     }
 
@@ -155,11 +154,11 @@ pub fn env(key: &str) -> String {
 #[derive(Clone, Debug)]
 pub struct IcAgentRuntime<'a> {
     pub agent: &'a Agent,
-    pub wallet_canister_id: CanisterId,
+    pub wallet_canister_id: Principal,
 }
 
 impl<'a> IcAgentRuntime<'a> {
-    pub fn new(agent: &'a Agent, wallet_canister_id: CanisterId) -> Self {
+    pub fn new(agent: &'a Agent, wallet_canister_id: Principal) -> Self {
         Self {
             agent,
             wallet_canister_id,

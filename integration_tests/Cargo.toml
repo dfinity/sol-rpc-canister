@@ -28,12 +28,9 @@ sol_rpc_types = { path = "../libs/types" }
 solana-account = { workspace = true }
 solana-account-decoder-client-types = { workspace = true }
 solana-commitment-config = { workspace = true }
-solana-compute-budget-interface = {workspace = true}
 solana-hash = { workspace = true }
 solana-instruction = { workspace = true }
-solana-keypair = { workspace = true }
 solana-pubkey = { workspace = true }
-solana-program = { workspace = true }
 solana-rpc-client-api = { workspace = true }
 solana-signature = { workspace = true }
 solana-signer = { workspace = true }
@@ -44,5 +41,8 @@ solana-transaction-status-client-types = { workspace = true }
 assert_matches = { workspace = true }
 futures = { workspace = true }
 solana-client = { workspace = true }
+solana-compute-budget-interface = { workspace = true }
+solana-keypair = { workspace = true }
+solana-program = { workspace = true }
 strum = { workspace = true }
 tokio = { workspace = true }

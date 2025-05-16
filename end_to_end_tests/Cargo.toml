@@ -12,19 +12,20 @@ async-trait = { workspace = true }
 candid = { workspace = true }
 ic-agent = { workspace = true }
 ic-cdk = { workspace = true }
-pocket-ic = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 sol_rpc_client = { path = "../libs/client" }
 sol_rpc_types = { path = "../libs/types" }
 sol_rpc_int_tests = { path = "../integration_tests" }
 solana-commitment-config = { workspace = true }
-solana-compute-budget-interface = { workspace = true }
 solana-hash = { workspace = true }
-solana-keypair = { workspace = true }
 solana-pubkey = { workspace = true }
-solana-program = { workspace = true }
 solana-signature = { workspace = true }
 solana-signer = { workspace = true }
 solana-transaction = { workspace = true }
 tokio = { workspace = true }
+
+[dev-dependencies]
+solana-compute-budget-interface = { workspace = true }
+solana-keypair = { workspace = true }
+solana-program = { workspace = true }
