@@ -13,7 +13,6 @@ candid = { workspace = true }
 canhttp = { workspace = true }
 canlog = { workspace = true }
 const_format = { workspace = true }
-ic-agent = { workspace = true }
 ic-cdk = { workspace = true }
 ic-http-types = { workspace = true }
 ic-test-utilities-load-wasm = { workspace = true }

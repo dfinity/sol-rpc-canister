@@ -1,10 +1,13 @@
 [workspace]
 resolver = "2"
 members = [
-    "canister", "integration_tests",
+    "canister",
+    "end_to_end_tests",
+    "examples/basic_solana",
+    "integration_tests",
     "libs/client",
     "libs/types",
-    "examples/basic_solana"]
+]
 
 [workspace.package]
 authors = ["DFINITY Stiftung"]

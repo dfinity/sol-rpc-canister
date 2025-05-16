@@ -1,94 +1,21 @@
+use async_trait::async_trait;
+use candid::{utils::ArgumentEncoder, CandidType, Encode, Principal};
 use ic_agent::{identity::Secp256k1Identity, Agent};
+use ic_cdk::api::call::RejectionCode;
 use pocket_ic::management_canister::CanisterId;
+use serde::de::DeserializeOwned;
 use serde_json::json;
-use sol_rpc_client::{ClientBuilder, SolRpcClient};
-use sol_rpc_int_tests::IcAgentRuntime;
+use sol_rpc_client::{ClientBuilder, Runtime, SolRpcClient};
+use sol_rpc_int_tests::{decode_call_response, encode_args, wallet, wallet::CallCanisterArgs};
 use sol_rpc_types::{
     CommitmentLevel, ConsensusStrategy, RpcConfig, RpcSource, RpcSources, SupportedRpcProviderId,
 };
 use solana_commitment_config::CommitmentConfig;
-use solana_hash::Hash;
-use solana_keypair::Keypair;
-use solana_program::system_instruction;
 use solana_pubkey::Pubkey;
 use solana_signature::Signature;
-use solana_signer::Signer;
-use solana_transaction::Transaction;
-use std::{env, str::FromStr, time::Duration};
+use std::{env, time::Duration};
 
 const DEFAULT_IC_GATEWAY: &str = "https://icp0.io";
-
-// This test should be run together with end-to-end tests, not other integration tests
-#[ignore]
-#[tokio::test(flavor = "multi_thread")]
-async fn should_send_transaction() {
-    let setup = Setup::new();
-
-    fn load_keypair(key: &str) -> Keypair {
-        fn try_load_keypair(key: &str) -> Result<Keypair, String> {
-            let value = env(key);
-            let bytes = serde_json::from_str::<Vec<u8>>(&value).map_err(|e| e.to_string())?;
-            Keypair::from_bytes(bytes.as_ref()).map_err(|e| e.to_string())
-        }
-        try_load_keypair(key).unwrap_or_else(|e| panic!("Unable to parse bytes stored in environment variable '{key}' as a valid keypair: {e}"))
-    }
-
-    let sender = load_keypair("SOLANA_SENDER_PRIVATE_KEY_BYTES");
-    let recipient = load_keypair("SOLANA_RECEIVER_PRIVATE_KEY_BYTES");
-
-    let sender_balance_before = setup.fund_account(&sender.pubkey(), 1_000_000_000).await;
-    let recipient_balance_before = setup.fund_account(&recipient.pubkey(), 1_000_000_000).await;
-
-    let slot = setup
-        .client()
-        .get_slot()
-        .send()
-        .await
-        .expect_consistent()
-        .expect("Call to get slot failed");
-    let block = setup
-        .client()
-        .get_block(slot)
-        .send()
-        .await
-        .expect_consistent()
-        .expect("Call to get block failed")
-        .expect("Block not found");
-    let blockhash = Hash::from_str(&block.blockhash).expect("Failed to parse blockhash");
-
-    let transaction_amount = 1_000;
-    let transaction = Transaction::new_signed_with_payer(
-        &[system_instruction::transfer(
-            &sender.pubkey(),
-            &recipient.pubkey(),
-            transaction_amount,
-        )],
-        Some(&sender.pubkey()),
-        &[&sender],
-        blockhash,
-    );
-
-    let transaction_id = setup
-        .client()
-        .send_transaction(transaction)
-        .send()
-        .await
-        .expect_consistent()
-        .unwrap();
-
-    // Wait until the transaction is confirmed.
-    setup.confirm_transaction(&transaction_id).await;
-
-    // Make sure the funds were sent from the sender to the recipient
-    let sender_balance_after = setup.get_account_balance(&sender.pubkey()).await;
-    let recipient_balance_after = setup.get_account_balance(&recipient.pubkey()).await;
-
-    assert_eq!(
-        recipient_balance_after,
-        recipient_balance_before + transaction_amount
-    );
-    assert!(sender_balance_after + transaction_amount <= sender_balance_before);
-}
 
 pub struct Setup {
     agent: Agent,
@@ -97,7 +24,7 @@ pub struct Setup {
 }
 
 impl Setup {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             agent: Agent::builder()
                 .with_url(DEFAULT_IC_GATEWAY)
@@ -112,7 +39,7 @@ impl Setup {
         }
     }
 
-    fn new_ic_agent_runtime(&self) -> IcAgentRuntime {
+    pub fn new_ic_agent_runtime(&self) -> IcAgentRuntime {
         IcAgentRuntime {
             agent: &self.agent,
             wallet_canister_id: self.wallet_canister_id,
@@ -123,7 +50,7 @@ impl Setup {
         SolRpcClient::builder(self.new_ic_agent_runtime(), self.sol_rpc_canister_id)
     }
 
-    fn client(&self) -> SolRpcClient<IcAgentRuntime> {
+    pub fn client(&self) -> SolRpcClient<IcAgentRuntime> {
         self.client_builder()
             .with_rpc_sources(RpcSources::Custom(vec![
                 RpcSource::Supported(SupportedRpcProviderId::AnkrDevnet),
@@ -141,7 +68,7 @@ impl Setup {
             .build()
     }
 
-    async fn confirm_transaction(&self, transaction_id: &Signature) {
+    pub async fn confirm_transaction(&self, transaction_id: &Signature) {
         let mut num_trials = 0;
         loop {
             num_trials += 1;
@@ -169,7 +96,7 @@ impl Setup {
         }
     }
 
-    async fn airdrop(&self, account: &Pubkey, amount: u64) -> u64 {
+    pub async fn airdrop(&self, account: &Pubkey, amount: u64) -> u64 {
         let balance_before = self.get_account_balance(account).await;
         let _airdrop_tx = self
             .client()
@@ -196,7 +123,7 @@ impl Setup {
         }
     }
 
-    async fn fund_account(&self, account: &Pubkey, amount: u64) -> u64 {
+    pub async fn fund_account(&self, account: &Pubkey, amount: u64) -> u64 {
         let balance = self.get_account_balance(account).await;
         if balance < amount {
             self.airdrop(account, amount).await
@@ -205,7 +132,7 @@ impl Setup {
         }
     }
 
-    async fn get_account_balance(&self, pubkey: &Pubkey) -> u64 {
+    pub async fn get_account_balance(&self, pubkey: &Pubkey) -> u64 {
         self.client()
             .get_balance(*pubkey)
             .send()
@@ -215,6 +142,72 @@ impl Setup {
     }
 }
 
-fn env(key: &str) -> String {
+impl Default for Setup {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+pub fn env(key: &str) -> String {
     env::var(key).unwrap_or_else(|_| panic!("Environment variable '{key}' is not set!"))
+}
+
+#[derive(Clone, Debug)]
+pub struct IcAgentRuntime<'a> {
+    pub agent: &'a Agent,
+    pub wallet_canister_id: CanisterId,
+}
+
+impl<'a> IcAgentRuntime<'a> {
+    pub fn new(agent: &'a Agent, wallet_canister_id: CanisterId) -> Self {
+        Self {
+            agent,
+            wallet_canister_id,
+        }
+    }
+}
+
+#[async_trait]
+impl Runtime for IcAgentRuntime<'_> {
+    async fn update_call<In, Out>(
+        &self,
+        id: Principal,
+        method: &str,
+        args: In,
+        cycles: u128,
+    ) -> Result<Out, (RejectionCode, String)>
+    where
+        In: ArgumentEncoder + Send,
+        Out: CandidType + DeserializeOwned,
+    {
+        // Forward the call through the wallet canister
+        let result = self
+            .agent
+            .update(&self.wallet_canister_id, "wallet_call128")
+            .with_arg(Encode!(&CallCanisterArgs::new(id, method, args, cycles)).unwrap())
+            .call_and_wait()
+            .await
+            .map_err(|e| (RejectionCode::Unknown, e.to_string()))?;
+        wallet::decode_cycles_wallet_response(result)
+    }
+
+    async fn query_call<In, Out>(
+        &self,
+        id: Principal,
+        method: &str,
+        args: In,
+    ) -> Result<Out, (RejectionCode, String)>
+    where
+        In: ArgumentEncoder + Send,
+        Out: CandidType + DeserializeOwned,
+    {
+        let result = self
+            .agent
+            .query(&id, method)
+            .with_arg(encode_args(args))
+            .call()
+            .await
+            .map_err(|e| (RejectionCode::Unknown, e.to_string()))?;
+        decode_call_response(result)
+    }
 }

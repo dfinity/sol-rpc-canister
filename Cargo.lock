@@ -4473,6 +4473,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "sol_rpc_e2e_tests"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "candid",
+ "ic-agent",
+ "ic-cdk",
+ "pocket-ic",
+ "serde",
+ "serde_json",
+ "sol_rpc_client",
+ "sol_rpc_int_tests",
+ "sol_rpc_types",
+ "solana-commitment-config",
+ "solana-compute-budget-interface",
+ "solana-hash",
+ "solana-keypair",
+ "solana-program",
+ "solana-pubkey",
+ "solana-signature",
+ "solana-signer",
+ "solana-transaction",
+ "tokio",
+]
+
+[[package]]
 name = "sol_rpc_int_tests"
 version = "0.1.0"
 dependencies = [
@@ -4483,7 +4509,6 @@ dependencies = [
  "canlog",
  "const_format",
  "futures",
- "ic-agent",
  "ic-cdk",
  "ic-http-types",
  "ic-test-utilities-load-wasm",

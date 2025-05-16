@@ -2,7 +2,6 @@ use async_trait::async_trait;
 use candid::{decode_args, utils::ArgumentEncoder, CandidType, Encode, Principal};
 use canhttp::http::json::ConstantSizeId;
 use canlog::{Log, LogEntry};
-use ic_agent::Agent;
 use ic_cdk::api::call::RejectionCode;
 use ic_http_types::{HttpRequest, HttpResponse};
 use num_traits::ToPrimitive;
@@ -292,9 +291,7 @@ impl Runtime for PocketIcRuntime<'_> {
                 self.wallet,
                 self.controller,
                 "wallet_call128",
-                CallCanisterArgs::new(id, method, args, cycles)
-                    .try_into()
-                    .unwrap(),
+                Encode!(&CallCanisterArgs::new(id, method, args, cycles)).unwrap(),
             )
             .await
             .unwrap();
@@ -444,9 +441,7 @@ impl Runtime for PocketIcLiveModeRuntime<'_> {
                 self.wallet,
                 self.controller,
                 "wallet_call128",
-                CallCanisterArgs::new(id, method, args, cycles)
-                    .try_into()
-                    .unwrap(),
+                Encode!(&CallCanisterArgs::new(id, method, args, cycles)).unwrap(),
             )
             .await
             .unwrap();
@@ -474,66 +469,6 @@ impl Runtime for PocketIcLiveModeRuntime<'_> {
             .await
             .map_err(PocketIcRuntime::parse_reject_response);
         decode_call_response(result?)
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct IcAgentRuntime<'a> {
-    pub agent: &'a Agent,
-    pub wallet_canister_id: CanisterId,
-}
-
-impl<'a> IcAgentRuntime<'a> {
-    pub fn new(agent: &'a Agent, wallet_canister_id: CanisterId) -> Self {
-        Self {
-            agent,
-            wallet_canister_id,
-        }
-    }
-}
-
-#[async_trait]
-impl Runtime for IcAgentRuntime<'_> {
-    async fn update_call<In, Out>(
-        &self,
-        id: Principal,
-        method: &str,
-        args: In,
-        cycles: u128,
-    ) -> Result<Out, (RejectionCode, String)>
-    where
-        In: ArgumentEncoder + Send,
-        Out: CandidType + DeserializeOwned,
-    {
-        // Forward the call through the wallet canister
-        let result = self
-            .agent
-            .update(&self.wallet_canister_id, "wallet_call128")
-            .with_arg(Vec::<u8>::try_from(CallCanisterArgs::new(id, method, args, cycles)).unwrap())
-            .call_and_wait()
-            .await
-            .map_err(|e| (RejectionCode::Unknown, e.to_string()))?;
-        wallet::decode_cycles_wallet_response(result)
-    }
-
-    async fn query_call<In, Out>(
-        &self,
-        id: Principal,
-        method: &str,
-        args: In,
-    ) -> Result<Out, (RejectionCode, String)>
-    where
-        In: ArgumentEncoder + Send,
-        Out: CandidType + DeserializeOwned,
-    {
-        let result = self
-            .agent
-            .query(&id, method)
-            .with_arg(encode_args(args))
-            .call()
-            .await
-            .map_err(|e| (RejectionCode::Unknown, e.to_string()))?;
-        decode_call_response(result)
     }
 }
 

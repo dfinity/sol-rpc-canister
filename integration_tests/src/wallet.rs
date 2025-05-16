@@ -1,7 +1,7 @@
 //! Module to interact with a [cycles wallet](https://github.com/dfinity/cycles-wallet) canister.
 
 use crate::{decode_call_response, encode_args};
-use candid::{utils::ArgumentEncoder, CandidType, Encode, Principal};
+use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use pocket_ic::management_canister::CanisterId;
 use regex::Regex;
@@ -30,14 +30,6 @@ impl CallCanisterArgs {
             args: encode_args(args),
             cycles,
         }
-    }
-}
-
-impl TryFrom<CallCanisterArgs> for Vec<u8> {
-    type Error = candid::Error;
-
-    fn try_from(args: CallCanisterArgs) -> Result<Vec<u8>, Self::Error> {
-        Encode!(&args)
     }
 }
 
