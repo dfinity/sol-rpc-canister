@@ -1,12 +1,9 @@
 use crate::VecWithMaxLen;
 use candid::{CandidType, Decode, Encode};
-use proptest::arbitrary::Arbitrary;
-use proptest::prelude::any;
-use proptest::prelude::TestCaseError;
-use proptest::prop_assert;
 use proptest::{
-    prelude::{prop, Strategy},
-    prop_assert_eq, proptest,
+    arbitrary::Arbitrary,
+    prelude::{any, prop, Strategy, TestCaseError},
+    prop_assert, prop_assert_eq, proptest,
 };
 use serde::de::DeserializeOwned;
 
