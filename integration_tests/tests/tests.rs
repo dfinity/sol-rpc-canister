@@ -13,9 +13,10 @@ use sol_rpc_int_tests::{
     mock::MockOutcallBuilder, PocketIcRuntime, Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID,
 };
 use sol_rpc_types::{
-    CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetSlotParams, InstallArgs, Mode,
-    ProviderError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource,
-    RpcSources, Slot, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetSignaturesForAddressLimit,
+    GetSlotParams, InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint,
+    RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster, SupportedRpcProvider,
+    SupportedRpcProviderId,
 };
 use solana_account_decoder_client_types::{
     token::UiTokenAmount, UiAccount, UiAccountData, UiAccountEncoding,
@@ -1964,7 +1965,7 @@ mod get_signatures_for_address_tests {
                 "id": Id::from(ConstantSizeId::from(id)),
                 "method": "getSignaturesForAddress",
                 "params": [
-                    some_signature().to_string(),
+                    USDC_PUBLIC_KEY.to_string(),
                     {
                         "limit": 1,
                     },
@@ -2005,6 +2006,9 @@ mod get_signatures_for_address_tests {
                 ])
                 .build()
                 .get_signatures_for_address(USDC_PUBLIC_KEY)
+                .modify_params(|params| {
+                    params.limit = Some(GetSignaturesForAddressLimit::try_from(1).unwrap())
+                })
                 .send()
                 .await
                 .expect_consistent();
