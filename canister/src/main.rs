@@ -13,9 +13,10 @@ use sol_rpc_canister::{
     rpc_client::MultiRpcRequest,
 };
 use sol_rpc_types::{
-    AccountInfo, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
-    GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
-    GetSignatureStatusesParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
+    AccountInfo, ConfirmedBlock, ConfirmedTransactionStatusWithSignature, GetAccountInfoParams,
+    GetBalanceParams, GetBlockParams, GetRecentPrioritizationFeesParams,
+    GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams,
+    GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
     GetTransactionParams, Lamport, MultiRpcResult, PrioritizationFee, RpcAccess, RpcConfig,
     RpcResult, RpcSources, SendTransactionParams, Signature, Slot, SupportedRpcProvider,
     SupportedRpcProviderId, TokenAmount, TransactionInfo, TransactionStatus,
@@ -188,6 +189,33 @@ async fn get_recent_prioritization_fees_cycles_cost(
     )?
     .cycles_cost()
     .await
+}
+
+#[update(name = "getSignaturesForAddress")]
+#[candid_method(rename = "getSignaturesForAddress")]
+async fn get_signatures_for_address(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: GetSignaturesForAddressParams,
+) -> MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>> {
+    let request =
+        MultiRpcRequest::get_signatures_for_address(source, config.unwrap_or_default(), params);
+    send_multi(request).await
+}
+
+#[query(name = "getSignaturesForAddressCyclesCost")]
+#[candid_method(query, rename = "getSignaturesForAddressCyclesCost")]
+async fn get_signatures_for_address_cycles_cost(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: GetSignaturesForAddressParams,
+) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
+    MultiRpcRequest::get_signatures_for_address(source, config.unwrap_or_default(), params)?
+        .cycles_cost()
+        .await
 }
 
 #[update(name = "getSignatureStatuses")]
