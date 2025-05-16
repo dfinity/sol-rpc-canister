@@ -81,7 +81,7 @@ async fn should_send_transaction() {
         .expect_consistent()
         .unwrap();
 
-    // Wait until the transaction is confirmed.
+    // Wait until the transaction is successfully executed and confirmed.
     setup.confirm_transaction(&transaction_id).await;
 
     // Make sure the funds were sent from the sender to the recipient

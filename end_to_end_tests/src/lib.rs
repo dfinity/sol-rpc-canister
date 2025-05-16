@@ -8,7 +8,8 @@ use serde_json::json;
 use sol_rpc_client::{ClientBuilder, Runtime, SolRpcClient};
 use sol_rpc_int_tests::{decode_call_response, encode_args, wallet, wallet::CallCanisterArgs};
 use sol_rpc_types::{
-    CommitmentLevel, ConsensusStrategy, RpcConfig, RpcSource, RpcSources, SupportedRpcProviderId,
+    CommitmentLevel, ConsensusStrategy, MultiRpcResult, RpcConfig, RpcSource, RpcSources,
+    SupportedRpcProviderId,
 };
 use solana_commitment_config::CommitmentConfig;
 use solana_pubkey::Pubkey;
@@ -80,17 +81,16 @@ impl Setup {
                 .get_signature_statuses([transaction_id])
                 .unwrap()
                 .send()
-                .await
-                .expect_consistent()
-                .unwrap_or_else(|_| {
-                    panic!("Failed to get status for transaction {transaction_id}")
-                });
-            if statuses.is_empty() || statuses[0].is_none() {
-                continue;
-            }
-            let status = statuses[0].as_ref().unwrap();
-            if status.satisfies_commitment(CommitmentConfig::confirmed()) & status.status.is_ok() {
-                return;
+                .await;
+            if let MultiRpcResult::Consistent(Ok(statuses)) = statuses {
+                if let Some(Some(status)) = statuses.first() {
+                    if let Some(err) = &status.err {
+                        panic!("Transaction failed with error {:?}", err);
+                    }
+                    if status.satisfies_commitment(CommitmentConfig::confirmed()) {
+                        return;
+                    }
+                }
             }
             tokio::time::sleep(Duration::from_millis(400)).await;
         }
