@@ -100,10 +100,10 @@ impl Setup {
         let _airdrop_tx = self
             .client()
             .json_request(json!({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "requestAirdrop",
-            "params": [account.to_string(), amount]
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "requestAirdrop",
+                "params": [account.to_string(), amount]
             }))
             .send()
             .await;

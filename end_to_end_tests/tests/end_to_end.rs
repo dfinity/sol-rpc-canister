@@ -42,7 +42,8 @@ async fn should_send_transaction() {
     let add_priority_fee_ix = ComputeBudgetInstruction::set_compute_unit_price(priority_fee);
 
     // Set a CU limit based for a simple transfer
-    let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(150);
+    // TODO XC-339: Use reasonable value here
+    let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(1000);
 
     // Send some SOL from sender to recipient
     let transaction_amount = 1_000;
