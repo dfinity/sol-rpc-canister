@@ -42,6 +42,10 @@ impl Setup {
         }
     }
 
+    pub fn get_wallet_canister_id(&self) -> Principal {
+        self.wallet_canister_id
+    }
+
     pub fn new_ic_agent_runtime(&self) -> IcAgentRuntime {
         IcAgentRuntime {
             agent: &self.agent,
