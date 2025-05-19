@@ -208,26 +208,27 @@ pub struct GetRecentPrioritizationFeesRpcConfig {
     #[serde(rename = "maxSlotRoundingError")]
     pub max_slot_rounding_error: Option<RoundingError>,
 
-    /// Limit the number of returned priority fees.
-    ///
-    /// A Solana validator returns at most 150 entries, so that bigger values are possible but not useful.
-    /// MUST be non-zero to avoid useless call.
-    /// Default value is 100.
-    /// Increasing that value can help in estimating the current priority fee
-    /// but will reduce the likelihood of nodes reaching consensus.
     #[serde(rename = "maxLength")]
     max_length: Option<NonZeroU8>,
 }
 
 impl GetRecentPrioritizationFeesRpcConfig {
-    /// TODO
+    /// Default number of priority fees to return.
+    pub const DEFAULT_MAX_LENGTH: NonZeroU8 =
+        NonZeroU8::new(std::num::NonZeroU8::new(100_u8).unwrap());
+
+    /// Number of priority fees to return.
+    ///
+    /// Returns the current value or the default [`Self::DEFAULT_MAX_LENGTH`].
     pub fn max_length(&self) -> NonZeroU8 {
-        const DEFAULT_MAX_LENGTH: NonZeroU8 =
-            NonZeroU8::new(std::num::NonZeroU8::new(100_u8).unwrap());
-        self.max_length.unwrap_or(DEFAULT_MAX_LENGTH)
+        self.max_length.unwrap_or(Self::DEFAULT_MAX_LENGTH)
     }
 
-    /// TODO
+    /// Change the number of priority fees to return.
+    ///
+    /// A Solana validator returns at most 150 entries, so that bigger values are possible but not useful.
+    /// Increasing that value can help in estimating the current priority fee
+    /// but will reduce the likelihood of nodes reaching consensus.
     pub fn set_max_length(&mut self, len: NonZeroU8) {
         self.max_length = Some(len)
     }
@@ -586,7 +587,7 @@ impl CandidType for NonZeroU8 {
 }
 
 impl NonZeroU8 {
-    /// TODO
+    /// Construct a new instance of [`NonZeroU8`].
     pub const fn new(value: std::num::NonZeroU8) -> Self {
         Self(value)
     }
