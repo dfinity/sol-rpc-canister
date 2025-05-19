@@ -948,7 +948,6 @@ impl<R: Runtime> SolRpcClient<R> {
 /// #     signature: "ityU6OGhNgvUXCL8gOy9p0LNThE8eKn4LUPNFwpeQVyXiUmNOzohl0VkcwEQnTqg".to_string().into_bytes(),
 /// # },));
 ///
-/// // TODO XC-317: Use pubkey that is actually derived from the given derivation path
 /// let key_id = Ed25519KeyId::TestKey1;
 /// let derivation_path = None;
 /// // This pubkey should be derived from the root key `key_id` with `derivation_path`, see:
