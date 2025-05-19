@@ -949,7 +949,7 @@ impl<R: Runtime> SolRpcClient<R> {
 ///
 /// // TODO XC-317: Use pubkey that is actually derived from the given derivation path
 /// let key_id = Ed25519KeyId::TestKey1;
-/// let derivation_path = Some(DerivationPath::from("un4fu-tqaaa-aaaab-qadjq-cai".as_bytes()));
+/// let derivation_path = None;
 /// // This pubkey should be derived from the root key `key_id` with `derivation_path`, see:
 /// // https://internetcomputer.org/docs/references/ic-interface-spec#ic-schnorr_public_key
 /// let payer = pubkey!("3EdRSc7CnKUGxGUSZwJ58rd7haBM8CR2Xh87KheEX7iS");
@@ -969,7 +969,7 @@ impl<R: Runtime> SolRpcClient<R> {
 /// let signature = sign_transaction(
 ///     &runtime,
 ///     SignTransactionRequestParams {
-///         transaction,
+///         transaction: transaction.clone(),
 ///         derivation_path,
 ///         key_id,
 ///     },
