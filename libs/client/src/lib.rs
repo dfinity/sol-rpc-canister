@@ -932,6 +932,7 @@ impl<R: Runtime> SolRpcClient<R> {
 /// use solana_message::legacy::Message;
 /// use solana_program::system_instruction::transfer;
 /// use solana_pubkey::pubkey;
+/// use solana_signature::Signature;
 /// use solana_transaction::Transaction;
 /// use sol_rpc_client::{IcRuntime, sign_transaction, SolRpcClient};
 /// use sol_rpc_types::{DerivationPath, Ed25519KeyId, SignTransactionRequestParams};
@@ -943,9 +944,9 @@ impl<R: Runtime> SolRpcClient<R> {
 /// use candid::Principal;
 /// # use ic_cdk::api::management_canister::schnorr::SignWithSchnorrResponse;
 /// let runtime = IcRuntime;
-/// # let runtime = MockRuntime::same_response(SignWithSchnorrResponse {
+/// # let runtime = MockRuntime::same_response((SignWithSchnorrResponse {
 /// #     signature: "ityU6OGhNgvUXCL8gOy9p0LNThE8eKn4LUPNFwpeQVyXiUmNOzohl0VkcwEQnTqg".to_string().into_bytes(),
-/// # });
+/// # },));
 ///
 /// // TODO XC-317: Use pubkey that is actually derived from the given derivation path
 /// let key_id = Ed25519KeyId::TestKey1;
@@ -977,7 +978,7 @@ impl<R: Runtime> SolRpcClient<R> {
 ///
 /// assert_eq!(
 ///     signature,
-///     Ok(solana_signature::Signature::from_str("").unwrap())
+///     Ok(Signature::from_str("37HbmunhjSC1xxnVsaFX2xaS8gYnb5JYiLy9B51Ky9Up69aF7Qra6dHSLMCaiurRYq3Y8ZxSVUwC5sntziWuhZee").unwrap())
 /// );
 ///
 /// // The transaction is now signed and can be submitted with the `sendTransaction` RPC method.
