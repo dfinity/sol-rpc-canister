@@ -9,7 +9,7 @@ use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams,
     GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
     GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams, GetSlotParams,
-    GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
+    GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport, NonZeroU8,
     PrioritizationFee, RoundingError, RpcConfig, RpcResult, RpcSources, SendTransactionParams,
     Signature, Slot, TokenAmount, TransactionInfo, TransactionStatus,
 };
@@ -532,9 +532,9 @@ impl<Runtime, Params, CandidOutput, Output>
     }
 
     /// Change the maximum number of entries for a `getRecentPrioritizationFees` response.
-    pub fn with_max_length(mut self, len: u8) -> Self {
+    pub fn with_max_length<T: Into<NonZeroU8>>(mut self, len: T) -> Self {
         let config = self.request.rpc_config_mut().get_or_insert_default();
-        config.max_length = Some(len);
+        config.set_max_length(len.into());
         self
     }
 }

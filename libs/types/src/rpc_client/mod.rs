@@ -216,8 +216,21 @@ pub struct GetRecentPrioritizationFeesRpcConfig {
     /// Increasing that value can help in estimating the current priority fee
     /// but will reduce the likelihood of nodes reaching consensus.
     #[serde(rename = "maxLength")]
-    // TODO XC-326: Use a wrapper type to implement Candid on `NonZeroU8` to prohibit the value 0.
-    pub max_length: Option<u8>,
+    max_length: Option<NonZeroU8>,
+}
+
+impl GetRecentPrioritizationFeesRpcConfig {
+    /// TODO
+    pub fn max_length(&self) -> NonZeroU8 {
+        const DEFAULT_MAX_LENGTH: NonZeroU8 =
+            NonZeroU8::new(std::num::NonZeroU8::new(100_u8).unwrap());
+        self.max_length.unwrap_or(DEFAULT_MAX_LENGTH)
+    }
+
+    /// TODO
+    pub fn set_max_length(&mut self, len: NonZeroU8) {
+        self.max_length = Some(len)
+    }
 }
 
 impl From<RpcConfig> for GetRecentPrioritizationFeesRpcConfig {
@@ -553,7 +566,9 @@ impl RoundingError {
 /// let encoded_zero = Encode!(&0_u8).unwrap();
 /// assert!(Decode!(&encoded_zero, NonZeroU8).is_err());
 /// ```
-#[derive(Debug, Clone, Copy, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, Eq, Ord, PartialEq, PartialOrd, From, Into, Serialize, Deserialize,
+)]
 #[serde(try_from = "u8", into = "u8")]
 pub struct NonZeroU8(std::num::NonZeroU8);
 
@@ -567,6 +582,13 @@ impl CandidType for NonZeroU8 {
         S: Serializer,
     {
         serializer.serialize_nat8(self.0.get())
+    }
+}
+
+impl NonZeroU8 {
+    /// TODO
+    pub const fn new(value: std::num::NonZeroU8) -> Self {
+        Self(value)
     }
 }
 
