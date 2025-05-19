@@ -5,7 +5,10 @@ use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use serde_json::json;
 use sol_rpc_client::{ClientBuilder, Runtime, SolRpcClient};
-use sol_rpc_int_tests::{decode_call_response, encode_args, wallet, wallet::CallCanisterArgs};
+use sol_rpc_int_tests::{
+    decode_call_response, encode_args,
+    wallet::{decode_cycles_wallet_response, CallCanisterArgs},
+};
 use sol_rpc_types::{
     CommitmentLevel, ConsensusStrategy, MultiRpcResult, RpcConfig, RpcSource, RpcSources,
     SupportedRpcProviderId,
@@ -187,7 +190,7 @@ impl Runtime for IcAgentRuntime<'_> {
             .call_and_wait()
             .await
             .map_err(|e| (RejectionCode::Unknown, e.to_string()))?;
-        wallet::decode_cycles_wallet_response(result)
+        decode_cycles_wallet_response(result)
     }
 
     async fn query_call<In, Out>(
