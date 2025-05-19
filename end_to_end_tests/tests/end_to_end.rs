@@ -2,7 +2,7 @@ use candid::Principal;
 use ic_cdk::api::management_canister::schnorr::{
     SchnorrAlgorithm, SchnorrKeyId, SchnorrPublicKeyArgument, SchnorrPublicKeyResponse,
 };
-use sol_rpc_client::sign_transaction;
+use sol_rpc_client::{sign_transaction, Runtime};
 use sol_rpc_e2e_tests::{env, Setup};
 use sol_rpc_types::{DerivationPath, Ed25519KeyId, SignTransactionRequestParams};
 use solana_compute_budget_interface::ComputeBudgetInstruction;
@@ -18,15 +18,14 @@ async fn should_send_transaction() {
     let setup = Setup::new();
     let client = setup.client();
 
-    fn load_derivation_path(key: &str) -> DerivationPath {
-        let bytes: Vec<u8> = serde_json::from_str(&env(key)).unwrap_or_else(|e| {
-            panic!("Failed to read bytes stored in environment variable '{key}': {e}")
-        });
-        DerivationPath::from(bytes.as_ref())
-    }
-    let sender_derivation_path = load_derivation_path("SOLANA_SENDER_DERIVATION_PATH_BYTES");
-    let sender_pubkey =
-        get_threshold_eddsa_key(setup.get_wallet_canister_id(), sender_derivation_path).await;
+    // Get the pubkey of the sender, which is derived from the given root Ed25519 key, and the
+    // canister ID of the wallet canister (through which all calls are forwarded).
+    let sender_pubkey = get_threshold_eddsa_key(
+        client.runtime(),
+        DerivationPath::default(),
+        Ed25519KeyId::TestKey1,
+    )
+    .await;
 
     fn load_pubkey(key: &str) -> Pubkey {
         Pubkey::from_str(&env(key)).unwrap_or_else(|e| {
@@ -121,21 +120,28 @@ async fn should_send_transaction() {
     assert!(sender_balance_after + transaction_amount <= sender_balance_before);
 }
 
-async fn get_threshold_eddsa_key(
-    canister_id: Principal,
+async fn get_threshold_eddsa_key<R: Runtime>(
+    runtime: &R,
     derivation_path: DerivationPath,
+    key_id: Ed25519KeyId,
 ) -> Pubkey {
-    let (SchnorrPublicKeyResponse {
-        public_key: bytes, ..
-    },) = ic_cdk::api::management_canister::schnorr::schnorr_public_key(SchnorrPublicKeyArgument {
-        canister_id: Some(canister_id),
+    let arg = SchnorrPublicKeyArgument {
+        canister_id: None,
         derivation_path: derivation_path.into(),
         key_id: SchnorrKeyId {
             algorithm: SchnorrAlgorithm::Ed25519,
-            name: "Test1".to_string(),
+            name: key_id.to_string(),
         },
-    })
-    .await
-    .expect("Failed to fetch EdDSA public key");
+    };
+    let (SchnorrPublicKeyResponse {
+        public_key: bytes, ..
+    },) = runtime
+        .query_call(
+            Principal::management_canister(),
+            "schnorr_public_key",
+            (arg,),
+        )
+        .await
+        .expect("Failed to fetch EdDSA public key");
     solana_pubkey::Pubkey::try_from(bytes.as_slice()).expect("Failed to parse bytes as public key")
 }
