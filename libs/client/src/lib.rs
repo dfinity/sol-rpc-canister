@@ -997,7 +997,7 @@ pub async fn sign_transaction<R: Runtime>(
             name: params.key_id.to_string(),
         },
     };
-    let (response,): (SignWithSchnorrResponse,) = R::update_call(
+    let response: SignWithSchnorrResponse = R::update_call(
         runtime,
         Principal::management_canister(),
         "sign_with_schnorr",
