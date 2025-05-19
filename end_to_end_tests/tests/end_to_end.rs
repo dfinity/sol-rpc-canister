@@ -26,10 +26,9 @@ async fn should_send_transaction() {
     let sender_balance_before = setup.fund_account(&sender.pubkey(), 1_000_000_000).await;
     let recipient_balance_before = setup.fund_account(&recipient.pubkey(), 1_000_000_000).await;
 
-    // Set a compute unit (CU) price fee based on the recent prioritization fees
     let prioritization_fees: Vec<_> = setup
         .client()
-        .get_recent_prioritization_fees(&[])
+        .get_recent_prioritization_fees(&[sender.pubkey(), recipient.pubkey()])
         .unwrap()
         .send()
         .await
@@ -38,12 +37,17 @@ async fn should_send_transaction() {
         .into_iter()
         .map(|fee| fee.prioritization_fee)
         .collect();
-    let priority_fee = prioritization_fees.into_iter().max().unwrap_or_default();
+
+    // Set the compute unit (CU) price to the median of the recent prioritization fees
+    let priority_fee = if !prioritization_fees.is_empty() {
+        prioritization_fees[prioritization_fees.len() / 2]
+    } else {
+        0
+    };
     let add_priority_fee_ix = ComputeBudgetInstruction::set_compute_unit_price(priority_fee);
 
-    // Set a CU limit based for a simple transfer
-    // TODO XC-339: Use reasonable value here
-    let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(1000);
+    // Set a CU limit based for a simple SOL transfer + instructions to set the CU price and CU limit
+    let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(500);
 
     // Send some SOL from sender to recipient
     let transaction_amount = 1_000;
