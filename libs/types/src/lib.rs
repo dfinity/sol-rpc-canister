@@ -25,11 +25,12 @@ use serde::Serialize;
 pub use solana::{
     account::{AccountData, AccountEncoding, AccountInfo, ParsedAccount},
     request::{
-        CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
-        GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
-        GetSignatureStatusesParams, GetSlotParams, GetTokenAccountBalanceParams,
-        GetTransactionEncoding, GetTransactionParams, SendTransactionEncoding,
-        SendTransactionParams, TransactionDetails,
+        CommitmentLevel, DataSlice, DerivationPath, Ed25519KeyId, GetAccountInfoEncoding,
+        GetAccountInfoParams, GetBalanceParams, GetBlockCommitmentLevel, GetBlockParams,
+        GetRecentPrioritizationFeesParams, GetSignatureStatusesParams, GetSlotParams,
+        GetTokenAccountBalanceParams, GetTransactionEncoding, GetTransactionParams,
+        SendTransactionEncoding, SendTransactionParams, SignTransactionRequestParams,
+        TransactionDetails,
     },
     transaction::{
         error::{InstructionError, TransactionError},

@@ -5,13 +5,16 @@
 //! such as error handling, access-control, caching, etc.
 
 use crate::{
-    ed25519::{sign_with_ed25519, DerivationPath, Ed25519ExtendedPublicKey},
+    ed25519::Ed25519ExtendedPublicKey,
     state::{lazy_call_ed25519_public_key, read_state},
 };
 use candid::Principal;
+use sol_rpc_client::{sign_transaction, IcRuntime};
+use sol_rpc_types::{DerivationPath, SignTransactionRequestParams};
 use solana_message::Message;
 use solana_pubkey::Pubkey;
 use solana_signature::Signature;
+use solana_transaction::Transaction;
 use std::fmt::Display;
 
 #[derive(Clone)]
@@ -26,7 +29,7 @@ impl SolanaAccount {
         derivation_path: DerivationPath,
     ) -> Self {
         let ed25519_public_key = root_public_key
-            .derive_public_key(&derivation_path)
+            .derive_public_key(derivation_path.clone())
             .public_key
             .serialize_raw()
             .into();
@@ -85,10 +88,16 @@ impl SolanaWallet {
         )
     }
 
-    pub async fn sign_with_ed25519(&self, message: &Message, signer: &SolanaAccount) -> Signature {
-        let message = message.serialize();
-        let derivation_path = &signer.derivation_path;
-        let key_name = &read_state(|s| s.ed25519_key_name());
-        Signature::from(sign_with_ed25519(message, derivation_path, key_name).await)
+    pub async fn sign_message(message: &Message, signer: &SolanaAccount) -> Signature {
+        sign_transaction(
+            &IcRuntime,
+            SignTransactionRequestParams {
+                transaction: Transaction::new_unsigned(message.clone()),
+                key_id: read_state(|s| s.ed25519_key_id()),
+                derivation_path: Some(signer.derivation_path.clone()),
+            },
+        )
+        .await
+        .expect("Failed to sign transaction")
     }
 }
