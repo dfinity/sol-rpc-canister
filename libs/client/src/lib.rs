@@ -944,9 +944,9 @@ impl<R: Runtime> SolRpcClient<R> {
 /// use candid::Principal;
 /// # use ic_cdk::api::management_canister::schnorr::SignWithSchnorrResponse;
 /// let runtime = IcRuntime;
-/// # let runtime = MockRuntime::same_response((SignWithSchnorrResponse {
+/// # let runtime = MockRuntime::same_response(SignWithSchnorrResponse {
 /// #     signature: "ityU6OGhNgvUXCL8gOy9p0LNThE8eKn4LUPNFwpeQVyXiUmNOzohl0VkcwEQnTqg".to_string().into_bytes(),
-/// # },));
+/// # });
 ///
 /// let key_id = Ed25519KeyId::TestKey1;
 /// let derivation_path = None;
