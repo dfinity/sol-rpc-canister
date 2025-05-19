@@ -7,7 +7,7 @@ type InitArg = record {
     solana_commitment_level : opt CommitmentLevel;
     // EdDSA keys will be derived from this key.
     // If not specified, the value is set to `TestKeyLocalDevelopment`.
-    ed25519_key_name : opt Ed25519KeyId;
+    ed25519_key_id : opt Ed25519KeyId;
     // The canister will interact with this SOL RPC canister.
     // If not specified, the value is set to `tghme-zyaaa-aaaar-qarca-cai`.
     sol_rpc_canister_id : opt principal;
