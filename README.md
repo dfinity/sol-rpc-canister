@@ -113,13 +113,16 @@ The SOL RPC canister reaches the Solana JSON-RPC providers using [HTTPS outcalls
    to canonicalize the response seen by each node before doing consensus may alleviate the problem.
    For example, `getSlot` rounds by default the received slot by 20, therefore artificially increasing the slot time seen by each node to 8s to allow them reaching consensus with some significantly higher probability.
    The reason why such a canonicalization strategy does not work for [`getLatestBlockhash`](https://solana.com/de/docs/rpc/http/getlatestblockhash) is that the result is basically a random-looking string of fixed length.
-4. There are therefore two options to send a transaction on Solana using the SOL RPC canister
+4. There are therefore two options to send a transaction on Solana using the SOL RPC canister (see the [examples](examples))
    1. Use a [durable nonce](https://solana.com/de/developers/guides/advanced/introduction-to-durable-nonces) instead of a blockhash.
    2. Retrieve a recent blockhash by first retrieving a recent slot with `getSlot` and then getting the block (which includes the blockhash) with `getBlock`.
 
 ## Supported methods
 
-   | Solana Method                                                                                   | Known Limitations                                                           |
+The limitations described above imply that it is sometimes necessary to adapt a raw response from a Solana endpoint to increase the likelihood of nodes reaching consensus when querying that endpoint using [HTTPS outcalls](https://internetcomputer.org/https-outcalls).
+The table below summarizes the supported endpoints and the necessary changes made to the response.
+
+   | Solana method                                                                                   | Known limitations                                                           |
    |-------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
    | [`getAccountInfo`](https://solana.com/de/docs/rpc/http/getaccountinfo)                          | <ul><li>The field `context` is removed from the response</li></ul>          |
    | [`getBalance`](https://solana.com/de/docs/rpc/http/getbalance)                                  | <ul><li>The field `context` is removed from the response</li></ul>          |
