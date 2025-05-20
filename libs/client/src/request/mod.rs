@@ -9,10 +9,10 @@ use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
     GetAccountInfoParams, GetBalanceParams, GetBlockCommitmentLevel, GetBlockParams,
     GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
-    GetSignatureStatusesParams, GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig,
-    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, PrioritizationFee, RoundingError,
-    RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot, TokenAmount,
-    TransactionInfo, TransactionStatus,
+    GetSignatureStatusesParams, GetSignaturesForAddressLimit, GetSignaturesForAddressParams,
+    GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
+    PrioritizationFee, RoundingError, RpcConfig, RpcResult, RpcSources, SendTransactionParams,
+    Signature, Slot, TokenAmount, TransactionInfo, TransactionStatus,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
@@ -247,6 +247,26 @@ pub type GetSignaturesForAddressRequestBuilder<R> = RequestBuilder<
     sol_rpc_types::MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>,
     sol_rpc_types::MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>,
 >;
+
+impl<R> GetSignaturesForAddressRequestBuilder<R> {
+    /// Change the `limit` parameter for a `getSignaturesForAddress` request.
+    pub fn with_limit(mut self, limit: GetSignaturesForAddressLimit) -> Self {
+        self.request.params.limit = Some(limit);
+        self
+    }
+
+    /// Change the `until` parameter for a `getSignaturesForAddress` request.
+    pub fn with_until(mut self, until: impl Into<Signature>) -> Self {
+        self.request.params.until = Some(until.into());
+        self
+    }
+
+    /// Change the `before` parameter for a `getSignaturesForAddress` request.
+    pub fn with_before(mut self, before: impl Into<Signature>) -> Self {
+        self.request.params.before = Some(before.into());
+        self
+    }
+}
 
 #[derive(Debug, Clone, Default, From)]
 pub struct GetSignatureStatusesRequest(GetSignatureStatusesParams);

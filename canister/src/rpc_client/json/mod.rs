@@ -3,8 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetBlockCommitmentLevel,
-    GetSignaturesForAddressLimit, GetTransactionEncoding, Pubkey, SendTransactionEncoding,
-    Signature, Slot, TransactionDetails,
+    GetTransactionEncoding, Pubkey, SendTransactionEncoding, Signature, Slot, TransactionDetails,
 };
 use solana_transaction_status_client_types::UiTransactionEncoding;
 
@@ -188,11 +187,8 @@ impl From<sol_rpc_types::GetRecentPrioritizationFeesParams> for GetRecentPriorit
 pub struct GetSignaturesForAddressParams(Pubkey, Option<GetSignaturesForAddressConfig>);
 
 impl GetSignaturesForAddressParams {
-    pub fn get_limit(&self) -> u16 {
-        self.1
-            .as_ref()
-            .and_then(|c| c.limit)
-            .unwrap_or(GetSignaturesForAddressLimit::MAX_LIMIT)
+    pub fn get_limit(&self) -> u32 {
+        self.1.as_ref().and_then(|c| c.limit).unwrap_or_default()
     }
 }
 
@@ -238,7 +234,7 @@ pub struct GetSignaturesForAddressConfig {
     pub commitment: Option<CommitmentLevel>,
     #[serde(rename = "minContextSlot")]
     pub min_context_slot: Option<Slot>,
-    pub limit: Option<u16>,
+    pub limit: Option<u32>,
     pub before: Option<Signature>,
     pub until: Option<Signature>,
 }

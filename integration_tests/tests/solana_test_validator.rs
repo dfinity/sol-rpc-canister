@@ -529,7 +529,7 @@ async fn should_get_signatures_for_address() {
         .compare_client(
             |sol| {
                 sol.get_signatures_for_address_with_config(
-                    &Pubkey::default(),
+                    &Pubkey::default(), // address of the Solana system program
                     GetConfirmedSignaturesForAddress2Config {
                         before: Some(before),
                         until: None,
@@ -541,10 +541,8 @@ async fn should_get_signatures_for_address() {
             },
             |ic| async move {
                 ic.get_signatures_for_address(Pubkey::default())
-                    .modify_params(|params| {
-                        params.before = Some(before.into());
-                        params.limit = Some(10.try_into().unwrap());
-                    })
+                    .with_limit(10.try_into().unwrap())
+                    .with_before(before)
                     .send()
                     .await
                     .expect_consistent()

@@ -756,10 +756,17 @@ type GetSignaturesForAddressParams = record {
     minContextSlot: opt Slot;
     // Maximum transaction signatures to return (between 1 and 1,000).
     limit: opt nat16;
-    // Start searching backwards from this transaction signature. If not provided the search
-    // starts from the top of the highest max confirmed block.
+    // Start searching backwards from this transaction signature. Any transaction can be used for this field; it
+    // does not necessarily have to use the `pubkey` account. If not provided, the search starts from the top of
+    // the highest max confirmed block.
+    //
+    // This field is required to obtain an idempotent response, and hence crucial for the replicas to reach
+    // consensus. If not included, different replicas will likely have different responses due to the fast-changing
+    // nature of the highest max confirmed block. Furthermore, it is highly recommended to use a finalized 
+    // transaction so that all returned transactions are also finalized. Otherwise, different replicas might
+    // see different statuses for some of the returned transactions and hence be unable to reach consensus.
     before: opt Signature;
-    // Search until this transaction signature, if found before limit reached.
+    // Search until this transaction signature, if found before `limit` reached.
     until: opt Signature;
 };
 

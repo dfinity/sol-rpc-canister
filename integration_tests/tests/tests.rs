@@ -14,9 +14,9 @@ use sol_rpc_int_tests::{
 };
 use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetSignaturesForAddressLimit,
-    GetSlotParams, InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint,
-    RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster, SupportedRpcProvider,
-    SupportedRpcProviderId,
+    GetSlotParams, InstallArgs, InstructionError, Mode, ProviderError, RpcAccess, RpcAuth,
+    RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster,
+    SupportedRpcProvider, SupportedRpcProviderId, TransactionError,
 };
 use solana_account_decoder_client_types::{
     token::UiTokenAmount, UiAccount, UiAccountData, UiAccountEncoding,
@@ -1967,7 +1967,7 @@ mod get_signatures_for_address_tests {
                 "params": [
                     USDC_PUBLIC_KEY.to_string(),
                     {
-                        "limit": 1,
+                        "limit": 5,
                     },
                 ],
             })
@@ -1979,12 +1979,46 @@ mod get_signatures_for_address_tests {
                 "jsonrpc": "2.0",
                 "result": [
                     {
-                        "signature": some_signature().to_string(),
-                        "slot": 114,
-                        "err": null,
+                        "signature": "3jPA8CnZb9sfs4zVAypa9KB7VAGwrTdXB6mg9H1H9XpATN6Y8iek4Y21Nb9LjbrpYACbF9USV8RBWvXFFhVoQUAs",
+                        "confirmationStatus": "finalized",
                         "memo": null,
-                        "blockTime": null,
-                        "confirmationStatus": "finalized"
+                        "slot": 340_372_399,
+                        "err": null,
+                        "blockTime": 1_747_389_084,
+                    },
+                    {
+                        "signature": "3WM42nYDQAHgBWFd6SbJ3pj1AGgiTJfxXJ2d5dHu49GgqSUui5qdh64S5yLCN1cMKcLMFVKKo776GrtVhfatLqP6",
+                        "confirmationStatus": "finalized",
+                        "memo": null,
+                        "slot": 340_372_399,
+                        "err": null,
+                        "blockTime": 1_747_389_084,
+                    },
+                    {
+                        "signature": "5iByUT1gTNXDY24hRx25YmQeebvUMD6jsNpGcu2jh1yjKmYwdo5GtRrYozyhdtdcn8SurwHq6EMp4YTpHgdansjc",
+                        "confirmationStatus": "finalized",
+                        "memo": null,
+                        "slot": 340_372_399,
+                        "err": null,
+                        "blockTime": 1_747_389_084,
+                    },
+                    {
+                        "signature": "2Zuhxr6qMGwBrpV611Ema7pZAy1WGSkQyurTcbfyoXwFMNuziUJbM6FCyoL8WxTRG6G3fEik2wSFeN76miUeUnmJ",
+                        "confirmationStatus": "finalized",
+                        "memo": null,
+                        "slot": 340_372_399,
+                        "err": null,
+                        "blockTime": 1_747_389_084,
+                    },
+                    {
+                        "signature": "4V1j8jZvXjcUdRoWQBRzxFVigfr61bJdHGsCFAkTm5h4z28FkrDczuTpcvwTRamiwiGm7E77EB5DKRBwG1mUEC8f",
+                        "confirmationStatus": "finalized",
+                        "memo": null,
+                        "slot": 340_372_399,
+                        "err": {
+                            "InstructionError" : [ 3, { "Custom" : 6_001 } ],
+                        },
+                        "blockTime": 1_747_389_084,
                     },
                 ]
             })
@@ -2006,23 +2040,54 @@ mod get_signatures_for_address_tests {
                 ])
                 .build()
                 .get_signatures_for_address(USDC_PUBLIC_KEY)
-                .modify_params(|params| {
-                    params.limit = Some(GetSignaturesForAddressLimit::try_from(1).unwrap())
-                })
+                .with_limit(GetSignaturesForAddressLimit::try_from(5).unwrap())
                 .send()
                 .await
                 .expect_consistent();
 
             assert_eq!(
                 results,
-                Ok(vec![ConfirmedTransactionStatusWithSignature {
-                    signature: some_signature().into(),
-                    slot: 114,
-                    err: None,
-                    memo: None,
-                    block_time: None,
-                    confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
-                }])
+                Ok(vec![
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("3jPA8CnZb9sfs4zVAypa9KB7VAGwrTdXB6mg9H1H9XpATN6Y8iek4Y21Nb9LjbrpYACbF9USV8RBWvXFFhVoQUAs").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: None,
+                        block_time: Some(1_747_389_084)
+                    },
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("3WM42nYDQAHgBWFd6SbJ3pj1AGgiTJfxXJ2d5dHu49GgqSUui5qdh64S5yLCN1cMKcLMFVKKo776GrtVhfatLqP6").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: None,
+                        block_time: Some(1_747_389_084)
+                    },
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("5iByUT1gTNXDY24hRx25YmQeebvUMD6jsNpGcu2jh1yjKmYwdo5GtRrYozyhdtdcn8SurwHq6EMp4YTpHgdansjc").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: None,
+                        block_time: Some(1_747_389_084)
+                    },
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("2Zuhxr6qMGwBrpV611Ema7pZAy1WGSkQyurTcbfyoXwFMNuziUJbM6FCyoL8WxTRG6G3fEik2wSFeN76miUeUnmJ").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: None,
+                        block_time: Some(1_747_389_084)
+                    },
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("4V1j8jZvXjcUdRoWQBRzxFVigfr61bJdHGsCFAkTm5h4z28FkrDczuTpcvwTRamiwiGm7E77EB5DKRBwG1mUEC8f").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: Some(TransactionError::InstructionError(3, InstructionError::Custom(6_001))),
+                        block_time: Some(1_747_389_084)
+                    }])
             );
         }
 

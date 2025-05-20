@@ -227,8 +227,15 @@ pub struct GetSignaturesForAddressParams {
     pub limit: Option<GetSignaturesForAddressLimit>,
     /// Start searching backwards from this transaction signature. If not provided the search
     /// starts from the top of the highest max confirmed block.
+    ///
+    /// This field is required to obtain an idempotent response, and hence crucial for the replicas
+    /// to reach consensus. If not included, different replicas will likely have different responses
+    /// due to the fast-changing nature of the highest max confirmed block.
+    /// Furthermore, it is highly recommended to use a finalized transaction so that all returned
+    /// transactions are also finalized. Otherwise, different replicas might see different statuses
+    /// for some of the returned transactions and hence be unable to reach consensus.
     pub before: Option<Signature>,
-    /// Search until this transaction signature, if found before limit reached.
+    /// Search until this transaction signature, if found before `limit` reached.
     pub until: Option<Signature>,
 }
 
@@ -248,18 +255,24 @@ impl<P: Into<Pubkey>> From<P> for GetSignaturesForAddressParams {
 /// The maximum number of transactions to return in the response of a
 /// [`getSignaturesForAddress`](https://solana.com/docs/rpc/http/getsignaturesforaddress) request.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
-#[serde(try_from = "u16", into = "u16")]
-pub struct GetSignaturesForAddressLimit(u16);
+#[serde(try_from = "u32", into = "u32")]
+pub struct GetSignaturesForAddressLimit(u32);
 
 impl GetSignaturesForAddressLimit {
     /// The maximum number of transactions that can be returned by a `getSignaturesForAddress` call.
-    pub const MAX_LIMIT: u16 = 1000;
+    pub const MAX_LIMIT: u32 = 1000;
 }
 
-impl TryFrom<u16> for GetSignaturesForAddressLimit {
+impl Default for GetSignaturesForAddressLimit {
+    fn default() -> Self {
+        Self(Self::MAX_LIMIT)
+    }
+}
+
+impl TryFrom<u32> for GetSignaturesForAddressLimit {
     type Error = RpcError;
 
-    fn try_from(value: u16) -> Result<Self, Self::Error> {
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
         match value {
             1..=Self::MAX_LIMIT => Ok(Self(value)),
             _ => Err(RpcError::ValidationError(format!(
@@ -271,7 +284,7 @@ impl TryFrom<u16> for GetSignaturesForAddressLimit {
     }
 }
 
-impl From<GetSignaturesForAddressLimit> for u16 {
+impl From<GetSignaturesForAddressLimit> for u32 {
     fn from(value: GetSignaturesForAddressLimit) -> Self {
         value.0
     }

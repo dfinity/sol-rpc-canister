@@ -538,11 +538,11 @@ impl<R> SolRpcClient<R> {
     ///
     /// ```rust
     /// use sol_rpc_client::SolRpcClient;
-    /// use sol_rpc_types::{RpcSources, SolanaCluster};
-    /// use solana_instruction::error::InstructionError;
+    /// use sol_rpc_types::{
+    ///     ConfirmedTransactionStatusWithSignature, InstructionError, RpcSources, Signature,
+    ///     SolanaCluster, TransactionConfirmationStatus, TransactionError,
+    /// };
     /// use solana_pubkey::pubkey;
-    /// use solana_transaction_error::TransactionError;
-    /// use sol_rpc_types::{ConfirmedTransactionStatusWithSignature, Signature, TransactionConfirmationStatus};
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -550,14 +550,22 @@ impl<R> SolRpcClient<R> {
     /// # use sol_rpc_types::MultiRpcResult;
     /// let client = SolRpcClient::builder_for_ic()
     /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(vec![
-    /// #       ConfirmedTransactionStatusWithSignature {
-    /// #           signature: Signature::from_str("5h6xBEauJ3PK6SWCZ1PGjBvj8vDdWG3KpwATGy1ARAXFSDwt8GFXM7W5Ncn16wmqokgpiKRLuS83KUxyZyv2sUYv").unwrap(),
-    /// #           slot: 114,
-    /// #           err: None,
-    /// #           memo: None,
-    /// #           block_time: None,
-    /// #           confirmation_status: Some(TransactionConfirmationStatus::Finalized),
-    /// #       }
+    /// #        ConfirmedTransactionStatusWithSignature {
+    /// #            signature: Signature::from_str("3jPA8CnZb9sfs4zVAypa9KB7VAGwrTdXB6mg9H1H9XpATN6Y8iek4Y21Nb9LjbrpYACbF9USV8RBWvXFFhVoQUAs").unwrap(),
+    /// #            confirmation_status: Some(TransactionConfirmationStatus::Finalized),
+    /// #            memo: None,
+    /// #            slot: 340_372_399,
+    /// #            err: None,
+    /// #            block_time: Some(1_747_389_084)
+    /// #        },
+    /// #        ConfirmedTransactionStatusWithSignature {
+    /// #            signature: Signature::from_str("3jPA8CnZb9sfs4zVAypa9KB7VAGwrTdXB6mg9H1H9XpATN6Y8iek4Y21Nb9LjbrpYACbF9USV8RBWvXFFhVoQUAs").unwrap(),
+    /// #            confirmation_status: Some(TransactionConfirmationStatus::Finalized),
+    /// #            memo: None,
+    /// #            slot: 340_372_399,
+    /// #            err: Some(TransactionError::InstructionError(3, InstructionError::Custom(6_001))),
+    /// #            block_time: Some(1_747_389_084)
+    /// #        },
     /// #    ])))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
@@ -568,16 +576,27 @@ impl<R> SolRpcClient<R> {
     ///     .await
     ///     .expect_consistent();
     ///
-    /// assert_eq!(statuses, Ok(vec![
-    ///     ConfirmedTransactionStatusWithSignature {
-    ///         signature: Signature::from_str("5h6xBEauJ3PK6SWCZ1PGjBvj8vDdWG3KpwATGy1ARAXFSDwt8GFXM7W5Ncn16wmqokgpiKRLuS83KUxyZyv2sUYv").unwrap(),
-    ///         slot: 114,
-    ///         err: None,
-    ///         memo: None,
-    ///         block_time: None,
-    ///         confirmation_status: Some(TransactionConfirmationStatus::Finalized),
-    ///     }
-    /// ]));
+    /// assert_eq!(
+    ///     statuses,
+    ///     Ok(vec![
+    ///         ConfirmedTransactionStatusWithSignature {
+    ///             signature: Signature::from_str("3jPA8CnZb9sfs4zVAypa9KB7VAGwrTdXB6mg9H1H9XpATN6Y8iek4Y21Nb9LjbrpYACbF9USV8RBWvXFFhVoQUAs").unwrap(),
+    ///             confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+    ///             memo: None,
+    ///             slot: 340_372_399,
+    ///             err: None,
+    ///             block_time: Some(1_747_389_084)
+    ///         },
+    ///         ConfirmedTransactionStatusWithSignature {
+    ///             signature: Signature::from_str("3jPA8CnZb9sfs4zVAypa9KB7VAGwrTdXB6mg9H1H9XpATN6Y8iek4Y21Nb9LjbrpYACbF9USV8RBWvXFFhVoQUAs").unwrap(),
+    ///             confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+    ///             memo: None,
+    ///             slot: 340_372_399,
+    ///             err: Some(TransactionError::InstructionError(3, InstructionError::Custom(6_001))),
+    ///             block_time: Some(1_747_389_084)
+    ///         },
+    ///     ])
+    /// );
     /// # Ok(())
     /// # }
     /// ```
