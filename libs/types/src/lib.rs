@@ -22,7 +22,7 @@ pub use rpc_client::{
     RegexSubstitution, RoundingError, RpcAccess, RpcAuth, RpcConfig, RpcEndpoint, RpcError,
     RpcResult, RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 pub use solana::{
     account::{AccountData, AccountEncoding, AccountInfo, ParsedAccount},
     request::{
@@ -41,11 +41,12 @@ pub use solana::{
         TransactionReturnData, TransactionStatus, TransactionStatusMeta, TransactionTokenBalance,
         TransactionVersion,
     },
-    ConfirmedBlock, Hash, Lamport, PrioritizationFee, Pubkey, Signature, Slot, Timestamp,
+    ConfirmedBlock, Hash, Lamport, MicroLamport, PrioritizationFee, Pubkey, Signature, Slot,
+    Timestamp,
 };
 
 /// A vector with a maximum capacity.
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq, Default, Into)]
+#[derive(Debug, Clone, Deserialize, CandidType, PartialEq, Default, Into)]
 #[serde(try_from = "Vec<T>")]
 pub struct VecWithMaxLen<T, const CAPACITY: usize>(Vec<T>);
 
@@ -60,5 +61,14 @@ impl<T, const CAPACITY: usize> TryFrom<Vec<T>> for VecWithMaxLen<T, CAPACITY> {
             )));
         }
         Ok(Self(value))
+    }
+}
+
+impl<T: Serialize, const CAPACITY: usize> Serialize for VecWithMaxLen<T, CAPACITY> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.0.serialize(serializer)
     }
 }

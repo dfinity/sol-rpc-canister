@@ -14,7 +14,7 @@ use sol_rpc_types::{
 };
 use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
 use solana_client::rpc_client::{
-    GetConfirmedSignaturesForAddress2Config, RpcClient as SolanaRpcClient, RpcClient,
+    GetConfirmedSignaturesForAddress2Config, RpcClient as SolanaRpcClient,
 };
 use solana_commitment_config::CommitmentConfig;
 use solana_compute_budget_interface::ComputeBudgetInstruction;
@@ -582,7 +582,7 @@ fn from_confirmed_transaction_status_with_signature(
 
 fn solana_rpc_client_get_account(
     pubkey: &Pubkey,
-    sol: &RpcClient,
+    sol: &SolanaRpcClient,
     config: Option<solana_rpc_client_api::config::RpcAccountInfoConfig>,
 ) -> Option<solana_account::Account> {
     sol.get_account_with_config(pubkey, config.unwrap_or_default())
@@ -612,7 +612,7 @@ impl Setup {
             .await;
         let _endpoint = pic.make_live(None).await;
         Setup {
-            solana_client: RpcClient::new_with_commitment(
+            solana_client: SolanaRpcClient::new_with_commitment(
                 Self::SOLANA_VALIDATOR_URL,
                 // Using confirmed commitment in tests provides faster execution while maintaining
                 // sufficient reliability.
