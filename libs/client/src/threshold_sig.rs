@@ -1,4 +1,4 @@
-//! This module provides some helper functions for the Internet Computer threshold EdDSA signatures API in the context
+//! This module provides some helper functions for the Internet Computer threshold EdDSA signature API in the context
 //! of the SOL RPC canister, e.g. signing Solana transactions and fetching and deriving EdDSA public keys.
 //! See the [documentation](https://internetcomputer.org/docs/building-apps/network-features/signatures/t-schnorr)
 //! for more detailed information on the full threshold Schnorr API.
@@ -12,7 +12,8 @@ use ic_cdk::api::management_canister::schnorr::{
 use ic_cdk::api::management_canister::schnorr::{
     SchnorrPublicKeyArgument, SchnorrPublicKeyResponse,
 };
-use sol_rpc_types::{DerivationPath, Ed25519KeyId, RpcError, RpcResult};
+use sol_rpc_types::{RpcError, RpcResult};
+use sol_rpc_types::{DerivationPath, Ed25519KeyId};
 
 // Source: https://internetcomputer.org/docs/current/references/t-sigs-how-it-works/#fees-for-the-t-schnorr-production-key
 const SIGN_WITH_SCHNORR_FEE: u128 = 26_153_846_153;
@@ -29,10 +30,10 @@ const SIGN_WITH_SCHNORR_FEE: u128 = 26_153_846_153;
 /// use solana_pubkey::pubkey;
 /// use solana_signature::Signature;
 /// use solana_transaction::Transaction;
-/// use sol_rpc_client::{IcRuntime, SolRpcClient, threshold_signatures};
-/// use sol_rpc_types::{DerivationPath, Ed25519KeyId, SignTransactionRequestParams};
+/// use sol_rpc_client::{threshold_sig , IcRuntime};
+/// use sol_rpc_types::Ed25519KeyId;
 ///
-/// # #[tokio::main]
+/// #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # use sol_rpc_client::fixtures::MockRuntime;
 /// # use std::str::FromStr;
@@ -46,7 +47,7 @@ const SIGN_WITH_SCHNORR_FEE: u128 = 26_153_846_153;
 ///
 /// let key_id = Ed25519KeyId::TestKey1;
 /// let derivation_path = None;
-/// let (payer, _) = threshold_signatures::get_pubkey(
+/// let (payer, _) = threshold_sig::get_pubkey(
 ///     &runtime,
 ///     None,
 ///     derivation_path,
@@ -70,7 +71,7 @@ const SIGN_WITH_SCHNORR_FEE: u128 = 26_153_846_153;
 /// #     signature: Signature::from_str("37HbmunhjSC1xxnVsaFX2xaS8gYnb5JYiLy9B51Ky9Up69aF7Qra6dHSLMCaiurRYq3Y8ZxSVUwC5sntziWuhZee").unwrap().as_ref().to_vec(),
 /// # });
 /// let mut transaction = Transaction::new_unsigned(message);
-/// let signature = threshold_signatures::sign_transaction(
+/// let signature = threshold_sig::sign_transaction(
 ///     &runtime,
 ///     &transaction,
 ///     key_id,
@@ -130,10 +131,10 @@ pub async fn sign_transaction<R: Runtime>(
 /// ```rust
 /// use candid::Principal;
 /// use solana_pubkey::pubkey;
-/// use sol_rpc_client::{threshold_signatures, IcRuntime};
+/// use sol_rpc_client::{threshold_sig, IcRuntime};
 /// use sol_rpc_types::{DerivationPath, Ed25519KeyId};
 ///
-/// # #[tokio::main]
+/// #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # use sol_rpc_client::fixtures::MockRuntime;
 /// # use ic_cdk::api::management_canister::schnorr::{SchnorrPublicKeyResponse, SignWithSchnorrResponse};
@@ -147,7 +148,7 @@ pub async fn sign_transaction<R: Runtime>(
 /// let canister_id = Principal::from_text("un4fu-tqaaa-aaaab-qadjq-cai").unwrap();
 /// let derivation_path = DerivationPath::from("some-derivation-path".as_bytes());
 ///
-/// let (pubkey, _) = threshold_signatures::get_pubkey(
+/// let (pubkey, _) = threshold_sig::get_pubkey(
 ///     &runtime,
 ///     Some(canister_id),
 ///     Some(&derivation_path),

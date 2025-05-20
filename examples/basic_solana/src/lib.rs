@@ -6,9 +6,10 @@ pub mod state;
 use crate::state::{read_state, State};
 use candid::{CandidType, Deserialize, Principal};
 use sol_rpc_client::{IcRuntime, SolRpcClient};
-use sol_rpc_types::{CommitmentLevel, Ed25519KeyId, MultiRpcResult, RpcSources, SolanaCluster};
+use sol_rpc_types::{CommitmentLevel, MultiRpcResult, RpcSources, SolanaCluster};
 use solana_hash::Hash;
 use std::str::FromStr;
+use sol_rpc_types::solana::::Ed25519KeyId;
 
 // Fetch a recent blockhash using the Solana `getSlot` and `getBlock` methods.
 // Since the `getSlot` method might fail due to Solana's fast blocktime, and some slots do not

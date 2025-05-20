@@ -256,7 +256,7 @@ mod request_serialization_tests {
                 123,
                 {
                     "rewards": false,
-                    "transactionDetails": "signatures",
+                    "transactionDetails": "signature",
                     "commitment": "finalized",
                     "maxSupportedTransactionVersion": 2
                 },

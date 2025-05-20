@@ -1,6 +1,6 @@
 use ic_ed25519::PublicKey;
 use sol_rpc_client::IcRuntime;
-use sol_rpc_types::{DerivationPath, Ed25519KeyId};
+use sol_rpc_types::solana::::{DerivationPath, Ed25519KeyId};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Ed25519ExtendedPublicKey {
@@ -30,14 +30,10 @@ pub async fn get_ed25519_public_key(
     key_id: Ed25519KeyId,
     derivation_path: &DerivationPath,
 ) -> Ed25519ExtendedPublicKey {
-    let (pubkey, chain_code) = sol_rpc_client::threshold_signatures::get_pubkey(
-        &IcRuntime,
-        None,
-        Some(&derivation_path),
-        key_id,
-    )
-    .await
-    .expect("Failed to fetch EdDSA public key");
+    let (pubkey, chain_code) =
+        sol_rpc_client::threshold_sig::get_pubkey(&IcRuntime, None, Some(derivation_path), key_id)
+            .await
+            .expect("Failed to fetch EdDSA public key");
     Ed25519ExtendedPublicKey {
         public_key: PublicKey::deserialize_raw(&pubkey.to_bytes()).unwrap(),
         chain_code,

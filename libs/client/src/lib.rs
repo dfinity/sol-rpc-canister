@@ -121,7 +121,7 @@
 #[cfg(not(target_arch = "wasm32"))]
 pub mod fixtures;
 mod request;
-pub mod threshold_signatures;
+pub mod threshold_sig;
 
 use crate::request::{
     GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetRecentPrioritizationFeesRequest,
@@ -602,9 +602,9 @@ impl<R> SolRpcClient<R> {
     ///
     /// # Errors
     ///
-    /// The number of signatures that can be passed to
+    /// The number of signature that can be passed to
     /// [`getSignatureStatuses`](https://solana.com/de/docs/rpc/http/getsignaturestatuses)
-    /// is limited to 256. More signatures result in an error.
+    /// is limited to 256. More signature result in an error.
     ///
     /// ```rust
     /// use std::{str::FromStr, collections::BTreeSet};

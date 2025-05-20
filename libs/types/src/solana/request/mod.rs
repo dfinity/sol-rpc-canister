@@ -3,71 +3,9 @@ mod tests;
 
 use crate::{solana::Pubkey, RpcError, Signature, Slot, VecWithMaxLen};
 use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
-use candid::{CandidType, Deserialize, Principal};
+use candid::{CandidType, Deserialize};
 use serde::Serialize;
 use std::fmt::Display;
-
-/// Represents the derivation path of an Ed25519 key from one of the root keys.
-/// See the [tEdDSA documentation](https://internetcomputer.org/docs/building-apps/network-features/signatures/t-schnorr#signing-messages-and-transactions)
-/// for more details.
-#[derive(Clone, Debug, PartialEq, Eq, Default)]
-pub struct DerivationPath(Vec<Vec<u8>>);
-
-impl From<&[u8]> for DerivationPath {
-    fn from(bytes: &[u8]) -> Self {
-        const SCHEMA_V1: u8 = 1;
-        Self([vec![SCHEMA_V1], bytes.to_vec()].into_iter().collect())
-    }
-}
-
-impl From<Principal> for DerivationPath {
-    fn from(principal: Principal) -> Self {
-        DerivationPath::from(principal.as_slice())
-    }
-}
-
-impl From<DerivationPath> for Vec<Vec<u8>> {
-    fn from(derivation_path: DerivationPath) -> Self {
-        derivation_path.0
-    }
-}
-
-/// The ID of one of the ICP root keys.
-/// See the [tEdDSA documentation](https://internetcomputer.org/docs/building-apps/network-features/signatures/t-schnorr#signing-messages-and-transactions)
-/// for more details.
-#[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq, Clone, Copy)]
-pub enum Ed25519KeyId {
-    /// Only available on the local development environment started by dfx.
-    #[default]
-    TestKeyLocalDevelopment,
-    /// Test key available on the ICP mainnet.
-    TestKey1,
-    /// Production key available on the ICP mainnet.
-    ProductionKey1,
-}
-
-impl Display for Ed25519KeyId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let str = match self {
-            Ed25519KeyId::TestKeyLocalDevelopment => "dfx_test_key",
-            Ed25519KeyId::TestKey1 => "test_key_1",
-            Ed25519KeyId::ProductionKey1 => "key_1",
-        }
-        .to_string();
-        write!(f, "{}", str)
-    }
-}
-
-/// The parameters for a request to sign the given Solana transaction with [tEdDSA](https://internetcomputer.org/docs/building-apps/network-features/signatures/t-schnorr).
-pub struct SignTransactionRequestParams {
-    /// The transaction to sign.
-    pub transaction: solana_transaction::Transaction,
-    /// The root key from which the key used to sign the transaction is derived.
-    pub key_id: Ed25519KeyId,
-    /// The derivation path used to derive the key used to sign the transaction.
-    // TODO XC-317: Make this parameter optional? Is this allowed?
-    pub derivation_path: Option<DerivationPath>,
-}
 
 /// The parameters for a Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method call.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
@@ -237,10 +175,10 @@ impl From<Slot> for GetBlockParams {
 /// are generally too large to be supported by the ICP.
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, CandidType)]
 pub enum TransactionDetails {
-    /// Includes transaction signatures (IDs) and block metadata only.
-    #[serde(rename = "signatures")]
+    /// Includes transaction signature (IDs) and block metadata only.
+    #[serde(rename = "signature")]
     Signatures,
-    /// Omits all transaction data and signatures; returns only block metadata.
+    /// Omits all transaction data and signature; returns only block metadata.
     #[default]
     #[serde(rename = "none")]
     None,
@@ -279,9 +217,9 @@ impl From<GetRecentPrioritizationFeesParams> for Vec<Pubkey> {
 /// The parameters for a Solana [`getSignatureStatuses`](https://solana.com/docs/rpc/http/getsignaturestatuses) RPC method call.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
 pub struct GetSignatureStatusesParams {
-    /// An array of transaction signatures to confirm, as base-58 encoded strings (up to a maximum of 256)
+    /// An array of transaction signature to confirm, as base-58 encoded strings (up to a maximum of 256)
     pub signatures: VecWithMaxLen<Signature, 256>,
-    /// If set to true, a Solana node will search its ledger cache for any signatures not found in the recent status cache.
+    /// If set to true, a Solana node will search its ledger cache for any signature not found in the recent status cache.
     #[serde(rename = "searchTransactionHistory")]
     pub search_transaction_history: Option<bool>,
 }

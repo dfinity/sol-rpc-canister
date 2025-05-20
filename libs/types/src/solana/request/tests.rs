@@ -8,7 +8,7 @@ mod get_signature_statuses_params_tests {
     #[test]
     fn should_deserialize() {
         let params = json!({
-            "signatures": vec!["5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y"; 256]
+            "signature": vec!["5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y"; 256]
         });
 
         let result = GetSignatureStatusesParams::deserialize(&params);
@@ -19,7 +19,7 @@ mod get_signature_statuses_params_tests {
     #[test]
     fn should_not_deserialize() {
         let params = json!({
-            "signatures": vec!["5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y"; 256 + 1]
+            "signature": vec!["5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y"; 256 + 1]
         });
 
         let result = GetSignatureStatusesParams::deserialize(&params);
