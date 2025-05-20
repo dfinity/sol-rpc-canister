@@ -755,7 +755,7 @@ type GetSignaturesForAddressParams = record {
     // The minimum slot that the request can be evaluated at.
     minContextSlot: opt Slot;
     // Maximum transaction signatures to return (between 1 and 1,000).
-    limit: opt nat16;
+    limit: opt nat32;
     // Start searching backwards from this transaction signature. Any transaction can be used for this field; it
     // does not necessarily have to use the `pubkey` account. If not provided, the search starts from the top of
     // the highest max confirmed block.
