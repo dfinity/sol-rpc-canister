@@ -3,12 +3,11 @@ use crate::{
     InitArg, SolanaNetwork,
 };
 use candid::Principal;
-use sol_rpc_types::CommitmentLevel;
+use sol_rpc_types::{CommitmentLevel, Ed25519KeyId};
 use std::{
     cell::RefCell,
     ops::{Deref, DerefMut},
 };
-use sol_rpc_types::solana::::Ed25519KeyId;
 
 thread_local! {
     pub static STATE: RefCell<State> = RefCell::default();

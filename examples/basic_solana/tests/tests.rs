@@ -8,7 +8,7 @@ use pocket_ic::{
 };
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    CommitmentLevel, OverrideProvider, RegexSubstitution, RpcAccess,
+    CommitmentLevel, Ed25519KeyId, OverrideProvider, RegexSubstitution, RpcAccess,
     SupportedRpcProvider, SupportedRpcProviderId, TokenAmount,
 };
 use solana_client::{rpc_client::RpcClient as SolanaRpcClient, rpc_config::RpcTransactionConfig};
@@ -22,7 +22,6 @@ use solana_signature::Signature;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
 use std::{env::var, path::PathBuf, sync::Arc, thread, time::Duration};
-use sol_rpc_types::solana::::Ed25519KeyId;
 
 pub const SENDER: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x42]);
 pub const RECEIVER: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x43]);

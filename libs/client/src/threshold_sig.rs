@@ -12,8 +12,7 @@ use ic_cdk::api::management_canister::schnorr::{
 use ic_cdk::api::management_canister::schnorr::{
     SchnorrPublicKeyArgument, SchnorrPublicKeyResponse,
 };
-use sol_rpc_types::{RpcError, RpcResult};
-use sol_rpc_types::{DerivationPath, Ed25519KeyId};
+use sol_rpc_types::{DerivationPath, Ed25519KeyId, RpcError, RpcResult};
 
 // Source: https://internetcomputer.org/docs/current/references/t-sigs-how-it-works/#fees-for-the-t-schnorr-production-key
 const SIGN_WITH_SCHNORR_FEE: u128 = 26_153_846_153;

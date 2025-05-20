@@ -3,8 +3,8 @@ mod tests;
 
 pub mod account;
 pub mod request;
-pub mod transaction;
 pub mod signature;
+pub mod transaction;
 
 use crate::RpcError;
 use candid::CandidType;

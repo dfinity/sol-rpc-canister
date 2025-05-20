@@ -1,6 +1,6 @@
-use std::fmt::Display;
 use candid::{CandidType, Deserialize, Principal};
 use derive_more::{From, Into};
+use std::fmt::Display;
 
 /// Represents the derivation path of an Ed25519 key from one of the root keys.
 /// See the [tEdDSA documentation](https://internetcomputer.org/docs/building-apps/network-features/signatures/t-schnorr#signing-messages-and-transactions)

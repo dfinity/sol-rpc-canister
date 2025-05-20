@@ -1,6 +1,6 @@
 use ic_ed25519::PublicKey;
 use sol_rpc_client::IcRuntime;
-use sol_rpc_types::solana::::{DerivationPath, Ed25519KeyId};
+use sol_rpc_types::{DerivationPath, Ed25519KeyId};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Ed25519ExtendedPublicKey {
