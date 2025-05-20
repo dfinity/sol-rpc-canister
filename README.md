@@ -117,8 +117,20 @@ The SOL RPC canister reaches the Solana JSON-RPC providers using [HTTPS outcalls
    1. Use a [durable nonce](https://solana.com/de/developers/guides/advanced/introduction-to-durable-nonces) instead of a blockhash.
    2. Retrieve a recent blockhash by first retrieving a recent slot with `getSlot` and then getting the block (which includes the blockhash) with `getBlock`.
 
-[//]: # (TODO: XC-326: mention also `getRecenPrioritizationFees`)
-[//]: # (TODO: XC-291: mention also `getSignatureStatuses#confirmations`)
+## Supported methods
+
+   | Solana Method                                                                                   | Known Limitations                                                           |
+   |-------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+   | [`getAccountInfo`](https://solana.com/de/docs/rpc/http/getaccountinfo)                          | <ul><li>The field `context` is removed from the response</li></ul>          |
+   | [`getBalance`](https://solana.com/de/docs/rpc/http/getbalance)                                  | <ul><li>The field `context` is removed from the response</li></ul>          |
+   | [`getBlock`](https://solana.com/de/docs/rpc/http/getblock)                                      |                                                                             |
+   | [`getRecenPrioritizationFees`](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees) | <ul><li>Returns a subset of the response (configurable by caller)</li></ul> |
+   | [`getSignatureStatuses`](https://solana.com/de/docs/rpc/http/getsignaturestatuses)              | <ul><li>The field `confirmations` is removed from the response</li></ul>    |
+   | [`getSlot`](https://solana.com/de/docs/rpc/http/getslot)                                        | <ul><li>The result is rounded down (configurable by caller)</li></ul>       |
+   | [`getTokenAccountBalance`](https://solana.com/de/docs/rpc/http/gettokenaccountbalance)          | <ul><li>The field `context` is removed from the response</li></ul>          |
+   | [`getTransaction`](https://solana.com/de/docs/rpc/http/gettransaction)                          |                                                                             |
+   | [`sendTransaction`](https://solana.com/de/docs/rpc/http/sendtransaction)                        |                                                                             |
+
 
 ## Reproducible Build
 
