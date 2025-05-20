@@ -1,10 +1,6 @@
-use candid::Principal;
-use ic_cdk::api::management_canister::schnorr::{
-    SchnorrAlgorithm, SchnorrKeyId, SchnorrPublicKeyArgument, SchnorrPublicKeyResponse,
-};
-use sol_rpc_client::{sign_transaction, Runtime};
+use sol_rpc_client::threshold_sig::{get_pubkey, sign_transaction};
 use sol_rpc_e2e_tests::{env, Setup};
-use sol_rpc_types::{DerivationPath, Ed25519KeyId, SignTransactionRequestParams};
+use sol_rpc_types::Ed25519KeyId;
 use solana_compute_budget_interface::ComputeBudgetInstruction;
 use solana_hash::Hash;
 use solana_message::Message;
@@ -14,18 +10,15 @@ use solana_transaction::Transaction;
 use std::str::FromStr;
 
 #[tokio::test(flavor = "multi_thread")]
-async fn should_send_transaction() {
+async fn should_send_transaction_with_recent_blockhash() {
     let setup = Setup::new();
     let client = setup.client();
 
     // Get the pubkey of the sender, which is derived from the given root Ed25519 key, and the
     // canister ID of the wallet canister (through which all calls are forwarded).
-    let sender_pubkey = get_threshold_eddsa_key(
-        client.runtime(),
-        DerivationPath::default(),
-        Ed25519KeyId::TestKey1,
-    )
-    .await;
+    let (sender_pubkey, _) = get_pubkey(client.runtime(), None, None, Ed25519KeyId::TestKey1)
+        .await
+        .unwrap_or_else(|e| panic!("Failed to get Ed25519 public key: {e}"));
 
     fn load_pubkey(key: &str) -> Pubkey {
         Pubkey::from_str(&env(key)).unwrap_or_else(|e| {
@@ -87,16 +80,9 @@ async fn should_send_transaction() {
     let mut transaction = Transaction::new_unsigned(message);
 
     // Sign transaction with tEdDSA
-    let signature = sign_transaction(
-        client.runtime(),
-        SignTransactionRequestParams {
-            transaction: transaction.clone(),
-            key_id: Ed25519KeyId::TestKey1,
-            derivation_path: None,
-        },
-    )
-    .await
-    .expect("Failed to sign transaction");
+    let signature = sign_transaction(client.runtime(), &transaction, Ed25519KeyId::TestKey1, None)
+        .await
+        .expect("Failed to sign transaction");
     transaction.signatures = vec![signature];
 
     let transaction_id = client
@@ -120,28 +106,7 @@ async fn should_send_transaction() {
     assert!(sender_balance_after + transaction_amount <= sender_balance_before);
 }
 
-async fn get_threshold_eddsa_key<R: Runtime>(
-    runtime: &R,
-    derivation_path: DerivationPath,
-    key_id: Ed25519KeyId,
-) -> Pubkey {
-    let arg = SchnorrPublicKeyArgument {
-        canister_id: None,
-        derivation_path: derivation_path.into(),
-        key_id: SchnorrKeyId {
-            algorithm: SchnorrAlgorithm::Ed25519,
-            name: key_id.to_string(),
-        },
-    };
-    let (SchnorrPublicKeyResponse {
-        public_key: bytes, ..
-    },) = runtime
-        .query_call(
-            Principal::management_canister(),
-            "schnorr_public_key",
-            (arg,),
-        )
-        .await
-        .expect("Failed to fetch EdDSA public key");
-    solana_pubkey::Pubkey::try_from(bytes.as_slice()).expect("Failed to parse bytes as public key")
+#[tokio::test(flavor = "multi_thread")]
+async fn should_send_transaction_with_durable_nonce() {
+    // TODO XC-347
 }
