@@ -240,7 +240,7 @@ impl GetRecentPrioritizationFeesRequest {
             JsonRpcRequest::new("getRecentPrioritizationFees", params.into()),
             max_response_bytes,
             ResponseTransform::GetRecentPrioritizationFees {
-                max_length: u8::from(max_length),
+                max_length: max_length.into(),
                 max_slot_rounding_error: config.max_slot_rounding_error.unwrap_or_default(),
             },
             ReductionStrategy::from(consensus_strategy),

@@ -15,6 +15,8 @@ use strum::IntoEnumIterator;
 
 mod normalization_tests {
     use super::*;
+    use crate::rpc_client::sol_rpc::ResponseTransformDiscriminants;
+    use std::num::NonZeroU8;
 
     #[test]
     fn should_normalize_raw_response() {
@@ -375,7 +377,7 @@ mod normalization_tests {
             bytes
         }
 
-        for transform in ResponseTransform::iter() {
+        for transform in all_response_transforms() {
             let left = r#"{ "jsonrpc": "2.0", "error": { "code": -32602, "message": "Invalid param: could not find account" }, "id": 1 }"#;
             let right = r#"{ "error": { "message": "Invalid param: could not find account", "code": -32602 }, "id": 1, "jsonrpc": "2.0" }"#;
             let normalized_left = normalize_json(&transform, left);
@@ -434,6 +436,32 @@ mod normalization_tests {
             normalize_result(transform, right)
         );
     }
+
+    fn all_response_transforms() -> impl Iterator<Item = ResponseTransform> {
+        ResponseTransformDiscriminants::iter().map(|variant| match variant {
+            ResponseTransformDiscriminants::GetAccountInfo => ResponseTransform::GetAccountInfo,
+            ResponseTransformDiscriminants::GetBalance => ResponseTransform::GetBalance,
+            ResponseTransformDiscriminants::GetBlock => ResponseTransform::GetBlock,
+            ResponseTransformDiscriminants::GetRecentPrioritizationFees => {
+                ResponseTransform::GetRecentPrioritizationFees {
+                    max_slot_rounding_error: RoundingError::default(),
+                    max_length: NonZeroU8::new(100).unwrap(),
+                }
+            }
+            ResponseTransformDiscriminants::GetSignatureStatuses => {
+                ResponseTransform::GetSignatureStatuses
+            }
+            ResponseTransformDiscriminants::GetSlot => {
+                ResponseTransform::GetSlot(RoundingError::default())
+            }
+            ResponseTransformDiscriminants::GetTokenAccountBalance => {
+                ResponseTransform::GetTokenAccountBalance
+            }
+            ResponseTransformDiscriminants::GetTransaction => ResponseTransform::GetTransaction,
+            ResponseTransformDiscriminants::SendTransaction => ResponseTransform::SendTransaction,
+            ResponseTransformDiscriminants::Raw => ResponseTransform::Raw,
+        })
+    }
 }
 
 mod get_recent_prioritization_fees {
@@ -458,28 +486,28 @@ mod get_recent_prioritization_fees {
             (
                 ResponseTransform::GetRecentPrioritizationFees {
                     max_slot_rounding_error: RoundingError::new(2),
-                    max_length: 2,
+                    max_length: 2.try_into().unwrap(),
                 },
                 prioritization_fees(vec![3, 4]),
             ),
             (
                 ResponseTransform::GetRecentPrioritizationFees {
                     max_slot_rounding_error: RoundingError::new(2),
-                    max_length: 0,
+                    max_length: 0.try_into().unwrap(),
                 },
                 prioritization_fees(vec![]),
             ),
             (
                 ResponseTransform::GetRecentPrioritizationFees {
                     max_slot_rounding_error: RoundingError::new(2),
-                    max_length: u8::MAX,
+                    max_length: u8::MAX.try_into().unwrap(),
                 },
                 prioritization_fees(vec![1, 2, 3, 4]),
             ),
             (
                 ResponseTransform::GetRecentPrioritizationFees {
                     max_slot_rounding_error: RoundingError::new(10),
-                    max_length: 2,
+                    max_length: 2.try_into().unwrap(),
                 },
                 prioritization_fees(vec![]),
             ),
@@ -498,7 +526,7 @@ mod get_recent_prioritization_fees {
         let raw_response = json_response::<PrioritizationFee>(&[]);
         let transform = ResponseTransform::GetRecentPrioritizationFees {
             max_slot_rounding_error: RoundingError::new(2),
-            max_length: 2,
+            max_length: 2.try_into().unwrap(),
         };
         let original_bytes = serde_json::to_vec(&raw_response).unwrap();
         let mut transformed_bytes = original_bytes.clone();
@@ -532,7 +560,7 @@ mod get_recent_prioritization_fees {
 
         let transform = ResponseTransform::GetRecentPrioritizationFees {
             max_slot_rounding_error: RoundingError::new(10),
-            max_length: 100,
+            max_length: 100.try_into().unwrap(),
         };
         let mut raw_bytes = serde_json::to_vec(&json_response(&fees)).unwrap();
         transform.apply(&mut raw_bytes);
@@ -560,7 +588,7 @@ mod get_recent_prioritization_fees {
 
         let transform = ResponseTransform::GetRecentPrioritizationFees {
             max_slot_rounding_error: RoundingError::new(10),
-            max_length: 100,
+            max_length: 100.try_into().unwrap(),
         };
         let mut raw_bytes = to_vec(&json_response(&fees)).unwrap();
         transform.apply(&mut raw_bytes);
@@ -574,7 +602,7 @@ mod get_recent_prioritization_fees {
         fn should_be_nop_when_failed_to_deserialize(original_bytes in  prop::collection::vec(any::<u8>(), 0..1000)) {
             let transform = ResponseTransform::GetRecentPrioritizationFees {
                 max_slot_rounding_error: RoundingError::new(2),
-                max_length: 2,
+                max_length: 2.try_into().unwrap(),
             };
             let mut transformed_bytes = original_bytes.clone();
             transform.apply(&mut transformed_bytes);
@@ -587,7 +615,7 @@ mod get_recent_prioritization_fees {
             let raw_response = json_response(&fees);
             let transform = ResponseTransform::GetRecentPrioritizationFees {
                 max_slot_rounding_error: RoundingError::new(20),
-                max_length: 100,
+                max_length: 100.try_into().unwrap(),
             };
             let mut raw_bytes = serde_json::to_vec(&raw_response).unwrap();
             transform.apply(&mut raw_bytes);
@@ -619,7 +647,7 @@ mod get_recent_prioritization_fees {
             };
             let transform = ResponseTransform::GetRecentPrioritizationFees {
                 max_slot_rounding_error: RoundingError::new(20),
-                max_length: 100,
+                max_length: 100.try_into().unwrap(),
             };
 
             let sorted_fees_bytes = {
