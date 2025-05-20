@@ -4457,6 +4457,7 @@ dependencies = [
  "candid",
  "derive_more",
  "ic-cdk",
+ "ic-ed25519",
  "serde",
  "serde_json",
  "sol_rpc_types",

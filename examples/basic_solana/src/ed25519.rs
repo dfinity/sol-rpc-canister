@@ -1,7 +1,5 @@
-use ic_cdk::api::management_canister::schnorr::{
-    SchnorrAlgorithm, SchnorrKeyId, SchnorrPublicKeyArgument, SchnorrPublicKeyResponse,
-};
 use ic_ed25519::PublicKey;
+use sol_rpc_client::IcRuntime;
 use sol_rpc_types::{DerivationPath, Ed25519KeyId};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -28,34 +26,20 @@ impl Ed25519ExtendedPublicKey {
     }
 }
 
-impl From<SchnorrPublicKeyResponse> for Ed25519ExtendedPublicKey {
-    fn from(value: SchnorrPublicKeyResponse) -> Self {
-        Ed25519ExtendedPublicKey {
-            public_key: PublicKey::deserialize_raw(value.public_key.as_slice()).unwrap(),
-            chain_code: <[u8; 32]>::try_from(value.chain_code).unwrap(),
-        }
-    }
-}
-
 pub async fn get_ed25519_public_key(
-    key_name: &Ed25519KeyId,
+    key_id: Ed25519KeyId,
     derivation_path: &DerivationPath,
 ) -> Ed25519ExtendedPublicKey {
-    let (response,): (SchnorrPublicKeyResponse,) =
-        ic_cdk::api::management_canister::schnorr::schnorr_public_key(SchnorrPublicKeyArgument {
-            canister_id: None,
-            derivation_path: derivation_path.clone().into(),
-            key_id: SchnorrKeyId {
-                algorithm: SchnorrAlgorithm::Ed25519,
-                name: key_name.to_string(),
-            },
-        })
-        .await
-        .unwrap_or_else(|(error_code, message)| {
-            ic_cdk::trap(&format!(
-                "failed to get canister's public key: {} (error code = {:?})",
-                message, error_code,
-            ))
-        });
-    Ed25519ExtendedPublicKey::from(response)
+    let (pubkey, chain_code) = sol_rpc_client::threshold_signatures::get_pubkey(
+        &IcRuntime,
+        None,
+        Some(&derivation_path),
+        key_id,
+    )
+    .await
+    .expect("Failed to fetch EdDSA public key");
+    Ed25519ExtendedPublicKey {
+        public_key: PublicKey::deserialize_raw(&pubkey.to_bytes()).unwrap(),
+        chain_code,
+    }
 }

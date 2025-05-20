@@ -121,6 +121,7 @@
 #[cfg(not(target_arch = "wasm32"))]
 pub mod fixtures;
 mod request;
+pub mod threshold_signatures;
 
 use crate::request::{
     GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetRecentPrioritizationFeesRequest,
@@ -130,28 +131,19 @@ use crate::request::{
 };
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
-use ic_cdk::api::{
-    call::RejectionCode,
-    management_canister::schnorr::{
-        SchnorrAlgorithm, SchnorrKeyId, SignWithSchnorrArgument, SignWithSchnorrResponse,
-    },
-};
+use ic_cdk::api::call::RejectionCode;
 pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
     GetRecentPrioritizationFeesParams, GetSignatureStatusesParams, GetSlotParams, GetSlotRpcConfig,
-    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, Pubkey, RpcConfig, RpcError,
-    RpcResult, RpcSources, SendTransactionParams, SignTransactionRequestParams, Signature, Slot,
-    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TokenAmount, TransactionDetails,
-    TransactionInfo,
+    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, Pubkey, RpcConfig, RpcResult,
+    RpcSources, SendTransactionParams, Signature, Slot, SolanaCluster, SupportedRpcProvider,
+    SupportedRpcProviderId, TokenAmount, TransactionDetails, TransactionInfo,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
 use std::{fmt::Debug, sync::Arc};
-
-// Source: https://internetcomputer.org/docs/current/references/t-sigs-how-it-works/#fees-for-the-t-schnorr-production-key
-const SIGN_WITH_SCHNORR_FEE: u128 = 26_153_846_153;
 
 /// The principal identifying the productive Solana RPC canister under NNS control.
 ///
@@ -920,102 +912,6 @@ impl<R: Runtime> SolRpcClient<R> {
             })
             .into()
     }
-}
-
-/// Sign an unsigned Solana transaction with threshold EdDSA, see threshold Schnorr documentation
-/// [here](https://internetcomputer.org/docs/building-apps/network-features/signatures/t-schnorr).
-///
-/// # Examples
-///
-/// ```rust
-/// use solana_hash::Hash;
-/// use solana_message::legacy::Message;
-/// use solana_program::system_instruction::transfer;
-/// use solana_pubkey::pubkey;
-/// use solana_signature::Signature;
-/// use solana_transaction::Transaction;
-/// use sol_rpc_client::{IcRuntime, sign_transaction, SolRpcClient};
-/// use sol_rpc_types::{DerivationPath, Ed25519KeyId, SignTransactionRequestParams};
-///
-/// # #[tokio::main]
-/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # use sol_rpc_client::fixtures::MockRuntime;
-/// # use std::str::FromStr;
-/// use candid::Principal;
-/// # use ic_cdk::api::management_canister::schnorr::SignWithSchnorrResponse;
-/// let runtime = IcRuntime;
-/// # let runtime = MockRuntime::same_response(SignWithSchnorrResponse {
-/// #     signature: "ityU6OGhNgvUXCL8gOy9p0LNThE8eKn4LUPNFwpeQVyXiUmNOzohl0VkcwEQnTqg".to_string().into_bytes(),
-/// # });
-///
-/// let key_id = Ed25519KeyId::TestKey1;
-/// let derivation_path = None;
-/// // This pubkey should be derived from the root key `key_id` with `derivation_path`, see:
-/// // https://internetcomputer.org/docs/references/ic-interface-spec#ic-schnorr_public_key
-/// let payer = pubkey!("3EdRSc7CnKUGxGUSZwJ58rd7haBM8CR2Xh87KheEX7iS");
-///
-/// let recipient = pubkey!("BPebStjcgCPnWTK3FXZJ8KhqwNYLk9aubC9b4Cgqb6oE");
-///
-/// // TODO XC-317: Use client method to fetch recent blockhash
-/// let recent_blockhash = Hash::new_unique();
-///
-/// let message = Message::new_with_blockhash(
-///     &[transfer(&payer, &recipient, 1_000_000)],
-///     Some(&payer),
-///     &recent_blockhash,
-///  );
-///
-/// let mut transaction = Transaction::new_unsigned(message);
-/// let signature = sign_transaction(
-///     &runtime,
-///     SignTransactionRequestParams {
-///         transaction: transaction.clone(),
-///         derivation_path,
-///         key_id,
-///     },
-/// ).await;
-///
-/// assert_eq!(
-///     signature,
-///     Ok(Signature::from_str("37HbmunhjSC1xxnVsaFX2xaS8gYnb5JYiLy9B51Ky9Up69aF7Qra6dHSLMCaiurRYq3Y8ZxSVUwC5sntziWuhZee").unwrap())
-/// );
-///
-/// // The transaction is now signed and can be submitted with the `sendTransaction` RPC method.
-/// transaction.signatures = vec![signature.unwrap()];
-/// # Ok(())
-/// # }
-/// ```
-pub async fn sign_transaction<R: Runtime>(
-    runtime: &R,
-    params: SignTransactionRequestParams,
-) -> RpcResult<solana_signature::Signature> {
-    let arg = SignWithSchnorrArgument {
-        message: params.transaction.message_data(),
-        derivation_path: params.derivation_path.unwrap_or_default().into(),
-        key_id: SchnorrKeyId {
-            algorithm: SchnorrAlgorithm::Ed25519,
-            name: params.key_id.to_string(),
-        },
-    };
-    let response: SignWithSchnorrResponse = R::update_call(
-        runtime,
-        Principal::management_canister(),
-        "sign_with_schnorr",
-        (arg,),
-        SIGN_WITH_SCHNORR_FEE,
-    )
-    .await
-    .map_err(|(rejection_code, message)| {
-        RpcError::ValidationError(format!(
-            "Failed to sign transaction, management canister returned code {rejection_code:?}: {message}")
-        )
-    })?;
-    solana_signature::Signature::try_from(response.signature).map_err(|bytes| {
-        RpcError::ValidationError(format!(
-            "Expected signature to contain 64 bytes, got {} bytes",
-            bytes.len()
-        ))
-    })
 }
 
 /// Runtime when interacting with a canister running on the Internet Computer.

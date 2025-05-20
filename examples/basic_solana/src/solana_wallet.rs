@@ -9,7 +9,7 @@ use crate::{
     state::{lazy_call_ed25519_public_key, read_state},
 };
 use candid::Principal;
-use sol_rpc_client::{sign_transaction, IcRuntime};
+use sol_rpc_client::{threshold_signatures::sign_transaction, IcRuntime};
 use sol_rpc_types::{DerivationPath, SignTransactionRequestParams};
 use solana_message::Message;
 use solana_pubkey::Pubkey;
@@ -91,11 +91,9 @@ impl SolanaWallet {
     pub async fn sign_message(message: &Message, signer: &SolanaAccount) -> Signature {
         sign_transaction(
             &IcRuntime,
-            SignTransactionRequestParams {
-                transaction: Transaction::new_unsigned(message.clone()),
-                key_id: read_state(|s| s.ed25519_key_id()),
-                derivation_path: Some(signer.derivation_path.clone()),
-            },
+            &Transaction::new_unsigned(message.clone()),
+            read_state(|s| s.ed25519_key_id()),
+            Some(&signer.derivation_path),
         )
         .await
         .expect("Failed to sign transaction")

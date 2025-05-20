@@ -15,6 +15,7 @@ async-trait = { workspace = true }
 candid = { workspace = true }
 derive_more = { workspace = true }
 ic-cdk = { workspace = true }
+ic-ed25519 = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 solana-account = { workspace = true }
