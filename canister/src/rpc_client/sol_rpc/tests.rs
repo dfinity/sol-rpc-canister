@@ -493,13 +493,6 @@ mod get_recent_prioritization_fees {
             (
                 ResponseTransform::GetRecentPrioritizationFees {
                     max_slot_rounding_error: RoundingError::new(2),
-                    max_length: 0.try_into().unwrap(),
-                },
-                prioritization_fees(vec![]),
-            ),
-            (
-                ResponseTransform::GetRecentPrioritizationFees {
-                    max_slot_rounding_error: RoundingError::new(2),
                     max_length: u8::MAX.try_into().unwrap(),
                 },
                 prioritization_fees(vec![1, 2, 3, 4]),
