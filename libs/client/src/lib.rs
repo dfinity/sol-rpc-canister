@@ -461,10 +461,10 @@ impl<R> SolRpcClient<R> {
     /// use sol_rpc_client::SolRpcClient;
     /// use sol_rpc_types::{RpcSources, SolanaCluster};
     /// use solana_pubkey::pubkey;
-    ///
+    /// #
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # use std::num::NonZeroU8;
+    /// use std::num::NonZeroU8;
     /// use sol_rpc_types::{MultiRpcResult, PrioritizationFee, TokenAmount};
     /// let client = SolRpcClient::builder_for_ic()
     /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(vec![PrioritizationFee{slot: 338637772, prioritization_fee: 166667}])))
