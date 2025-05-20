@@ -76,15 +76,20 @@ mod rounding_error_tests {
 mod non_zero_u8 {
     use crate::rpc_client::tests::encode_decode_roundtrip;
     use crate::rpc_client::NonZeroU8;
+    use candid::{Decode, Encode};
     use proptest::proptest;
 
     proptest! {
         #[test]
-        fn should_encode_decode(v: u8) {
-            if v !=0 {
+        fn should_encode_decode(v in 1..255_u8) {
                 encode_decode_roundtrip(NonZeroU8::try_from(v).unwrap(), v)?;
-            }
         }
+    }
+
+    #[test]
+    fn should_fail_deserialization_when_zero() {
+        let encoded_zero = Encode!(&0_u8).unwrap();
+        assert!(Decode!(&encoded_zero, NonZeroU8).is_err());
     }
 }
 
@@ -102,9 +107,9 @@ where
         wrapped_value
     );
 
-    let decoded_text_value = Decode!(&encoded_wrapped_value, T).unwrap();
+    let decoded_wrapped_value = Decode!(&encoded_wrapped_value, T).unwrap();
     prop_assert_eq!(
-        &decoded_text_value,
+        &decoded_wrapped_value,
         &wrapped_value,
         "Decoded value differ for {:?}",
         wrapped_value
