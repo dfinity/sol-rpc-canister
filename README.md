@@ -120,19 +120,19 @@ The SOL RPC canister reaches the Solana JSON-RPC providers using [HTTPS outcalls
 ## Supported methods
 
 The limitations described above imply that it is sometimes necessary to adapt a raw response from a Solana endpoint to increase the likelihood of nodes reaching consensus when querying that endpoint using [HTTPS outcalls](https://internetcomputer.org/https-outcalls).
-The table below summarizes the supported endpoints and the necessary changes made to the response.
+The table below summarizes the supported endpoints and the necessary changes (if any) made to the response.
 
-   | Solana method                                                                                   | Support            | Known limitations                                                           |
-   |-------------------------------------------------------------------------------------------------|--------------------|-----------------------------------------------------------------------------|
-   | [`getAccountInfo`](https://solana.com/de/docs/rpc/http/getaccountinfo)                          | :bulb:             | <ul><li>The field `context` is removed from the response</li></ul>          |
-   | [`getBalance`](https://solana.com/de/docs/rpc/http/getbalance)                                  | :bulb:             | <ul><li>The field `context` is removed from the response</li></ul>          |
-   | [`getBlock`](https://solana.com/de/docs/rpc/http/getblock)                                      | :white_check_mark: |                                                                             |
-   | [`getRecenPrioritizationFees`](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees) | :warning:          | <ul><li>Returns a subset of the response (configurable by caller)</li></ul> |
-   | [`getSignatureStatuses`](https://solana.com/de/docs/rpc/http/getsignaturestatuses)              | :bulb:             | <ul><li>The field `confirmations` is removed from the response</li></ul>    |
-   | [`getSlot`](https://solana.com/de/docs/rpc/http/getslot)                                        | :warning:          | <ul><li>The result is rounded down (configurable by caller)</li></ul>       |
-   | [`getTokenAccountBalance`](https://solana.com/de/docs/rpc/http/gettokenaccountbalance)          | :bulb:             | <ul><li>The field `context` is removed from the response</li></ul>          |
-   | [`getTransaction`](https://solana.com/de/docs/rpc/http/gettransaction)                          | :white_check_mark: |                                                                             |
-   | [`sendTransaction`](https://solana.com/de/docs/rpc/http/sendtransaction)                        | :white_check_mark: |                                                                             |
+   | Solana method                                                                                   | Support              | Known limitations                                                           |
+   |-------------------------------------------------------------------------------------------------|----------------------|-----------------------------------------------------------------------------|
+   | [`getAccountInfo`](https://solana.com/de/docs/rpc/http/getaccountinfo)                          | :scissors:           | <ul><li>The field `context` is removed from the response</li></ul>          |
+   | [`getBalance`](https://solana.com/de/docs/rpc/http/getbalance)                                  | :scissors:           | <ul><li>The field `context` is removed from the response</li></ul>          |
+   | [`getBlock`](https://solana.com/de/docs/rpc/http/getblock)                                      | :white_check_mark:   |                                                                             |
+   | [`getRecenPrioritizationFees`](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees) | :hammer_and_wrench:  | <ul><li>Returns a subset of the response (configurable by caller)</li></ul> |
+   | [`getSignatureStatuses`](https://solana.com/de/docs/rpc/http/getsignaturestatuses)              | :scissors:           | <ul><li>The field `confirmations` is removed from the response</li></ul>    |
+   | [`getSlot`](https://solana.com/de/docs/rpc/http/getslot)                                        | :hammer_and_wrench:  | <ul><li>The result is rounded down (configurable by caller)</li></ul>       |
+   | [`getTokenAccountBalance`](https://solana.com/de/docs/rpc/http/gettokenaccountbalance)          | :scissors:           | <ul><li>The field `context` is removed from the response</li></ul>          |
+   | [`getTransaction`](https://solana.com/de/docs/rpc/http/gettransaction)                          | :white_check_mark:   |                                                                             |
+   | [`sendTransaction`](https://solana.com/de/docs/rpc/http/sendtransaction)                        | :white_check_mark:   |                                                                             |
 
 
 ## Reproducible Build
