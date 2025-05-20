@@ -78,7 +78,9 @@ mod vec_with_max_len_tests {
         prop::collection::vec(any::<T>(), 0..=max_size)
     }
 
-    fn arb_vec_with_size_greater_than<T: Arbitrary>(min_size: usize) -> impl Strategy<Value = Vec<T>> {
+    fn arb_vec_with_size_greater_than<T: Arbitrary>(
+        min_size: usize,
+    ) -> impl Strategy<Value = Vec<T>> {
         prop::collection::vec(any::<T>(), min_size + 1..=min_size + 100)
     }
 }
