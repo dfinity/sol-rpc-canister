@@ -174,10 +174,10 @@ impl From<Slot> for GetBlockParams {
 /// are generally too large to be supported by the ICP.
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, CandidType)]
 pub enum TransactionDetails {
-    /// Includes transaction signature (IDs) and block metadata only.
-    #[serde(rename = "signature")]
+    /// Includes transaction signatures (IDs) and block metadata only.
+    #[serde(rename = "signatures")]
     Signatures,
-    /// Omits all transaction data and signature; returns only block metadata.
+    /// Omits all transaction data and signatures; returns only block metadata.
     #[default]
     #[serde(rename = "none")]
     None,
@@ -216,9 +216,9 @@ impl From<GetRecentPrioritizationFeesParams> for Vec<Pubkey> {
 /// The parameters for a Solana [`getSignatureStatuses`](https://solana.com/docs/rpc/http/getsignaturestatuses) RPC method call.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
 pub struct GetSignatureStatusesParams {
-    /// An array of transaction signature to confirm, as base-58 encoded strings (up to a maximum of 256)
+    /// An array of transaction signatures to confirm, as base-58 encoded strings (up to a maximum of 256)
     pub signatures: VecWithMaxLen<Signature, 256>,
-    /// If set to true, a Solana node will search its ledger cache for any signature not found in the recent status cache.
+    /// If set to true, a Solana node will search its ledger cache for any signatures not found in the recent status cache.
     #[serde(rename = "searchTransactionHistory")]
     pub search_transaction_history: Option<bool>,
 }
