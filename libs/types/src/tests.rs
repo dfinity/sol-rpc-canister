@@ -24,9 +24,9 @@ mod vec_with_max_len_tests {
 
         #[test]
         fn should_fail_to_decode_when_too_long(
-            string_vec in arb_vec_with_min_size(50),
-            int_vec in arb_vec_with_min_size(75),
-            bytes_vec in arb_vec_with_min_size(100))
+            string_vec in arb_vec_with_size_greater_than(50),
+            int_vec in arb_vec_with_size_greater_than(75),
+            bytes_vec in arb_vec_with_size_greater_than(100))
         {
             expect_decoding_error::<String, 50>(string_vec)?;
             expect_decoding_error::<i32, 75>(int_vec)?;
@@ -38,20 +38,20 @@ mod vec_with_max_len_tests {
     where
         T: Clone + CandidType + std::fmt::Debug + PartialEq + DeserializeOwned,
     {
-        let parsed_value: VecWithMaxLen<T, CAPACITY> = TryFrom::try_from(value.clone())?;
+        let wrapped_value: VecWithMaxLen<T, CAPACITY> = TryFrom::try_from(value.clone())?;
         let encoded_value = Encode!(&value)?;
-        let encoded_parsed_value = Encode!(&parsed_value)?;
+        let encoded_wrapped_value = Encode!(&wrapped_value)?;
         prop_assert_eq!(
             &encoded_value,
-            &encoded_parsed_value,
+            &encoded_wrapped_value,
             "Encoded value differ for {:?}",
             value
         );
 
-        let decoded_text_value = Decode!(&encoded_value, VecWithMaxLen<T, CAPACITY>)?;
+        let decoded_value = Decode!(&encoded_value, VecWithMaxLen<T, CAPACITY>)?;
         prop_assert_eq!(
-            &decoded_text_value,
-            &parsed_value,
+            &decoded_value,
+            &wrapped_value,
             "Decoded value differ for {:?}",
             value
         );
@@ -78,7 +78,7 @@ mod vec_with_max_len_tests {
         prop::collection::vec(any::<T>(), 0..=max_size)
     }
 
-    fn arb_vec_with_min_size<T: Arbitrary>(min_size: usize) -> impl Strategy<Value = Vec<T>> {
+    fn arb_vec_with_size_greater_than<T: Arbitrary>(min_size: usize) -> impl Strategy<Value = Vec<T>> {
         prop::collection::vec(any::<T>(), min_size + 1..=min_size + 100)
     }
 }
