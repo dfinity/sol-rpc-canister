@@ -19,6 +19,7 @@ Interact with the [Solana](https://solana.com/) blockchain from the [Internet Co
     * [From the command line](#from-the-command-line)
     * [From within a Rust canister](#from-within-a-rust-canister)
 * [Limitations](#limitations)
+* [Supported Methods](#supported-methods)
 * [Reproducible build](#reproducible-build)
 * [Related projects](#related-projects)
 * [Contributing](#contributing)
@@ -120,7 +121,10 @@ The SOL RPC canister reaches the Solana JSON-RPC providers using [HTTPS outcalls
 ## Supported methods
 
 The limitations described above imply that it is sometimes necessary to adapt a raw response from a Solana endpoint to increase the likelihood of nodes reaching consensus when querying that endpoint using [HTTPS outcalls](https://internetcomputer.org/https-outcalls).
-The table below summarizes the supported endpoints and the necessary changes (if any) made to the response.
+The table below summarizes the supported endpoints and the necessary changes (if any) made to the response indicated as follows:
+* :white_check_mark: no changes are made to the raw response (expected for JSON canonicalization).
+* :scissors: one or several fields are removed from the raw response.
+* :hammer_and_wrench: the raw response is more heavily transformed (e.g. rounding, subset, etc.).
 
    | Solana method                                                                                   | Support              | Known limitations                                                           |
    |-------------------------------------------------------------------------------------------------|----------------------|-----------------------------------------------------------------------------|
