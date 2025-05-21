@@ -7,6 +7,7 @@ set -e -x
 set -u # or set -o nounset
 : "$ALCHEMY_API_KEY"
 : "$ANKR_API_KEY"
+: "$CHAINSTACK_API_KEY"
 : "$DRPC_API_KEY"
 : "$HELIUS_API_KEY"
 
@@ -21,6 +22,8 @@ dfx canister call ${CANISTER} updateApiKeys "(vec {
   record { variant { AlchemyDevnet }; opt \"${ALCHEMY_API_KEY}\" };
   record { variant { AnkrMainnet }; opt \"${ANKR_API_KEY}\" };
   record { variant { AnkrDevnet }; opt \"${ANKR_API_KEY}\" };
+  record { variant { ChainstackMainnet }; opt \"${ANKR_API_KEY}\" };
+  record { variant { ChainstackDevnet }; opt \"${ANKR_API_KEY}\" };
   record { variant { DrpcMainnet }; opt \"${DRPC_API_KEY}\" };
   record { variant { DrpcDevnet }; opt \"${DRPC_API_KEY}\" };
   record { variant { HeliusMainnet }; opt \"${HELIUS_API_KEY}\" };

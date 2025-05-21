@@ -321,6 +321,10 @@ pub enum SupportedRpcProviderId {
     AnkrMainnet,
     /// [Ankr](https://www.ankr.com/) provider on [Solana Devnet](https://solana.com/docs/references/clusters)
     AnkrDevnet,
+    /// [Chainstack](https://www.chainstack.com/) provider on [Solana Mainnet](https://solana.com/docs/references/clusters)
+    ChainstackMainnet,
+    /// [Chainstack](https://www.chainstack.com/) provider on [Solana Devnet](https://solana.com/docs/references/clusters)
+    ChainstackDevnet,
     /// [dRPC](https://drpc.org/) provider on [Solana Mainnet](https://solana.com/docs/references/clusters)
     DrpcMainnet,
     /// [dRPC](https://drpc.org/) provider on [Solana Devnet](https://solana.com/docs/references/clusters)
