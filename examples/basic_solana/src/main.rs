@@ -5,7 +5,7 @@ use basic_solana::{
 use candid::{Nat, Principal};
 use ic_cdk::{init, post_upgrade, update};
 use num::ToPrimitive;
-use sol_rpc_client::account_info::extract_durable_nonce;
+use sol_rpc_client::nonce::extract_durable_nonce;
 use sol_rpc_types::{GetAccountInfoEncoding, GetAccountInfoParams, TokenAmount};
 use solana_hash::Hash;
 use solana_message::Message;

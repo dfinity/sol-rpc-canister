@@ -1,6 +1,6 @@
 use crate::{
-    account_info::extract_durable_nonce,
     fixtures::{initialized_nonce_account, usdc_account},
+    nonce::{extract_durable_nonce, ExtractNonceError},
 };
 use assert_matches::assert_matches;
 use serde_json::json;
@@ -10,7 +10,6 @@ use std::str::FromStr;
 
 mod durable_nonce {
     use super::*;
-    use crate::account_info::ExtractNonceError;
 
     #[test]
     fn should_extract_base64_encoded_durable_nonce() {
