@@ -119,6 +119,7 @@ The SOL RPC canister reaches the Solana JSON-RPC providers using [HTTPS outcalls
 
 [//]: # (TODO: XC-326: mention also `getRecenPrioritizationFees`)
 [//]: # (TODO: XC-291: mention also `getSignatureStatuses#confirmations`)
+[//]: # (TODO: XC-290: mention also `getSignaturesForAddress`)
 
 ## Reproducible Build
 

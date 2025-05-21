@@ -4,7 +4,7 @@ pub mod reward;
 
 use crate::{
     solana::{parse_opt, parse_vec, try_from_vec},
-    Pubkey, RpcError, Slot, Timestamp,
+    Pubkey, RpcError, Signature, Slot, Timestamp,
 };
 use candid::{CandidType, Deserialize};
 use error::TransactionError;
@@ -68,6 +68,44 @@ impl From<TransactionInfo> for EncodedConfirmedTransactionWithStatusMeta {
                 version: transaction.version.map(Into::into),
             },
             block_time: transaction.block_time,
+        }
+    }
+}
+
+/// Solana transaction signature information as returned by the [`getSignaturesForAddress`](https://solana.com/de/docs/rpc/http/getsignaturestatuses)
+/// RPC method.
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
+pub struct ConfirmedTransactionStatusWithSignature {
+    /// Transaction signature.
+    pub signature: Signature,
+    /// The slot that contains the block with the transaction.
+    pub slot: Slot,
+    /// Error if transaction failed, [`None`] if transaction succeeded.
+    pub err: Option<TransactionError>,
+    /// Memo associated with the transaction, [`None`] if no memo is present.
+    pub memo: Option<String>,
+    /// Estimated production time of when transaction was processed, [`None`] if not available.
+    #[serde(rename = "blockTime")]
+    pub block_time: Option<Timestamp>,
+    /// The transaction's cluster confirmation status; Either `processed`, `confirmed`, or `finalized`.
+    /// See [Commitment](https://solana.com/docs/rpc#configuring-state-commitment) for more on
+    /// optimistic confirmation.
+    #[serde(rename = "confirmationStatus")]
+    pub confirmation_status: Option<TransactionConfirmationStatus>,
+}
+
+impl From<ConfirmedTransactionStatusWithSignature>
+    for solana_transaction_status_client_types::ConfirmedTransactionStatusWithSignature
+{
+    fn from(value: ConfirmedTransactionStatusWithSignature) -> Self {
+        Self {
+            signature: solana_signature::Signature::from(value.signature),
+            slot: value.slot,
+            err: value
+                .err
+                .map(solana_transaction_error::TransactionError::from),
+            memo: value.memo,
+            block_time: value.block_time,
         }
     }
 }
