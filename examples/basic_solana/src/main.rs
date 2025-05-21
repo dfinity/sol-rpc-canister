@@ -6,6 +6,7 @@ use basic_solana::{
 use candid::{Nat, Principal};
 use ic_cdk::{init, post_upgrade, update};
 use num::ToPrimitive;
+use sol_rpc_client::account_info::extract_durable_nonce;
 use sol_rpc_types::{GetAccountInfoEncoding, GetAccountInfoParams, TokenAmount};
 use solana_account_decoder_client_types::{UiAccountData, UiAccountEncoding};
 use solana_hash::Hash;
@@ -68,36 +69,20 @@ pub async fn get_nonce(account: Option<sol_rpc_types::Pubkey>) -> sol_rpc_types:
     let account = account.unwrap_or(nonce_account(None).await);
 
     // Fetch the account info with the data encoded in base64 format
-    // TODO XC-347: use method from client to retrieve nonce
     let mut params = GetAccountInfoParams::from_pubkey(account);
     params.encoding = Some(GetAccountInfoEncoding::Base64);
-    let account_data = client()
+    let account = client()
         .get_account_info(params)
         .send()
         .await
         .expect_consistent()
         .expect("Call to `getAccountInfo` failed")
-        .expect("Account not found for given pubkey")
-        .data;
+        .expect("Account not found for given pubkey");
 
     // Extract the nonce from the account data
-    let account_data = if let UiAccountData::Binary(blob, UiAccountEncoding::Base64) = account_data
-    {
-        BASE64_STANDARD
-            .decode(blob)
-            .expect("Unable to base64 decode account data")
-    } else {
-        panic!("Invalid response format");
-    };
-    match bincode::deserialize::<NonceVersions>(account_data.as_slice())
-        .expect("Failed to deserialize nonce account data")
-        .state()
-    {
-        solana_nonce::state::State::Uninitialized => panic!("Nonce account is uninitialized"),
-        solana_nonce::state::State::Initialized(data) => {
-            sol_rpc_types::Hash::from(data.blockhash())
-        }
-    }
+    extract_durable_nonce(&account)
+        .expect("Failed to extract durable nonce from account data")
+        .into()
 }
 
 #[update]

@@ -121,6 +121,8 @@
 #[cfg(not(target_arch = "wasm32"))]
 pub mod fixtures;
 mod request;
+#[cfg(test)]
+mod tests;
 
 use crate::request::{
     GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetRecentPrioritizationFeesRequest,
@@ -138,11 +140,12 @@ use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
     GetRecentPrioritizationFeesParams, GetSignatureStatusesParams, GetSignaturesForAddressParams,
     GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
-    Pubkey, RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot,
+    Pubkey, RpcConfig, RpcError, RpcResult, RpcSources, SendTransactionParams, Signature, Slot,
     SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TokenAmount, TransactionDetails,
     TransactionInfo,
 };
-use solana_account_decoder_client_types::token::UiTokenAmount;
+use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
+use solana_nonce::{state::State, versions::Versions as NonceVersion};
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
 use std::{fmt::Debug, sync::Arc};
 
@@ -986,6 +989,59 @@ impl<R: Runtime> SolRpcClient<R> {
                 )
             })
             .into()
+    }
+}
+
+/// Module for interacting with Solana [nonce accounts](https://solana.com/de/developers/guides/advanced/introduction-to-durable-nonces#nonce-account).
+pub mod account_info {
+    use super::*;
+
+    /// Extracts the durable nonce value from the response of a `getAccountInfo` RPC call.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_client::{account_info::extract_durable_nonce, SolRpcClient};
+    /// use sol_rpc_types::{RpcSources, SolanaCluster};
+    /// use solana_hash::Hash;
+    /// use solana_pubkey::pubkey;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use std::str::FromStr;
+    /// # use sol_rpc_client::fixtures::initialized_nonce_account;
+    /// # use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo, MultiRpcResult};
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(Some(initialized_nonce_account()))))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Devnet))
+    ///     .build();
+    ///
+    /// let nonce_account = client
+    ///     .get_account_info(pubkey!("8DedqKHx9ogFajbHtRnTM3pPr3MRyVKDtepEpUiaDXX"))
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent()
+    ///     .unwrap()
+    ///     .unwrap();
+    ///
+    /// let durable_nonce = extract_durable_nonce(&nonce_account)
+    ///     .unwrap();
+    ///
+    /// assert_eq!(durable_nonce, Hash::from_str("6QK3LC8dsRtH2qVU47cSvgchPHNU72f1scvg2LuN2z7e").unwrap());
+    /// # Ok(())
+    /// # }
+    pub fn extract_durable_nonce(account: &UiAccount) -> RpcResult<solana_hash::Hash> {
+        let data = account.data.decode().ok_or(RpcError::ValidationError(
+            "Unsupported account data encoding format".to_string(),
+        ))?;
+        let versions = bincode::deserialize::<NonceVersion>(data.as_slice())
+            .map_err(|e| RpcError::ValidationError(format!("Invalid nonce account data: {e}")))?;
+        match versions.state() {
+            State::Uninitialized => Err(RpcError::ValidationError(
+                "Nonce account is not initialized".to_string(),
+            )),
+            State::Initialized(data) => Ok(data.blockhash()),
+        }
     }
 }
 
