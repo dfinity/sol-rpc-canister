@@ -11,8 +11,8 @@ use sol_rpc_types::{
     GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
     GetSignatureStatusesParams, GetSignaturesForAddressLimit, GetSignaturesForAddressParams,
     GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
-    PrioritizationFee, RoundingError, RpcConfig, RpcResult, RpcSources, SendTransactionParams,
-    Signature, Slot, TokenAmount, TransactionInfo, TransactionStatus,
+    NonZeroU8, PrioritizationFee, RoundingError, RpcConfig, RpcResult, RpcSources,
+    SendTransactionParams, Signature, Slot, TokenAmount, TransactionInfo, TransactionStatus,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;

@@ -451,6 +451,9 @@ mod normalization_tests {
             ResponseTransformDiscriminants::GetSignatureStatuses => {
                 ResponseTransform::GetSignatureStatuses
             }
+            ResponseTransformDiscriminants::GetSignaturesForAddress => {
+                ResponseTransform::GetSignaturesForAddress
+            }
             ResponseTransformDiscriminants::GetSlot => {
                 ResponseTransform::GetSlot(RoundingError::default())
             }
