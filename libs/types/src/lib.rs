@@ -13,6 +13,7 @@ mod solana;
 
 use candid::{CandidType, Deserialize};
 use derive_more::Into;
+
 pub use lifecycle::{InstallArgs, Mode, NumSubnetNodes};
 pub use response::MultiRpcResult;
 pub use rpc_client::{
@@ -27,17 +28,18 @@ pub use solana::{
     request::{
         CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
         GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
-        GetSignatureStatusesParams, GetSlotParams, GetTokenAccountBalanceParams,
-        GetTransactionEncoding, GetTransactionParams, SendTransactionEncoding,
-        SendTransactionParams, TransactionDetails,
+        GetSignatureStatusesParams, GetSignaturesForAddressLimit, GetSignaturesForAddressParams,
+        GetSlotParams, GetTokenAccountBalanceParams, GetTransactionEncoding, GetTransactionParams,
+        SendTransactionEncoding, SendTransactionParams, TransactionDetails,
     },
     transaction::{
         error::{InstructionError, TransactionError},
         instruction::{CompiledInstruction, InnerInstructions, Instruction},
         reward::{Reward, RewardType},
-        EncodedTransaction, LoadedAddresses, TokenAmount, TransactionBinaryEncoding,
-        TransactionConfirmationStatus, TransactionInfo, TransactionReturnData, TransactionStatus,
-        TransactionStatusMeta, TransactionTokenBalance, TransactionVersion,
+        ConfirmedTransactionStatusWithSignature, EncodedTransaction, LoadedAddresses, TokenAmount,
+        TransactionBinaryEncoding, TransactionConfirmationStatus, TransactionInfo,
+        TransactionReturnData, TransactionStatus, TransactionStatusMeta, TransactionTokenBalance,
+        TransactionVersion,
     },
     ConfirmedBlock, Hash, Lamport, MicroLamport, PrioritizationFee, Pubkey, Signature, Slot,
     Timestamp,

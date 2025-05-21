@@ -41,6 +41,13 @@ fn should_set_correct_commitment_level() {
             SolRpcEndpoint::GetRecentPrioritizationFees => {
                 // no op, GetRecentPrioritizationFees does not use commitment level
             }
+            SolRpcEndpoint::GetSignaturesForAddress => {
+                let builder = client_with_commitment_level.get_signatures_for_address(pubkey);
+                assert_eq!(
+                    builder.request.params.commitment,
+                    Some(CommitmentLevel::Confirmed)
+                );
+            }
             SolRpcEndpoint::GetSignatureStatuses => {
                 // no op, GetSignatureStatuses does not use commitment level
             }

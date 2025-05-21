@@ -35,16 +35,18 @@ pub enum ResponseTransform {
         max_length: u8,
     },
     #[n(4)]
-    GetSignatureStatuses,
+    GetSignaturesForAddress,
     #[n(5)]
-    GetSlot(#[cbor(n(0), with = "crate::rpc_client::cbor::rounding_error")] RoundingError),
+    GetSignatureStatuses,
     #[n(6)]
-    GetTokenAccountBalance,
+    GetSlot(#[cbor(n(0), with = "crate::rpc_client::cbor::rounding_error")] RoundingError),
     #[n(7)]
-    GetTransaction,
+    GetTokenAccountBalance,
     #[n(8)]
-    SendTransaction,
+    GetTransaction,
     #[n(9)]
+    SendTransaction,
+    #[n(10)]
     Raw,
 }
 
@@ -133,6 +135,9 @@ impl ResponseTransform {
                             .collect()
                     },
                 );
+            }
+            Self::GetSignaturesForAddress => {
+                canonicalize_response::<Value, Value>(body_bytes, std::convert::identity);
             }
             Self::GetSignatureStatuses => {
                 canonicalize_response::<
