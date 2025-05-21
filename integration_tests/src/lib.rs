@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use candid::{decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encode, Principal};
+use candid::{decode_args, utils::ArgumentEncoder, CandidType, Encode, Principal};
 use canhttp::http::json::ConstantSizeId;
 use canlog::{Log, LogEntry};
 use ic_cdk::api::call::RejectionCode;
@@ -13,8 +13,7 @@ use pocket_ic::{
     nonblocking::PocketIc,
     PocketIcBuilder, RejectCode, RejectResponse,
 };
-use regex::Regex;
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::de::DeserializeOwned;
 use sol_rpc_canister::logs::Priority;
 use sol_rpc_client::{ClientBuilder, Runtime, SolRpcClient};
 use sol_rpc_types::{InstallArgs, RpcAccess, SupportedRpcProviderId};
@@ -26,8 +25,10 @@ use std::{
 
 pub mod mock;
 pub mod spl;
+pub mod wallet;
 
 use mock::{MockOutcall, MockOutcallBuilder};
+use wallet::CallCanisterArgs;
 
 const DEFAULT_MAX_RESPONSE_BYTES: u64 = 2_000_000;
 const MAX_TICKS: usize = 10;
@@ -135,12 +136,13 @@ impl Setup {
                 RpcAccess::Unauthenticated { .. } => {}
             }
         }
+        let args = (api_keys,);
         self.env
             .update_call(
                 self.sol_rpc_canister_id,
                 self.controller,
                 "updateApiKeys",
-                PocketIcRuntime::encode_args((api_keys,)),
+                encode_args(args),
             )
             .await
             .expect("BUG: Failed to call updateApiKeys");
@@ -289,18 +291,17 @@ impl Runtime for PocketIcRuntime<'_> {
                 self.wallet,
                 self.controller,
                 "wallet_call128",
-                Encode!(&CallCanisterArgs {
-                    canister: id,
-                    method_name: method.to_string(),
-                    args: PocketIcRuntime::encode_args(args),
-                    cycles,
-                })
-                .unwrap(),
+                Encode!(&CallCanisterArgs::new(id, method, args, cycles)).unwrap(),
             )
             .await
             .unwrap();
         self.execute_mock().await;
-        PocketIcRuntime::decode_forwarded_result(self.env.await_call(message_id).await)
+        wallet::decode_cycles_wallet_response(
+            self.env
+                .await_call(message_id)
+                .await
+                .map_err(PocketIcRuntime::parse_reject_response)?,
+        )
     }
 
     async fn query_call<In, Out>(
@@ -313,44 +314,16 @@ impl Runtime for PocketIcRuntime<'_> {
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
     {
-        PocketIcRuntime::decode_call_result(
-            self.env
-                .query_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
-                .await,
-        )
+        let result = self
+            .env
+            .query_call(id, self.caller, method, encode_args(args))
+            .await
+            .map_err(PocketIcRuntime::parse_reject_response);
+        decode_call_response(result?)
     }
 }
 
 impl PocketIcRuntime<'_> {
-    fn encode_args<In>(args: In) -> Vec<u8>
-    where
-        In: ArgumentEncoder,
-    {
-        encode_args(args).expect("Failed to encode arguments.")
-    }
-
-    fn decode_call_result<Out>(
-        result: Result<Vec<u8>, RejectResponse>,
-    ) -> Result<Out, (RejectionCode, String)>
-    where
-        Out: CandidType + DeserializeOwned,
-    {
-        match result {
-            Ok(bytes) => Self::decode_call_response(bytes),
-            Err(e) => {
-                let rejection_code = match e.reject_code {
-                    RejectCode::SysFatal => RejectionCode::SysFatal,
-                    RejectCode::SysTransient => RejectionCode::SysTransient,
-                    RejectCode::DestinationInvalid => RejectionCode::DestinationInvalid,
-                    RejectCode::CanisterReject => RejectionCode::CanisterReject,
-                    RejectCode::CanisterError => RejectionCode::CanisterError,
-                    RejectCode::SysUnknown => RejectionCode::Unknown,
-                };
-                Err((rejection_code, e.reject_message))
-            }
-        }
-    }
-
     fn with_strategy(self, strategy: MockStrategy) -> Self {
         Self {
             mock_strategy: Some(strategy),
@@ -422,45 +395,16 @@ impl PocketIcRuntime<'_> {
         true
     }
 
-    fn decode_call_response<Out>(bytes: Vec<u8>) -> Result<Out, (RejectionCode, String)>
-    where
-        Out: CandidType + DeserializeOwned,
-    {
-        decode_args(&bytes).map(|(res,)| res).map_err(|e| {
-            (
-                RejectionCode::CanisterError,
-                format!(
-                    "failed to decode canister response as {}: {}",
-                    std::any::type_name::<Out>(),
-                    e
-                ),
-            )
-        })
-    }
-
-    fn decode_forwarded_result<Out>(
-        call_result: Result<Vec<u8>, RejectResponse>,
-    ) -> Result<Out, (RejectionCode, String)>
-    where
-        Out: CandidType + DeserializeOwned,
-    {
-        match PocketIcRuntime::decode_call_result::<Result<CallResult, String>>(call_result)? {
-            Ok(CallResult { bytes }) => PocketIcRuntime::decode_call_response(bytes),
-            Err(message) => {
-                // The wallet canister formats the rejection code and error message from the target
-                // canister into a single string. Extract them back from the formatted string.
-                match Regex::new(r"^An error happened during the call: (\d+): (.*)$")
-                    .unwrap()
-                    .captures(&message)
-                {
-                    Some(captures) => {
-                        let (_, [code, message]) = captures.extract();
-                        Err((code.parse::<u32>().unwrap().into(), message.to_string()))
-                    }
-                    None => Err((RejectionCode::Unknown, message)),
-                }
-            }
-        }
+    fn parse_reject_response(response: RejectResponse) -> (RejectionCode, String) {
+        let rejection_code = match response.reject_code {
+            RejectCode::SysFatal => RejectionCode::SysFatal,
+            RejectCode::SysTransient => RejectionCode::SysTransient,
+            RejectCode::DestinationInvalid => RejectionCode::DestinationInvalid,
+            RejectCode::CanisterReject => RejectionCode::CanisterReject,
+            RejectCode::CanisterError => RejectionCode::CanisterError,
+            RejectCode::SysUnknown => RejectionCode::Unknown,
+        };
+        (rejection_code, response.reject_message)
     }
 }
 
@@ -497,18 +441,16 @@ impl Runtime for PocketIcLiveModeRuntime<'_> {
                 self.wallet,
                 self.controller,
                 "wallet_call128",
-                Encode!(&CallCanisterArgs {
-                    canister: id,
-                    method_name: method.to_string(),
-                    args: PocketIcRuntime::encode_args(args),
-                    cycles,
-                })
-                .unwrap(),
+                Encode!(&CallCanisterArgs::new(id, method, args, cycles)).unwrap(),
             )
             .await
             .unwrap();
-
-        PocketIcRuntime::decode_forwarded_result(self.env.await_call_no_ticks(message_id).await)
+        wallet::decode_cycles_wallet_response(
+            self.env
+                .await_call_no_ticks(message_id)
+                .await
+                .map_err(PocketIcRuntime::parse_reject_response)?,
+        )
     }
 
     async fn query_call<In, Out>(
@@ -521,12 +463,33 @@ impl Runtime for PocketIcLiveModeRuntime<'_> {
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
     {
-        PocketIcRuntime::decode_call_result(
-            self.env
-                .query_call(id, self.caller, method, PocketIcRuntime::encode_args(args))
-                .await,
-        )
+        let result = self
+            .env
+            .query_call(id, self.caller, method, encode_args(args))
+            .await
+            .map_err(PocketIcRuntime::parse_reject_response);
+        decode_call_response(result?)
     }
+}
+
+pub fn encode_args<In: ArgumentEncoder>(args: In) -> Vec<u8> {
+    candid::encode_args(args).expect("Failed to encode arguments.")
+}
+
+pub fn decode_call_response<Out>(bytes: Vec<u8>) -> Result<Out, (RejectionCode, String)>
+where
+    Out: CandidType + DeserializeOwned,
+{
+    decode_args(&bytes).map(|(res,)| res).map_err(|e| {
+        (
+            RejectionCode::CanisterError,
+            format!(
+                "failed to decode canister response as {}: {}",
+                std::any::type_name::<Out>(),
+                e
+            ),
+        )
+    })
 }
 
 #[async_trait]
@@ -595,23 +558,4 @@ enum MockStrategy {
     Mock(MockOutcall),
     MockOnce(MockOutcall),
     MockSequence(Vec<MockOutcall>),
-}
-
-/// Argument to the wallet canister `wallet_call128` method.
-/// See the [cycles wallet repository](https://github.com/dfinity/cycles-wallet).
-#[derive(CandidType, Deserialize)]
-struct CallCanisterArgs {
-    canister: Principal,
-    method_name: String,
-    #[serde(with = "serde_bytes")]
-    args: Vec<u8>,
-    cycles: u128,
-}
-
-/// Return type of the wallet canister `wallet_call128` method.
-/// See the [cycles wallet repository](https://github.com/dfinity/cycles-wallet)
-#[derive(CandidType, Deserialize)]
-struct CallResult {
-    #[serde(with = "serde_bytes", rename = "return")]
-    bytes: Vec<u8>,
 }

@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetBlockCommitmentLevel,
-    GetTransactionEncoding, Pubkey, SendTransactionEncoding, Signature, Slot, TransactionDetails,
+    GetSignaturesForAddressLimit, GetTransactionEncoding, Pubkey, SendTransactionEncoding,
+    Signature, Slot, TransactionDetails,
 };
 use solana_transaction_status_client_types::UiTransactionEncoding;
 
@@ -179,6 +180,68 @@ impl From<sol_rpc_types::GetRecentPrioritizationFeesParams> for GetRecentPriorit
     fn from(value: sol_rpc_types::GetRecentPrioritizationFeesParams) -> Self {
         Self(value.into())
     }
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(into = "(Pubkey, Option<GetSignaturesForAddressConfig>)")]
+pub struct GetSignaturesForAddressParams(Pubkey, Option<GetSignaturesForAddressConfig>);
+
+impl GetSignaturesForAddressParams {
+    pub fn get_limit(&self) -> u32 {
+        self.1
+            .as_ref()
+            .and_then(|c| c.limit)
+            .unwrap_or_default()
+            .into()
+    }
+}
+
+impl From<sol_rpc_types::GetSignaturesForAddressParams> for GetSignaturesForAddressParams {
+    fn from(params: sol_rpc_types::GetSignaturesForAddressParams) -> Self {
+        let sol_rpc_types::GetSignaturesForAddressParams {
+            pubkey,
+            commitment,
+            min_context_slot,
+            limit,
+            before,
+            until,
+        } = params;
+        let config = if commitment.is_some()
+            || min_context_slot.is_some()
+            || limit.is_some()
+            || before.is_some()
+            || until.is_some()
+        {
+            Some(GetSignaturesForAddressConfig {
+                commitment,
+                min_context_slot,
+                limit,
+                before,
+                until,
+            })
+        } else {
+            None
+        };
+        Self(pubkey, config)
+    }
+}
+
+impl From<GetSignaturesForAddressParams> for (Pubkey, Option<GetSignaturesForAddressConfig>) {
+    fn from(params: GetSignaturesForAddressParams) -> Self {
+        (params.0, params.1)
+    }
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Clone, Debug, From)]
+pub struct GetSignaturesForAddressConfig {
+    pub commitment: Option<CommitmentLevel>,
+    #[serde(rename = "minContextSlot")]
+    pub min_context_slot: Option<Slot>,
+    pub limit: Option<GetSignaturesForAddressLimit>,
+    pub before: Option<Signature>,
+    pub until: Option<Signature>,
 }
 
 #[skip_serializing_none]

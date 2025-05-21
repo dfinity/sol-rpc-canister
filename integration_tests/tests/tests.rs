@@ -13,9 +13,10 @@ use sol_rpc_int_tests::{
     mock::MockOutcallBuilder, PocketIcRuntime, Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID,
 };
 use sol_rpc_types::{
-    CommitmentLevel, GetSlotParams, InstallArgs, Mode, ProviderError, RpcAccess, RpcAuth,
+    CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetSignaturesForAddressLimit,
+    GetSlotParams, InstallArgs, InstructionError, Mode, ProviderError, RpcAccess, RpcAuth,
     RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster,
-    SupportedRpcProvider, SupportedRpcProviderId,
+    SupportedRpcProvider, SupportedRpcProviderId, TransactionError,
 };
 use solana_account_decoder_client_types::{
     token::UiTokenAmount, UiAccount, UiAccountData, UiAccountEncoding,
@@ -1492,6 +1493,9 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::GetRecentPrioritizationFees => {
                     check(client.get_recent_prioritization_fees(&[]).unwrap()).await
                 }
+                SolRpcEndpoint::GetSignaturesForAddress => {
+                    check(client.get_signatures_for_address(USDC_PUBLIC_KEY)).await;
+                }
                 SolRpcEndpoint::GetSignatureStatuses => {
                     check(client.get_signature_statuses(&[some_signature()]).unwrap()).await;
                 }
@@ -1547,6 +1551,9 @@ mod cycles_cost_tests {
                 }
                 SolRpcEndpoint::GetRecentPrioritizationFees => {
                     check(client.get_recent_prioritization_fees(&[]).unwrap()).await;
+                }
+                SolRpcEndpoint::GetSignaturesForAddress => {
+                    check(client.get_signatures_for_address(USDC_PUBLIC_KEY)).await;
                 }
                 SolRpcEndpoint::GetSignatureStatuses => {
                     check(client.get_signature_statuses(&[some_signature()]).unwrap()).await;
@@ -1665,6 +1672,14 @@ mod cycles_cost_tests {
                         &setup,
                         client.get_recent_prioritization_fees(&[]).unwrap(),
                         2_378_204_800,
+                    )
+                    .await;
+                }
+                SolRpcEndpoint::GetSignaturesForAddress => {
+                    check(
+                        &setup,
+                        client.get_signatures_for_address(USDC_PUBLIC_KEY),
+                        22_601_010_400,
                     )
                     .await;
                 }
@@ -1933,6 +1948,147 @@ mod get_signature_statuses_tests {
                     }),
                     None,
                 ])
+            );
+        }
+
+        setup.drop().await;
+    }
+}
+
+mod get_signatures_for_address_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn should_get_signatures_for_address() {
+        fn request_body(id: u8) -> serde_json::Value {
+            json!({
+                "jsonrpc": "2.0",
+                "id": Id::from(ConstantSizeId::from(id)),
+                "method": "getSignaturesForAddress",
+                "params": [
+                    USDC_PUBLIC_KEY.to_string(),
+                    {
+                        "limit": 5,
+                    },
+                ],
+            })
+        }
+
+        fn response_body(id: u8) -> serde_json::Value {
+            json!({
+                "id": Id::from(ConstantSizeId::from(id)),
+                "jsonrpc": "2.0",
+                "result": [
+                    {
+                        "signature": "3jPA8CnZb9sfs4zVAypa9KB7VAGwrTdXB6mg9H1H9XpATN6Y8iek4Y21Nb9LjbrpYACbF9USV8RBWvXFFhVoQUAs",
+                        "confirmationStatus": "finalized",
+                        "memo": null,
+                        "slot": 340_372_399,
+                        "err": null,
+                        "blockTime": 1_747_389_084,
+                    },
+                    {
+                        "signature": "3WM42nYDQAHgBWFd6SbJ3pj1AGgiTJfxXJ2d5dHu49GgqSUui5qdh64S5yLCN1cMKcLMFVKKo776GrtVhfatLqP6",
+                        "confirmationStatus": "finalized",
+                        "memo": null,
+                        "slot": 340_372_399,
+                        "err": null,
+                        "blockTime": 1_747_389_084,
+                    },
+                    {
+                        "signature": "5iByUT1gTNXDY24hRx25YmQeebvUMD6jsNpGcu2jh1yjKmYwdo5GtRrYozyhdtdcn8SurwHq6EMp4YTpHgdansjc",
+                        "confirmationStatus": "finalized",
+                        "memo": null,
+                        "slot": 340_372_399,
+                        "err": null,
+                        "blockTime": 1_747_389_084,
+                    },
+                    {
+                        "signature": "2Zuhxr6qMGwBrpV611Ema7pZAy1WGSkQyurTcbfyoXwFMNuziUJbM6FCyoL8WxTRG6G3fEik2wSFeN76miUeUnmJ",
+                        "confirmationStatus": "finalized",
+                        "memo": null,
+                        "slot": 340_372_399,
+                        "err": null,
+                        "blockTime": 1_747_389_084,
+                    },
+                    {
+                        "signature": "4V1j8jZvXjcUdRoWQBRzxFVigfr61bJdHGsCFAkTm5h4z28FkrDczuTpcvwTRamiwiGm7E77EB5DKRBwG1mUEC8f",
+                        "confirmationStatus": "finalized",
+                        "memo": null,
+                        "slot": 340_372_399,
+                        "err": {
+                            "InstructionError" : [ 3, { "Custom" : 6_001 } ],
+                        },
+                        "blockTime": 1_747_389_084,
+                    },
+                ]
+            })
+        }
+
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
+            let client = setup.client().with_rpc_sources(sources);
+
+            let results = client
+                .mock_http_sequence(vec![
+                    MockOutcallBuilder::new(200, response_body(first_id))
+                        .with_request_body(request_body(first_id)),
+                    MockOutcallBuilder::new(200, response_body(first_id + 1))
+                        .with_request_body(request_body(first_id + 1)),
+                    MockOutcallBuilder::new(200, response_body(first_id + 2))
+                        .with_request_body(request_body(first_id + 2)),
+                ])
+                .build()
+                .get_signatures_for_address(USDC_PUBLIC_KEY)
+                .with_limit(GetSignaturesForAddressLimit::try_from(5).unwrap())
+                .send()
+                .await
+                .expect_consistent();
+
+            assert_eq!(
+                results,
+                Ok(vec![
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("3jPA8CnZb9sfs4zVAypa9KB7VAGwrTdXB6mg9H1H9XpATN6Y8iek4Y21Nb9LjbrpYACbF9USV8RBWvXFFhVoQUAs").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: None,
+                        block_time: Some(1_747_389_084)
+                    },
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("3WM42nYDQAHgBWFd6SbJ3pj1AGgiTJfxXJ2d5dHu49GgqSUui5qdh64S5yLCN1cMKcLMFVKKo776GrtVhfatLqP6").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: None,
+                        block_time: Some(1_747_389_084)
+                    },
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("5iByUT1gTNXDY24hRx25YmQeebvUMD6jsNpGcu2jh1yjKmYwdo5GtRrYozyhdtdcn8SurwHq6EMp4YTpHgdansjc").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: None,
+                        block_time: Some(1_747_389_084)
+                    },
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("2Zuhxr6qMGwBrpV611Ema7pZAy1WGSkQyurTcbfyoXwFMNuziUJbM6FCyoL8WxTRG6G3fEik2wSFeN76miUeUnmJ").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: None,
+                        block_time: Some(1_747_389_084)
+                    },
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("4V1j8jZvXjcUdRoWQBRzxFVigfr61bJdHGsCFAkTm5h4z28FkrDczuTpcvwTRamiwiGm7E77EB5DKRBwG1mUEC8f").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: Some(TransactionError::InstructionError(3, InstructionError::Custom(6_001))),
+                        block_time: Some(1_747_389_084)
+                    }])
             );
         }
 

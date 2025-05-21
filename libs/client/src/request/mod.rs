@@ -6,10 +6,11 @@ use candid::CandidType;
 use derive_more::From;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    AccountInfo, CommitmentLevel, ConfirmedBlock, GetAccountInfoParams, GetBalanceParams,
-    GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
-    GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams, GetSlotParams,
-    GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport, NonZeroU8,
+    AccountInfo, CommitmentLevel, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
+    GetAccountInfoParams, GetBalanceParams, GetBlockCommitmentLevel, GetBlockParams,
+    GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
+    GetSignatureStatusesParams, GetSignaturesForAddressLimit, GetSignaturesForAddressParams,
+    GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
     PrioritizationFee, RoundingError, RpcConfig, RpcResult, RpcSources, SendTransactionParams,
     Signature, Slot, TokenAmount, TransactionInfo, TransactionStatus,
 };
@@ -47,6 +48,8 @@ pub enum SolRpcEndpoint {
     GetBlock,
     /// `getRecentPrioritizationFees` endpoint.
     GetRecentPrioritizationFees,
+    /// `getSignaturesForAddress` endpoint.
+    GetSignaturesForAddress,
     /// `getSignatureStatuses` endpoint.
     GetSignatureStatuses,
     /// `getSlot` endpoint.
@@ -70,6 +73,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetBlock => "getBlock",
             SolRpcEndpoint::GetRecentPrioritizationFees => "getRecentPrioritizationFees",
             SolRpcEndpoint::GetSignatureStatuses => "getSignatureStatuses",
+            SolRpcEndpoint::GetSignaturesForAddress => "getSignaturesForAddress",
             SolRpcEndpoint::GetSlot => "getSlot",
             SolRpcEndpoint::GetTokenAccountBalance => "getTokenAccountBalance",
             SolRpcEndpoint::GetTransaction => "getTransaction",
@@ -85,6 +89,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetBalance => "getBalanceCyclesCost",
             SolRpcEndpoint::GetBlock => "getBlockCyclesCost",
             SolRpcEndpoint::GetRecentPrioritizationFees => "getRecentPrioritizationFeesCyclesCost",
+            SolRpcEndpoint::GetSignaturesForAddress => "getSignaturesForAddressCyclesCost",
             SolRpcEndpoint::GetSignatureStatuses => "getSignatureStatusesCyclesCost",
             SolRpcEndpoint::GetSlot => "getSlotCyclesCost",
             SolRpcEndpoint::GetTransaction => "getTransactionCyclesCost",
@@ -212,6 +217,54 @@ impl SolRpcRequest for GetRecentPrioritizationFeesRequest {
 impl From<GetRecentPrioritizationFeesParams> for GetRecentPrioritizationFeesRequest {
     fn from(value: GetRecentPrioritizationFeesParams) -> Self {
         Self(value)
+    }
+}
+
+#[derive(Debug, Clone, From)]
+pub struct GetSignaturesForAddressRequest(GetSignaturesForAddressParams);
+
+impl SolRpcRequest for GetSignaturesForAddressRequest {
+    type Config = RpcConfig;
+    type Params = GetSignaturesForAddressParams;
+    type CandidOutput = Self::Output;
+    type Output = sol_rpc_types::MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>;
+
+    fn endpoint(&self) -> SolRpcEndpoint {
+        SolRpcEndpoint::GetSignaturesForAddress
+    }
+
+    fn params(self, default_commitment_level: Option<CommitmentLevel>) -> Self::Params {
+        let mut params = self.0;
+        set_default(default_commitment_level, &mut params.commitment);
+        params
+    }
+}
+
+pub type GetSignaturesForAddressRequestBuilder<R> = RequestBuilder<
+    R,
+    RpcConfig,
+    GetSignaturesForAddressParams,
+    sol_rpc_types::MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>,
+    sol_rpc_types::MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>,
+>;
+
+impl<R> GetSignaturesForAddressRequestBuilder<R> {
+    /// Change the `limit` parameter for a `getSignaturesForAddress` request.
+    pub fn with_limit(mut self, limit: GetSignaturesForAddressLimit) -> Self {
+        self.request.params.limit = Some(limit);
+        self
+    }
+
+    /// Change the `until` parameter for a `getSignaturesForAddress` request.
+    pub fn with_until(mut self, until: impl Into<Signature>) -> Self {
+        self.request.params.until = Some(until.into());
+        self
+    }
+
+    /// Change the `before` parameter for a `getSignaturesForAddress` request.
+    pub fn with_before(mut self, before: impl Into<Signature>) -> Self {
+        self.request.params.before = Some(before.into());
+        self
     }
 }
 

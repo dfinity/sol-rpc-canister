@@ -1,5 +1,5 @@
 [package]
-name = "sol_rpc_int_tests"
+name = "sol_rpc_e2e_tests"
 version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
@@ -10,39 +10,22 @@ license.workspace = true
 [dependencies]
 async-trait = { workspace = true }
 candid = { workspace = true }
-canhttp = { workspace = true }
-canlog = { workspace = true }
-const_format = { workspace = true }
+ic-agent = { workspace = true }
 ic-cdk = { workspace = true }
-ic-http-types = { workspace = true }
-ic-test-utilities-load-wasm = { workspace = true }
-num-traits = { workspace = true }
-pocket-ic = { workspace = true }
-regex = { workspace = true }
 serde = { workspace = true }
-serde_bytes = { workspace = true }
 serde_json = { workspace = true }
-sol_rpc_canister = { path = "../canister" }
 sol_rpc_client = { path = "../libs/client" }
 sol_rpc_types = { path = "../libs/types" }
-solana-account = { workspace = true }
-solana-account-decoder-client-types = { workspace = true }
+sol_rpc_int_tests = { path = "../integration_tests" }
 solana-commitment-config = { workspace = true }
 solana-hash = { workspace = true }
-solana-instruction = { workspace = true }
 solana-pubkey = { workspace = true }
-solana-rpc-client-api = { workspace = true }
 solana-signature = { workspace = true }
 solana-signer = { workspace = true }
 solana-transaction = { workspace = true }
-solana-transaction-status-client-types = { workspace = true }
+tokio = { workspace = true }
 
 [dev-dependencies]
-assert_matches = { workspace = true }
-futures = { workspace = true }
-solana-client = { workspace = true }
 solana-compute-budget-interface = { workspace = true }
 solana-keypair = { workspace = true }
 solana-program = { workspace = true }
-strum = { workspace = true }
-tokio = { workspace = true }
