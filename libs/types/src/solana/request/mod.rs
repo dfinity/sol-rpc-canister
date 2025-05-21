@@ -254,7 +254,7 @@ impl<P: Into<Pubkey>> From<P> for GetSignaturesForAddressParams {
 
 /// The maximum number of transactions to return in the response of a
 /// [`getSignaturesForAddress`](https://solana.com/docs/rpc/http/getsignaturesforaddress) request.
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, CandidType)]
 #[serde(try_from = "u32", into = "u32")]
 pub struct GetSignaturesForAddressLimit(u32);
 

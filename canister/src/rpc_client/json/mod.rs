@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetBlockCommitmentLevel,
-    GetTransactionEncoding, Pubkey, SendTransactionEncoding, Signature, Slot, TransactionDetails,
+    GetSignaturesForAddressLimit, GetTransactionEncoding, Pubkey, SendTransactionEncoding,
+    Signature, Slot, TransactionDetails,
 };
 use solana_transaction_status_client_types::UiTransactionEncoding;
 
@@ -188,7 +189,11 @@ pub struct GetSignaturesForAddressParams(Pubkey, Option<GetSignaturesForAddressC
 
 impl GetSignaturesForAddressParams {
     pub fn get_limit(&self) -> u32 {
-        self.1.as_ref().and_then(|c| c.limit).unwrap_or_default()
+        self.1
+            .as_ref()
+            .and_then(|c| c.limit)
+            .unwrap_or_default()
+            .into()
     }
 }
 
@@ -234,7 +239,7 @@ pub struct GetSignaturesForAddressConfig {
     pub commitment: Option<CommitmentLevel>,
     #[serde(rename = "minContextSlot")]
     pub min_context_slot: Option<Slot>,
-    pub limit: Option<u32>,
+    pub limit: Option<GetSignaturesForAddressLimit>,
     pub before: Option<Signature>,
     pub until: Option<Signature>,
 }
