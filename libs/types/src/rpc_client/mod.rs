@@ -82,7 +82,8 @@ pub enum HttpOutcallError {
     /// Response is not a valid JSON-RPC response,
     /// which means that the response was not successful (status other than 2xx)
     /// or that the response body could not be deserialized into a JSON-RPC response.
-    #[error("Invalid HTTP JSON-RPC response: status {status}, body: {body}, parsing error: {parsing_error:?}")]
+    #[error("Invalid HTTP JSON-RPC response: status {status}, body: {body}, parsing error: {parsing_error:?}"
+    )]
     InvalidHttpJsonRpcResponse {
         /// The HTTP status code returned.
         status: u16,
@@ -321,6 +322,10 @@ pub enum SupportedRpcProviderId {
     AnkrMainnet,
     /// [Ankr](https://www.ankr.com/) provider on [Solana Devnet](https://solana.com/docs/references/clusters)
     AnkrDevnet,
+    /// [Tatum](https://www.chainstack.com/) provider on [Solana Mainnet](https://solana.com/docs/references/clusters)
+    TatumMainnet,
+    /// [Tatum](https://www.chainstack.com/) provider on [Solana Devnet](https://solana.com/docs/references/clusters)
+    TatumDevnet,
     /// [dRPC](https://drpc.org/) provider on [Solana Mainnet](https://solana.com/docs/references/clusters)
     DrpcMainnet,
     /// [dRPC](https://drpc.org/) provider on [Solana Devnet](https://solana.com/docs/references/clusters)
@@ -398,6 +403,13 @@ pub enum RpcAuth {
     /// API key will be used in an Authorization header as Bearer token, e.g.,
     /// `Authorization: Bearer API_KEY`
     BearerToken {
+        /// Request URL for the provider.
+        url: String,
+    },
+    /// API key will be used in a custom header, e.g. `X-Api-Key: API_KEY`
+    CustomHeader {
+        /// Name of the header in which the API key is placed.
+        header_name: String,
         /// Request URL for the provider.
         url: String,
     },

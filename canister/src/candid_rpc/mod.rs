@@ -67,7 +67,7 @@ fn process_error<T, E: Into<RpcError>>(error: E) -> MultiRpcResult<T> {
 pub fn hostname(provider: SupportedRpcProvider) -> Option<String> {
     let url = match provider.access {
         RpcAccess::Authenticated { auth, .. } => match auth {
-            RpcAuth::BearerToken { url } => url,
+            RpcAuth::BearerToken { url } | RpcAuth::CustomHeader { url, .. } => url,
             RpcAuth::UrlParameter { url_pattern } => url_pattern,
         },
         RpcAccess::Unauthenticated { public_url } => public_url,
