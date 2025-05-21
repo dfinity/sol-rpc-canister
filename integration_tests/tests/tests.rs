@@ -133,7 +133,7 @@ mod get_provider_tests {
         let client = setup.client().build();
         let providers = client.get_providers().await;
 
-        assert_eq!(providers.len(), 9);
+        assert_eq!(providers.len(), 10);
 
         assert_eq!(
             providers[0],
