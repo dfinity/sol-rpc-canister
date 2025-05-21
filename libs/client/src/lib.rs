@@ -1031,6 +1031,46 @@ pub mod account_info {
     /// assert_eq!(durable_nonce, Hash::from_str("6QK3LC8dsRtH2qVU47cSvgchPHNU72f1scvg2LuN2z7e").unwrap());
     /// # Ok(())
     /// # }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// The method will return an instance of [`ExtractNonceError`] if the account data does not
+    /// correspond to a valid and properly encoded nonce account. See [`ExtractNonceError`] for
+    /// more details.
+    ///
+    /// ```rust
+    /// use sol_rpc_client::{account_info::{ExtractNonceError, extract_durable_nonce}, SolRpcClient};
+    /// use sol_rpc_types::{RpcSources, SolanaCluster};
+    /// use solana_hash::Hash;
+    /// use solana_pubkey::pubkey;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use std::str::FromStr;
+    /// # use assert_matches::assert_matches;
+    /// # use sol_rpc_client::fixtures::usdc_account;
+    /// # use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo, MultiRpcResult};
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(Some(usdc_account()))))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// // Fetch the USDC account data on Mainnet
+    /// let usdc_account = client
+    ///     .get_account_info(pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"))
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent()
+    ///     .unwrap()
+    ///     .unwrap();
+    ///
+    /// let durable_nonce = extract_durable_nonce(&usdc_account);
+    ///
+    /// assert_matches!(durable_nonce, Err(ExtractNonceError::InvalidAccountData(_)));
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn extract_durable_nonce(
         account: &UiAccount,
     ) -> Result<solana_hash::Hash, ExtractNonceError> {
