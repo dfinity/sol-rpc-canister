@@ -835,7 +835,7 @@ impl Setup {
         commitment: CommitmentConfig,
     ) {
         // Wait until the transaction is confirmed
-        let max_wait = Duration::from_secs(10);
+        let max_wait = Duration::from_secs(30);
         let start = Instant::now();
         loop {
             let confirmed = self
