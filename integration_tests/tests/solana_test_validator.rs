@@ -523,7 +523,7 @@ async fn should_get_signatures_for_address() {
         .solana_client
         .request_airdrop(&Keypair::new().pubkey(), 10_000_000_000)
         .expect("Error while requesting airdrop");
-    setup.confirm_transaction(&before);
+    setup.confirm_transaction_with_commitment(&before, CommitmentConfig::finalized());
 
     let (sol_res, ic_res) = setup
         .compare_client(
