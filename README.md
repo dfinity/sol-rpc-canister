@@ -20,6 +20,7 @@ Interact with the [Solana](https://solana.com/) blockchain from the [Internet Co
     * [From within a Rust canister](#from-within-a-rust-canister)
 * [Limitations](#limitations)
 * [Supported Methods](#supported-methods)
+* [Supported Solana JSON-RPC Providers](#supported-solana-json-rpc-providers)
 * [Reproducible build](#reproducible-build)
 * [Related projects](#related-projects)
 * [Contributing](#contributing)
@@ -140,6 +141,16 @@ The table below summarizes the supported endpoints and the necessary changes (if
    | [`getTransaction`](https://solana.com/de/docs/rpc/http/gettransaction)                          | :white_check_mark:   |                                                                                                                                            |
    | [`sendTransaction`](https://solana.com/de/docs/rpc/http/sendtransaction)                        | :white_check_mark:   |                                                                                                                                            |
 
+
+## Supported Solana JSON-RPC Providers
+
+| Provider                              | Solana Mainnet     | Solana Devnet      |
+|---------------------------------------|--------------------|--------------------|
+| [Alchemy](https://www.alchemy.com/)   | :white_check_mark: | :white_check_mark: |
+| [Ankr](https://www.ankr.com/)         | :white_check_mark: | :white_check_mark: |
+| [dRPC](https://drpc.org/)             | :white_check_mark: | :white_check_mark: |
+| [Helius](https://www.helius.dev/)     | :white_check_mark: | :white_check_mark: |
+| [PublicNode](https://publicnode.com/) | :white_check_mark: | :x:                |
 
 ## Reproducible Build
 
