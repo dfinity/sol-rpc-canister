@@ -128,15 +128,3 @@ pub fn initialized_nonce_account() -> AccountInfo {
         space: 80
     }
 }
-
-/// Example uninitialized nonce account.
-pub fn uninitialized_nonce_account() -> AccountInfo {
-    AccountInfo {
-        lamports: 1_500_000,
-        data: AccountData::Binary("AQAAAAEAAAChb81VTNCM7E4be0vlpKR6G8cq4G/7smTmmOQUEaYN5/aIGga7Axo+dAuX25tf9tJz74QdNXO9pX3glPS/hsqsiBMAAAAAAAA=".to_string(), AccountEncoding::Base64),
-        owner: "11111111111111111111111111111111".to_string(),
-        executable: false,
-        rent_epoch: 18_446_744_073_709_551_615,
-        space: 80
-    }
-}

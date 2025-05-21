@@ -1,4 +1,3 @@
-use base64::{prelude::BASE64_STANDARD, Engine};
 use basic_solana::{
     client, get_recent_blockhash, solana_wallet::SolanaWallet, spl, state::init_state,
     validate_caller_not_anonymous, InitArg,
@@ -8,10 +7,8 @@ use ic_cdk::{init, post_upgrade, update};
 use num::ToPrimitive;
 use sol_rpc_client::account_info::extract_durable_nonce;
 use sol_rpc_types::{GetAccountInfoEncoding, GetAccountInfoParams, TokenAmount};
-use solana_account_decoder_client_types::{UiAccountData, UiAccountEncoding};
 use solana_hash::Hash;
 use solana_message::Message;
-use solana_nonce::versions::Versions as NonceVersions;
 use solana_program::system_instruction;
 use solana_pubkey::Pubkey;
 use solana_transaction::Transaction;
