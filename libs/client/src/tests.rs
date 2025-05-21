@@ -4,13 +4,13 @@ use crate::{
 };
 use assert_matches::assert_matches;
 use serde_json::json;
-use sol_rpc_types::RpcError;
 use solana_account_decoder_client_types::{UiAccount, UiAccountData, UiAccountEncoding};
 use solana_hash::Hash;
 use std::str::FromStr;
 
 mod durable_nonce {
     use super::*;
+    use crate::account_info::ExtractNonceError;
 
     #[test]
     fn should_extract_base64_encoded_durable_nonce() {
@@ -72,9 +72,7 @@ mod durable_nonce {
 
         assert_eq!(
             durable_nonce,
-            Err(RpcError::ValidationError(
-                "Unsupported account data encoding format".to_string()
-            ))
+            Err(ExtractNonceError::UnsupportedEncodingFormat)
         )
     }
 
@@ -84,10 +82,7 @@ mod durable_nonce {
 
         let durable_nonce = extract_durable_nonce(&account);
 
-        assert_matches!(
-            durable_nonce,
-            Err(RpcError::ValidationError(s)) => assert!(s.starts_with("Invalid nonce account data:"))
-        )
+        assert_matches!(durable_nonce, Err(ExtractNonceError::InvalidAccountData(_)))
     }
 
     #[test]
@@ -106,11 +101,6 @@ mod durable_nonce {
 
         let durable_nonce = extract_durable_nonce(&account);
 
-        assert_eq!(
-            durable_nonce,
-            Err(RpcError::ValidationError(
-                "Nonce account is not initialized".to_string()
-            ))
-        )
+        assert_eq!(durable_nonce, Err(ExtractNonceError::Uninitialized))
     }
 }
