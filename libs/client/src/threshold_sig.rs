@@ -178,10 +178,11 @@ pub async fn get_pubkey<R: Runtime>(
     let SchnorrPublicKeyResponse {
         public_key, chain_code
     } = runtime
-        .query_call(
+        .update_call(
             Principal::management_canister(),
             "schnorr_public_key",
             (arg,),
+            0,
         )
         .await
         .map_err(|(rejection_code, message)| {
