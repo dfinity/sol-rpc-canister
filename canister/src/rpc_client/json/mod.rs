@@ -216,7 +216,7 @@ impl From<sol_rpc_types::GetSignaturesForAddressParams> for GetSignaturesForAddr
             Some(GetSignaturesForAddressConfig {
                 commitment,
                 min_context_slot,
-                limit: limit.map(Into::into),
+                limit,
                 before,
                 until,
             })
