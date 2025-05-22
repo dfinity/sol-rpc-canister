@@ -148,6 +148,7 @@ The table below summarizes the supported endpoints and the necessary changes (if
 |---------------------------------------|--------------------|--------------------|
 | [Alchemy](https://www.alchemy.com/)   | :white_check_mark: | :white_check_mark: |
 | [Ankr](https://www.ankr.com/)         | :white_check_mark: | :white_check_mark: |
+| [Chainstack](https://chainstack.com/) | :white_check_mark: | :white_check_mark: |
 | [dRPC](https://drpc.org/)             | :white_check_mark: | :white_check_mark: |
 | [Helius](https://www.helius.dev/)     | :white_check_mark: | :white_check_mark: |
 | [PublicNode](https://publicnode.com/) | :white_check_mark: | :x:                |
