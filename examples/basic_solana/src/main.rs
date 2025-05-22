@@ -1,7 +1,7 @@
 use base64::{prelude::BASE64_STANDARD, Engine};
 use basic_solana::{
-    client, get_recent_blockhash, solana_wallet::SolanaWallet, spl, state::init_state,
-    validate_caller_not_anonymous, InitArg,
+    client, solana_wallet::SolanaWallet, spl, state::init_state, validate_caller_not_anonymous,
+    InitArg,
 };
 use candid::{Nat, Principal};
 use ic_cdk::{init, post_upgrade, update};
@@ -152,7 +152,7 @@ pub async fn create_nonce_account(owner: Option<Principal>) -> String {
     let message = Message::new_with_blockhash(
         instructions.as_slice(),
         Some(payer.as_ref()),
-        &get_recent_blockhash(&client).await,
+        &client.estimate_recent_blockhash(3).await.unwrap(),
     );
 
     let signatures = vec![
@@ -209,7 +209,7 @@ pub async fn create_associated_token_account(
     let message = Message::new_with_blockhash(
         &[instruction],
         Some(payer.as_ref()),
-        &get_recent_blockhash(&client).await,
+        &client.estimate_recent_blockhash(3).await.unwrap(),
     );
 
     let signatures = vec![wallet.sign_with_ed25519(&message, &payer).await];
@@ -249,7 +249,7 @@ pub async fn send_sol(owner: Option<Principal>, to: String, amount: Nat) -> Stri
     let message = Message::new_with_blockhash(
         &[instruction],
         Some(payer.as_ref()),
-        &get_recent_blockhash(&client).await,
+        &client.estimate_recent_blockhash(3).await.unwrap(),
     );
     let signatures = vec![wallet.sign_with_ed25519(&message, &payer).await];
     let transaction = Transaction {
@@ -330,7 +330,7 @@ pub async fn send_spl_token(
     let message = Message::new_with_blockhash(
         &[instruction],
         Some(payer.as_ref()),
-        &get_recent_blockhash(&client).await,
+        &client.estimate_recent_blockhash(3).await.unwrap(),
     );
     let signatures = vec![wallet.sign_with_ed25519(&message, &payer).await];
     let transaction = Transaction {
