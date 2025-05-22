@@ -142,6 +142,8 @@ type RpcError = variant {
   ProviderError : ProviderError;
   ValidationError : text;
   HttpOutcallError : HttpOutcallError;
+  ConsensusError : text;
+  RetryError : vec RpcError;
 };
 
 // Represents a JSON-RPC error.
