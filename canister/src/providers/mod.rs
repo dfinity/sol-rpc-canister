@@ -51,7 +51,7 @@ thread_local! {
         SupportedRpcProviderId::TatumMainnet => SupportedRpcProvider {
             cluster: SolanaCluster::Mainnet,
             access: RpcAccess::Authenticated {
-                auth: RpcAuth::CustomHeader {
+                auth: RpcAuth::HttpHeader {
                     header_name: "x-api-key".to_string(),
                     url: "https://solana-mainnet.gateway.tatum.io/".to_string(),
                 },
@@ -61,7 +61,7 @@ thread_local! {
         SupportedRpcProviderId::TatumDevnet => SupportedRpcProvider {
             cluster: SolanaCluster::Devnet,
             access: RpcAccess::Authenticated {
-                auth: RpcAuth::CustomHeader {
+                auth: RpcAuth::HttpHeader {
                     header_name: "x-api-key".to_string(),
                     url: "https://solana-devnet.gateway.tatum.io/".to_string(),
                 },
@@ -284,11 +284,11 @@ fn resolve_api_key(access: RpcAccess, provider: SupportedRpcProviderId) -> RpcEn
                             value: format!("Bearer {}", api_key.read()),
                         }]),
                     },
-                    RpcAuth::CustomHeader { header_name, url } => RpcEndpoint {
+                    RpcAuth::HttpHeader { header_name, url } => RpcEndpoint {
                         url: url.to_string(),
                         headers: Some(vec![HttpHeader {
                             name: header_name.to_string(),
-                            value: format!("Bearer {}", api_key.read()),
+                            value: api_key.read().to_string(),
                         }]),
                     },
                     RpcAuth::UrlParameter { url_pattern } => RpcEndpoint {

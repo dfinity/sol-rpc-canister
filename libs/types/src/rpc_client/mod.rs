@@ -406,8 +406,8 @@ pub enum RpcAuth {
         /// Request URL for the provider.
         url: String,
     },
-    /// API key will be used in a custom header, e.g. `X-Api-Key: API_KEY`
-    CustomHeader {
+    /// API key will be used in an HTTP header, e.g. `X-Api-Key: API_KEY`
+    HttpHeader {
         /// Name of the header in which the API key is placed.
         header_name: String,
         /// Request URL for the provider.

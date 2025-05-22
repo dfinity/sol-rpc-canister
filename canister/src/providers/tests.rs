@@ -23,7 +23,7 @@ fn test_rpc_provider_url_patterns() {
             match access {
                 RpcAccess::Authenticated { auth, public_url } => {
                     match auth {
-                        RpcAuth::BearerToken { url } | RpcAuth::CustomHeader { url, .. } => {
+                        RpcAuth::BearerToken { url } | RpcAuth::HttpHeader { url, .. } => {
                             assert_not_url_pattern(url, provider)
                         }
                         RpcAuth::UrlParameter { url_pattern } => {
