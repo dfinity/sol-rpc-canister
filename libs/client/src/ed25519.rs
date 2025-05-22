@@ -80,7 +80,7 @@ impl Display for Ed25519KeyId {
 /// use solana_pubkey::pubkey;
 /// use solana_signature::Signature;
 /// use solana_transaction::Transaction;
-/// use sol_rpc_client::{threshold_sig , IcRuntime};
+/// use sol_rpc_client::{ed25519 , IcRuntime};
 ///
 /// #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -94,9 +94,9 @@ impl Display for Ed25519KeyId {
 /// #     chain_code: "UWbC6EgDnWEJIU4KFBqASTCYAzEiJGsR".as_bytes().to_vec(),
 /// # });
 ///
-/// let key_id = threshold_sig::Ed25519KeyId::TestKey1;
+/// let key_id = ed25519::Ed25519KeyId::TestKey1;
 /// let derivation_path = None;
-/// let (payer, _) = threshold_sig::get_pubkey(
+/// let (payer, _) = ed25519::get_pubkey(
 ///     &runtime,
 ///     None,
 ///     derivation_path,
@@ -120,7 +120,7 @@ impl Display for Ed25519KeyId {
 /// #     signature: Signature::from_str("37HbmunhjSC1xxnVsaFX2xaS8gYnb5JYiLy9B51Ky9Up69aF7Qra6dHSLMCaiurRYq3Y8ZxSVUwC5sntziWuhZee").unwrap().as_ref().to_vec(),
 /// # });
 /// let mut transaction = Transaction::new_unsigned(message);
-/// let signature = threshold_sig::sign_transaction(
+/// let signature = ed25519::sign_transaction(
 ///     &runtime,
 ///     &transaction,
 ///     key_id,
@@ -183,7 +183,7 @@ pub async fn sign_transaction<R: Runtime>(
 /// ```rust
 /// use candid::Principal;
 /// use solana_pubkey::pubkey;
-/// use sol_rpc_client::{threshold_sig, IcRuntime};
+/// use sol_rpc_client::{ed25519, IcRuntime};
 ///
 /// #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -195,11 +195,11 @@ pub async fn sign_transaction<R: Runtime>(
 /// #     chain_code: "UWbC6EgDnWEJIU4KFBqASTCYAzEiJGsR".as_bytes().to_vec(),
 /// # });
 ///
-/// let key_id = threshold_sig::Ed25519KeyId::TestKey1;
+/// let key_id = ed25519::Ed25519KeyId::TestKey1;
 /// let canister_id = Principal::from_text("un4fu-tqaaa-aaaab-qadjq-cai").unwrap();
-/// let derivation_path = threshold_sig::DerivationPath::from("some-derivation-path".as_bytes());
+/// let derivation_path = ed25519::DerivationPath::from("some-derivation-path".as_bytes());
 ///
-/// let (pubkey, _) = threshold_sig::get_pubkey(
+/// let (pubkey, _) = ed25519::get_pubkey(
 ///     &runtime,
 ///     Some(canister_id),
 ///     Some(&derivation_path),

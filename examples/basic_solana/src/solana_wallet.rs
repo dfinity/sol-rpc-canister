@@ -10,7 +10,7 @@ use crate::{
 };
 use candid::Principal;
 use sol_rpc_client::{
-    threshold_sig::{sign_transaction, DerivationPath},
+    ed25519::{sign_transaction, DerivationPath},
     IcRuntime,
 };
 use solana_message::Message;
@@ -94,7 +94,7 @@ impl SolanaWallet {
         sign_transaction(
             &IcRuntime,
             &Transaction::new_unsigned(message.clone()),
-            read_state(|s| s.ed25519_key_id()).into(),
+            read_state(|s| s.ed25519_key_name()).into(),
             Some(&signer.derivation_path),
         )
         .await

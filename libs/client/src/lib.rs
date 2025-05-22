@@ -118,11 +118,11 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 
+#[cfg(feature = "ed25519")]
+pub mod ed25519;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod fixtures;
 mod request;
-#[cfg(feature = "threshold_sig")]
-pub mod threshold_sig;
 
 use crate::request::{
     GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetRecentPrioritizationFeesRequest,

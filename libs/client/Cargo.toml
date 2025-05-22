@@ -34,7 +34,7 @@ sol_rpc_types = { version = "0.1.0", path = "../types" }
 strum = { workspace = true }
 
 [features]
-threshold_sig = [
+ed25519 = [
     "ic-ed25519",
     "solana-hash",
     "solana-keypair",

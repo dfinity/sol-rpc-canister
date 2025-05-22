@@ -1,4 +1,4 @@
-use basic_solana::{Ed25519KeyId, SolanaNetwork};
+use basic_solana::{Ed25519KeyName, SolanaNetwork};
 use candid::{
     decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encode, Nat, Principal,
 };
@@ -292,7 +292,7 @@ impl Setup {
         let basic_solana_install_args = basic_solana::InitArg {
             sol_rpc_canister_id: Some(sol_rpc_canister_id),
             solana_network: Some(SolanaNetwork::Devnet),
-            ed25519_key_id: Some(Ed25519KeyId::ProductionKey1),
+            ed25519_key_name: Some(Ed25519KeyName::ProductionKey1),
             solana_commitment_level: Some(CommitmentLevel::Confirmed),
         };
         env.install_canister(

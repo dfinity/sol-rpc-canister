@@ -1,8 +1,6 @@
+use crate::Ed25519KeyName;
 use ic_ed25519::PublicKey;
-use sol_rpc_client::{
-    threshold_sig::{DerivationPath, Ed25519KeyId},
-    IcRuntime,
-};
+use sol_rpc_client::{ed25519::DerivationPath, IcRuntime};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Ed25519ExtendedPublicKey {
@@ -29,13 +27,17 @@ impl Ed25519ExtendedPublicKey {
 }
 
 pub async fn get_ed25519_public_key(
-    key_id: Ed25519KeyId,
+    key_name: Ed25519KeyName,
     derivation_path: &DerivationPath,
 ) -> Ed25519ExtendedPublicKey {
-    let (pubkey, chain_code) =
-        sol_rpc_client::threshold_sig::get_pubkey(&IcRuntime, None, Some(derivation_path), key_id)
-            .await
-            .expect("Failed to fetch EdDSA public key");
+    let (pubkey, chain_code) = sol_rpc_client::ed25519::get_pubkey(
+        &IcRuntime,
+        None,
+        Some(derivation_path),
+        key_name.into(),
+    )
+    .await
+    .expect("Failed to fetch EdDSA public key");
     Ed25519ExtendedPublicKey {
         public_key: PublicKey::deserialize_raw(&pubkey.to_bytes()).unwrap(),
         chain_code,

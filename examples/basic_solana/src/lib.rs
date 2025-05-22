@@ -5,7 +5,7 @@ pub mod state;
 
 use crate::state::{read_state, State};
 use candid::{CandidType, Deserialize, Principal};
-use sol_rpc_client::{IcRuntime, SolRpcClient};
+use sol_rpc_client::{ed25519::Ed25519KeyId, IcRuntime, SolRpcClient};
 use sol_rpc_types::{CommitmentLevel, MultiRpcResult, RpcSources, SolanaCluster};
 use solana_hash::Hash;
 use std::str::FromStr;
@@ -68,7 +68,7 @@ pub fn client() -> SolRpcClient<IcRuntime> {
 pub struct InitArg {
     pub sol_rpc_canister_id: Option<Principal>,
     pub solana_network: Option<SolanaNetwork>,
-    pub ed25519_key_id: Option<Ed25519KeyId>,
+    pub ed25519_key_name: Option<Ed25519KeyName>,
     pub solana_commitment_level: Option<CommitmentLevel>,
 }
 
@@ -91,19 +91,19 @@ impl From<SolanaNetwork> for SolanaCluster {
 }
 
 #[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq, Clone, Copy)]
-pub enum Ed25519KeyId {
+pub enum Ed25519KeyName {
     #[default]
     TestKeyLocalDevelopment,
     TestKey1,
     ProductionKey1,
 }
 
-impl From<Ed25519KeyId> for sol_rpc_client::threshold_sig::Ed25519KeyId {
-    fn from(key_id: Ed25519KeyId) -> Self {
+impl From<Ed25519KeyName> for Ed25519KeyId {
+    fn from(key_id: Ed25519KeyName) -> Self {
         match key_id {
-            Ed25519KeyId::TestKeyLocalDevelopment => Self::TestKeyLocalDevelopment,
-            Ed25519KeyId::TestKey1 => Self::TestKey1,
-            Ed25519KeyId::ProductionKey1 => Self::ProductionKey1,
+            Ed25519KeyName::TestKeyLocalDevelopment => Self::TestKeyLocalDevelopment,
+            Ed25519KeyName::TestKey1 => Self::TestKey1,
+            Ed25519KeyName::ProductionKey1 => Self::ProductionKey1,
         }
     }
 }
