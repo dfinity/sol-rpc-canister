@@ -93,17 +93,17 @@ impl From<SolanaNetwork> for SolanaCluster {
 #[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq, Clone, Copy)]
 pub enum Ed25519KeyName {
     #[default]
-    TestKeyLocalDevelopment,
-    TestKey1,
-    ProductionKey1,
+    LocalDevelopment,
+    MainnetTestKey1,
+    MainnetProdKey1,
 }
 
 impl From<Ed25519KeyName> for Ed25519KeyId {
     fn from(key_id: Ed25519KeyName) -> Self {
         match key_id {
-            Ed25519KeyName::TestKeyLocalDevelopment => Self::TestKeyLocalDevelopment,
-            Ed25519KeyName::TestKey1 => Self::TestKey1,
-            Ed25519KeyName::ProductionKey1 => Self::ProductionKey1,
+            Ed25519KeyName::LocalDevelopment => Self::LocalDevelopment,
+            Ed25519KeyName::MainnetTestKey1 => Self::MainnetTestKey1,
+            Ed25519KeyName::MainnetProdKey1 => Self::MainnetProdKey1,
         }
     }
 }

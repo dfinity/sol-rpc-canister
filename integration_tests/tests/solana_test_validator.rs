@@ -33,10 +33,10 @@ use solana_signature::Signature;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
 use solana_transaction_status_client_types::UiTransactionEncoding;
-use std::num::NonZeroU8;
 use std::{
     future::Future,
     iter::zip,
+    num::NonZeroU8,
     str::FromStr,
     thread,
     thread::sleep,

@@ -12,7 +12,6 @@ use ic_cdk::api::management_canister::schnorr::{
     SignWithSchnorrArgument, SignWithSchnorrResponse,
 };
 use sol_rpc_types::{RpcError, RpcResult};
-use std::fmt::Display;
 
 // Source: https://internetcomputer.org/docs/current/references/t-sigs-how-it-works/#fees-for-the-t-schnorr-test-key
 const SIGN_WITH_SCHNORR_TEST_FEE: u128 = 10_000_000_000;
@@ -49,44 +48,47 @@ impl From<Principal> for DerivationPath {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Ed25519KeyId {
     /// Only available on the local development environment started by `dfx`.
-    TestKeyLocalDevelopment,
+    LocalDevelopment,
     /// Test key available on the ICP mainnet.
-    TestKey1,
+    MainnetTestKey1,
     /// Production key available on the ICP mainnet.
-    ProductionKey1,
+    MainnetProdKey1,
 }
 
-impl Display for Ed25519KeyId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let str = match self {
-            Ed25519KeyId::TestKeyLocalDevelopment => "dfx_test_key",
-            Ed25519KeyId::TestKey1 => "test_key_1",
-            Ed25519KeyId::ProductionKey1 => "key_1",
+impl Ed25519KeyId {
+    /// The string representation of a [`Ed25519KeyId`] used as an argument to threshold Schnorr
+    /// method calls such as `schnorr_public_key` or `sign_with_schnorr`.
+    pub fn id(&self) -> &'static str {
+        match self {
+            Ed25519KeyId::LocalDevelopment => "dfx_test_key",
+            Ed25519KeyId::MainnetTestKey1 => "test_key_1",
+            Ed25519KeyId::MainnetProdKey1 => "key_1",
         }
-        .to_string();
-        write!(f, "{}", str)
     }
 }
 
-/// Sign an unsigned Solana transaction with threshold EdDSA, see threshold Schnorr documentation
+/// Sign a Solana message with threshold EdDSA, see threshold Schnorr documentation
 /// [here](https://internetcomputer.org/docs/building-apps/network-features/signatures/t-schnorr).
 ///
 /// # Examples
 ///
 /// ```rust
+/// use candid::Principal;
 /// use solana_hash::Hash;
 /// use solana_message::legacy::Message;
 /// use solana_program::system_instruction::transfer;
 /// use solana_pubkey::pubkey;
 /// use solana_signature::Signature;
 /// use solana_transaction::Transaction;
-/// use sol_rpc_client::{ed25519 , IcRuntime};
+/// use sol_rpc_client::{
+///     ed25519::{get_pubkey, sign_message, DerivationPath, Ed25519KeyId},
+///     IcRuntime
+/// };
 ///
-/// #[tokio::main]
+/// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # use sol_rpc_client::fixtures::MockRuntime;
 /// # use std::str::FromStr;
-/// use candid::Principal;
 /// # use ic_cdk::api::management_canister::schnorr::{SchnorrPublicKeyResponse, SignWithSchnorrResponse};
 /// let runtime = IcRuntime;
 /// # let runtime = MockRuntime::same_response(SchnorrPublicKeyResponse {
@@ -94,61 +96,64 @@ impl Display for Ed25519KeyId {
 /// #     chain_code: "UWbC6EgDnWEJIU4KFBqASTCYAzEiJGsR".as_bytes().to_vec(),
 /// # });
 ///
-/// let key_id = ed25519::Ed25519KeyId::TestKey1;
-/// let derivation_path = None;
-/// let (payer, _) = ed25519::get_pubkey(
+/// let key_id = Ed25519KeyId::MainnetTestKey1;
+/// let derivation_path = DerivationPath::from(
+///     Principal::from_text("vaupb-eqaaa-aaaai-qplka-cai").unwrap()
+/// );
+/// let (payer, _) = get_pubkey(
 ///     &runtime,
 ///     None,
-///     derivation_path,
-///     key_id)
+///     Some(&derivation_path),
+///     key_id
+/// )
 /// .await
 /// .unwrap();
 ///
 /// let recipient = pubkey!("BPebStjcgCPnWTK3FXZJ8KhqwNYLk9aubC9b4Cgqb6oE");
 ///
-/// // TODO XC-317: Use client method to fetch recent blockhash
-/// let recent_blockhash = Hash::new_unique();
-///
+/// # // TODO XC-317: Use client method to fetch recent blockhash
+/// # let recent_blockhash = Hash::default();
 /// let message = Message::new_with_blockhash(
 ///     &[transfer(&payer, &recipient, 1_000_000)],
 ///     Some(&payer),
 ///     &recent_blockhash,
 ///  );
 ///
-///
 /// # let runtime = MockRuntime::same_response(SignWithSchnorrResponse {
 /// #     signature: Signature::from_str("37HbmunhjSC1xxnVsaFX2xaS8gYnb5JYiLy9B51Ky9Up69aF7Qra6dHSLMCaiurRYq3Y8ZxSVUwC5sntziWuhZee").unwrap().as_ref().to_vec(),
 /// # });
-/// let mut transaction = Transaction::new_unsigned(message);
-/// let signature = ed25519::sign_transaction(
+/// let signature = sign_message(
 ///     &runtime,
-///     &transaction,
+///     &message,
 ///     key_id,
-///     derivation_path,
-/// ).await;
+///     Some(&derivation_path),
+/// )
+/// .await;
 ///
 /// assert_eq!(
 ///     signature,
 ///     Ok(Signature::from_str("37HbmunhjSC1xxnVsaFX2xaS8gYnb5JYiLy9B51Ky9Up69aF7Qra6dHSLMCaiurRYq3Y8ZxSVUwC5sntziWuhZee").unwrap())
 /// );
 ///
-/// // The transaction is now signed and can be submitted with the `sendTransaction` RPC method.
-/// transaction.signatures = vec![signature.unwrap()];
+/// let transaction = Transaction {
+///     message,
+///     signatures: vec![signature.unwrap()],
+/// };
 /// # Ok(())
 /// # }
 /// ```
-pub async fn sign_transaction<R: Runtime>(
+pub async fn sign_message<R: Runtime>(
     runtime: &R,
-    transaction: &solana_transaction::Transaction,
+    message: &solana_message::Message,
     key_id: Ed25519KeyId,
     derivation_path: Option<&DerivationPath>,
 ) -> RpcResult<solana_signature::Signature> {
     let arg = SignWithSchnorrArgument {
-        message: transaction.message_data(),
+        message: message.serialize(),
         derivation_path: derivation_path.cloned().unwrap_or_default().into(),
         key_id: SchnorrKeyId {
             algorithm: SchnorrAlgorithm::Ed25519,
-            name: key_id.to_string(),
+            name: key_id.id().to_string(),
         },
     };
     let response: SignWithSchnorrResponse = R::update_call(
@@ -157,8 +162,8 @@ pub async fn sign_transaction<R: Runtime>(
         "sign_with_schnorr",
         (arg,),
         match key_id {
-            Ed25519KeyId::TestKeyLocalDevelopment | Ed25519KeyId::TestKey1 => SIGN_WITH_SCHNORR_TEST_FEE,
-            Ed25519KeyId::ProductionKey1 => SIGN_WITH_SCHNORR_PRODUCTION_FEE,
+            Ed25519KeyId::LocalDevelopment | Ed25519KeyId::MainnetTestKey1 => SIGN_WITH_SCHNORR_TEST_FEE,
+            Ed25519KeyId::MainnetProdKey1 => SIGN_WITH_SCHNORR_PRODUCTION_FEE,
         },
     )
         .await
@@ -183,7 +188,10 @@ pub async fn sign_transaction<R: Runtime>(
 /// ```rust
 /// use candid::Principal;
 /// use solana_pubkey::pubkey;
-/// use sol_rpc_client::{ed25519, IcRuntime};
+/// use sol_rpc_client::{
+///     ed25519::{get_pubkey, DerivationPath, Ed25519KeyId},
+///     IcRuntime
+/// };
 ///
 /// #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -195,11 +203,21 @@ pub async fn sign_transaction<R: Runtime>(
 /// #     chain_code: "UWbC6EgDnWEJIU4KFBqASTCYAzEiJGsR".as_bytes().to_vec(),
 /// # });
 ///
-/// let key_id = ed25519::Ed25519KeyId::TestKey1;
+/// let key_id = Ed25519KeyId::MainnetTestKey1;
 /// let canister_id = Principal::from_text("un4fu-tqaaa-aaaab-qadjq-cai").unwrap();
-/// let derivation_path = ed25519::DerivationPath::from("some-derivation-path".as_bytes());
+/// let derivation_path = DerivationPath::from(
+///     Principal::from_text("vaupb-eqaaa-aaaai-qplka-cai").unwrap()
+/// );
+/// let (payer, _) = get_pubkey(
+///     &runtime,
+///     None,
+///     Some(&derivation_path),
+///     key_id
+/// )
+/// .await
+/// .unwrap();
 ///
-/// let (pubkey, _) = ed25519::get_pubkey(
+/// let (pubkey, _) = get_pubkey(
 ///     &runtime,
 ///     Some(canister_id),
 ///     Some(&derivation_path),
@@ -224,7 +242,7 @@ pub async fn get_pubkey<R: Runtime>(
         derivation_path: derivation_path.cloned().unwrap_or_default().into(),
         key_id: SchnorrKeyId {
             algorithm: SchnorrAlgorithm::Ed25519,
-            name: key_id.to_string(),
+            name: key_id.id().to_string(),
         },
     };
     let SchnorrPublicKeyResponse {

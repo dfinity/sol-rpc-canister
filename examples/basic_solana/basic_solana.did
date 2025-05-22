@@ -32,11 +32,11 @@ type CommitmentLevel = variant {
 
 type Ed25519KeyName = variant {
     // For local development with `dfx`.
-    TestKeyLocalDevelopment;
+    LocalDevelopment;
     // For testing with the Internet Computer's test key.
-    TestKey1;
+    MainnetTestKey1;
     // For running the canister in a production environment using the Internet Computer's production key.
-    ProductionKey1;
+    MainnetProdKey1;
 };
 
 // Atomic unit of SOL, i.e., 1 SOL = 10^9 Lamports
