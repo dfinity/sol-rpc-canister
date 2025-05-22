@@ -1,18 +1,24 @@
 use crate::rpc_client::{
-    GetAccountInfoRequest, GetBlockRequest, GetSignatureStatusesRequest, GetSlotRequest,
-    GetTransactionRequest, MultiRpcRequest, SendTransactionRequest,
+    GetAccountInfoRequest, GetBlockRequest, GetSignatureStatusesRequest,
+    GetSignaturesForAddressRequest, GetSlotRequest, GetTransactionRequest, MultiRpcRequest,
+    SendTransactionRequest,
 };
 use serde::Serialize;
 use serde_json::json;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
-    GetBlockCommitmentLevel, GetBlockParams, GetSignatureStatusesParams, GetSlotParams,
-    GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionEncoding, GetTransactionParams,
-    RpcConfig, RpcSources, SendTransactionEncoding, SendTransactionParams, Signature,
-    SolanaCluster, TransactionDetails,
+    GetBlockCommitmentLevel, GetBlockParams, GetSignatureStatusesParams,
+    GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
+    GetTransactionEncoding, GetTransactionParams, Pubkey, RpcConfig, RpcSources,
+    SendTransactionEncoding, SendTransactionParams, Signature, SolanaCluster, TransactionDetails,
 };
 use solana_pubkey::pubkey;
 use std::str::FromStr;
+
+const SOME_SIGNATURE: &str =
+    "5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y";
+const ANOTHER_SIGNATURE: &str =
+    "FAAHyQpENs991w9BR7jpwzyXk74jhQWzbsSbjs4NJWkYeL6nggNfT5baWy6eBNLSuqfiiYRGfEC5bhwxUVBZamB";
 
 mod request_serialization_tests {
     use super::*;
@@ -87,6 +93,51 @@ mod request_serialization_tests {
     }
 
     #[test]
+    fn should_serialize_get_signatures_for_address_request() {
+        assert_params_eq(
+            GetSignaturesForAddressRequest::get_signatures_for_address(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetSignaturesForAddressParams {
+                    pubkey: Pubkey::default(),
+                    commitment: None,
+                    min_context_slot: None,
+                    limit: None,
+                    before: None,
+                    until: None,
+                },
+            )
+            .unwrap(),
+            json!(["11111111111111111111111111111111", null]),
+        );
+        assert_params_eq(
+            GetSignaturesForAddressRequest::get_signatures_for_address(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetSignaturesForAddressParams {
+                    pubkey: Pubkey::default(),
+                    commitment: Some(CommitmentLevel::Processed),
+                    min_context_slot: Some(123),
+                    limit: Some(10.try_into().unwrap()),
+                    before: Some(Signature::from_str(SOME_SIGNATURE).unwrap()),
+                    until: Some(Signature::from_str(ANOTHER_SIGNATURE).unwrap()),
+                },
+            )
+            .unwrap(),
+            json!([
+                "11111111111111111111111111111111",
+                {
+                    "commitment": "processed",
+                    "minContextSlot": 123,
+                    "limit": 10,
+                    "before": SOME_SIGNATURE,
+                    "until": ANOTHER_SIGNATURE,
+                }
+            ]),
+        );
+    }
+
+    #[test]
     fn should_serialize_get_signature_statuses_request() {
         assert_params_eq(
             GetSignatureStatusesRequest::get_signature_statuses(
@@ -106,18 +157,17 @@ mod request_serialization_tests {
                 RpcConfig::default(),
                 GetSignatureStatusesParams {
                     signatures: vec![
-                        Signature::from_str("5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y").unwrap(),
-                        Signature::from_str("FAAHyQpENs991w9BR7jpwzyXk74jhQWzbsSbjs4NJWkYeL6nggNfT5baWy6eBNLSuqfiiYRGfEC5bhwxUVBZamB").unwrap()
-                    ].try_into().unwrap(),
+                        Signature::from_str(SOME_SIGNATURE).unwrap(),
+                        Signature::from_str(ANOTHER_SIGNATURE).unwrap(),
+                    ]
+                    .try_into()
+                    .unwrap(),
                     search_transaction_history: Some(true),
                 },
             )
-                .unwrap(),
+            .unwrap(),
             json!([
-                [
-                    "5iBbqBJzgqafuQn93Np8ztWyXeYe2ReGPzUB1zXP2suZ8b5EaxSwe74ZUhg5pZQuDQkNGW7XApgfXX91YLYUuo5y",
-                    "FAAHyQpENs991w9BR7jpwzyXk74jhQWzbsSbjs4NJWkYeL6nggNfT5baWy6eBNLSuqfiiYRGfEC5bhwxUVBZamB"
-                ],
+                [SOME_SIGNATURE, ANOTHER_SIGNATURE],
                 {
                     "searchTransactionHistory": true,
                 }

@@ -154,3 +154,25 @@ GET_TOKEN_ACCOUNT_BALANCE_PARAMS="(
 )"
 CYCLES=$(dfx canister call sol_rpc getTokenAccountBalanceCyclesCost "$GET_TOKEN_ACCOUNT_BALANCE_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
 dfx canister call sol_rpc getTokenAccountBalance "$GET_TOKEN_ACCOUNT_BALANCE_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
+
+# Get the last 10 USDC mint account transactions on Mainnet with a 2-out-of-3 strategy starting the search backwards
+# from one of the transactions extracted from a block earlier.
+GET_SIGNATURES_FOR_ADDRESS_PARAMS="(
+  variant { Default = variant { Mainnet } },
+  opt record {
+    responseConsensus = opt variant {
+      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+    };
+    responseSizeEstimate = null;
+  },
+  record {
+    pubkey = \"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v\";
+    commitment = null;
+    minContextSlot = null;
+    limit = opt (10 : nat16);
+    before = opt \"${FIRST_SIGNATURE}\";
+    until = null;
+  },
+)"
+CYCLES=$(dfx canister call sol_rpc getSignaturesForAddressCyclesCost "$GET_SIGNATURES_FOR_ADDRESS_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
+dfx canister call sol_rpc getSignaturesForAddress "$GET_SIGNATURES_FOR_ADDRESS_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
