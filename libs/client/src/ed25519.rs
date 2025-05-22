@@ -7,11 +7,11 @@ pub use crate::request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest}
 use crate::Runtime;
 use candid::Principal;
 use derive_more::{From, Into};
+use ic_cdk::api::call::RejectionCode;
 use ic_cdk::api::management_canister::schnorr::{
     SchnorrAlgorithm, SchnorrKeyId, SchnorrPublicKeyArgument, SchnorrPublicKeyResponse,
     SignWithSchnorrArgument, SignWithSchnorrResponse,
 };
-use sol_rpc_types::{RpcError, RpcResult};
 
 // Source: https://internetcomputer.org/docs/current/references/t-sigs-how-it-works/#fees-for-the-t-schnorr-test-key
 const SIGN_WITH_SCHNORR_TEST_FEE: u128 = 10_000_000_000;
@@ -147,7 +147,7 @@ pub async fn sign_message<R: Runtime>(
     message: &solana_message::Message,
     key_id: Ed25519KeyId,
     derivation_path: Option<&DerivationPath>,
-) -> RpcResult<solana_signature::Signature> {
+) -> Result<solana_signature::Signature, (RejectionCode, String)> {
     let arg = SignWithSchnorrArgument {
         message: message.serialize(),
         derivation_path: derivation_path.cloned().unwrap_or_default().into(),
@@ -162,22 +162,20 @@ pub async fn sign_message<R: Runtime>(
         "sign_with_schnorr",
         (arg,),
         match key_id {
-            Ed25519KeyId::LocalDevelopment | Ed25519KeyId::MainnetTestKey1 => SIGN_WITH_SCHNORR_TEST_FEE,
+            Ed25519KeyId::LocalDevelopment | Ed25519KeyId::MainnetTestKey1 => {
+                SIGN_WITH_SCHNORR_TEST_FEE
+            }
             Ed25519KeyId::MainnetProdKey1 => SIGN_WITH_SCHNORR_PRODUCTION_FEE,
         },
     )
-        .await
-        .map_err(|(rejection_code, message)| {
-            RpcError::ValidationError(format!(
-                "Failed to sign transaction, management canister returned code {rejection_code:?}: {message}")
-            )
-        })?;
-    solana_signature::Signature::try_from(response.signature).map_err(|bytes| {
-        RpcError::ValidationError(format!(
+    .await?;
+    match solana_signature::Signature::try_from(response.signature) {
+        Ok(signature) => Ok(signature),
+        Err(bytes) => panic!(
             "Expected signature to contain 64 bytes, got {} bytes",
             bytes.len()
-        ))
-    })
+        ),
+    }
 }
 
 /// Fetch the Ed25519 public key for the key ID, given canister ID and derivation path, see threshold Schnorr
@@ -236,7 +234,7 @@ pub async fn get_pubkey<R: Runtime>(
     canister_id: Option<Principal>,
     derivation_path: Option<&DerivationPath>,
     key_id: Ed25519KeyId,
-) -> RpcResult<(solana_pubkey::Pubkey, [u8; 32])> {
+) -> Result<(solana_pubkey::Pubkey, [u8; 32]), (RejectionCode, String)> {
     let arg = SchnorrPublicKeyArgument {
         canister_id,
         derivation_path: derivation_path.cloned().unwrap_or_default().into(),
@@ -246,7 +244,8 @@ pub async fn get_pubkey<R: Runtime>(
         },
     };
     let SchnorrPublicKeyResponse {
-        public_key, chain_code
+        public_key,
+        chain_code,
     } = runtime
         .update_call(
             Principal::management_canister(),
@@ -254,20 +253,20 @@ pub async fn get_pubkey<R: Runtime>(
             (arg,),
             0,
         )
-        .await
-        .map_err(|(rejection_code, message)| {
-            RpcError::ValidationError(format!(
-                "Failed to fetch EdDSA public key, management canister returned code {rejection_code:?}: {message}")
-            )
-        })?;
-    let pubkey = solana_pubkey::Pubkey::try_from(public_key.as_slice()).map_err(|e| {
-        RpcError::ValidationError(format!("Failed to parse bytes as public key: {e}"))
-    })?;
-    let chain_code = <[u8; 32]>::try_from(chain_code.as_slice()).map_err(|_| {
-        RpcError::ValidationError(format!(
-            "Expected chain code to contain 32 bytes but it contained {}",
-            chain_code.len()
-        ))
-    })?;
+        .await?;
+    let pubkey = match solana_pubkey::Pubkey::try_from(public_key) {
+        Ok(pubkey) => pubkey,
+        Err(bytes) => panic!(
+            "Expected public key to contain 32 bytes, got {} bytes",
+            bytes.len()
+        ),
+    };
+    let chain_code = match <[u8; 32]>::try_from(chain_code) {
+        Ok(pubkey) => pubkey,
+        Err(bytes) => panic!(
+            "Expected chain code key to contain 32 bytes, got {} bytes",
+            bytes.len()
+        ),
+    };
     Ok((pubkey, chain_code))
 }
