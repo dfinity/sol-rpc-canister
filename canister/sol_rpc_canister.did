@@ -121,7 +121,7 @@ type RpcAccess = variant {
 // Defines how a call to a supported provider is authenticated.
 type RpcAuth = variant {
   BearerToken : record { url : text };
-  CustomHeader : record { url : text; header_name: text };
+  HttpHeader : record { url : text; header_name: text };
   UrlParameter : record { urlPattern : text };
 };
 
