@@ -7,10 +7,12 @@ pub use crate::request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest}
 use crate::Runtime;
 use candid::Principal;
 use derive_more::{From, Into};
-use ic_cdk::api::call::RejectionCode;
-use ic_cdk::api::management_canister::schnorr::{
-    SchnorrAlgorithm, SchnorrKeyId, SchnorrPublicKeyArgument, SchnorrPublicKeyResponse,
-    SignWithSchnorrArgument, SignWithSchnorrResponse,
+use ic_cdk::api::{
+    call::RejectionCode,
+    management_canister::schnorr::{
+        SchnorrAlgorithm, SchnorrKeyId, SchnorrPublicKeyArgument, SchnorrPublicKeyResponse,
+        SignWithSchnorrArgument, SignWithSchnorrResponse,
+    },
 };
 
 // Source: https://internetcomputer.org/docs/current/references/t-sigs-how-it-works/#fees-for-the-t-schnorr-test-key
