@@ -11,8 +11,8 @@ use sol_rpc_types::{
     GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
     GetSignatureStatusesParams, GetSignaturesForAddressLimit, GetSignaturesForAddressParams,
     GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
-    PrioritizationFee, RoundingError, RpcConfig, RpcResult, RpcSources, SendTransactionParams,
-    Signature, Slot, TokenAmount, TransactionInfo, TransactionStatus,
+    NonZeroU8, PrioritizationFee, RoundingError, RpcConfig, RpcResult, RpcSources,
+    SendTransactionParams, Signature, Slot, TokenAmount, TransactionInfo, TransactionStatus,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
@@ -585,9 +585,9 @@ impl<Runtime, Params, CandidOutput, Output>
     }
 
     /// Change the maximum number of entries for a `getRecentPrioritizationFees` response.
-    pub fn with_max_length(mut self, len: u8) -> Self {
+    pub fn with_max_length<T: Into<NonZeroU8>>(mut self, len: T) -> Self {
         let config = self.request.rpc_config_mut().get_or_insert_default();
-        config.max_length = Some(len);
+        config.set_max_length(len.into());
         self
     }
 }
