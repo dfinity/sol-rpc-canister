@@ -126,55 +126,118 @@ impl Providers {
     // The threshold consensus strategy will consider the first `total` providers in the order
     // they are specified (taking the default ones first, followed by the non default ones if necessary)
     // if the providers are not explicitly specified by the caller.
-    const DEFAULT_MAINNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] = &[
+    const MAINNET_PROVIDERS: &'static [SupportedRpcProviderId] = &[
         SupportedRpcProviderId::AlchemyMainnet,
         SupportedRpcProviderId::HeliusMainnet,
         SupportedRpcProviderId::DrpcMainnet,
-    ];
-    const NON_DEFAULT_MAINNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] = &[
         SupportedRpcProviderId::AnkrMainnet,
         SupportedRpcProviderId::PublicNodeMainnet,
         SupportedRpcProviderId::ChainstackMainnet,
     ];
 
-    const DEFAULT_DEVNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] = &[
+    const DEVNET_PROVIDERS: &'static [SupportedRpcProviderId] = &[
         SupportedRpcProviderId::AlchemyDevnet,
         SupportedRpcProviderId::HeliusDevnet,
         SupportedRpcProviderId::DrpcDevnet,
-    ];
-    const NON_DEFAULT_DEVNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] = &[
         SupportedRpcProviderId::AnkrDevnet,
         SupportedRpcProviderId::ChainstackDevnet,
     ];
 
     pub fn new(source: RpcSources, strategy: ConsensusStrategy) -> Result<Self, ProviderError> {
-        fn get_sources(provider_ids: &[SupportedRpcProviderId]) -> Vec<RpcSource> {
-            provider_ids
-                .iter()
-                .map(|provider| RpcSource::Supported(*provider))
-                .collect()
+        fn supported_providers(
+            cluster: &SolanaCluster,
+        ) -> Result<&[SupportedRpcProviderId], ProviderError> {
+            match cluster {
+                SolanaCluster::Mainnet => Ok(Providers::MAINNET_PROVIDERS),
+                SolanaCluster::Devnet => Ok(Providers::DEVNET_PROVIDERS),
+                SolanaCluster::Testnet => {
+                    Err(ProviderError::UnsupportedCluster(format!("{:?}", cluster)))
+                }
+            }
         }
 
-        let providers: BTreeSet<_> = match source {
-            RpcSources::Custom(sources) => {
-                choose_providers(Some(sources), vec![], vec![], strategy)?
+        fn supported_rpc_source(supported_provider: &SupportedRpcProviderId) -> RpcSource {
+            RpcSource::Supported(*supported_provider)
+        }
+
+        let providers: BTreeSet<_> = match (source, strategy) {
+            (RpcSources::Custom(custom_providers), ConsensusStrategy::Equality) => {
+                Ok(custom_providers.into_iter().collect())
             }
-            RpcSources::Default(cluster) => match cluster {
-                SolanaCluster::Mainnet => choose_providers(
-                    None,
-                    get_sources(Self::DEFAULT_MAINNET_SUPPORTED_PROVIDERS),
-                    get_sources(Self::NON_DEFAULT_MAINNET_SUPPORTED_PROVIDERS),
-                    strategy,
-                )?,
-                SolanaCluster::Devnet => choose_providers(
-                    None,
-                    get_sources(Self::DEFAULT_DEVNET_SUPPORTED_PROVIDERS),
-                    get_sources(Self::NON_DEFAULT_DEVNET_SUPPORTED_PROVIDERS),
-                    strategy,
-                )?,
-                cluster => return Err(ProviderError::UnsupportedCluster(format!("{:?}", cluster))),
-            },
-        };
+            (RpcSources::Custom(custom_providers), ConsensusStrategy::Threshold { total, min }) => {
+                if min == 0 {
+                    return Err(ProviderError::InvalidRpcConfig(
+                        "min must be greater than 0".to_string(),
+                    ));
+                }
+                if min > custom_providers.len() as u8 {
+                    return Err(ProviderError::InvalidRpcConfig(format!(
+                        "min {} is greater than the number of specified providers {}",
+                        min,
+                        custom_providers.len()
+                    )));
+                }
+                if let Some(total) = total {
+                    if total != custom_providers.len() as u8 {
+                        return Err(ProviderError::InvalidRpcConfig(format!(
+                            "total {} is different than the number of specified providers {}",
+                            total,
+                            custom_providers.len()
+                        )));
+                    }
+                };
+                Ok(custom_providers.into_iter().collect())
+            }
+            (RpcSources::Default(cluster), ConsensusStrategy::Equality) => {
+                let supported_providers = supported_providers(&cluster)?;
+                assert!(
+                    supported_providers.len() >= 3,
+                    "BUG: need at least 3 providers, but got {supported_providers:?}"
+                );
+                Ok(supported_providers
+                    .iter()
+                    .take(3)
+                    .map(supported_rpc_source)
+                    .collect())
+            }
+            (RpcSources::Default(cluster), ConsensusStrategy::Threshold { total, min }) => {
+                // Ensure that
+                // 0 < min <= total <= all_providers.len()
+                if min == 0 {
+                    return Err(ProviderError::InvalidRpcConfig(
+                        "min must be greater than 0".to_string(),
+                    ));
+                }
+                let supported_providers = supported_providers(&cluster)?;
+                let all_providers_len = supported_providers.len();
+                let total = total.ok_or_else(|| {
+                    ProviderError::InvalidRpcConfig(
+                        "total must be specified when using default providers".to_string(),
+                    )
+                })?;
+
+                if min > total {
+                    return Err(ProviderError::InvalidRpcConfig(format!(
+                        "min {} is greater than total {}",
+                        min, total
+                    )));
+                }
+
+                if total > all_providers_len as u8 {
+                    return Err(ProviderError::InvalidRpcConfig(format!(
+                        "total {} is greater than the number of all supported providers {}",
+                        total, all_providers_len
+                    )));
+                }
+                let providers: BTreeSet<_> = supported_providers
+                    .iter()
+                    .take(total as usize)
+                    .map(supported_rpc_source)
+                    .collect();
+                assert_eq!(providers.len(), total as usize, "BUG: duplicate providers");
+                Ok(providers)
+            }
+        }?;
 
         if providers.is_empty() {
             return Err(ProviderError::InvalidRpcConfig(
@@ -183,80 +246,6 @@ impl Providers {
         }
 
         Ok(Self { sources: providers })
-    }
-}
-
-fn choose_providers(
-    user_input: Option<Vec<RpcSource>>,
-    default_providers: Vec<RpcSource>,
-    non_default_providers: Vec<RpcSource>,
-    strategy: ConsensusStrategy,
-) -> Result<BTreeSet<RpcSource>, ProviderError> {
-    match strategy {
-        ConsensusStrategy::Equality => Ok(user_input
-            .unwrap_or_else(|| default_providers.to_vec())
-            .into_iter()
-            .collect()),
-        ConsensusStrategy::Threshold { total, min } => {
-            // Ensure that
-            // 0 < min <= total <= all_providers.len()
-            if min == 0 {
-                return Err(ProviderError::InvalidRpcConfig(
-                    "min must be greater than 0".to_string(),
-                ));
-            }
-            match user_input {
-                None => {
-                    let all_providers_len = default_providers.len() + non_default_providers.len();
-                    let total = total.ok_or_else(|| {
-                        ProviderError::InvalidRpcConfig(
-                            "total must be specified when using default providers".to_string(),
-                        )
-                    })?;
-
-                    if min > total {
-                        return Err(ProviderError::InvalidRpcConfig(format!(
-                            "min {} is greater than total {}",
-                            min, total
-                        )));
-                    }
-
-                    if total > all_providers_len as u8 {
-                        return Err(ProviderError::InvalidRpcConfig(format!(
-                            "total {} is greater than the number of all supported providers {}",
-                            total, all_providers_len
-                        )));
-                    }
-                    let providers: BTreeSet<_> = default_providers
-                        .iter()
-                        .chain(non_default_providers.iter())
-                        .take(total as usize)
-                        .cloned()
-                        .collect();
-                    assert_eq!(providers.len(), total as usize, "BUG: duplicate providers");
-                    Ok(providers)
-                }
-                Some(providers) => {
-                    if min > providers.len() as u8 {
-                        return Err(ProviderError::InvalidRpcConfig(format!(
-                            "min {} is greater than the number of specified providers {}",
-                            min,
-                            providers.len()
-                        )));
-                    }
-                    if let Some(total) = total {
-                        if total != providers.len() as u8 {
-                            return Err(ProviderError::InvalidRpcConfig(format!(
-                                "total {} is different than the number of specified providers {}",
-                                total,
-                                providers.len()
-                            )));
-                        }
-                    }
-                    Ok(providers.into_iter().collect())
-                }
-            }
-        }
     }
 }
 
