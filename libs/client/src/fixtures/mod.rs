@@ -117,7 +117,7 @@ pub fn usdc_account() -> AccountInfo {
     }
 }
 
-/// Nonce account [`8DedqKHx9ogFajbHtRnTM3pPr3MRyVKDtepEpUiaDXX`](https://solscan.io/token/8DedqKHx9ogFajbHtRnTM3pPr3MRyVKDtepEpUiaDXX?cluster=devnet) on Solana Devnet.
+/// Nonce account [`8DedqKHx9ogFajbHtRnTM3pPr3MRyVKDtepEpUiaDXX`](https://explorer.solana.com/address/8DedqKHx9ogFajbHtRnTM3pPr3MRyVKDtepEpUiaDXX?cluster=devnet) on Solana Devnet.
 pub fn initialized_nonce_account() -> AccountInfo {
     AccountInfo {
         lamports: 1_499_900,
