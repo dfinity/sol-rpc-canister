@@ -1,15 +1,16 @@
 #[cfg(test)]
 mod tests;
 
-use candid::types::{Serializer, Type, TypeInner};
-use candid::CandidType;
+use candid::{
+    types::{Serializer, Type, TypeInner},
+    CandidType,
+};
 use derive_more::{From, Into};
 use ic_cdk::api::call::RejectionCode;
 pub use ic_cdk::api::management_canister::http_request::HttpHeader;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::fmt::Debug;
-use std::num::TryFromIntError;
+use std::{fmt::Debug, num::TryFromIntError};
 use strum::Display;
 use thiserror::Error;
 

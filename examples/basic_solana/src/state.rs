@@ -72,7 +72,7 @@ pub async fn lazy_call_ed25519_public_key() -> Ed25519ExtendedPublicKey {
         return public_key;
     }
     let public_key =
-        get_ed25519_public_key(&read_state(|s| s.ed25519_key_name()), &Default::default()).await;
+        get_ed25519_public_key(read_state(|s| s.ed25519_key_name()), &Default::default()).await;
     mutate_state(|s| s.ed25519_public_key = Some(public_key.clone()));
     public_key
 }

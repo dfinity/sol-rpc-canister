@@ -118,6 +118,8 @@
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
 
+#[cfg(feature = "ed25519")]
+pub mod ed25519;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod fixtures;
 mod request;
@@ -204,6 +206,11 @@ impl<R> SolRpcClient<R> {
     /// Creates a [`ClientBuilder`] to configure a [`SolRpcClient`].
     pub fn builder(runtime: R, sol_rpc_canister: Principal) -> ClientBuilder<R> {
         ClientBuilder::new(runtime, sol_rpc_canister)
+    }
+
+    /// Returns a reference to the client's runtime.
+    pub fn runtime(&self) -> &R {
+        &self.config.runtime
     }
 }
 

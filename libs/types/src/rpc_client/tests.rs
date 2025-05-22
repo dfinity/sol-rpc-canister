@@ -1,7 +1,6 @@
 use crate::{HttpHeader, RpcEndpoint};
 use candid::{CandidType, Decode, Encode};
-use proptest::prelude::TestCaseError;
-use proptest::prop_assert_eq;
+use proptest::{prelude::TestCaseError, prop_assert_eq};
 use serde::de::DeserializeOwned;
 
 #[test]
@@ -32,8 +31,7 @@ fn should_contain_host_without_sensitive_information() {
 }
 
 mod rounding_error_tests {
-    use crate::rpc_client::tests::encode_decode_roundtrip;
-    use crate::RoundingError;
+    use crate::{rpc_client::tests::encode_decode_roundtrip, RoundingError};
     use proptest::proptest;
 
     #[test]
@@ -74,8 +72,7 @@ mod rounding_error_tests {
 }
 
 mod non_zero_u8 {
-    use crate::rpc_client::tests::encode_decode_roundtrip;
-    use crate::rpc_client::NonZeroU8;
+    use crate::rpc_client::{tests::encode_decode_roundtrip, NonZeroU8};
     use candid::{Decode, Encode};
     use proptest::proptest;
 
