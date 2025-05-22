@@ -1,15 +1,16 @@
 #[cfg(test)]
 mod tests;
 
-use candid::types::{Serializer, Type, TypeInner};
-use candid::CandidType;
+use candid::{
+    types::{Serializer, Type, TypeInner},
+    CandidType,
+};
 use derive_more::{From, Into};
 use ic_cdk::api::call::RejectionCode;
 pub use ic_cdk::api::management_canister::http_request::HttpHeader;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::fmt::Debug;
-use std::num::TryFromIntError;
+use std::{fmt::Debug, num::TryFromIntError};
 use strum::Display;
 use thiserror::Error;
 
@@ -30,7 +31,15 @@ pub enum RpcError {
     JsonRpcError(JsonRpcError),
     /// A validation error occurred.
     #[error("Validation error: {0}")]
+    #[from(ignore)]
     ValidationError(String),
+    /// A consensus error occurred.
+    #[error("Consensus error: {0}")]
+    #[from(ignore)]
+    ConsensusError(String),
+    /// A retry error occurred.
+    #[error("Retry error: {0:?}")]
+    RetryError(Vec<RpcError>),
 }
 
 impl From<solana_pubkey::ParsePubkeyError> for RpcError {
@@ -84,7 +93,8 @@ pub enum HttpOutcallError {
     /// Response is not a valid JSON-RPC response,
     /// which means that the response was not successful (status other than 2xx)
     /// or that the response body could not be deserialized into a JSON-RPC response.
-    #[error("Invalid HTTP JSON-RPC response: status {status}, body: {body}, parsing error: {parsing_error:?}")]
+    #[error("Invalid HTTP JSON-RPC response: status {status}, body: {body}, parsing error: {parsing_error:?}"
+    )]
     InvalidHttpJsonRpcResponse {
         /// The HTTP status code returned.
         status: u16,

@@ -138,13 +138,14 @@ use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
     GetRecentPrioritizationFeesParams, GetSignatureStatusesParams, GetSignaturesForAddressParams,
     GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
-    Pubkey, RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot,
-    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TokenAmount, TransactionDetails,
-    TransactionInfo,
+    MultiRpcResult, Pubkey, RpcConfig, RpcError, RpcResult, RpcSources, SendTransactionParams,
+    Signature, Slot, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TokenAmount,
+    TransactionDetails, TransactionInfo,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
+use solana_hash::Hash;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
-use std::{fmt::Debug, sync::Arc};
+use std::{fmt::Debug, str::FromStr, sync::Arc};
 
 /// The principal identifying the productive Solana RPC canister under NNS control.
 ///
@@ -325,8 +326,8 @@ impl<R> SolRpcClient<R> {
         R,
         RpcConfig,
         GetAccountInfoParams,
-        sol_rpc_types::MultiRpcResult<Option<sol_rpc_types::AccountInfo>>,
-        sol_rpc_types::MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>,
+        MultiRpcResult<Option<sol_rpc_types::AccountInfo>>,
+        MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>,
     > {
         RequestBuilder::new(
             self.clone(),
@@ -369,8 +370,8 @@ impl<R> SolRpcClient<R> {
         R,
         RpcConfig,
         GetBalanceParams,
-        sol_rpc_types::MultiRpcResult<Lamport>,
-        sol_rpc_types::MultiRpcResult<Lamport>,
+        MultiRpcResult<Lamport>,
+        MultiRpcResult<Lamport>,
     > {
         RequestBuilder::new(
             self.clone(),
@@ -387,10 +388,8 @@ impl<R> SolRpcClient<R> {
         R,
         RpcConfig,
         GetBlockParams,
-        sol_rpc_types::MultiRpcResult<Option<sol_rpc_types::ConfirmedBlock>>,
-        sol_rpc_types::MultiRpcResult<
-            Option<solana_transaction_status_client_types::UiConfirmedBlock>,
-        >,
+        MultiRpcResult<Option<sol_rpc_types::ConfirmedBlock>>,
+        MultiRpcResult<Option<solana_transaction_status_client_types::UiConfirmedBlock>>,
     > {
         let params = params.into();
         let cycles = match params.transaction_details.unwrap_or_default() {
@@ -445,8 +444,8 @@ impl<R> SolRpcClient<R> {
         R,
         RpcConfig,
         GetTokenAccountBalanceParams,
-        sol_rpc_types::MultiRpcResult<TokenAmount>,
-        sol_rpc_types::MultiRpcResult<UiTokenAmount>,
+        MultiRpcResult<TokenAmount>,
+        MultiRpcResult<UiTokenAmount>,
     > {
         RequestBuilder::new(
             self.clone(),
@@ -757,8 +756,8 @@ impl<R> SolRpcClient<R> {
         R,
         GetSlotRpcConfig,
         Option<GetSlotParams>,
-        sol_rpc_types::MultiRpcResult<Slot>,
-        sol_rpc_types::MultiRpcResult<Slot>,
+        MultiRpcResult<Slot>,
+        MultiRpcResult<Slot>,
     > {
         RequestBuilder::new(self.clone(), GetSlotRequest::default(), 10_000_000_000)
     }
@@ -771,8 +770,8 @@ impl<R> SolRpcClient<R> {
         R,
         RpcConfig,
         GetTransactionParams,
-        sol_rpc_types::MultiRpcResult<Option<TransactionInfo>>,
-        sol_rpc_types::MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>,
+        MultiRpcResult<Option<TransactionInfo>>,
+        MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>,
     > {
         RequestBuilder::new(
             self.clone(),
@@ -822,8 +821,8 @@ impl<R> SolRpcClient<R> {
         R,
         RpcConfig,
         SendTransactionParams,
-        sol_rpc_types::MultiRpcResult<Signature>,
-        sol_rpc_types::MultiRpcResult<solana_signature::Signature>,
+        MultiRpcResult<Signature>,
+        MultiRpcResult<solana_signature::Signature>,
     >
     where
         T: TryInto<SendTransactionParams>,
@@ -897,13 +896,7 @@ impl<R> SolRpcClient<R> {
     pub fn json_request(
         &self,
         json_request: serde_json::Value,
-    ) -> RequestBuilder<
-        R,
-        RpcConfig,
-        String,
-        sol_rpc_types::MultiRpcResult<String>,
-        sol_rpc_types::MultiRpcResult<String>,
-    > {
+    ) -> RequestBuilder<R, RpcConfig, String, MultiRpcResult<String>, MultiRpcResult<String>> {
         RequestBuilder::new(
             self.clone(),
             JsonRequest::try_from(json_request).expect("Client error: invalid JSON request"),
@@ -934,6 +927,97 @@ impl<R: Runtime> SolRpcClient<R> {
             )
             .await
             .unwrap()
+    }
+
+    /// Estimate a recent blockhash based on successive calls to `getSlot` and `getBlock`.
+    ///
+    /// Due to Solana's fast block time, the `getRecentBlockhash` RPC method cannot directly be
+    /// called by a canister running on the Internet Computer. Instead, to fetch a recent blockhash
+    /// (e.g. in order to build a transaction), one must instead first get the current slot with
+    /// `getSlot`, then get the corresponding block with `getBlock`, and finally extract the
+    /// blockhash from the resulting block.
+    ///
+    /// Since `getSlot` can fail due to consensus errors and `getBlock` can fail due to not every
+    /// slot having a block, this method allows performing the above-mentioned routine with a given
+    /// number of retries until a blockhash is successfully obtained. Each RPC method call (i.e.
+    /// `getSlot` or `getBlock` counts as one retry). If the maximum number of retries is reached,
+    /// [`RpcError::RetryError`] is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{MultiRpcResult, RpcSources, SolanaCluster};
+    /// use solana_transaction::Transaction;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #    .with_mocked_response(MultiRpcResult::Consistent(Ok()))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// // Fetch a recent blockhash
+    /// let blockhash = client
+    ///     .estimate_recent_blockhash(3)
+    ///     .await
+    ///     .unwrap();
+    ///
+    /// // Use the resulting blockhash to build a Solana transaction
+    /// # let message = solana_message::Message::default();
+    /// # let payer = &[solana_keypair::Keypair::new()];
+    /// let transaction = Transaction::new(
+    ///     &[payer],
+    ///     message,
+    ///     blockhash,
+    /// );
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn estimate_recent_blockhash(&self, num_tries: usize) -> RpcResult<Hash> {
+        let mut errors = Vec::with_capacity(num_tries);
+        loop {
+            if errors.len() >= num_tries {
+                return Err(errors.into());
+            }
+            match self.get_slot().send().await {
+                MultiRpcResult::Consistent(Ok(slot)) => match self.get_block(slot).send().await {
+                    MultiRpcResult::Consistent(Ok(Some(block))) => {
+                        match Hash::from_str(&block.blockhash) {
+                            Ok(blockhash) => return Ok(blockhash),
+                            Err(e) => errors.push(e.into()),
+                        }
+                        continue;
+                    }
+                    MultiRpcResult::Consistent(Ok(None)) => {
+                        errors.push(RpcError::ValidationError(format!(
+                            "No block for slot {slot}"
+                        )));
+                        continue;
+                    }
+                    MultiRpcResult::Inconsistent(_) => {
+                        errors.push(RpcError::ConsensusError(
+                            "Inconsistent result while fetching block".to_string(),
+                        ));
+                        continue;
+                    }
+                    MultiRpcResult::Consistent(Err(e)) => {
+                        errors.push(e);
+                        continue;
+                    }
+                },
+                MultiRpcResult::Inconsistent(_) => {
+                    errors.push(RpcError::ConsensusError(
+                        "Inconsistent result while fetching slot".to_string(),
+                    ));
+                    continue;
+                }
+                MultiRpcResult::Consistent(Err(e)) => {
+                    errors.push(e);
+                    continue;
+                }
+            }
+        }
     }
 
     async fn execute_request<Config, Params, CandidOutput, Output>(

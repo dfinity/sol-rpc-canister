@@ -13,8 +13,7 @@ use serde_json::{from_slice, Value};
 use sol_rpc_types::{PrioritizationFee, RoundingError};
 use solana_clock::Slot;
 use solana_transaction_status_client_types::TransactionStatus;
-use std::fmt::Debug;
-use std::num::NonZeroU8;
+use std::{fmt::Debug, num::NonZeroU8};
 
 /// Describes a payload transformation to execute before passing the HTTP response to consensus.
 /// The purpose of these transformations is to ensure that the response encoding is deterministic
