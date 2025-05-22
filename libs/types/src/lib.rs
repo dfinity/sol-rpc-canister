@@ -31,7 +31,6 @@ pub use solana::{
         GetTransactionEncoding, GetTransactionParams, SendTransactionEncoding,
         SendTransactionParams, TransactionDetails,
     },
-    signature::{DerivationPath, Ed25519KeyId},
     transaction::{
         error::{InstructionError, TransactionError},
         instruction::{CompiledInstruction, InnerInstructions, Instruction},

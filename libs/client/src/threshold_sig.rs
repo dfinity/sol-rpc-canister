@@ -8,10 +8,8 @@ use crate::Runtime;
 use candid::Principal;
 use derive_more::{From, Into};
 use ic_cdk::api::management_canister::schnorr::{
-    SchnorrAlgorithm, SchnorrKeyId, SignWithSchnorrArgument, SignWithSchnorrResponse,
-};
-use ic_cdk::api::management_canister::schnorr::{
-    SchnorrPublicKeyArgument, SchnorrPublicKeyResponse,
+    SchnorrAlgorithm, SchnorrKeyId, SchnorrPublicKeyArgument, SchnorrPublicKeyResponse,
+    SignWithSchnorrArgument, SignWithSchnorrResponse,
 };
 use sol_rpc_types::{RpcError, RpcResult};
 use std::fmt::Display;

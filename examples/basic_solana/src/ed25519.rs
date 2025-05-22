@@ -1,6 +1,8 @@
 use ic_ed25519::PublicKey;
-use sol_rpc_client::threshold_sig::{DerivationPath, Ed25519KeyId};
-use sol_rpc_client::IcRuntime;
+use sol_rpc_client::{
+    threshold_sig::{DerivationPath, Ed25519KeyId},
+    IcRuntime,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Ed25519ExtendedPublicKey {

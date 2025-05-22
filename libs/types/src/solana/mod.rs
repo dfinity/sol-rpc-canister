@@ -3,7 +3,6 @@ mod tests;
 
 pub mod account;
 pub mod request;
-pub mod signature;
 pub mod transaction;
 
 use crate::RpcError;
