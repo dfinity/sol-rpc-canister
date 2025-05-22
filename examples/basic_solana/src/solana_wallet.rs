@@ -9,8 +9,8 @@ use crate::{
     state::{lazy_call_ed25519_public_key, read_state},
 };
 use candid::Principal;
+use sol_rpc_client::threshold_sig::DerivationPath;
 use sol_rpc_client::{threshold_sig::sign_transaction, IcRuntime};
-use sol_rpc_types::DerivationPath;
 use solana_message::Message;
 use solana_pubkey::Pubkey;
 use solana_signature::Signature;
@@ -92,7 +92,7 @@ impl SolanaWallet {
         sign_transaction(
             &IcRuntime,
             &Transaction::new_unsigned(message.clone()),
-            read_state(|s| s.ed25519_key_id()),
+            read_state(|s| s.ed25519_key_id()).into(),
             Some(&signer.derivation_path),
         )
         .await
