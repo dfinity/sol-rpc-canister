@@ -16,8 +16,10 @@ use ic_cdk::api::management_canister::schnorr::{
 use sol_rpc_types::{RpcError, RpcResult};
 use std::fmt::Display;
 
+// Source: https://internetcomputer.org/docs/current/references/t-sigs-how-it-works/#fees-for-the-t-schnorr-test-key
+const SIGN_WITH_SCHNORR_TEST_FEE: u128 = 10_000_000_000;
 // Source: https://internetcomputer.org/docs/current/references/t-sigs-how-it-works/#fees-for-the-t-schnorr-production-key
-const SIGN_WITH_SCHNORR_FEE: u128 = 26_153_846_153;
+const SIGN_WITH_SCHNORR_PRODUCTION_FEE: u128 = 26_153_846_153;
 
 /// Represents the derivation path of an Ed25519 key from one of the root keys.
 /// See the [tEdDSA documentation](https://internetcomputer.org/docs/building-apps/network-features/signatures/t-schnorr#signing-messages-and-transactions)
@@ -46,10 +48,9 @@ impl From<Principal> for DerivationPath {
 /// The ID of one of the ICP root keys.
 /// See the [tEdDSA documentation](https://internetcomputer.org/docs/building-apps/network-features/signatures/t-schnorr#signing-messages-and-transactions)
 /// for more details.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Ed25519KeyId {
-    /// Only available on the local development environment started by dfx.
-    #[default]
+    /// Only available on the local development environment started by `dfx`.
     TestKeyLocalDevelopment,
     /// Test key available on the ICP mainnet.
     TestKey1,
@@ -82,7 +83,6 @@ impl Display for Ed25519KeyId {
 /// use solana_signature::Signature;
 /// use solana_transaction::Transaction;
 /// use sol_rpc_client::{threshold_sig , IcRuntime};
-/// use sol_rpc_types::Ed25519KeyId;
 ///
 /// #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -96,7 +96,7 @@ impl Display for Ed25519KeyId {
 /// #     chain_code: "UWbC6EgDnWEJIU4KFBqASTCYAzEiJGsR".as_bytes().to_vec(),
 /// # });
 ///
-/// let key_id = Ed25519KeyId::TestKey1;
+/// let key_id = threshold_sig::Ed25519KeyId::TestKey1;
 /// let derivation_path = None;
 /// let (payer, _) = threshold_sig::get_pubkey(
 ///     &runtime,
@@ -158,7 +158,10 @@ pub async fn sign_transaction<R: Runtime>(
         Principal::management_canister(),
         "sign_with_schnorr",
         (arg,),
-        SIGN_WITH_SCHNORR_FEE,
+        match key_id {
+            Ed25519KeyId::TestKeyLocalDevelopment | Ed25519KeyId::TestKey1 => SIGN_WITH_SCHNORR_TEST_FEE,
+            Ed25519KeyId::ProductionKey1 => SIGN_WITH_SCHNORR_PRODUCTION_FEE,
+        },
     )
         .await
         .map_err(|(rejection_code, message)| {
@@ -183,7 +186,6 @@ pub async fn sign_transaction<R: Runtime>(
 /// use candid::Principal;
 /// use solana_pubkey::pubkey;
 /// use sol_rpc_client::{threshold_sig, IcRuntime};
-/// use sol_rpc_types::{DerivationPath, Ed25519KeyId};
 ///
 /// #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -195,9 +197,9 @@ pub async fn sign_transaction<R: Runtime>(
 /// #     chain_code: "UWbC6EgDnWEJIU4KFBqASTCYAzEiJGsR".as_bytes().to_vec(),
 /// # });
 ///
-/// let key_id = Ed25519KeyId::TestKey1;
+/// let key_id = threshold_sig::Ed25519KeyId::TestKey1;
 /// let canister_id = Principal::from_text("un4fu-tqaaa-aaaab-qadjq-cai").unwrap();
-/// let derivation_path = DerivationPath::from("some-derivation-path".as_bytes());
+/// let derivation_path = threshold_sig::DerivationPath::from("some-derivation-path".as_bytes());
 ///
 /// let (pubkey, _) = threshold_sig::get_pubkey(
 ///     &runtime,

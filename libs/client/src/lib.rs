@@ -121,6 +121,7 @@
 #[cfg(not(target_arch = "wasm32"))]
 pub mod fixtures;
 mod request;
+#[cfg(feature = "threshold_sig")]
 pub mod threshold_sig;
 
 use crate::request::{
