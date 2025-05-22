@@ -48,6 +48,24 @@ thread_local! {
                 public_url: Some("https://rpc.ankr.com/solana_devnet/".to_string()),
             }
         },
+        SupportedRpcProviderId::ChainstackMainnet => SupportedRpcProvider {
+            cluster: SolanaCluster::Mainnet,
+            access: RpcAccess::Authenticated {
+                auth: RpcAuth::UrlParameter {
+                    url_pattern: "https://solana-mainnet.core.chainstack.com/{API_KEY}".to_string(),
+                },
+                public_url: None,
+            }
+        },
+        SupportedRpcProviderId::ChainstackDevnet => SupportedRpcProvider {
+            cluster: SolanaCluster::Devnet,
+            access: RpcAccess::Authenticated {
+                auth: RpcAuth::UrlParameter {
+                    url_pattern: "https://solana-devnet.core.chainstack.com/{API_KEY}".to_string(),
+                },
+                public_url: None,
+            }
+        },
         SupportedRpcProviderId::DrpcMainnet => SupportedRpcProvider {
             cluster: SolanaCluster::Mainnet,
             access: RpcAccess::Authenticated {
@@ -116,6 +134,7 @@ impl Providers {
     const NON_DEFAULT_MAINNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] = &[
         SupportedRpcProviderId::AnkrMainnet,
         SupportedRpcProviderId::PublicNodeMainnet,
+        SupportedRpcProviderId::ChainstackMainnet,
     ];
 
     const DEFAULT_DEVNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] = &[
@@ -123,8 +142,10 @@ impl Providers {
         SupportedRpcProviderId::HeliusDevnet,
         SupportedRpcProviderId::DrpcDevnet,
     ];
-    const NON_DEFAULT_DEVNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] =
-        &[SupportedRpcProviderId::AnkrDevnet];
+    const NON_DEFAULT_DEVNET_SUPPORTED_PROVIDERS: &'static [SupportedRpcProviderId] = &[
+        SupportedRpcProviderId::AnkrDevnet,
+        SupportedRpcProviderId::ChainstackDevnet,
+    ];
 
     pub fn new(source: RpcSources, strategy: ConsensusStrategy) -> Result<Self, ProviderError> {
         fn get_sources(provider_ids: &[SupportedRpcProviderId]) -> Vec<RpcSource> {
