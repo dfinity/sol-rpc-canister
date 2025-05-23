@@ -8,22 +8,22 @@ use solana_compute_budget_interface::ComputeBudgetInstruction;
 use solana_hash::Hash;
 use solana_message::Message;
 use solana_program::system_instruction;
-use solana_pubkey::{pubkey, Pubkey};
+use solana_pubkey::Pubkey;
 use solana_transaction::Transaction;
 use std::str::FromStr;
 
 // Pubkey `ACCOUNT_A` was obtained with the `schnorr_public_key` with the team wallet canister ID
 // the derivation path `DERIVATION_PATH_A`, and the `test_key_1` key ID
 const DERIVATION_PATH_A: &[&[u8]] = &[&[1]];
-const ACCOUNT_A: &'static str = "2qL8z3PZS3tr8GV2x3z6mntNjNfLyh1VYcybfAENFSAn";
+const ACCOUNT_A: &str = "2qL8z3PZS3tr8GV2x3z6mntNjNfLyh1VYcybfAENFSAn";
 
 // Pubkey `PUBKEY_B` was obtained with the `schnorr_public_key` with the team wallet canister ID
 // the derivation path `DERIVATION_PATH_B`, and the `test_key_1` key ID
 const DERIVATION_PATH_B: &[&[u8]] = &[&[2]];
-const PUBKEY_B: &'static str = "rcvXBuRWbcXAPAWG6VgnjbehGPyLYqdfBHXL2L4XVCt";
+const PUBKEY_B: &str = "rcvXBuRWbcXAPAWG6VgnjbehGPyLYqdfBHXL2L4XVCt";
 
 // `NONCE_ACCOUNT_B` is an initialized nonce account with nonce authority `PUBKEY_B`
-const NONCE_ACCOUNT_B: &'static str = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+const NONCE_ACCOUNT_B: &str = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
 #[tokio::test(flavor = "multi_thread")]
 async fn should_send_transaction_with_recent_blockhash() {
