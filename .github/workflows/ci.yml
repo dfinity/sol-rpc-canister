@@ -177,6 +177,5 @@ jobs:
 
       - name: "Run end-to-end tests"
         env:
-          SOLANA_RECEIVER_PUBLIC_KEY: "rcvXBuRWbcXAPAWG6VgnjbehGPyLYqdfBHXL2L4XVCt"
           DFX_DEPLOY_KEY: ${{ secrets.DFX_DEPLOY_KEY }}
         run: cargo test --locked --package sol_rpc_e2e_tests -- --test-threads 2 --nocapture
