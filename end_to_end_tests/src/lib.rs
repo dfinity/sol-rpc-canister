@@ -16,8 +16,7 @@ use sol_rpc_types::{
 use solana_commitment_config::CommitmentConfig;
 use solana_pubkey::Pubkey;
 use solana_signature::Signature;
-use std::{env, time::Duration};
-use std::fmt::Debug;
+use std::{env, fmt::Debug, time::Duration};
 
 const DEFAULT_IC_GATEWAY: &str = "https://icp0.io";
 
