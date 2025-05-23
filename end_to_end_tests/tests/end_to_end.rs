@@ -7,26 +7,35 @@ use sol_rpc_e2e_tests::{IcAgentRuntime, Setup};
 use solana_compute_budget_interface::ComputeBudgetInstruction;
 use solana_hash::Hash;
 use solana_message::Message;
+use solana_program::instruction::Instruction;
 use solana_program::system_instruction;
 use solana_pubkey::Pubkey;
 use solana_transaction::Transaction;
 use std::str::FromStr;
 
+const KEY_ID: Ed25519KeyId = Ed25519KeyId::MainnetTestKey1;
+
 // Pubkey `ACCOUNT_A` was obtained with the `schnorr_public_key` with the team wallet canister ID
-// the derivation path `DERIVATION_PATH_A`, and the `test_key_1` key ID
+// the derivation path `DERIVATION_PATH_A`, and the `KEY_ID` key ID
 const DERIVATION_PATH_A: &[&[u8]] = &[&[1]];
-const ACCOUNT_A: &str = "2qL8z3PZS3tr8GV2x3z6mntNjNfLyh1VYcybfAENFSAn";
+const ACCOUNT_A: &str = "HNELCCu1459ANnRXrQuBmEhaVVJfCk9FFRDZHL5YBXzH";
 
 // Pubkey `PUBKEY_B` was obtained with the `schnorr_public_key` with the team wallet canister ID
-// the derivation path `DERIVATION_PATH_B`, and the `test_key_1` key ID
+// the derivation path `DERIVATION_PATH_B`, and the `KEY_ID` key ID
 const DERIVATION_PATH_B: &[&[u8]] = &[&[2]];
-const PUBKEY_B: &str = "rcvXBuRWbcXAPAWG6VgnjbehGPyLYqdfBHXL2L4XVCt";
+const PUBKEY_B: &str = "G7Ut56qgcEphHZmLhLimM2DfHVC7QwHfT18tvj8ntn9";
 
 // `NONCE_ACCOUNT_B` is an initialized nonce account with nonce authority `PUBKEY_B`
 const NONCE_ACCOUNT_B: &str = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
 #[tokio::test(flavor = "multi_thread")]
 async fn should_send_transaction_with_recent_blockhash() {
+    let sender_pubkey = Pubkey::from_str(ACCOUNT_A).unwrap();
+    let sender_derivation_path = DerivationPath::from(DERIVATION_PATH_A);
+    verify_pubkey(&sender_derivation_path, &sender_pubkey).await;
+
+    let recipient_pubkey = Pubkey::from_str(PUBKEY_B).unwrap();
+
     let get_blockhash = async |client: &SolRpcClient<IcAgentRuntime>| {
         // TODO XC-317: Use method to estimate recent blockhash
         let slot = client
@@ -45,21 +54,27 @@ async fn should_send_transaction_with_recent_blockhash() {
         Hash::from_str(&block.blockhash).expect("Failed to parse blockhash")
     };
 
-    let sender_pubkey = Pubkey::from_str(ACCOUNT_A).unwrap();
-    let sender_derivation_path = DerivationPath::from(DERIVATION_PATH_A);
-    verify_pubkey(&sender_derivation_path, &sender_pubkey).await;
+    let modify_instructions = |_instructions: &mut Vec<Instruction>| {};
 
     send_transaction_test(
         sender_pubkey,
         sender_derivation_path,
-        Pubkey::from_str(PUBKEY_B).unwrap(),
+        recipient_pubkey,
         get_blockhash,
+        modify_instructions,
     )
     .await;
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn should_send_transaction_with_durable_nonce() {
+    let sender_pubkey = Pubkey::from_str(PUBKEY_B).unwrap();
+    let sender_derivation_path = DerivationPath::from(DERIVATION_PATH_B);
+    verify_pubkey(&sender_derivation_path, &sender_pubkey).await;
+
+    let sender_nonce_account = Pubkey::from_str(NONCE_ACCOUNT_B).unwrap();
+    let recipient_pubkey = Pubkey::from_str(ACCOUNT_A).unwrap();
+
     let get_blockhash = async |client: &SolRpcClient<IcAgentRuntime>| {
         let account = client
             .get_account_info(Pubkey::from_str(NONCE_ACCOUNT_B).unwrap())
@@ -71,25 +86,32 @@ async fn should_send_transaction_with_durable_nonce() {
         extract_durable_nonce(&account).expect("Failed to extract durable nonce from account")
     };
 
-    let sender_pubkey = Pubkey::from_str(PUBKEY_B).unwrap();
-    let sender_derivation_path = DerivationPath::from(DERIVATION_PATH_B);
-    verify_pubkey(&sender_derivation_path, &sender_pubkey).await;
+    let modify_instructions = |instructions: &mut Vec<Instruction>| {
+        let advance_nonce_ix =
+            system_instruction::advance_nonce_account(&sender_nonce_account, &sender_pubkey);
+        instructions.insert(2, advance_nonce_ix);
+    };
 
     send_transaction_test(
         sender_pubkey,
         sender_derivation_path,
-        Pubkey::from_str(ACCOUNT_A).unwrap(),
+        recipient_pubkey,
         get_blockhash,
+        modify_instructions,
     )
     .await;
 }
 
-async fn send_transaction_test<F: AsyncFnOnce(&SolRpcClient<IcAgentRuntime>) -> Hash>(
+async fn send_transaction_test<F, S>(
     sender_pubkey: Pubkey,
     sender_derivation_path: DerivationPath,
     recipient_pubkey: Pubkey,
     get_blockhash: F,
-) {
+    modify_instructions: S,
+) where
+    F: AsyncFnOnce(&SolRpcClient<IcAgentRuntime>) -> Hash,
+    S: FnOnce(&mut Vec<Instruction>),
+{
     let setup = Setup::new();
     let client = setup.client();
 
@@ -125,17 +147,17 @@ async fn send_transaction_test<F: AsyncFnOnce(&SolRpcClient<IcAgentRuntime>) -> 
 
     let blockhash = get_blockhash(&client).await;
 
-    let message = Message::new_with_blockhash(
-        &[set_cu_limit_ix, add_priority_fee_ix, transfer_ix],
-        Some(&sender_pubkey),
-        &blockhash,
-    );
+    let mut instructions = vec![set_cu_limit_ix, add_priority_fee_ix, transfer_ix];
+    modify_instructions(&mut instructions);
+
+    let message =
+        Message::new_with_blockhash(instructions.as_slice(), Some(&sender_pubkey), &blockhash);
 
     // Sign transaction with t-EdDSA
     let signature = sign_message(
         client.runtime(),
         &message,
-        Ed25519KeyId::MainnetTestKey1,
+        KEY_ID,
         Some(&sender_derivation_path),
     )
     .await
@@ -172,7 +194,7 @@ async fn verify_pubkey(derivation_path: &DerivationPath, expected_pubkey: &Pubke
         Setup::new().client().runtime(),
         None,
         Some(derivation_path),
-        Ed25519KeyId::MainnetTestKey1,
+        KEY_ID,
     )
     .await
     .unwrap_or_else(|e| panic!("Failed to get Ed25519 public key: {e:?}"));
