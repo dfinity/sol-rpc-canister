@@ -12,7 +12,8 @@
         {
           "name": "candid:service"
         }
-      ]
+      ],
+      "init_arg": "( record { solana_commitment_level = opt variant { confirmed }; ed25519_key_name = opt variant { MainnetTestKey1 }; solana_network = opt variant { Devnet }; sol_rpc_canister_id = opt principal \"titvo-eiaaa-aaaar-qaogq-cai\"; })"
     }
   },
   "defaults": {
