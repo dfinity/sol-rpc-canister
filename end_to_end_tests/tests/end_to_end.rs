@@ -4,7 +4,7 @@ use solana_compute_budget_interface::ComputeBudgetInstruction;
 use solana_hash::Hash;
 use solana_message::Message;
 use solana_program::system_instruction;
-use solana_pubkey::Pubkey;
+use solana_pubkey::{pubkey, Pubkey};
 use solana_transaction::Transaction;
 use std::str::FromStr;
 
@@ -19,6 +19,10 @@ async fn should_send_transaction_with_recent_blockhash() {
         get_pubkey(client.runtime(), None, None, Ed25519KeyId::MainnetTestKey1)
             .await
             .unwrap_or_else(|e| panic!("Failed to get Ed25519 public key: {e:?}"));
+    assert_eq!(
+        sender_pubkey,
+        pubkey!("2qL8z3PZS3tr8GV2x3z6mntNjNfLyh1VYcybfAENFSAn")
+    );
 
     fn load_pubkey(key: &str) -> Pubkey {
         Pubkey::from_str(&env(key)).unwrap_or_else(|e| {
