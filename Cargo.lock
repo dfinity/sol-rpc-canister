@@ -4450,7 +4450,6 @@ version = "0.1.0"
 dependencies = [
  "assert_matches",
  "async-trait",
- "bincode",
  "candid",
  "derive_more",
  "ic-cdk",
@@ -4463,6 +4462,7 @@ dependencies = [
  "solana-instruction",
  "solana-nonce",
  "solana-pubkey",
+ "solana-rpc-client-nonce-utils",
  "solana-signature",
  "solana-transaction-error",
  "solana-transaction-status-client-types",

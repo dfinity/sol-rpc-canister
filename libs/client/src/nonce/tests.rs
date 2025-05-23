@@ -6,6 +6,7 @@ use assert_matches::assert_matches;
 use serde_json::json;
 use solana_account_decoder_client_types::{UiAccount, UiAccountData, UiAccountEncoding};
 use solana_hash::Hash;
+use solana_rpc_client_nonce_utils::Error;
 use std::str::FromStr;
 
 mod durable_nonce {
@@ -69,10 +70,7 @@ mod durable_nonce {
 
         let durable_nonce = extract_durable_nonce(&account);
 
-        assert_eq!(
-            durable_nonce,
-            Err(ExtractNonceError::UnsupportedEncodingFormat)
-        )
+        assert_eq!(durable_nonce, Err(ExtractNonceError::AccountDecodingError))
     }
 
     #[test]
@@ -81,7 +79,12 @@ mod durable_nonce {
 
         let durable_nonce = extract_durable_nonce(&account);
 
-        assert_matches!(durable_nonce, Err(ExtractNonceError::InvalidAccountData(_)))
+        assert_matches!(
+            durable_nonce,
+            Err(ExtractNonceError::DurableNonceError(
+                Error::InvalidAccountOwner
+            ))
+        );
     }
 
     #[test]
@@ -100,6 +103,11 @@ mod durable_nonce {
 
         let durable_nonce = extract_durable_nonce(&account);
 
-        assert_eq!(durable_nonce, Err(ExtractNonceError::Uninitialized))
+        assert_matches!(
+            durable_nonce,
+            Err(ExtractNonceError::DurableNonceError(
+                Error::InvalidStateForOperation
+            ))
+        );
     }
 }
