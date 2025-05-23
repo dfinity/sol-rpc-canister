@@ -143,6 +143,8 @@ impl Providers {
         SupportedRpcProviderId::ChainstackDevnet,
     ];
 
+    const DEFAULT_NUM_PROVIDERS_FOR_EQUALITY: usize = 3;
+
     pub fn new(source: RpcSources, strategy: ConsensusStrategy) -> Result<Self, ProviderError> {
         fn supported_providers(
             cluster: &SolanaCluster,
@@ -191,12 +193,12 @@ impl Providers {
             (RpcSources::Default(cluster), ConsensusStrategy::Equality) => {
                 let supported_providers = supported_providers(&cluster)?;
                 assert!(
-                    supported_providers.len() >= 3,
+                    supported_providers.len() >= Self::DEFAULT_NUM_PROVIDERS_FOR_EQUALITY,
                     "BUG: need at least 3 providers, but got {supported_providers:?}"
                 );
                 Ok(supported_providers
                     .iter()
-                    .take(3)
+                    .take(Self::DEFAULT_NUM_PROVIDERS_FOR_EQUALITY)
                     .map(supported_rpc_source)
                     .collect())
             }
