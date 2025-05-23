@@ -12,15 +12,18 @@ use solana_pubkey::{pubkey, Pubkey};
 use solana_transaction::Transaction;
 use std::str::FromStr;
 
-// Pubkey `PUBKEY_A` was obtained with the `schnorr_public_key` with the team wallet canister ID
+// Pubkey `ACCOUNT_A` was obtained with the `schnorr_public_key` with the team wallet canister ID
 // the derivation path `DERIVATION_PATH_A`, and the `test_key_1` key ID
 const DERIVATION_PATH_A: &[&[u8]] = &[&[1]];
-const PUBKEY_A: &'static str = "2qL8z3PZS3tr8GV2x3z6mntNjNfLyh1VYcybfAENFSAn";
+const ACCOUNT_A: &'static str = "2qL8z3PZS3tr8GV2x3z6mntNjNfLyh1VYcybfAENFSAn";
 
 // Pubkey `PUBKEY_B` was obtained with the `schnorr_public_key` with the team wallet canister ID
 // the derivation path `DERIVATION_PATH_B`, and the `test_key_1` key ID
 const DERIVATION_PATH_B: &[&[u8]] = &[&[2]];
 const PUBKEY_B: &'static str = "rcvXBuRWbcXAPAWG6VgnjbehGPyLYqdfBHXL2L4XVCt";
+
+// `NONCE_ACCOUNT_B` is an initialized nonce account with nonce authority `PUBKEY_B`
+const NONCE_ACCOUNT_B: &'static str = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
 #[tokio::test(flavor = "multi_thread")]
 async fn should_send_transaction_with_recent_blockhash() {
@@ -42,7 +45,7 @@ async fn should_send_transaction_with_recent_blockhash() {
         Hash::from_str(&block.blockhash).expect("Failed to parse blockhash")
     };
 
-    let sender_pubkey = Pubkey::from_str(PUBKEY_A).unwrap();
+    let sender_pubkey = Pubkey::from_str(ACCOUNT_A).unwrap();
     let sender_derivation_path = DerivationPath::from(DERIVATION_PATH_A);
     verify_pubkey(&sender_derivation_path, &sender_pubkey).await;
 
@@ -59,7 +62,7 @@ async fn should_send_transaction_with_recent_blockhash() {
 async fn should_send_transaction_with_durable_nonce() {
     let get_blockhash = async |client: &SolRpcClient<IcAgentRuntime>| {
         let account = client
-            .get_account_info(pubkey!(""))
+            .get_account_info(Pubkey::from_str(NONCE_ACCOUNT_B).unwrap())
             .send()
             .await
             .expect_consistent()
@@ -75,7 +78,7 @@ async fn should_send_transaction_with_durable_nonce() {
     send_transaction_test(
         sender_pubkey,
         sender_derivation_path,
-        Pubkey::from_str(PUBKEY_A).unwrap(),
+        Pubkey::from_str(ACCOUNT_A).unwrap(),
         get_blockhash,
     )
     .await;
