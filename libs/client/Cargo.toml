@@ -12,6 +12,7 @@ include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
 
 [dependencies]
 async-trait = { workspace = true }
+bincode = { workspace = true }
 candid = { workspace = true }
 derive_more = { workspace = true }
 ic-cdk = { workspace = true }
@@ -24,9 +25,9 @@ solana-hash = { workspace = true }
 solana-instruction = { workspace = true }
 solana-keypair = { workspace = true, optional = true }
 solana-message = { workspace = true, optional = true }
+solana-nonce = { workspace = true, features = ["serde"] }
 solana-program = { workspace = true, optional = true }
 solana-pubkey = { workspace = true }
-solana-rpc-client-nonce-utils = { workspace = true }
 solana-signature = { workspace = true }
 solana-transaction = { workspace = true, optional = true }
 solana-transaction-error = { workspace = true }
