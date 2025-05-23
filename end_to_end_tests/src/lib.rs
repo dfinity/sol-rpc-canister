@@ -17,6 +17,7 @@ use solana_commitment_config::CommitmentConfig;
 use solana_pubkey::Pubkey;
 use solana_signature::Signature;
 use std::{env, time::Duration};
+use std::fmt::Debug;
 
 const DEFAULT_IC_GATEWAY: &str = "https://icp0.io";
 
@@ -100,7 +101,7 @@ impl Setup {
 
     pub async fn airdrop(&self, account: &Pubkey, amount: u64) -> u64 {
         let balance_before = self.get_account_balance(account).await;
-        let _airdrop_tx = self
+        let airdrop_tx = self
             .client()
             .json_request(json!({
                 "jsonrpc": "2.0",
@@ -110,6 +111,7 @@ impl Setup {
             }))
             .send()
             .await;
+        println!("Response for `requestAirdrop` JSON-RPC request: {airdrop_tx:?}");
         let expected_balance = balance_before + amount;
         let mut num_trials = 0;
         loop {
