@@ -4491,12 +4491,10 @@ dependencies = [
  "solana-commitment-config",
  "solana-compute-budget-interface",
  "solana-hash",
- "solana-keypair",
  "solana-message",
  "solana-program",
  "solana-pubkey",
  "solana-signature",
- "solana-signer",
  "solana-transaction",
  "tokio",
 ]
