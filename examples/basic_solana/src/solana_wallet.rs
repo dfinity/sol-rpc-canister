@@ -9,12 +9,13 @@ use crate::{
     state::{lazy_call_ed25519_public_key, read_state},
 };
 use candid::Principal;
-use sol_rpc_client::{threshold_sig::sign_transaction, IcRuntime};
-use sol_rpc_types::DerivationPath;
+use sol_rpc_client::{
+    ed25519::{sign_message, DerivationPath},
+    IcRuntime,
+};
 use solana_message::Message;
 use solana_pubkey::Pubkey;
 use solana_signature::Signature;
-use solana_transaction::Transaction;
 use std::fmt::Display;
 
 #[derive(Clone)]
@@ -37,6 +38,17 @@ impl SolanaAccount {
             ed25519_public_key,
             derivation_path,
         }
+    }
+
+    pub async fn sign_message(&self, message: &Message) -> Signature {
+        sign_message(
+            &IcRuntime,
+            message,
+            read_state(|s| s.ed25519_key_name()).into(),
+            Some(&self.derivation_path),
+        )
+        .await
+        .expect("Failed to sign transaction")
     }
 }
 
@@ -86,16 +98,5 @@ impl SolanaWallet {
                 .as_slice()
                 .into(),
         )
-    }
-
-    pub async fn sign_message(message: &Message, signer: &SolanaAccount) -> Signature {
-        sign_transaction(
-            &IcRuntime,
-            &Transaction::new_unsigned(message.clone()),
-            read_state(|s| s.ed25519_key_id()),
-            Some(&signer.derivation_path),
-        )
-        .await
-        .expect("Failed to sign transaction")
     }
 }

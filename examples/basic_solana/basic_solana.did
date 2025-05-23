@@ -7,7 +7,7 @@ type InitArg = record {
     solana_commitment_level : opt CommitmentLevel;
     // EdDSA keys will be derived from this key.
     // If not specified, the value is set to `TestKeyLocalDevelopment`.
-    ed25519_key_id : opt Ed25519KeyId;
+    ed25519_key_name : opt Ed25519KeyName;
     // The canister will interact with this SOL RPC canister.
     // If not specified, the value is set to `tghme-zyaaa-aaaar-qarca-cai`.
     sol_rpc_canister_id : opt principal;
@@ -30,13 +30,13 @@ type CommitmentLevel = variant {
   finalized;
 };
 
-type Ed25519KeyId = variant {
+type Ed25519KeyName = variant {
     // For local development with `dfx`.
-    TestKeyLocalDevelopment;
+    LocalDevelopment;
     // For testing with the Internet Computer's test key.
-    TestKey1;
+    MainnetTestKey1;
     // For running the canister in a production environment using the Internet Computer's production key.
-    ProductionKey1;
+    MainnetProdKey1;
 };
 
 // Atomic unit of SOL, i.e., 1 SOL = 10^9 Lamports

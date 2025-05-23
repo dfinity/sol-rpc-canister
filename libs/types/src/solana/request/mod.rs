@@ -20,7 +20,7 @@ pub struct GetAccountInfoParams {
     pub data_slice: Option<DataSlice>,
     /// The minimum slot that the request can be evaluated at.
     #[serde(rename = "minContextSlot")]
-    pub min_context_slot: Option<u64>,
+    pub min_context_slot: Option<Slot>,
 }
 
 impl GetAccountInfoParams {
@@ -95,7 +95,7 @@ pub struct GetBalanceParams {
     pub commitment: Option<CommitmentLevel>,
     /// The minimum slot that the request can be evaluated at.
     #[serde(rename = "minContextSlot")]
-    pub min_context_slot: Option<u64>,
+    pub min_context_slot: Option<Slot>,
 }
 
 impl GetBalanceParams {
@@ -213,6 +213,83 @@ impl From<GetRecentPrioritizationFeesParams> for Vec<Pubkey> {
     }
 }
 
+/// The parameters for a Solana [`getSignaturesForAddress`](https://solana.com/docs/rpc/http/getsignaturesforaddress) RPC method call.
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+pub struct GetSignaturesForAddressParams {
+    /// The account address.
+    pub pubkey: Pubkey,
+    /// The commitment describes how finalized a block is at that point in time.
+    pub commitment: Option<CommitmentLevel>,
+    /// The minimum slot that the request can be evaluated at.
+    #[serde(rename = "minContextSlot")]
+    pub min_context_slot: Option<Slot>,
+    /// Maximum transaction signatures to return (between 1 and 1,000).
+    pub limit: Option<GetSignaturesForAddressLimit>,
+    /// Start searching backwards from this transaction signature. If not provided the search
+    /// starts from the top of the highest max confirmed block.
+    ///
+    /// This field is required to obtain an idempotent response, and hence crucial for the replicas
+    /// to reach consensus. If not included, different replicas will likely have different responses
+    /// due to the fast-changing nature of the highest max confirmed block.
+    /// Furthermore, it is highly recommended to use a finalized transaction so that all returned
+    /// transactions are also finalized. Otherwise, different replicas might see different statuses
+    /// for some of the returned transactions and hence be unable to reach consensus.
+    pub before: Option<Signature>,
+    /// Search until this transaction signature, if found before `limit` reached.
+    pub until: Option<Signature>,
+}
+
+impl<P: Into<Pubkey>> From<P> for GetSignaturesForAddressParams {
+    fn from(pubkey: P) -> Self {
+        Self {
+            pubkey: pubkey.into(),
+            commitment: None,
+            min_context_slot: None,
+            limit: None,
+            before: None,
+            until: None,
+        }
+    }
+}
+
+/// The maximum number of transactions to return in the response of a
+/// [`getSignaturesForAddress`](https://solana.com/docs/rpc/http/getsignaturesforaddress) request.
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, CandidType)]
+#[serde(try_from = "u32", into = "u32")]
+pub struct GetSignaturesForAddressLimit(u32);
+
+impl GetSignaturesForAddressLimit {
+    /// The maximum number of transactions that can be returned by a `getSignaturesForAddress` call.
+    pub const MAX_LIMIT: u32 = 1000;
+}
+
+impl Default for GetSignaturesForAddressLimit {
+    fn default() -> Self {
+        Self(Self::MAX_LIMIT)
+    }
+}
+
+impl TryFrom<u32> for GetSignaturesForAddressLimit {
+    type Error = RpcError;
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        match value {
+            1..=Self::MAX_LIMIT => Ok(Self(value)),
+            _ => Err(RpcError::ValidationError(format!(
+                "Expected a value between 1 and {}, but got {}",
+                Self::MAX_LIMIT,
+                value
+            ))),
+        }
+    }
+}
+
+impl From<GetSignaturesForAddressLimit> for u32 {
+    fn from(value: GetSignaturesForAddressLimit) -> Self {
+        value.0
+    }
+}
+
 /// The parameters for a Solana [`getSignatureStatuses`](https://solana.com/docs/rpc/http/getsignaturestatuses) RPC method call.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
 pub struct GetSignatureStatusesParams {
@@ -245,7 +322,7 @@ pub struct GetSlotParams {
     pub commitment: Option<CommitmentLevel>,
     /// The minimum slot that the request can be evaluated at.
     #[serde(rename = "minContextSlot")]
-    pub min_context_slot: Option<u64>,
+    pub min_context_slot: Option<Slot>,
 }
 
 impl GetSlotParams {
@@ -360,7 +437,7 @@ pub struct SendTransactionParams {
     pub max_retries: Option<u32>,
     /// Set the minimum slot at which to perform preflight transaction checks
     #[serde(rename = "minContextSlot")]
-    pub min_context_slot: Option<u64>,
+    pub min_context_slot: Option<Slot>,
 }
 
 impl SendTransactionParams {

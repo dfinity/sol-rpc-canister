@@ -7,12 +7,15 @@ use pocket_ic::PocketIcBuilder;
 use sol_rpc_client::SolRpcClient;
 use sol_rpc_int_tests::{spl, PocketIcLiveModeRuntime};
 use sol_rpc_types::{
-    CommitmentLevel, GetAccountInfoEncoding, GetAccountInfoParams, GetBlockCommitmentLevel,
-    GetBlockParams, GetTransactionEncoding, GetTransactionParams, InstallArgs, Lamport,
-    OverrideProvider, PrioritizationFee, RegexSubstitution, TransactionDetails, TransactionStatus,
+    CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetAccountInfoEncoding,
+    GetAccountInfoParams, GetBlockCommitmentLevel, GetBlockParams, GetTransactionEncoding,
+    GetTransactionParams, InstallArgs, Lamport, OverrideProvider, PrioritizationFee,
+    RegexSubstitution, TransactionDetails, TransactionStatus,
 };
 use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
-use solana_client::rpc_client::RpcClient as SolanaRpcClient;
+use solana_client::rpc_client::{
+    GetConfirmedSignaturesForAddress2Config, RpcClient as SolanaRpcClient,
+};
 use solana_commitment_config::CommitmentConfig;
 use solana_compute_budget_interface::ComputeBudgetInstruction;
 use solana_hash::Hash;
@@ -24,7 +27,7 @@ use solana_program::{
 use solana_pubkey::{pubkey, Pubkey};
 use solana_rpc_client_api::{
     config::{RpcBlockConfig, RpcTransactionConfig},
-    response::RpcPrioritizationFee,
+    response::{RpcConfirmedTransactionStatusWithSignature, RpcPrioritizationFee},
 };
 use solana_signature::Signature;
 use solana_signer::Signer;
@@ -33,6 +36,7 @@ use solana_transaction_status_client_types::UiTransactionEncoding;
 use std::{
     future::Future,
     iter::zip,
+    num::NonZeroU8,
     str::FromStr,
     thread,
     thread::sleep,
@@ -102,8 +106,8 @@ async fn should_get_recent_prioritization_fees() {
     }
 
     let spent_lamports = NUM_TRANSACTIONS * transaction_amount //amount sent
-            + NUM_TRANSACTIONS * BASE_FEE_PER_SIGNATURE_LAMPORTS //base fee
-            + NUM_TRANSACTIONS * (NUM_TRANSACTIONS+1) / 2; //prioritization_fee = 1 µL * CUL / 1_000_000 + .. + NUM_TRANSACTIONS * CUL / 1_000_000 and compute unit limit was set to 1 million.
+        + NUM_TRANSACTIONS * BASE_FEE_PER_SIGNATURE_LAMPORTS //base fee
+        + NUM_TRANSACTIONS * (NUM_TRANSACTIONS + 1) / 2; //prioritization_fee = 1 µL * CUL / 1_000_000 + .. + NUM_TRANSACTIONS * CUL / 1_000_000 and compute unit limit was set to 1 million.
     assert_eq!(
         sender_balance_before - setup.solana_client.get_balance(&sender.pubkey()).unwrap(),
         spent_lamports
@@ -121,7 +125,7 @@ async fn should_get_recent_prioritization_fees() {
             |ic| async move {
                 ic.get_recent_prioritization_fees(&[account])
                     .unwrap()
-                    .with_max_length(150)
+                    .with_max_length(NonZeroU8::new(150).unwrap())
                     .with_max_slot_rounding_error(1)
                     .send()
                     .await
@@ -506,6 +510,77 @@ async fn should_get_signature_statuses() {
     setup.setup.drop().await;
 }
 
+#[tokio::test(flavor = "multi_thread")]
+async fn should_get_signatures_for_address() {
+    let setup = Setup::new().await;
+
+    // Start searching backwards from this transaction. This ensures the two clients get the
+    // same answer. Otherwise, they might get different results due to one of them including
+    // transactions from more recent blocks than others.
+    // Also wait until this transaction is finalized, so that all transactions before it should
+    // be finalized as well. Otherwise, the confirmation status of some transactions might change
+    // while fetching them and the two clients might get different results.
+    let before = setup
+        .solana_client
+        .request_airdrop(&Keypair::new().pubkey(), 10_000_000_000)
+        .expect("Error while requesting airdrop");
+    setup.confirm_transaction_with_commitment(&before, CommitmentConfig::finalized());
+
+    let (sol_res, ic_res) = setup
+        .compare_client(
+            |sol| {
+                sol.get_signatures_for_address_with_config(
+                    &Pubkey::default(), // address of the Solana system program
+                    GetConfirmedSignaturesForAddress2Config {
+                        before: Some(before),
+                        until: None,
+                        limit: Some(10),
+                        commitment: Some(setup.solana_client.commitment()),
+                    },
+                )
+                .unwrap_or_else(|e| panic!("Failed to get signatures for address: {e}"))
+            },
+            |ic| async move {
+                ic.get_signatures_for_address(Pubkey::default())
+                    .with_limit(10.try_into().unwrap())
+                    .with_before(before)
+                    .send()
+                    .await
+                    .expect_consistent()
+                    .unwrap_or_else(|e| panic!("`getSignaturesForAddress` call failed: {e}"))
+                    .into_iter()
+                    .map(from_confirmed_transaction_status_with_signature)
+                    .collect::<Vec<_>>()
+            },
+        )
+        .await;
+
+    assert_eq!(sol_res, ic_res);
+
+    setup.setup.drop().await;
+}
+
+fn from_confirmed_transaction_status_with_signature(
+    status: ConfirmedTransactionStatusWithSignature,
+) -> RpcConfirmedTransactionStatusWithSignature {
+    let ConfirmedTransactionStatusWithSignature {
+        signature,
+        slot,
+        err,
+        memo,
+        block_time,
+        confirmation_status,
+    } = status;
+    RpcConfirmedTransactionStatusWithSignature {
+        signature: signature.into(),
+        slot,
+        err: err.map(Into::into),
+        memo,
+        block_time,
+        confirmation_status: confirmation_status.map(Into::into),
+    }
+}
+
 fn solana_rpc_client_get_account(
     pubkey: &Pubkey,
     sol: &SolanaRpcClient,
@@ -752,14 +827,23 @@ impl Setup {
     }
 
     fn confirm_transaction(&self, transaction_id: &Signature) {
+        self.confirm_transaction_with_commitment(transaction_id, self.solana_client.commitment())
+    }
+
+    fn confirm_transaction_with_commitment(
+        &self,
+        transaction_id: &Signature,
+        commitment: CommitmentConfig,
+    ) {
         // Wait until the transaction is confirmed
-        let max_wait = Duration::from_secs(10);
+        let max_wait = Duration::from_secs(30);
         let start = Instant::now();
         loop {
             let confirmed = self
                 .solana_client
-                .confirm_transaction(transaction_id)
-                .expect("Error while getting transaction confirmation status");
+                .confirm_transaction_with_commitment(transaction_id, commitment)
+                .expect("Error while getting transaction confirmation status")
+                .value;
             if confirmed {
                 return;
             } else {

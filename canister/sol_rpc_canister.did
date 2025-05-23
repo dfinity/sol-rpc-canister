@@ -14,6 +14,8 @@ type SupportedProvider = variant {
   AlchemyDevnet;
   AnkrMainnet;
   AnkrDevnet;
+  ChainstackMainnet;
+  ChainstackDevnet;
   DrpcMainnet;
   DrpcDevnet;
   HeliusMainnet;
@@ -633,6 +635,34 @@ type TransactionConfirmationStatus = variant {
   finalized;
 };
 
+// Solana transaction signature information as returned by the `getSignaturesForAddress` RPC method.
+type ConfirmedTransactionStatusWithSignature = record {
+    // Transaction signature.
+    signature: Signature;
+    // The slot that contains the block with the transaction.
+    slot: Slot;
+    // Error if transaction failed, null if transaction succeeded.
+    err: opt TransactionError;
+    // Memo associated with the transaction, null if no memo is present.
+    memo: opt text;
+    // Estimated production time of when transaction was processed, null if not available.
+    blockTime: opt Timestamp;
+    // The transaction's cluster confirmation status; Either `processed`, `confirmed`, or `finalized`.
+    // See [Commitment](https://solana.com/docs/rpc#configuring-state-commitment) for more on
+    // optimistic confirmation.
+    confirmationStatus: opt TransactionConfirmationStatus;
+};
+
+// Represents the result of a call to the `getSignaturesForAddress` Solana RPC method containing
+// an array of transaction signature information objects, ordered from newest to oldest transaction.
+type GetSignaturesForAddressResult = variant { Ok : vec ConfirmedTransactionStatusWithSignature; Err : RpcError };
+
+// Represents an aggregated result from multiple RPC calls to the `getSignatureStatuses` Solana RPC method.
+type MultiGetSignaturesForAddressResult = variant {
+    Consistent : GetSignaturesForAddressResult;
+    Inconsistent : vec record { RpcSource; GetSignaturesForAddressResult };
+};
+
 // Represents the result of a call to the `getSignatureStatuses` Solana RPC method.
 type GetSignatureStatusesResult = variant { Ok : vec opt TransactionStatus; Err : RpcError };
 
@@ -717,6 +747,30 @@ type CommitmentLevel = variant {
 // The parameters for a call to the `getRecentPrioritizationFees` Solana RPC method.
 // An array of Account addresses (up to a maximum of 128 addresses), as base-58 encoded strings.
 type GetRecentPrioritizationFeesParams =  vec Pubkey;
+
+// The parameters for a call to the `getSignaturesForAddress` Solana RPC method.
+type GetSignaturesForAddressParams = record {
+    // The account address.
+    pubkey: Pubkey;
+    // The commitment describes how finalized a block is at that point in time.
+    commitment: opt CommitmentLevel;
+    // The minimum slot that the request can be evaluated at.
+    minContextSlot: opt Slot;
+    // Maximum transaction signatures to return (between 1 and 1,000).
+    limit: opt nat32;
+    // Start searching backwards from this transaction signature. Any transaction can be used for this field; it
+    // does not necessarily have to use the `pubkey` account. If not provided, the search starts from the top of
+    // the highest max confirmed block.
+    //
+    // This field is required to obtain an idempotent response, and hence crucial for the replicas to reach
+    // consensus. If not included, different replicas will likely have different responses due to the fast-changing
+    // nature of the highest max confirmed block. Furthermore, it is highly recommended to use a finalized 
+    // transaction so that all returned transactions are also finalized. Otherwise, different replicas might
+    // see different statuses for some of the returned transactions and hence be unable to reach consensus.
+    before: opt Signature;
+    // Search until this transaction signature, if found before `limit` reached.
+    until: opt Signature;
+};
 
 // The parameters for a call to the `getSignatureStatuses` Solana RPC method.
 type GetSignatureStatusesParams = record {
@@ -809,6 +863,10 @@ service : (InstallArgs,) -> {
   // Call the Solana `getRecentPrioritizationFees` RPC method and return the resulting slot.
   getRecentPrioritizationFees : (RpcSources, opt GetRecentPrioritizationFeesRpcConfig, opt GetRecentPrioritizationFeesParams) -> (MultiGetRecentPrioritizationFeesResult);
   getRecentPrioritizationFeesCyclesCost : (RpcSources, opt GetRecentPrioritizationFeesRpcConfig, opt GetRecentPrioritizationFeesParams) ->  (RequestCostResult) query;
+
+  // Call the Solana `getSignaturesForAddress` RPC method and return the resulting signatures.
+  getSignaturesForAddress : (RpcSources, opt RpcConfig, GetSignaturesForAddressParams) -> (MultiGetSignaturesForAddressResult);
+  getSignaturesForAddressCyclesCost : (RpcSources, opt RpcConfig, GetSignaturesForAddressParams) -> (RequestCostResult) query;
 
   // Call the Solana `getSignatureStatuses` RPC method and return the resulting statuses.
   getSignatureStatuses : (RpcSources, opt RpcConfig, GetSignatureStatusesParams) -> (MultiGetSignatureStatusesResult);

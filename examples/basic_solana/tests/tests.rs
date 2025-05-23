@@ -1,4 +1,4 @@
-use basic_solana::SolanaNetwork;
+use basic_solana::{Ed25519KeyName, SolanaNetwork};
 use candid::{
     decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encode, Nat, Principal,
 };
@@ -8,8 +8,8 @@ use pocket_ic::{
 };
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    CommitmentLevel, Ed25519KeyId, OverrideProvider, RegexSubstitution, RpcAccess,
-    SupportedRpcProvider, SupportedRpcProviderId, TokenAmount,
+    CommitmentLevel, OverrideProvider, RegexSubstitution, RpcAccess, SupportedRpcProvider,
+    SupportedRpcProviderId, TokenAmount,
 };
 use solana_client::{rpc_client::RpcClient as SolanaRpcClient, rpc_config::RpcTransactionConfig};
 use solana_commitment_config::CommitmentConfig;
@@ -292,7 +292,7 @@ impl Setup {
         let basic_solana_install_args = basic_solana::InitArg {
             sol_rpc_canister_id: Some(sol_rpc_canister_id),
             solana_network: Some(SolanaNetwork::Devnet),
-            ed25519_key_id: Some(Ed25519KeyId::ProductionKey1),
+            ed25519_key_name: Some(Ed25519KeyName::MainnetProdKey1),
             solana_commitment_level: Some(CommitmentLevel::Confirmed),
         };
         env.install_canister(

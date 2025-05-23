@@ -15,23 +15,33 @@ async-trait = { workspace = true }
 candid = { workspace = true }
 derive_more = { workspace = true }
 ic-cdk = { workspace = true }
-ic-ed25519 = { workspace = true }
+ic-ed25519 = { workspace = true, optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 solana-account = { workspace = true }
 solana-account-decoder-client-types = { workspace = true }
-solana-hash = { workspace = true }
+solana-hash = { workspace = true, optional = true }
 solana-instruction = { workspace = true }
-solana-keypair = { workspace = true }
-solana-message = { workspace = true }
-solana-program = { workspace = true }
+solana-keypair = { workspace = true, optional = true }
+solana-message = { workspace = true, optional = true }
+solana-program = { workspace = true, optional = true }
 solana-pubkey = { workspace = true }
 solana-signature = { workspace = true }
-solana-transaction = { workspace = true }
+solana-transaction = { workspace = true, optional = true }
 solana-transaction-error = { workspace = true }
 solana-transaction-status-client-types = { workspace = true }
 sol_rpc_types = { version = "0.1.0", path = "../types" }
 strum = { workspace = true }
+
+[features]
+ed25519 = [
+    "ic-ed25519",
+    "solana-hash",
+    "solana-keypair",
+    "solana-message",
+    "solana-program",
+    "solana-transaction",
+]
 
 [dev-dependencies]
 assert_matches = { workspace = true }

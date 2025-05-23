@@ -19,7 +19,7 @@ ic-cdk = { workspace = true }
 ic-ed25519 = { workspace = true }
 num = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-sol_rpc_client = { path = "../../libs/client" }
+sol_rpc_client = { path = "../../libs/client", features = ["ed25519"] }
 sol_rpc_types = { path = "../../libs/types" }
 solana-account-decoder-client-types = { workspace = true }
 solana-hash = { workspace = true }
@@ -39,5 +39,5 @@ pocket-ic = { workspace = true }
 solana-client = { workspace = true }
 solana-commitment-config = { workspace = true }
 solana-keypair = { workspace = true }
-solana-rpc-client-nonce-utils = {workspace = true}
-solana-signer = {workspace = true}
+solana-rpc-client-nonce-utils = { workspace = true }
+solana-signer = { workspace = true }

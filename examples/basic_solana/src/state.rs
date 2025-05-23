@@ -1,9 +1,9 @@
 use crate::{
     ed25519::{get_ed25519_public_key, Ed25519ExtendedPublicKey},
-    InitArg, SolanaNetwork,
+    Ed25519KeyName, InitArg, SolanaNetwork,
 };
 use candid::Principal;
-use sol_rpc_types::{CommitmentLevel, Ed25519KeyId};
+use sol_rpc_types::CommitmentLevel;
 use std::{
     cell::RefCell,
     ops::{Deref, DerefMut},
@@ -34,11 +34,11 @@ pub struct State {
     solana_network: SolanaNetwork,
     solana_commitment_level: CommitmentLevel,
     ed25519_public_key: Option<Ed25519ExtendedPublicKey>,
-    ed25519_key_name: Ed25519KeyId,
+    ed25519_key_name: Ed25519KeyName,
 }
 
 impl State {
-    pub fn ed25519_key_id(&self) -> Ed25519KeyId {
+    pub fn ed25519_key_name(&self) -> Ed25519KeyName {
         self.ed25519_key_name
     }
 
@@ -62,7 +62,7 @@ impl From<InitArg> for State {
             solana_network: init_arg.solana_network.unwrap_or_default(),
             solana_commitment_level: init_arg.solana_commitment_level.unwrap_or_default(),
             ed25519_public_key: None,
-            ed25519_key_name: init_arg.ed25519_key_id.unwrap_or_default(),
+            ed25519_key_name: init_arg.ed25519_key_name.unwrap_or_default(),
         }
     }
 }
@@ -72,7 +72,7 @@ pub async fn lazy_call_ed25519_public_key() -> Ed25519ExtendedPublicKey {
         return public_key;
     }
     let public_key =
-        get_ed25519_public_key(read_state(|s| s.ed25519_key_id()), &Default::default()).await;
+        get_ed25519_public_key(read_state(|s| s.ed25519_key_name()), &Default::default()).await;
     mutate_state(|s| s.ed25519_public_key = Some(public_key.clone()));
     public_key
 }

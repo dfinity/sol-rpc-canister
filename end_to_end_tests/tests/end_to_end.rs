@@ -1,6 +1,5 @@
-use sol_rpc_client::threshold_sig::{get_pubkey, sign_transaction};
+use sol_rpc_client::ed25519::{get_pubkey, sign_message, Ed25519KeyId};
 use sol_rpc_e2e_tests::{env, Setup};
-use sol_rpc_types::Ed25519KeyId;
 use solana_compute_budget_interface::ComputeBudgetInstruction;
 use solana_hash::Hash;
 use solana_message::Message;
@@ -16,9 +15,10 @@ async fn should_send_transaction_with_recent_blockhash() {
 
     // Get the pubkey of the sender, which is derived from the given root Ed25519 key, and the
     // canister ID of the wallet canister (through which all calls are forwarded).
-    let (sender_pubkey, _) = get_pubkey(client.runtime(), None, None, Ed25519KeyId::TestKey1)
-        .await
-        .unwrap_or_else(|e| panic!("Failed to get Ed25519 public key: {e}"));
+    let (sender_pubkey, _) =
+        get_pubkey(client.runtime(), None, None, Ed25519KeyId::MainnetTestKey1)
+            .await
+            .unwrap_or_else(|e| panic!("Failed to get Ed25519 public key: {e:?}"));
 
     fn load_pubkey(key: &str) -> Pubkey {
         Pubkey::from_str(&env(key)).unwrap_or_else(|e| {
@@ -57,6 +57,7 @@ async fn should_send_transaction_with_recent_blockhash() {
     let transfer_ix =
         system_instruction::transfer(&sender_pubkey, &recipient_pubkey, transaction_amount);
 
+    // TODO XC-317: Use method to estimate recent blockhash
     let slot = client
         .get_slot()
         .send()
@@ -77,13 +78,21 @@ async fn should_send_transaction_with_recent_blockhash() {
         Some(&sender_pubkey),
         &blockhash,
     );
-    let mut transaction = Transaction::new_unsigned(message);
 
-    // Sign transaction with tEdDSA
-    let signature = sign_transaction(client.runtime(), &transaction, Ed25519KeyId::TestKey1, None)
-        .await
-        .expect("Failed to sign transaction");
-    transaction.signatures = vec![signature];
+    // Sign transaction with t-EdDSA
+    let signature = sign_message(
+        client.runtime(),
+        &message,
+        Ed25519KeyId::MainnetTestKey1,
+        None,
+    )
+    .await
+    .expect("Failed to sign transaction");
+
+    let transaction = Transaction {
+        message,
+        signatures: vec![signature],
+    };
 
     let transaction_id = client
         .send_transaction(transaction)
@@ -108,5 +117,5 @@ async fn should_send_transaction_with_recent_blockhash() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn should_send_transaction_with_durable_nonce() {
-    // TODO XC-347
+    // TODO XC-347: Same as `should_send_transaction_with_recent_blockhash` but with a durable nonce
 }
