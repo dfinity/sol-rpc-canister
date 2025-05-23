@@ -4463,7 +4463,6 @@ dependencies = [
  "solana-instruction",
  "solana-keypair",
  "solana-message",
- "solana-nonce",
  "solana-program",
  "solana-pubkey",
  "solana-rpc-client-nonce-utils",

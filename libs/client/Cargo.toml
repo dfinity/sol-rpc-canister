@@ -20,11 +20,10 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 solana-account = { workspace = true }
 solana-account-decoder-client-types = { workspace = true, features = ["zstd"] }
-solana-hash = { workspace = true, optional = true }
+solana-hash = { workspace = true }
 solana-instruction = { workspace = true }
 solana-keypair = { workspace = true, optional = true }
 solana-message = { workspace = true, optional = true }
-solana-nonce = { workspace = true, features = ["serde"] }
 solana-program = { workspace = true, optional = true }
 solana-pubkey = { workspace = true }
 solana-rpc-client-nonce-utils = { workspace = true }
@@ -39,7 +38,6 @@ thiserror = { workspace = true }
 [features]
 ed25519 = [
     "ic-ed25519",
-    "solana-hash",
     "solana-keypair",
     "solana-message",
     "solana-program",
