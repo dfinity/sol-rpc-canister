@@ -13,7 +13,7 @@ use sol_rpc_canister::{
     rpc_client::MultiRpcRequest,
 };
 use sol_rpc_types::{
-    AccountInfo, ConfirmedBlock, ConfirmedTransactionStatusWithSignature, GetAccountInfoParams,
+    Account, ConfirmedBlock, ConfirmedTransactionStatusWithSignature, GetAccountInfoParams,
     GetBalanceParams, GetBlockParams, GetRecentPrioritizationFeesParams,
     GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams,
     GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
@@ -85,7 +85,7 @@ async fn get_account_info(
     source: RpcSources,
     config: Option<RpcConfig>,
     params: GetAccountInfoParams,
-) -> MultiRpcResult<Option<AccountInfo>> {
+) -> MultiRpcResult<Option<Account>> {
     let request = MultiRpcRequest::get_account_info(source, config.unwrap_or_default(), params);
     send_multi(request).await.into()
 }

@@ -21,13 +21,13 @@ num = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 sol_rpc_client = { path = "../../libs/client", features = ["ed25519"] }
 sol_rpc_types = { path = "../../libs/types" }
-solana-account-decoder-client-types = { workspace = true }
 solana-hash = { workspace = true }
 solana-instruction = { workspace = true }
 solana-message = { workspace = true }
 solana-nonce = { workspace = true }
 solana-program = { workspace = true }
 solana-pubkey = { workspace = true }
+solana-rpc-client-nonce-utils = { workspace = true }
 solana-signature = { workspace = true }
 solana-transaction = { workspace = true, features = ["bincode"] }
 

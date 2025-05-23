@@ -6,7 +6,7 @@ use candid::CandidType;
 use derive_more::From;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    AccountInfo, CommitmentLevel, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
+    Account, CommitmentLevel, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
     GetAccountInfoParams, GetBalanceParams, GetBlockCommitmentLevel, GetBlockParams,
     GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
     GetSignatureStatusesParams, GetSignaturesForAddressLimit, GetSignaturesForAddressParams,
@@ -112,9 +112,8 @@ impl GetAccountInfoRequest {
 impl SolRpcRequest for GetAccountInfoRequest {
     type Config = RpcConfig;
     type Params = GetAccountInfoParams;
-    type CandidOutput = sol_rpc_types::MultiRpcResult<Option<AccountInfo>>;
-    type Output =
-        sol_rpc_types::MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>;
+    type CandidOutput = sol_rpc_types::MultiRpcResult<Option<Account>>;
+    type Output = sol_rpc_types::MultiRpcResult<Option<solana_account::Account>>;
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetAccountInfo

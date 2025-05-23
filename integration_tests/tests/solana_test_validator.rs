@@ -12,7 +12,7 @@ use sol_rpc_types::{
     GetTransactionParams, InstallArgs, Lamport, OverrideProvider, PrioritizationFee,
     RegexSubstitution, TransactionDetails, TransactionStatus,
 };
-use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
+use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_client::rpc_client::{
     GetConfirmedSignaturesForAddress2Config, RpcClient as SolanaRpcClient,
 };
@@ -180,7 +180,6 @@ async fn should_get_account_info() {
                     .await
                     .expect_consistent()
                     .unwrap_or_else(|e| panic!("`getAccountInfo` call failed: {e}"))
-                    .map(decode_ui_account)
             },
         )
         .await;
@@ -204,7 +203,6 @@ async fn should_not_get_account_info() {
                     .await
                     .expect_consistent()
                     .unwrap_or_else(|e| panic!("`getAccountInfo` call failed: {e}"))
-                    .map(decode_ui_account)
             },
         )
         .await;
@@ -589,12 +587,6 @@ fn solana_rpc_client_get_account(
     sol.get_account_with_config(pubkey, config.unwrap_or_default())
         .expect("Failed to get account")
         .value
-}
-
-fn decode_ui_account(account: UiAccount) -> solana_account::Account {
-    account
-        .decode::<solana_account::Account>()
-        .unwrap_or_else(|| panic!("Failed to decode account"))
 }
 
 pub struct Setup {

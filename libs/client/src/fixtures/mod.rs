@@ -7,7 +7,9 @@ use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
-use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo};
+use sol_rpc_types::Account;
+use solana_account_decoder_client_types::{UiAccountData, UiAccountEncoding};
+use solana_pubkey::pubkey;
 
 impl<R> ClientBuilder<R> {
     /// Change the runtime to return the same mocked response for both update and query calls.
@@ -103,16 +105,15 @@ impl Runtime for MockRuntime {
 }
 
 /// USDC token account [`EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`](https://solscan.io/token/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v) on Solana Mainnet.
-pub fn usdc_account() -> AccountInfo {
-    AccountInfo {
+pub fn usdc_account() -> Account {
+    Account {
         lamports: 388_127_047_454,
-        data: AccountData::Binary(
+        data: UiAccountData::Binary(
             "KLUv/QBYkQIAAQAAAJj+huiNm+Lqi8HMpIeLKYjCQPUrhCS/tA7Rot3LXhmbQLUAvmbxIwAGAQEAAABicKqKWcWUBbRShshncubNEm6bil06OFNtN/e0FOi2Zw==".to_string(),
-            AccountEncoding::Base64Zstd,
-        ),
-        owner: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA".to_string(),
+            UiAccountEncoding::Base64Zstd,
+        ).decode().unwrap(),
+        owner: pubkey!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA").into(),
         executable: false,
         rent_epoch: 18_446_744_073_709_551_615,
-        space: 82,
     }
 }

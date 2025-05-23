@@ -24,7 +24,7 @@ pub use rpc_client::{
 };
 use serde::{Serialize, Serializer};
 pub use solana::{
-    account::{AccountData, AccountEncoding, AccountInfo, ParsedAccount},
+    account::Account,
     request::{
         CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
         GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,

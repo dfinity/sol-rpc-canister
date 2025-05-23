@@ -1,10 +1,11 @@
 use crate::{
-    solana::account::AccountInfo, ConfirmedBlock, RpcResult, RpcSource, Signature, TokenAmount,
-    TransactionInfo, TransactionStatus,
+    solana::account::Account, ConfirmedBlock, RpcError, RpcResult, RpcSource, Signature,
+    TokenAmount, TransactionInfo, TransactionStatus,
 };
 use candid::CandidType;
 use serde::Deserialize;
-use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
+use solana_account_decoder_client_types::token::UiTokenAmount;
+use solana_account_decoder_client_types::UiAccount;
 use solana_transaction_status_client_types::{
     EncodedConfirmedTransactionWithStatusMeta, UiConfirmedBlock,
 };
@@ -92,15 +93,26 @@ impl From<MultiRpcResult<Signature>> for MultiRpcResult<solana_signature::Signat
     }
 }
 
-impl From<MultiRpcResult<Option<AccountInfo>>> for MultiRpcResult<Option<UiAccount>> {
-    fn from(result: MultiRpcResult<Option<AccountInfo>>) -> Self {
+impl From<MultiRpcResult<Option<Account>>> for MultiRpcResult<Option<solana_account::Account>> {
+    fn from(result: MultiRpcResult<Option<Account>>) -> Self {
         result.map(|maybe_account| maybe_account.map(|account| account.into()))
     }
 }
 
-impl From<MultiRpcResult<Option<UiAccount>>> for MultiRpcResult<Option<AccountInfo>> {
+impl From<MultiRpcResult<Option<UiAccount>>> for MultiRpcResult<Option<Account>> {
     fn from(result: MultiRpcResult<Option<UiAccount>>) -> Self {
-        result.map(|maybe_account| maybe_account.map(|account| account.into()))
+        result.and_then(|maybe_account| {
+            maybe_account
+                .map(|account| {
+                    account
+                        .decode::<solana_account::Account>()
+                        .ok_or(RpcError::ValidationError(
+                            "Failed to decode account".to_string(),
+                        ))
+                        .map(Account::from)
+                })
+                .transpose()
+        })
     }
 }
 

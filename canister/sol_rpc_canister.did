@@ -232,56 +232,18 @@ type Signature = text;
 // Example: "DzfXchZJoLMG3cNftcf2sw7qatkkuwQf4xH15N5wkKAb"
 type Hash = text;
 
-// Solana account info.
-type AccountInfo = record {
+// Solana account as returned by the `getAccountInfo` RPC method.
+type Account = record {
     // Number of lamports assigned to this account.
     lamports: nat64;
     // Data associated with the account.
-    data: AccountData;
+    data: vec nat8;
     // Pubkey of the program this account has been assigned to.
     owner: Pubkey;
     // Boolean indicating if the account contains a program (and is strictly read-only).
     executable: bool;
     // The epoch at which this account will next owe rent.
     rentEpoch: nat64;
-    // The data size of the account.
-    space: nat64;
-};
-
-// Represents Solana account data.
-type AccountData = variant {
-  // The data is formatted as a binary string. This is a legacy format retained for RPC backwards compatibility
-  legacyBinary: text;
-  // The data is formatted as a JSON `ParsedAccount`.
-  json: ParsedAccount;
-  // The data is formatted as a string containing the account data encoded according to one of
-  // the `AccountEncoding` formats.
-  binary: record { text; AccountEncoding };
-};
-
-// Represents Solana account data parsed as JSON.
-type ParsedAccount = record {
-    // The Solana program that interprets the data.
-    program: Pubkey;
-    // The account data parsed as JSON and formatted as a string.
-    parsed: text;
-    // The data size of the account.
-    space: nat64;
-};
-
-// Represents an encoding format for Solana account data.
-type AccountEncoding = variant {
-    // The account data is formatted as a binary string. Legacy. Retained for RPC backwards compatibility.
-    binary;
-    // The account data is formatted as a base-58 string.
-    base58;
-    // The account data is formatted as a base-64 string.
-    base64;
-    // The account data was first compressed using Zstandard and the
-    // result was then formatted as a base-64 string.
-    "base64+zstd";
-    // The account data is formatted as a JSON string.
-    jsonParsed;
 };
 
 // The parameters for a Solana `getTransaction` RPC method call.

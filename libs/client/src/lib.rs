@@ -308,7 +308,7 @@ impl<R> SolRpcClient<R> {
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # use sol_rpc_client::fixtures::usdc_account;
-    /// # use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo, MultiRpcResult};
+    /// # use sol_rpc_types::{Account, MultiRpcResult};
     /// let client = SolRpcClient::builder_for_ic()
     /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(Some(usdc_account()))))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
@@ -322,7 +322,7 @@ impl<R> SolRpcClient<R> {
     ///     .unwrap()
     ///     .unwrap();
     ///
-    /// assert_eq!(usdc_account.owner, "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA".to_string());
+    /// assert_eq!(usdc_account.owner, pubkey!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"));
     /// # Ok(())
     /// # }
     pub fn get_account_info(
@@ -332,8 +332,8 @@ impl<R> SolRpcClient<R> {
         R,
         RpcConfig,
         GetAccountInfoParams,
-        sol_rpc_types::MultiRpcResult<Option<sol_rpc_types::AccountInfo>>,
-        sol_rpc_types::MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>,
+        sol_rpc_types::MultiRpcResult<Option<sol_rpc_types::Account>>,
+        sol_rpc_types::MultiRpcResult<Option<solana_account::Account>>,
     > {
         RequestBuilder::new(
             self.clone(),

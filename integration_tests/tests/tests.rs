@@ -18,9 +18,7 @@ use sol_rpc_types::{
     RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster,
     SupportedRpcProvider, SupportedRpcProviderId, TransactionError,
 };
-use solana_account_decoder_client_types::{
-    token::UiTokenAmount, UiAccount, UiAccountData, UiAccountEncoding,
-};
+use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccountData, UiAccountEncoding};
 use solana_pubkey::pubkey;
 use solana_signer::Signer;
 use solana_transaction_status_client_types::{TransactionConfirmationStatus, TransactionStatus};
@@ -178,12 +176,14 @@ mod get_account_info_tests {
                         "result": {
                             "context": { "apiVersion": "2.0.15", "slot": 341197053 },
                             "value": {
-                                "data": ["1234", "base58"],
+                                "data": [
+                                    "KLUv/QBYkQIAAQAAAJj+huiNm+Lqi8HMpIeLKYjCQPUrhCS/tA7Rot3LXhmbQLUAvmbxIwAGAQEAAABicKqKWcWUBbRShshncubNEm6bil06OFNtN/e0FOi2Zw==", 
+                                    "base64+zstd"
+                                ],
                                 "executable": false,
-                                "lamports": 88849814690250u64,
-                                "owner": "11111111111111111111111111111111",
-                                "rentEpoch": 18446744073709551615u64,
-                                "space": 0
+                                "lamports": 388_127_047_454u64,
+                                "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+                                "rentEpoch": 18_446_744_073_709_551_615u64,
                             }
                         },
                     }),
@@ -196,13 +196,15 @@ mod get_account_info_tests {
 
             assert_eq!(
                 results,
-                Ok(UiAccount {
+                Ok(solana_account::Account {
                     lamports: 88849814690250,
-                    data: UiAccountData::Binary("1234".to_string(), UiAccountEncoding::Base58),
-                    owner: "11111111111111111111111111111111".to_string(),
+                    data: UiAccountData::Binary(
+                        "KLUv/QBYkQIAAQAAAJj+huiNm+Lqi8HMpIeLKYjCQPUrhCS/tA7Rot3LXhmbQLUAvmbxIwAGAQEAAABicKqKWcWUBbRShshncubNEm6bil06OFNtN/e0FOi2Zw==".to_string(), 
+                        UiAccountEncoding::Base64Zstd
+                    ).decode().unwrap(),
+                    owner: pubkey!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
                     executable: false,
-                    rent_epoch: 18446744073709551615,
-                    space: Some(0),
+                    rent_epoch: 18_446_744_073_709_551_615,
                 }
                 .into())
             );
