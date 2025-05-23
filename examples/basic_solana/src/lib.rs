@@ -5,10 +5,10 @@ pub mod state;
 
 use crate::state::{read_state, State};
 use candid::{CandidType, Deserialize, Principal};
-use sol_rpc_client::{IcRuntime, SolRpcClient};
+use sol_rpc_client::{ed25519::Ed25519KeyId, IcRuntime, SolRpcClient};
 use sol_rpc_types::{CommitmentLevel, MultiRpcResult, RpcSources, SolanaCluster};
 use solana_hash::Hash;
-use std::{fmt::Display, str::FromStr};
+use std::str::FromStr;
 
 // Fetch a recent blockhash using the Solana `getSlot` and `getBlock` methods.
 // Since the `getSlot` method might fail due to Solana's fast blocktime, and some slots do not
@@ -93,20 +93,18 @@ impl From<SolanaNetwork> for SolanaCluster {
 #[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq, Clone, Copy)]
 pub enum Ed25519KeyName {
     #[default]
-    TestKeyLocalDevelopment,
-    TestKey1,
-    ProductionKey1,
+    LocalDevelopment,
+    MainnetTestKey1,
+    MainnetProdKey1,
 }
 
-impl Display for Ed25519KeyName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let str = match self {
-            Ed25519KeyName::TestKeyLocalDevelopment => "dfx_test_key",
-            Ed25519KeyName::TestKey1 => "test_key_1",
-            Ed25519KeyName::ProductionKey1 => "key_1",
+impl From<Ed25519KeyName> for Ed25519KeyId {
+    fn from(key_id: Ed25519KeyName) -> Self {
+        match key_id {
+            Ed25519KeyName::LocalDevelopment => Self::LocalDevelopment,
+            Ed25519KeyName::MainnetTestKey1 => Self::MainnetTestKey1,
+            Ed25519KeyName::MainnetProdKey1 => Self::MainnetProdKey1,
         }
-        .to_string();
-        write!(f, "{}", str)
     }
 }
 

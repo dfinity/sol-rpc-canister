@@ -36,6 +36,7 @@ use solana_transaction_status_client_types::UiTransactionEncoding;
 use std::{
     future::Future,
     iter::zip,
+    num::NonZeroU8,
     str::FromStr,
     thread,
     thread::sleep,
@@ -124,7 +125,7 @@ async fn should_get_recent_prioritization_fees() {
             |ic| async move {
                 ic.get_recent_prioritization_fees(&[account])
                     .unwrap()
-                    .with_max_length(150)
+                    .with_max_length(NonZeroU8::new(150).unwrap())
                     .with_max_slot_rounding_error(1)
                     .send()
                     .await

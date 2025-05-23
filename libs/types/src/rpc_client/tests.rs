@@ -1,4 +1,7 @@
 use crate::{HttpHeader, RpcEndpoint};
+use candid::{CandidType, Decode, Encode};
+use proptest::{prelude::TestCaseError, prop_assert_eq};
+use serde::de::DeserializeOwned;
 
 #[test]
 fn should_contain_host_without_sensitive_information() {
@@ -28,7 +31,7 @@ fn should_contain_host_without_sensitive_information() {
 }
 
 mod rounding_error_tests {
-    use crate::RoundingError;
+    use crate::{rpc_client::tests::encode_decode_roundtrip, RoundingError};
     use proptest::proptest;
 
     #[test]
@@ -59,5 +62,54 @@ mod rounding_error_tests {
         fn should_not_panic (rounding_error: u64, slot: u64) {
             let _result = RoundingError::new(rounding_error).round(slot);
         }
+
+        #[test]
+        fn should_encode_decode (rounding_error: u64) {
+            encode_decode_roundtrip(RoundingError::new(rounding_error), rounding_error)?;
+        }
+
     }
+}
+
+mod non_zero_u8 {
+    use crate::rpc_client::{tests::encode_decode_roundtrip, NonZeroU8};
+    use candid::{Decode, Encode};
+    use proptest::proptest;
+
+    proptest! {
+        #[test]
+        fn should_encode_decode(v in 1..255_u8) {
+                encode_decode_roundtrip(NonZeroU8::try_from(v).unwrap(), v)?;
+        }
+    }
+
+    #[test]
+    fn should_fail_deserialization_when_zero() {
+        let encoded_zero = Encode!(&0_u8).unwrap();
+        assert!(Decode!(&encoded_zero, NonZeroU8).is_err());
+    }
+}
+
+fn encode_decode_roundtrip<T, U>(wrapped_value: T, inner_value: U) -> Result<(), TestCaseError>
+where
+    T: CandidType + DeserializeOwned + PartialEq + std::fmt::Debug,
+    U: CandidType,
+{
+    let encoded_wrapped_value = Encode!(&wrapped_value).unwrap();
+    let encoded_inner_value = Encode!(&inner_value).unwrap();
+    prop_assert_eq!(
+        &encoded_wrapped_value,
+        &encoded_inner_value,
+        "Encoded value differ for {:?}",
+        wrapped_value
+    );
+
+    let decoded_wrapped_value = Decode!(&encoded_wrapped_value, T).unwrap();
+    prop_assert_eq!(
+        &decoded_wrapped_value,
+        &wrapped_value,
+        "Decoded value differ for {:?}",
+        wrapped_value
+    );
+    Ok(())
 }

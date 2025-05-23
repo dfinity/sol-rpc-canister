@@ -17,7 +17,7 @@ ic-cdk = { workspace = true }
 ic-ed25519 = { workspace = true }
 num = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-sol_rpc_client = { path = "../../libs/client" }
+sol_rpc_client = { path = "../../libs/client", features = ["ed25519"] }
 sol_rpc_types = { path = "../../libs/types" }
 solana-hash = { workspace = true }
 solana-instruction = { workspace = true }

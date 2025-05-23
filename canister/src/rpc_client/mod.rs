@@ -261,6 +261,7 @@ impl GetRecentPrioritizationFeesRequest {
         config: GetRecentPrioritizationFeesRpcConfig,
         params: Params,
     ) -> Result<Self, ProviderError> {
+        let max_length = config.max_length();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
         let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
         let max_response_bytes = config
@@ -272,8 +273,8 @@ impl GetRecentPrioritizationFeesRequest {
             JsonRpcRequest::new("getRecentPrioritizationFees", params.into()),
             max_response_bytes,
             ResponseTransform::GetRecentPrioritizationFees {
+                max_length: max_length.into(),
                 max_slot_rounding_error: config.max_slot_rounding_error.unwrap_or_default(),
-                max_length: config.max_length.unwrap_or(100),
             },
             ReductionStrategy::from(consensus_strategy),
         ))

@@ -138,9 +138,10 @@ pub async fn create_nonce_account(owner: Option<Principal>) -> String {
     );
 
     let signatures = vec![
-        wallet.sign_with_ed25519(&message, &payer).await,
-        wallet.sign_with_ed25519(&message, &nonce_account).await,
+        payer.sign_message(&message).await,
+        nonce_account.sign_message(&message).await,
     ];
+
     let transaction = Transaction {
         message,
         signatures,
@@ -194,7 +195,7 @@ pub async fn create_associated_token_account(
         &get_recent_blockhash(&client).await,
     );
 
-    let signatures = vec![wallet.sign_with_ed25519(&message, &payer).await];
+    let signatures = vec![payer.sign_message(&message).await];
     let transaction = Transaction {
         message,
         signatures,
@@ -233,7 +234,7 @@ pub async fn send_sol(owner: Option<Principal>, to: String, amount: Nat) -> Stri
         Some(payer.as_ref()),
         &get_recent_blockhash(&client).await,
     );
-    let signatures = vec![wallet.sign_with_ed25519(&message, &payer).await];
+    let signatures = vec![payer.sign_message(&message).await];
     let transaction = Transaction {
         message,
         signatures,
@@ -272,7 +273,7 @@ pub async fn send_sol_with_durable_nonce(
     let blockhash = Hash::from(get_nonce(Some(nonce_account.as_ref().into())).await);
 
     let message = Message::new_with_blockhash(instructions, Some(payer.as_ref()), &blockhash);
-    let signatures = vec![wallet.sign_with_ed25519(&message, &payer).await];
+    let signatures = vec![payer.sign_message(&message).await];
     let transaction = Transaction {
         message,
         signatures,
@@ -314,7 +315,7 @@ pub async fn send_spl_token(
         Some(payer.as_ref()),
         &get_recent_blockhash(&client).await,
     );
-    let signatures = vec![wallet.sign_with_ed25519(&message, &payer).await];
+    let signatures = vec![payer.sign_message(&message).await];
     let transaction = Transaction {
         message,
         signatures,

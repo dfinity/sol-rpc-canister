@@ -13,13 +13,14 @@ use serde_json::{from_slice, Value};
 use sol_rpc_types::{PrioritizationFee, RoundingError};
 use solana_clock::Slot;
 use solana_transaction_status_client_types::TransactionStatus;
-use std::fmt::Debug;
-use strum::EnumIter;
+use std::{fmt::Debug, num::NonZeroU8};
 
 /// Describes a payload transformation to execute before passing the HTTP response to consensus.
 /// The purpose of these transformations is to ensure that the response encoding is deterministic
 /// (the field order is the same).
-#[derive(Clone, Debug, Decode, Encode, EnumIter)]
+#[derive(Clone, Debug, Decode, Encode)]
+#[cfg_attr(test, derive(strum::EnumDiscriminants))]
+#[cfg_attr(test, strum_discriminants(derive(strum::EnumIter)))]
 pub enum ResponseTransform {
     #[n(0)]
     GetAccountInfo,
@@ -32,7 +33,7 @@ pub enum ResponseTransform {
         #[cbor(n(0), with = "crate::rpc_client::cbor::rounding_error")]
         max_slot_rounding_error: RoundingError,
         #[n(1)]
-        max_length: u8,
+        max_length: NonZeroU8,
     },
     #[n(4)]
     GetSignaturesForAddress,
@@ -110,7 +111,7 @@ impl ResponseTransform {
                         // "Currently, a node's prioritization-fee cache stores data from up to 150 blocks."
                         // Manual testing shows that the result seems to always contain 150 elements on mainnet (also for not used addresses)
                         // but not necessarily when using a local validator.
-                        if fees.is_empty() || max_length == &0 {
+                        if fees.is_empty() {
                             return Vec::default();
                         }
                         // The order of the prioritization fees in the response is not specified in the
@@ -128,7 +129,7 @@ impl ResponseTransform {
 
                         fees.into_iter()
                             .skip_while(|fee| fee.slot > max_rounded_slot)
-                            .take(*max_length as usize)
+                            .take(max_length.get() as usize)
                             .collect::<Vec<_>>()
                             .into_iter()
                             .rev()

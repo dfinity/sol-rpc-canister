@@ -133,7 +133,7 @@ mod get_provider_tests {
         let client = setup.client().build();
         let providers = client.get_providers().await;
 
-        assert_eq!(providers.len(), 9);
+        assert_eq!(providers.len(), 11);
 
         assert_eq!(
             providers[0],
@@ -476,6 +476,7 @@ mod get_recent_prioritization_fees_tests {
     use serde_json::json;
     use sol_rpc_int_tests::{mock::MockOutcallBuilder, Setup, SolRpcTestClient};
     use sol_rpc_types::PrioritizationFee;
+    use std::num::NonZeroU8;
 
     #[tokio::test]
     async fn should_get_fees_with_rounding() {
@@ -1107,7 +1108,7 @@ mod get_recent_prioritization_fees_tests {
             .get_recent_prioritization_fees(&[USDC_PUBLIC_KEY])
             .unwrap()
             .with_max_slot_rounding_error(10)
-            .with_max_length(5)
+            .with_max_length(NonZeroU8::new(5).unwrap())
             .send()
             .await
             .expect_consistent();

@@ -71,6 +71,7 @@ async fn should_send_transaction() {
         .expect("Block not found");
     let blockhash = Hash::from_str(&block.blockhash).expect("Failed to parse blockhash");
 
+    // TODO XC-317: Use tEDdSA
     let transaction = Transaction::new_signed_with_payer(
         &[set_cu_limit_ix, add_priority_fee_ix, transfer_ix],
         Some(&sender.pubkey()),
