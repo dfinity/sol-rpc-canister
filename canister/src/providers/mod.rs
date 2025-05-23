@@ -124,8 +124,7 @@ pub struct Providers {
 impl Providers {
     // Order of providers matters!
     // The threshold consensus strategy will consider the first `total` providers in the order
-    // they are specified (taking the default ones first, followed by the non default ones if necessary)
-    // if the providers are not explicitly specified by the caller.
+    // they are specified if the providers are not explicitly specified by the caller.
     const MAINNET_PROVIDERS: &'static [SupportedRpcProviderId] = &[
         SupportedRpcProviderId::AlchemyMainnet,
         SupportedRpcProviderId::HeliusMainnet,
