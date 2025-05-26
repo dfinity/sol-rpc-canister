@@ -97,7 +97,7 @@ async fn should_send_transaction_with_durable_nonce() {
         // TODO XC-339: Revise estimate of CU limit
         let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(2000);
         instructions.insert(0, set_cu_limit_ix);
-        // Instruction to advance nonce account
+        // Instruction to advance nonce account; this instruction must be first.
         let advance_nonce_ix =
             system_instruction::advance_nonce_account(&sender_nonce_account, &sender_pubkey);
         instructions.insert(0, advance_nonce_ix);
