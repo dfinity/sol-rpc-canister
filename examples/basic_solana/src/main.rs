@@ -1,7 +1,7 @@
 use base64::{prelude::BASE64_STANDARD, Engine};
 use basic_solana::{
     client, get_recent_blockhash, solana_wallet::SolanaWallet, spl, state::init_state,
-    validate_caller_not_anonymous, InitArg,
+    validate_caller_not_anonymous, InitArg, TokenProgramId,
 };
 use candid::{Nat, Principal};
 use ic_cdk::{init, post_upgrade, update};
@@ -43,11 +43,20 @@ pub async fn nonce_account(owner: Option<Principal>) -> sol_rpc_types::Pubkey {
 }
 
 #[update]
-pub async fn associated_token_account(owner: Option<Principal>, mint_account: String) -> String {
+pub async fn associated_token_account(
+    owner: Option<Principal>,
+    mint_account: String,
+    token_program_id: Option<TokenProgramId>,
+) -> String {
     let owner = owner.unwrap_or_else(validate_caller_not_anonymous);
     let mint = Pubkey::from_str(&mint_account).unwrap();
     let wallet = SolanaWallet::new(owner).await;
-    spl::get_associated_token_address(wallet.solana_account().as_ref(), &mint).to_string()
+    spl::get_associated_token_address(
+        wallet.solana_account().as_ref(),
+        &mint,
+        &token_program_id.unwrap_or_default().id(),
+    )
+    .to_string()
 }
 
 #[update]
@@ -101,8 +110,13 @@ pub async fn get_nonce(account: Option<sol_rpc_types::Pubkey>) -> sol_rpc_types:
 }
 
 #[update]
-pub async fn get_spl_token_balance(account: Option<String>, mint_account: String) -> TokenAmount {
-    let account = account.unwrap_or(associated_token_account(None, mint_account).await);
+pub async fn get_spl_token_balance(
+    account: Option<String>,
+    mint_account: String,
+    token_program_id: Option<TokenProgramId>,
+) -> TokenAmount {
+    let account =
+        account.unwrap_or(associated_token_account(None, mint_account, token_program_id).await);
     let public_key = Pubkey::from_str(&account).unwrap();
     client()
         .get_token_account_balance(public_key)
@@ -179,6 +193,7 @@ pub async fn create_nonce_account(owner: Option<Principal>) -> String {
 pub async fn create_associated_token_account(
     owner: Option<Principal>,
     mint_account: String,
+    token_program_id: Option<TokenProgramId>,
 ) -> String {
     let client = client();
 
@@ -188,8 +203,12 @@ pub async fn create_associated_token_account(
     let payer = wallet.solana_account();
     let mint = Pubkey::from_str(&mint_account).unwrap();
 
-    let (associated_token_account, instruction) =
-        spl::create_associated_token_account_instruction(payer.as_ref(), payer.as_ref(), &mint);
+    let (associated_token_account, instruction) = spl::create_associated_token_account_instruction(
+        payer.as_ref(),
+        payer.as_ref(),
+        &mint,
+        &token_program_id.unwrap_or_default().id(),
+    );
 
     if let Some(_account) = client
         .get_account_info(associated_token_account)
@@ -311,6 +330,7 @@ pub async fn send_sol_with_durable_nonce(
 pub async fn send_spl_token(
     owner: Option<Principal>,
     mint_account: String,
+    token_program_id: Option<TokenProgramId>,
     to: String,
     amount: Nat,
 ) -> String {
@@ -324,10 +344,24 @@ pub async fn send_spl_token(
     let mint = Pubkey::from_str(&mint_account).unwrap();
     let amount = amount.0.to_u64().unwrap();
 
-    let from = spl::get_associated_token_address(payer.as_ref(), &mint);
-    let to = spl::get_associated_token_address(&recipient, &mint);
+    let from = spl::get_associated_token_address(
+        payer.as_ref(),
+        &mint,
+        &token_program_id.unwrap_or_default().id(),
+    );
+    let to = spl::get_associated_token_address(
+        &recipient,
+        &mint,
+        &token_program_id.unwrap_or_default().id(),
+    );
 
-    let instruction = spl::transfer_instruction(&from, &to, payer.as_ref(), amount);
+    let instruction = spl::transfer_instruction_with_program_id(
+        &from,
+        &to,
+        payer.as_ref(),
+        amount,
+        &token_program_id.unwrap_or_default().id(),
+    );
 
     let message = Message::new_with_blockhash(
         &[instruction],

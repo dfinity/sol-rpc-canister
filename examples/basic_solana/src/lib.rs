@@ -6,7 +6,7 @@ pub mod state;
 use crate::state::{read_state, State};
 use candid::{CandidType, Deserialize, Principal};
 use sol_rpc_client::{ed25519::Ed25519KeyId, IcRuntime, SolRpcClient};
-use sol_rpc_types::{CommitmentLevel, MultiRpcResult, RpcSources, SolanaCluster};
+use sol_rpc_types::{CommitmentLevel, MultiRpcResult, Pubkey, RpcSources, SolanaCluster};
 use solana_hash::Hash;
 use std::str::FromStr;
 
@@ -86,6 +86,22 @@ impl From<SolanaNetwork> for SolanaCluster {
             SolanaNetwork::Mainnet => Self::Mainnet,
             SolanaNetwork::Devnet => Self::Devnet,
             SolanaNetwork::Testnet => Self::Testnet,
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq, Clone, Copy)]
+pub enum TokenProgramId {
+    TokenProgram,
+    #[default]
+    Token2022Program,
+}
+
+impl TokenProgramId {
+    pub fn id(&self) -> solana_pubkey::Pubkey {
+        match self {
+            Self::TokenProgram => spl::token_program::id(),
+            Self::Token2022Program => spl::token_2022_program::id(),
         }
     }
 }

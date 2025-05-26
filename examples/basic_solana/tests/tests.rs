@@ -1,4 +1,4 @@
-use basic_solana::{Ed25519KeyName, SolanaNetwork};
+use basic_solana::{Ed25519KeyName, SolanaNetwork, TokenProgramId};
 use candid::{
     decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encode, Nat, Principal,
 };
@@ -134,7 +134,11 @@ fn test_basic_solana() {
         .update_call::<_, String>(
             SENDER,
             "create_associated_token_account",
-            (None::<Principal>, mint_account.to_string()),
+            (
+                None::<Principal>,
+                mint_account.to_string(),
+                None::<TokenProgramId>,
+            ),
         )
         .parse()
         .unwrap();
@@ -145,7 +149,11 @@ fn test_basic_solana() {
         .update_call::<_, String>(
             RECEIVER,
             "create_associated_token_account",
-            (None::<Principal>, mint_account.to_string()),
+            (
+                None::<Principal>,
+                mint_account.to_string(),
+                None::<TokenProgramId>,
+            ),
         )
         .parse()
         .unwrap();
@@ -189,6 +197,7 @@ fn test_basic_solana() {
             (
                 None::<Principal>,
                 mint_account.to_string(),
+                None::<TokenProgramId>,
                 receiver_solana_account.to_string(),
                 Nat::from(1_000_u16),
             ),
@@ -208,6 +217,7 @@ fn test_basic_solana() {
         (
             Some(sender_associated_token_account.to_string()),
             mint_account.to_string(),
+            None::<TokenProgramId>,
         ),
     );
     assert_eq!(
@@ -231,6 +241,7 @@ fn test_basic_solana() {
         (
             Some(receiver_associated_token_account.to_string()),
             mint_account.to_string(),
+            None::<TokenProgramId>,
         ),
     );
     assert_eq!(
