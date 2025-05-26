@@ -89,7 +89,7 @@ async fn should_send_transaction_with_durable_nonce() {
     let modify_instructions = |instructions: &mut Vec<Instruction>| {
         let advance_nonce_ix =
             system_instruction::advance_nonce_account(&sender_nonce_account, &sender_pubkey);
-        instructions.insert(2, advance_nonce_ix);
+        instructions.insert(0, advance_nonce_ix);
     };
 
     send_transaction_test(
