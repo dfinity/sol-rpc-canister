@@ -1,7 +1,7 @@
 use base64::{prelude::BASE64_STANDARD, Engine};
 use basic_solana::{
     client, get_recent_blockhash, solana_wallet::SolanaWallet, spl, state::init_state,
-    validate_caller_not_anonymous, InitArg, TokenProgramId,
+    validate_caller_not_anonymous, InitArg,
 };
 use candid::{Nat, Principal};
 use ic_cdk::{init, post_upgrade, update};
@@ -43,18 +43,14 @@ pub async fn nonce_account(owner: Option<Principal>) -> sol_rpc_types::Pubkey {
 }
 
 #[update]
-pub async fn associated_token_account(
-    owner: Option<Principal>,
-    mint_account: String,
-    token_program_id: Option<TokenProgramId>,
-) -> String {
+pub async fn associated_token_account(owner: Option<Principal>, mint_account: String) -> String {
     let owner = owner.unwrap_or_else(validate_caller_not_anonymous);
-    let mint = Pubkey::from_str(&mint_account).unwrap();
     let wallet = SolanaWallet::new(owner).await;
+    let mint = Pubkey::from_str(&mint_account).unwrap();
     spl::get_associated_token_address(
         wallet.solana_account().as_ref(),
         &mint,
-        &token_program_id.unwrap_or_default().id(),
+        &get_account_owner(&mint).await,
     )
     .to_string()
 }
@@ -110,13 +106,8 @@ pub async fn get_nonce(account: Option<sol_rpc_types::Pubkey>) -> sol_rpc_types:
 }
 
 #[update]
-pub async fn get_spl_token_balance(
-    account: Option<String>,
-    mint_account: String,
-    token_program_id: Option<TokenProgramId>,
-) -> TokenAmount {
-    let account =
-        account.unwrap_or(associated_token_account(None, mint_account, token_program_id).await);
+pub async fn get_spl_token_balance(account: Option<String>, mint_account: String) -> TokenAmount {
+    let account = account.unwrap_or(associated_token_account(None, mint_account).await);
     let public_key = Pubkey::from_str(&account).unwrap();
     client()
         .get_token_account_balance(public_key)
@@ -193,7 +184,6 @@ pub async fn create_nonce_account(owner: Option<Principal>) -> String {
 pub async fn create_associated_token_account(
     owner: Option<Principal>,
     mint_account: String,
-    token_program_id: Option<TokenProgramId>,
 ) -> String {
     let client = client();
 
@@ -207,7 +197,7 @@ pub async fn create_associated_token_account(
         payer.as_ref(),
         payer.as_ref(),
         &mint,
-        &token_program_id.unwrap_or_default().id(),
+        &get_account_owner(&mint).await,
     );
 
     if let Some(_account) = client
@@ -330,7 +320,6 @@ pub async fn send_sol_with_durable_nonce(
 pub async fn send_spl_token(
     owner: Option<Principal>,
     mint_account: String,
-    token_program_id: Option<TokenProgramId>,
     to: String,
     amount: Nat,
 ) -> String {
@@ -344,23 +333,17 @@ pub async fn send_spl_token(
     let mint = Pubkey::from_str(&mint_account).unwrap();
     let amount = amount.0.to_u64().unwrap();
 
-    let from = spl::get_associated_token_address(
-        payer.as_ref(),
-        &mint,
-        &token_program_id.unwrap_or_default().id(),
-    );
-    let to = spl::get_associated_token_address(
-        &recipient,
-        &mint,
-        &token_program_id.unwrap_or_default().id(),
-    );
+    let token_program = get_account_owner(&mint).await;
+
+    let from = spl::get_associated_token_address(payer.as_ref(), &mint, &token_program);
+    let to = spl::get_associated_token_address(&recipient, &mint, &token_program);
 
     let instruction = spl::transfer_instruction_with_program_id(
         &from,
         &to,
         payer.as_ref(),
         amount,
-        &token_program_id.unwrap_or_default().id(),
+        &token_program,
     );
 
     let message = Message::new_with_blockhash(
@@ -381,6 +364,19 @@ pub async fn send_spl_token(
         .expect_consistent()
         .expect("Call to `sendTransaction` failed")
         .to_string()
+}
+
+async fn get_account_owner(account: &Pubkey) -> Pubkey {
+    let token_program = client()
+        .get_account_info(account.clone())
+        .with_encoding(GetAccountInfoEncoding::Base64)
+        .send()
+        .await
+        .expect_consistent()
+        .expect("Call to `getAccountInfo` failed")
+        .unwrap_or_else(|| panic!("Account not found for pubkey `{account}`"))
+        .owner;
+    Pubkey::from_str(&token_program).unwrap()
 }
 
 fn main() {}

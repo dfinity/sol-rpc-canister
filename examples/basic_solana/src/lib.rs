@@ -91,22 +91,6 @@ impl From<SolanaNetwork> for SolanaCluster {
 }
 
 #[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq, Clone, Copy)]
-pub enum TokenProgramId {
-    TokenProgram,
-    #[default]
-    Token2022Program,
-}
-
-impl TokenProgramId {
-    pub fn id(&self) -> solana_pubkey::Pubkey {
-        match self {
-            Self::TokenProgram => spl::token_program::id(),
-            Self::Token2022Program => spl::token_2022_program::id(),
-        }
-    }
-}
-
-#[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq, Clone, Copy)]
 pub enum Ed25519KeyName {
     #[default]
     LocalDevelopment,
