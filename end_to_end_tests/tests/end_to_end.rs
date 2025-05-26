@@ -54,7 +54,12 @@ async fn should_send_transaction_with_recent_blockhash() {
         Hash::from_str(&block.blockhash).expect("Failed to parse blockhash")
     };
 
-    let modify_instructions = |_instructions: &mut Vec<Instruction>| {};
+    let modify_instructions = |instructions: &mut Vec<Instruction>| {
+        // Set a CU limit for instructions to: perform a SOL transfer, set the CU price, and set the
+        // CU limit
+        let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(500);
+        instructions.insert(0, set_cu_limit_ix);
+    };
 
     send_transaction_test(
         sender_pubkey,
@@ -87,6 +92,12 @@ async fn should_send_transaction_with_durable_nonce() {
     };
 
     let modify_instructions = |instructions: &mut Vec<Instruction>| {
+        // Set a CU limit for instructions to: perform a SOL transfer, advance the nonce account,
+        // and set the CU price, and set the CU limit
+        // TODO XC-339: Revise estimate of CU limit
+        let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(2000);
+        instructions.insert(0, set_cu_limit_ix);
+        // Instruction to advance nonce account
         let advance_nonce_ix =
             system_instruction::advance_nonce_account(&sender_nonce_account, &sender_pubkey);
         instructions.insert(0, advance_nonce_ix);
@@ -137,9 +148,6 @@ async fn send_transaction_test<F, S>(
     };
     let add_priority_fee_ix = ComputeBudgetInstruction::set_compute_unit_price(priority_fee);
 
-    // Set a CU limit based for a simple SOL transfer + instructions to set the CU price and CU limit
-    let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(500);
-
     // Send some SOL from sender to recipient
     let transaction_amount = 1_000;
     let transfer_ix =
@@ -147,7 +155,7 @@ async fn send_transaction_test<F, S>(
 
     let blockhash = get_blockhash(&client).await;
 
-    let mut instructions = vec![set_cu_limit_ix, add_priority_fee_ix, transfer_ix];
+    let mut instructions = vec![add_priority_fee_ix, transfer_ix];
     modify_instructions(&mut instructions);
 
     let message =
