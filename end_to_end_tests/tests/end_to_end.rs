@@ -26,7 +26,7 @@ const DERIVATION_PATH_B: &[&[u8]] = &[&[2]];
 const PUBKEY_B: &str = "G7Ut56qgcEphHZmLhLimM2DfHVC7QwHfT18tvj8ntn9";
 
 // `NONCE_ACCOUNT_B` is an initialized nonce account with nonce authority `PUBKEY_B`
-const NONCE_ACCOUNT_B: &str = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+const NONCE_ACCOUNT_B: &str = "876vg5npuF9LCfc2MVWZtewBUEfcgzdbahCK7gXn5MLh";
 
 #[tokio::test(flavor = "multi_thread")]
 async fn should_send_transaction_with_recent_blockhash() {
