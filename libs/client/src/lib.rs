@@ -125,11 +125,11 @@ pub mod fixtures;
 mod request;
 
 use crate::request::{
-    GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetRecentPrioritizationFeesRequest,
-    GetRecentPrioritizationFeesRequestBuilder, GetSignatureStatusesRequest,
-    GetSignatureStatusesRequestBuilder, GetSignaturesForAddressRequest,
-    GetSignaturesForAddressRequestBuilder, GetSlotRequest, GetTokenAccountBalanceRequest,
-    GetTransactionRequest, JsonRequest, SendTransactionRequest,
+    GetAccountInfoRequest, GetAccountInfoRequestBuilder, GetBalanceRequest, GetBlockRequest,
+    GetRecentPrioritizationFeesRequest, GetRecentPrioritizationFeesRequestBuilder,
+    GetSignatureStatusesRequest, GetSignatureStatusesRequestBuilder,
+    GetSignaturesForAddressRequest, GetSignaturesForAddressRequestBuilder, GetSlotRequest,
+    GetTokenAccountBalanceRequest, GetTransactionRequest, JsonRequest, SendTransactionRequest,
 };
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
@@ -328,13 +328,7 @@ impl<R> SolRpcClient<R> {
     pub fn get_account_info(
         &self,
         params: impl Into<GetAccountInfoParams>,
-    ) -> RequestBuilder<
-        R,
-        RpcConfig,
-        GetAccountInfoParams,
-        sol_rpc_types::MultiRpcResult<Option<sol_rpc_types::AccountInfo>>,
-        sol_rpc_types::MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>,
-    > {
+    ) -> GetAccountInfoRequestBuilder<R> {
         RequestBuilder::new(
             self.clone(),
             GetAccountInfoRequest::new(params.into()),

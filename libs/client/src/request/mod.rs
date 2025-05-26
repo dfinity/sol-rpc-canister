@@ -127,7 +127,7 @@ impl SolRpcRequest for GetAccountInfoRequest {
     }
 }
 
-type GetAccountInfoRequestBuilder<R> = RequestBuilder<
+pub type GetAccountInfoRequestBuilder<R> = RequestBuilder<
     R,
     RpcConfig,
     GetAccountInfoParams,
