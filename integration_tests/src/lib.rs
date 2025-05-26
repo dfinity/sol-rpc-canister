@@ -4,12 +4,12 @@ use canhttp::http::json::ConstantSizeId;
 use canlog::{Log, LogEntry};
 use ic_cdk::api::call::RejectionCode;
 use ic_http_types::{HttpRequest, HttpResponse};
+use ic_management_canister_types::{CanisterId, CanisterSettings};
 use num_traits::ToPrimitive;
 use pocket_ic::{
     common::rest::{
         CanisterHttpReject, CanisterHttpRequest, CanisterHttpResponse, MockCanisterHttpResponse,
     },
-    management_canister::{CanisterId, CanisterSettings},
     nonblocking::PocketIc,
     PocketIcBuilder, RejectCode, RejectResponse,
 };

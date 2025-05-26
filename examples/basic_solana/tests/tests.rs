@@ -2,10 +2,8 @@ use basic_solana::{Ed25519KeyName, SolanaNetwork};
 use candid::{
     decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encode, Nat, Principal,
 };
-use pocket_ic::{
-    management_canister::{CanisterId, CanisterSettings},
-    PocketIc, PocketIcBuilder,
-};
+use ic_management_canister_types::{CanisterId, CanisterSettings};
+use pocket_ic::{PocketIc, PocketIcBuilder};
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     CommitmentLevel, OverrideProvider, RegexSubstitution, RpcAccess, SupportedRpcProvider,
