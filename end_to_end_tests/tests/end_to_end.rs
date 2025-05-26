@@ -57,7 +57,7 @@ async fn should_send_transaction_with_recent_blockhash() {
     let modify_instructions = |instructions: &mut Vec<Instruction>| {
         // Set a CU limit for instructions to: perform a SOL transfer, set the CU price, and set the
         // CU limit
-        let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(500);
+        let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(450);
         instructions.insert(0, set_cu_limit_ix);
     };
 
@@ -94,8 +94,7 @@ async fn should_send_transaction_with_durable_nonce() {
     let modify_instructions = |instructions: &mut Vec<Instruction>| {
         // Set a CU limit for instructions to: perform a SOL transfer, advance the nonce account,
         // and set the CU price, and set the CU limit
-        // TODO XC-339: Revise estimate of CU limit
-        let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(2000);
+        let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(600);
         instructions.insert(0, set_cu_limit_ix);
         // Instruction to advance nonce account; this instruction must be first.
         let advance_nonce_ix =
@@ -183,7 +182,7 @@ async fn send_transaction_test<F, S>(
         .expect_consistent()
         .unwrap();
 
-    // Wait until the transaction is successfully executed and confirmed.
+    // Wait until the transaction is successfully executed and finalized.
     setup.confirm_transaction(&transaction_id).await;
 
     // Make sure the funds were sent from the sender to the recipient
