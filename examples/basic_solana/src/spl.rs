@@ -4,6 +4,9 @@ use solana_pubkey::Pubkey;
 mod system_program {
     solana_pubkey::declare_id!("11111111111111111111111111111111");
 }
+mod token_program {
+    solana_pubkey::declare_id!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+}
 mod token_2022_program {
     solana_pubkey::declare_id!("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
 }
@@ -20,7 +23,7 @@ pub fn get_associated_token_address(
     let (program_derived_address, _bump) = Pubkey::find_program_address(
         &[
             &wallet_address.to_bytes(),
-            &token_2022_program::id().to_bytes(),
+            &token_program::id().to_bytes(),
             &token_mint_address.to_bytes(),
         ],
         &associated_token_account_program::id(),
@@ -45,7 +48,7 @@ pub fn create_associated_token_account_instruction(
             AccountMeta::new_readonly(*wallet_address, false),
             AccountMeta::new_readonly(*token_mint_address, false),
             AccountMeta::new_readonly(system_program::id(), false),
-            AccountMeta::new_readonly(token_2022_program::id(), false),
+            AccountMeta::new_readonly(token_program::id(), false),
         ],
         data: vec![
             0, // SPL Associated Token Account program "create" instruction
@@ -63,7 +66,7 @@ pub fn transfer_instruction(
     amount: u64,
 ) -> Instruction {
     Instruction {
-        program_id: token_2022_program::id(),
+        program_id: token_program::id(),
         accounts: vec![
             AccountMeta::new(*source_address, false),
             AccountMeta::new(*destination_address, false),

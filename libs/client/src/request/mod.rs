@@ -7,8 +7,8 @@ use derive_more::From;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
-    GetAccountInfoParams, GetBalanceParams, GetBlockCommitmentLevel, GetBlockParams,
-    GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
+    GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams, GetBlockCommitmentLevel,
+    GetBlockParams, GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
     GetSignatureStatusesParams, GetSignaturesForAddressLimit, GetSignaturesForAddressParams,
     GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
     NonZeroU8, PrioritizationFee, RoundingError, RpcConfig, RpcResult, RpcSources,
@@ -124,6 +124,22 @@ impl SolRpcRequest for GetAccountInfoRequest {
         let mut params = self.0;
         set_default(default_commitment_level, &mut params.commitment);
         params
+    }
+}
+
+type GetAccountInfoRequestBuilder<R> = RequestBuilder<
+    R,
+    RpcConfig,
+    GetAccountInfoParams,
+    sol_rpc_types::MultiRpcResult<Option<AccountInfo>>,
+    sol_rpc_types::MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>,
+>;
+
+impl<R> GetAccountInfoRequestBuilder<R> {
+    /// Change the `encoding` parameter for a `getAccountInfo` request.
+    pub fn with_encoding(mut self, encoding: GetAccountInfoEncoding) -> Self {
+        self.request.params.encoding = Some(encoding);
+        self
     }
 }
 

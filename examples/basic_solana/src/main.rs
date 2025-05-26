@@ -193,6 +193,7 @@ pub async fn create_associated_token_account(
 
     if let Some(_account) = client
         .get_account_info(associated_token_account)
+        .with_encoding(GetAccountInfoEncoding::Base64)
         .send()
         .await
         .expect_consistent()
