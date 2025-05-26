@@ -368,7 +368,7 @@ pub async fn send_spl_token(
 
 async fn get_account_owner(account: &Pubkey) -> Pubkey {
     let token_program = client()
-        .get_account_info(account.clone())
+        .get_account_info(*account)
         .with_encoding(GetAccountInfoEncoding::Base64)
         .send()
         .await
