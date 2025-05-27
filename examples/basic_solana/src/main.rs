@@ -1,4 +1,3 @@
-use base64::{prelude::BASE64_STANDARD, Engine};
 use basic_solana::{
     client, get_recent_blockhash, solana_wallet::SolanaWallet, spl, state::init_state,
     validate_caller_not_anonymous, InitArg,
@@ -6,11 +5,10 @@ use basic_solana::{
 use candid::{Nat, Principal};
 use ic_cdk::{init, post_upgrade, update};
 use num::ToPrimitive;
+use sol_rpc_client::nonce::nonce_from_account;
 use sol_rpc_types::{GetAccountInfoEncoding, GetAccountInfoParams, TokenAmount};
-use solana_account_decoder_client_types::{UiAccountData, UiAccountEncoding};
 use solana_hash::Hash;
 use solana_message::Message;
-use solana_nonce::versions::Versions as NonceVersions;
 use solana_program::system_instruction;
 use solana_pubkey::Pubkey;
 use solana_transaction::Transaction;
@@ -45,9 +43,14 @@ pub async fn nonce_account(owner: Option<Principal>) -> sol_rpc_types::Pubkey {
 #[update]
 pub async fn associated_token_account(owner: Option<Principal>, mint_account: String) -> String {
     let owner = owner.unwrap_or_else(validate_caller_not_anonymous);
-    let mint = Pubkey::from_str(&mint_account).unwrap();
     let wallet = SolanaWallet::new(owner).await;
-    spl::get_associated_token_address(wallet.solana_account().as_ref(), &mint).to_string()
+    let mint = Pubkey::from_str(&mint_account).unwrap();
+    spl::get_associated_token_address(
+        wallet.solana_account().as_ref(),
+        &mint,
+        &get_account_owner(&mint).await,
+    )
+    .to_string()
 }
 
 #[update]
@@ -68,36 +71,20 @@ pub async fn get_nonce(account: Option<sol_rpc_types::Pubkey>) -> sol_rpc_types:
     let account = account.unwrap_or(nonce_account(None).await);
 
     // Fetch the account info with the data encoded in base64 format
-    // TODO XC-347: use method from client to retrieve nonce
     let mut params = GetAccountInfoParams::from_pubkey(account);
     params.encoding = Some(GetAccountInfoEncoding::Base64);
-    let account_data = client()
+    let account = client()
         .get_account_info(params)
         .send()
         .await
         .expect_consistent()
         .expect("Call to `getAccountInfo` failed")
-        .expect("Account not found for given pubkey")
-        .data;
+        .expect("Account not found for given pubkey");
 
     // Extract the nonce from the account data
-    let account_data = if let UiAccountData::Binary(blob, UiAccountEncoding::Base64) = account_data
-    {
-        BASE64_STANDARD
-            .decode(blob)
-            .expect("Unable to base64 decode account data")
-    } else {
-        panic!("Invalid response format");
-    };
-    match bincode::deserialize::<NonceVersions>(account_data.as_slice())
-        .expect("Failed to deserialize nonce account data")
-        .state()
-    {
-        solana_nonce::state::State::Uninitialized => panic!("Nonce account is uninitialized"),
-        solana_nonce::state::State::Initialized(data) => {
-            sol_rpc_types::Hash::from(data.blockhash())
-        }
-    }
+    nonce_from_account(&account)
+        .expect("Failed to extract durable nonce from account data")
+        .into()
 }
 
 #[update]
@@ -188,11 +175,16 @@ pub async fn create_associated_token_account(
     let payer = wallet.solana_account();
     let mint = Pubkey::from_str(&mint_account).unwrap();
 
-    let (associated_token_account, instruction) =
-        spl::create_associated_token_account_instruction(payer.as_ref(), payer.as_ref(), &mint);
+    let (associated_token_account, instruction) = spl::create_associated_token_account_instruction(
+        payer.as_ref(),
+        payer.as_ref(),
+        &mint,
+        &get_account_owner(&mint).await,
+    );
 
     if let Some(_account) = client
         .get_account_info(associated_token_account)
+        .with_encoding(GetAccountInfoEncoding::Base64)
         .send()
         .await
         .expect_consistent()
@@ -323,10 +315,18 @@ pub async fn send_spl_token(
     let mint = Pubkey::from_str(&mint_account).unwrap();
     let amount = amount.0.to_u64().unwrap();
 
-    let from = spl::get_associated_token_address(payer.as_ref(), &mint);
-    let to = spl::get_associated_token_address(&recipient, &mint);
+    let token_program = get_account_owner(&mint).await;
 
-    let instruction = spl::transfer_instruction(&from, &to, payer.as_ref(), amount);
+    let from = spl::get_associated_token_address(payer.as_ref(), &mint, &token_program);
+    let to = spl::get_associated_token_address(&recipient, &mint, &token_program);
+
+    let instruction = spl::transfer_instruction_with_program_id(
+        &from,
+        &to,
+        payer.as_ref(),
+        amount,
+        &token_program,
+    );
 
     let message = Message::new_with_blockhash(
         &[instruction],
@@ -346,6 +346,19 @@ pub async fn send_spl_token(
         .expect_consistent()
         .expect("Call to `sendTransaction` failed")
         .to_string()
+}
+
+async fn get_account_owner(account: &Pubkey) -> Pubkey {
+    let owner = client()
+        .get_account_info(*account)
+        .with_encoding(GetAccountInfoEncoding::Base64)
+        .send()
+        .await
+        .expect_consistent()
+        .expect("Call to `getAccountInfo` failed")
+        .unwrap_or_else(|| panic!("Account not found for pubkey `{account}`"))
+        .owner;
+    Pubkey::from_str(&owner).unwrap()
 }
 
 fn main() {}
