@@ -1,6 +1,6 @@
 [package]
 name = "sol_rpc_client"
-version = "0.1.0"
+version = "0.2.0"
 description = "Client to interact with the SOL RPC canister"
 authors.workspace = true
 edition.workspace = true
@@ -32,7 +32,7 @@ solana-signature = { workspace = true }
 solana-transaction = { workspace = true, optional = true }
 solana-transaction-error = { workspace = true }
 solana-transaction-status-client-types = { workspace = true }
-sol_rpc_types = { version = "0.1.0", path = "../types" }
+sol_rpc_types = { version = "0.2.0", path = "../types" }
 strum = { workspace = true }
 thiserror = { workspace = true }
 

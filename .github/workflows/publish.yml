@@ -93,13 +93,9 @@ jobs:
           echo "release_version: $release_version"
           echo "RELEASE_VERSION=$release_version" >> "$GITHUB_ENV"
           
-          echo "- SHA-256 hash: ${{ env.SOL_RPC_CANISTER_WASM_GZ_SHA256}}" >> ${{ github.workspace }}-RELEASE.txt
-          echo "" >> ${{ github.workspace }}-RELEASE.txt
-          echo "## What's Changed" >> ${{ github.workspace }}-RELEASE.txt
-          echo "" >> ${{ github.workspace }}-RELEASE.txt
-          
           notes=$(parse-changelog canister/CHANGELOG.md "$release_version")
-          echo "$notes" >> ${{ github.workspace }}-RELEASE.txt
+          
+          CHANGELOG="$notes" envsubst < release_notes.md >> ${{ github.workspace }}-RELEASE.txt
 
       - name: "Create Github release"
         uses: softprops/action-gh-release@v2
