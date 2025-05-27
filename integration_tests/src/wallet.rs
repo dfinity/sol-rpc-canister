@@ -3,7 +3,7 @@
 use crate::{decode_call_response, encode_args};
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
-use pocket_ic::management_canister::CanisterId;
+use ic_management_canister_types::CanisterId;
 use regex::Regex;
 use serde::{de::DeserializeOwned, Deserialize};
 
