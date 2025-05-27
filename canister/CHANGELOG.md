@@ -9,12 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add client method to sign a transaction ([#113](https://github.com/dfinity/sol-rpc-canister/pull/113))
-- Add Chainstack RPC provider ([#118](https://github.com/dfinity/sol-rpc-canister/pull/118))
 - Add `getRecentPrioritizationFees` RPC method ([#92](https://github.com/dfinity/sol-rpc-canister/pull/92), [#107](https://github.com/dfinity/sol-rpc-canister/pull/107) and [108](https://github.com/dfinity/sol-rpc-canister/pull/108))
 - Add `getSignaturesForAddress` RPC method ([#106](https://github.com/dfinity/sol-rpc-canister/pull/106))
 - Add `getSignatureStatuses` RPC method ([#96](https://github.com/dfinity/sol-rpc-canister/pull/96))
 - Add `getTokenAccountBalance` RPC method ([#90](https://github.com/dfinity/sol-rpc-canister/pull/90))
+- Add Chainstack RPC provider ([#118](https://github.com/dfinity/sol-rpc-canister/pull/118))
 - End-to-end tests for signing and sending a transaction ([#104](https://github.com/dfinity/sol-rpc-canister/pull/104) and [#114](https://github.com/dfinity/sol-rpc-canister/pull/114))
 
 ### Changed
