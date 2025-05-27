@@ -2,6 +2,7 @@
 
 use solana_account_decoder_client_types::UiAccount;
 use solana_nonce::{state::State, versions::Versions};
+use solana_program::system_program;
 use thiserror::Error;
 
 #[cfg(test)]
@@ -12,7 +13,7 @@ mod tests;
 /// # Examples
 ///
 /// ```rust
-/// use sol_rpc_client::{nonce::extract_durable_nonce, SolRpcClient};
+/// use sol_rpc_client::{nonce::nonce_from_account, SolRpcClient};
 /// use sol_rpc_types::{RpcSources, SolanaCluster};
 /// use solana_hash::Hash;
 /// use solana_pubkey::pubkey;
@@ -20,10 +21,10 @@ mod tests;
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # use std::str::FromStr;
-/// # use sol_rpc_client::fixtures::initialized_nonce_account;
+/// # use sol_rpc_client::fixtures::nonce_account;
 /// # use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo, MultiRpcResult};
 /// let client = SolRpcClient::builder_for_ic()
-/// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(Some(initialized_nonce_account()))))
+/// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(Some(nonce_account()))))
 ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Devnet))
 ///     .build();
 ///
@@ -35,7 +36,7 @@ mod tests;
 ///     .unwrap()
 ///     .unwrap();
 ///
-/// let durable_nonce = extract_durable_nonce(&nonce_account)
+/// let durable_nonce = nonce_from_account(&nonce_account)
 ///     .unwrap();
 ///
 /// assert_eq!(durable_nonce, Hash::from_str("6QK3LC8dsRtH2qVU47cSvgchPHNU72f1scvg2LuN2z7e").unwrap());
@@ -50,7 +51,7 @@ mod tests;
 /// more details.
 ///
 /// ```rust
-/// use sol_rpc_client::{nonce::{ExtractNonceError, extract_durable_nonce}, SolRpcClient};
+/// use sol_rpc_client::{nonce::{ExtractNonceError, nonce_from_account}, SolRpcClient};
 /// use sol_rpc_types::{RpcSources, SolanaCluster};
 /// use solana_hash::Hash;
 /// use solana_pubkey::pubkey;
@@ -75,17 +76,25 @@ mod tests;
 ///     .unwrap()
 ///     .unwrap();
 ///
-/// let durable_nonce = extract_durable_nonce(&usdc_account);
+/// let durable_nonce = nonce_from_account(&usdc_account);
 ///
-/// assert_matches!(durable_nonce, Err(ExtractNonceError::InvalidAccountData(_)));
+/// assert_matches!(durable_nonce, Err(ExtractNonceError::InvalidAccountOwner(_)));
 /// # Ok(())
 /// # }
 /// ```
-pub fn extract_durable_nonce(account: &UiAccount) -> Result<solana_hash::Hash, ExtractNonceError> {
+pub fn nonce_from_account(account: &UiAccount) -> Result<solana_hash::Hash, ExtractNonceError> {
+    if account.owner != system_program::ID.to_string() {
+        return Err(ExtractNonceError::InvalidAccountOwner(
+            account.owner.clone(),
+        ));
+    }
     let data = account
         .data
         .decode()
         .ok_or(ExtractNonceError::UnsupportedEncodingFormat)?;
+    if data.is_empty() {
+        return Err(ExtractNonceError::UnexpectedDataSize(data.len()));
+    }
     let versions = bincode::deserialize::<Versions>(data.as_slice())
         .map_err(|e| ExtractNonceError::InvalidAccountData(e.to_string()))?;
     match versions.state() {
@@ -94,7 +103,7 @@ pub fn extract_durable_nonce(account: &UiAccount) -> Result<solana_hash::Hash, E
     }
 }
 
-/// Errors that might happen when calling the [`extract_durable_nonce`] method.
+/// Errors that might happen when calling the [`nonce_from_account`] method.
 #[derive(Clone, Debug, PartialEq, Error)]
 pub enum ExtractNonceError {
     /// The account data does not represent a valid nonce account.
@@ -103,6 +112,12 @@ pub enum ExtractNonceError {
     /// that is not a nonce account.
     #[error("Invalid account data: {0}")]
     InvalidAccountData(String),
+    /// The account owner is not the system program.
+    #[error("Invalid account owner: {0}")]
+    InvalidAccountOwner(String),
+    /// The account data is empty.
+    #[error("Unexpected account data size: {0} bytes")]
+    UnexpectedDataSize(usize),
     /// The account data is encoded in a format that is not supported. Currently, this
     /// only applies to account data encoded in `jsonParsed` format.
     #[error("Unsupported encoding format")]

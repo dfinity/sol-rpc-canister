@@ -118,7 +118,7 @@ pub fn usdc_account() -> AccountInfo {
 }
 
 /// Nonce account [`8DedqKHx9ogFajbHtRnTM3pPr3MRyVKDtepEpUiaDXX`](https://explorer.solana.com/address/8DedqKHx9ogFajbHtRnTM3pPr3MRyVKDtepEpUiaDXX?cluster=devnet) on Solana Devnet.
-pub fn initialized_nonce_account() -> AccountInfo {
+pub fn nonce_account() -> AccountInfo {
     AccountInfo {
         lamports: 1_499_900,
         data: AccountData::Binary("AQAAAAEAAAA+ZK6at2Umwl1p39ifPkNAu66sw5w0AKkY72a19k0LVFBDMPwL0VO7EYlFDc0BAwVcV446FBr/cRWZCGdrPYW9iBMAAAAAAAA=".to_string(), AccountEncoding::Base64),

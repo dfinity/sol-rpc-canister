@@ -5,7 +5,7 @@ use basic_solana::{
 use candid::{Nat, Principal};
 use ic_cdk::{init, post_upgrade, update};
 use num::ToPrimitive;
-use sol_rpc_client::nonce::extract_durable_nonce;
+use sol_rpc_client::nonce::nonce_from_account;
 use sol_rpc_types::{GetAccountInfoEncoding, GetAccountInfoParams, TokenAmount};
 use solana_hash::Hash;
 use solana_message::Message;
@@ -77,7 +77,7 @@ pub async fn get_nonce(account: Option<sol_rpc_types::Pubkey>) -> sol_rpc_types:
         .expect("Account not found for given pubkey");
 
     // Extract the nonce from the account data
-    extract_durable_nonce(&account)
+    nonce_from_account(&account)
         .expect("Failed to extract durable nonce from account data")
         .into()
 }
