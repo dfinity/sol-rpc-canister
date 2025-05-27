@@ -122,6 +122,7 @@
 pub mod ed25519;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod fixtures;
+pub mod nonce;
 mod request;
 
 use crate::request::{
@@ -147,7 +148,6 @@ use sol_rpc_types::{
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
 use std::{fmt::Debug, sync::Arc};
-
 /// The principal identifying the productive Solana RPC canister under NNS control.
 ///
 /// ```rust

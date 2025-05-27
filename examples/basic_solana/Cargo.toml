@@ -8,8 +8,6 @@ name = "basic_solana"
 path = "src/main.rs"
 
 [dependencies]
-base64 = "0.22.1"
-bincode = { workspace = true }
 bs58 = { workspace = true }
 candid = { workspace = true }
 # Transitive dependency
@@ -21,11 +19,9 @@ num = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 sol_rpc_client = { path = "../../libs/client", features = ["ed25519"] }
 sol_rpc_types = { path = "../../libs/types" }
-solana-account-decoder-client-types = { workspace = true }
 solana-hash = { workspace = true }
 solana-instruction = { workspace = true }
 solana-message = { workspace = true }
-solana-nonce = { workspace = true }
 solana-program = { workspace = true }
 solana-pubkey = { workspace = true }
 solana-signature = { workspace = true }

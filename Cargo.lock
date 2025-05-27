@@ -299,8 +299,6 @@ checksum = "89e25b6adfb930f02d1981565a6e5d9c547ac15a96606256d3b59040e5cd4ca3"
 name = "basic_solana"
 version = "0.1.0"
 dependencies = [
- "base64 0.22.1",
- "bincode",
  "bs58",
  "candid",
  "candid_parser",
@@ -314,14 +312,12 @@ dependencies = [
  "serde",
  "sol_rpc_client",
  "sol_rpc_types",
- "solana-account-decoder-client-types",
  "solana-client",
  "solana-commitment-config",
  "solana-hash",
  "solana-instruction",
  "solana-keypair",
  "solana-message",
- "solana-nonce",
  "solana-program",
  "solana-pubkey",
  "solana-rpc-client-nonce-utils",
@@ -4481,6 +4477,7 @@ version = "0.1.0"
 dependencies = [
  "assert_matches",
  "async-trait",
+ "bincode",
  "candid",
  "derive_more",
  "ic-cdk",
@@ -4494,6 +4491,7 @@ dependencies = [
  "solana-instruction",
  "solana-keypair",
  "solana-message",
+ "solana-nonce",
  "solana-program",
  "solana-pubkey",
  "solana-signature",
@@ -4501,6 +4499,7 @@ dependencies = [
  "solana-transaction-error",
  "solana-transaction-status-client-types",
  "strum 0.27.1",
+ "thiserror 2.0.12",
  "tokio",
 ]
 
