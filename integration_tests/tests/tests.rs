@@ -2096,6 +2096,42 @@ mod get_signatures_for_address_tests {
     }
 }
 
+#[tokio::test]
+async fn should_log_request_and_response() {
+    let setup = Setup::new().await.with_mock_api_keys().await;
+
+    let client = setup
+        .client()
+        .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Supported(
+            SupportedRpcProviderId::AlchemyMainnet,
+        )]));
+
+    let results = client
+        .mock_sequential_json_rpc_responses::<1>(
+            200,
+            json!({
+                "id": Id::from(ConstantSizeId::ZERO),
+                "jsonrpc": "2.0",
+                "result": 1234,
+            }),
+        )
+        .build()
+        .get_slot()
+        .with_rounding_error(0)
+        .send()
+        .await
+        .expect_consistent();
+    assert_eq!(results, Ok(1234));
+
+    let logs = setup.retrieve_logs("TRACE_HTTP").await;
+    assert_eq!(logs.len(), 2, "Unexpected amount of logs: {logs:?}");
+
+    assert_eq!(logs[0].message, "JSON-RPC request with id `00000000000000000000` to solana-mainnet.g.alchemy.com: JsonRpcRequest { jsonrpc: V2, method: \"getSlot\", id: String(\"00000000000000000000\"), params: Some(GetSlotParams(None)) }");
+    assert_eq!(logs[1].message, "Got response for request with id `00000000000000000000`. Response with status 200 OK: JsonRpcResponse { jsonrpc: V2, id: String(\"00000000000000000000\"), result: Ok(1234) }");
+
+    setup.drop().await;
+}
+
 fn assert_within(actual: u128, expected: u128, percentage_error: u8) {
     assert!(percentage_error <= 100);
     let error_margin = expected.saturating_mul(percentage_error as u128) / 100;
