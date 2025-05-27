@@ -178,4 +178,4 @@ jobs:
       - name: "Run end-to-end tests"
         env:
           DFX_DEPLOY_KEY: ${{ secrets.DFX_DEPLOY_KEY }}
-        run: cargo test --locked --package sol_rpc_e2e_tests -- --test-threads 2 --nocapture
+        run: cargo test --locked --package sol_rpc_e2e_tests -- --test-threads 1 --nocapture

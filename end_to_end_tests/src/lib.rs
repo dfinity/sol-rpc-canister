@@ -143,38 +143,6 @@ impl Setup {
             .expect_consistent()
             .unwrap_or_else(|_| panic!("Failed to fetch account balance for account {pubkey}"))
     }
-
-    pub async fn get_transaction_fee(&self, transaction_id: &Signature, slot: u64) -> u64 {
-        let block = self
-            .client()
-            .get_block(slot)
-            .send()
-            .await
-            .expect_consistent()
-            .expect("Call to `getBlock` failed`")
-            .unwrap_or_else(|| panic!("No block found for slot {:?}", slot));
-        let transaction_fees = block
-            .transactions
-            .expect("Block has no transactions")
-            .into_iter()
-            .find(|transaction| {
-                transaction
-                    .transaction
-                    .decode()
-                    .expect("Failed to decode transaction")
-                    .signatures
-                    .first()
-                    == Some(transaction_id)
-            })
-            .map(|transaction| transaction.meta.expect("Transaction has no metadata").fee)
-            .unwrap_or_else(|| {
-                panic!(
-                    "Unable to get transaction fee for transaction '{:?}' from block '{:?}'",
-                    transaction_id, block.blockhash
-                )
-            });
-        transaction_fees
-    }
 }
 
 impl Default for Setup {

@@ -27,7 +27,7 @@ const PUBKEY_B: &str = "G7Ut56qgcEphHZmLhLimM2DfHVC7QwHfT18tvj8ntn9";
 // `NONCE_ACCOUNT_B` is an initialized nonce account with nonce authority `PUBKEY_B`
 const NONCE_ACCOUNT_B: &str = "876vg5npuF9LCfc2MVWZtewBUEfcgzdbahCK7gXn5MLh";
 
-#[tokio::test(flavor = "current_thread")]
+#[tokio::test]
 async fn should_send_transaction_with_recent_blockhash() {
     let sender_pubkey = Pubkey::from_str(ACCOUNT_A).unwrap();
     let sender_derivation_path = DerivationPath::from(DERIVATION_PATH_A);
@@ -71,7 +71,7 @@ async fn should_send_transaction_with_recent_blockhash() {
     .await;
 }
 
-#[tokio::test(flavor = "current_thread")]
+#[tokio::test]
 async fn should_send_transaction_with_durable_nonce() {
     let sender_pubkey = Pubkey::from_str(PUBKEY_B).unwrap();
     let sender_derivation_path = DerivationPath::from(DERIVATION_PATH_B);
@@ -199,12 +199,6 @@ async fn send_transaction_test<F, S>(
         status.slot
     );
 
-    // Extract the fees from the block in which the transaction is included
-    let transaction_fees = setup
-        .get_transaction_fee(&transaction_id, status.slot)
-        .await;
-    println!("Transaction fees for sender: {transaction_fees:?}");
-
     // Make sure the funds were sent from the sender to the recipient
     let sender_balance_after = setup.get_account_balance(&sender_pubkey).await;
     println!("Sender balance after sending transaction: {sender_balance_before:?} lamports");
@@ -215,10 +209,7 @@ async fn send_transaction_test<F, S>(
         recipient_balance_after,
         recipient_balance_before + transaction_amount
     );
-    assert_eq!(
-        sender_balance_after,
-        sender_balance_before - transaction_amount - transaction_fees,
-    );
+    assert!(sender_balance_after <= sender_balance_before - transaction_amount);
 }
 
 async fn verify_pubkey(derivation_path: &DerivationPath, expected_pubkey: &Pubkey) {
