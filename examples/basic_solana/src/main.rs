@@ -367,7 +367,7 @@ pub async fn send_spl_token(
 }
 
 async fn get_account_owner(account: &Pubkey) -> Pubkey {
-    let token_program = client()
+    let owner = client()
         .get_account_info(*account)
         .with_encoding(GetAccountInfoEncoding::Base64)
         .send()
@@ -376,7 +376,7 @@ async fn get_account_owner(account: &Pubkey) -> Pubkey {
         .expect("Call to `getAccountInfo` failed")
         .unwrap_or_else(|| panic!("Account not found for pubkey `{account}`"))
         .owner;
-    Pubkey::from_str(&token_program).unwrap()
+    Pubkey::from_str(&owner).unwrap()
 }
 
 fn main() {}
