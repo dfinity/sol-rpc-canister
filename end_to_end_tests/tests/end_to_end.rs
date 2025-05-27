@@ -28,6 +28,7 @@ const PUBKEY_B: &str = "G7Ut56qgcEphHZmLhLimM2DfHVC7QwHfT18tvj8ntn9";
 // `NONCE_ACCOUNT_B` is an initialized nonce account with nonce authority `PUBKEY_B`
 const NONCE_ACCOUNT_B: &str = "876vg5npuF9LCfc2MVWZtewBUEfcgzdbahCK7gXn5MLh";
 
+#[ignore]
 #[tokio::test(flavor = "multi_thread")]
 async fn should_send_transaction_with_recent_blockhash() {
     let sender_pubkey = Pubkey::from_str(ACCOUNT_A).unwrap();
@@ -71,7 +72,6 @@ async fn should_send_transaction_with_recent_blockhash() {
     .await;
 }
 
-#[ignore]
 #[tokio::test(flavor = "multi_thread")]
 async fn should_send_transaction_with_durable_nonce() {
     let sender_pubkey = Pubkey::from_str(PUBKEY_B).unwrap();
