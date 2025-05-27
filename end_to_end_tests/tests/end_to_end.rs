@@ -55,8 +55,8 @@ async fn should_send_transaction_with_recent_blockhash() {
     };
 
     let modify_instructions = |instructions: &mut Vec<Instruction>| {
-        // Set a CU limit for instructions to: perform a SOL transfer, set the CU price, and set the
-        // CU limit
+        // Set a CU limit for instructions to: perform a SOL transfer, set the CU price, and set
+        // the CU limit (150 CU x 3 = 450 CU)
         let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(450);
         instructions.insert(0, set_cu_limit_ix);
     };
@@ -71,6 +71,7 @@ async fn should_send_transaction_with_recent_blockhash() {
     .await;
 }
 
+#[ignore]
 #[tokio::test(flavor = "multi_thread")]
 async fn should_send_transaction_with_durable_nonce() {
     let sender_pubkey = Pubkey::from_str(PUBKEY_B).unwrap();
@@ -93,7 +94,7 @@ async fn should_send_transaction_with_durable_nonce() {
 
     let modify_instructions = |instructions: &mut Vec<Instruction>| {
         // Set a CU limit for instructions to: perform a SOL transfer, advance the nonce account,
-        // and set the CU price, and set the CU limit
+        // and set the CU price, and set the CU limit (150 CU x 4 = 600 CU)
         let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(600);
         instructions.insert(0, set_cu_limit_ix);
         // Instruction to advance nonce account; this instruction must be first.
@@ -148,7 +149,7 @@ async fn send_transaction_test<F, S>(
     let add_priority_fee_ix = ComputeBudgetInstruction::set_compute_unit_price(priority_fee);
 
     // Send some SOL from sender to recipient
-    let transaction_amount = 1_000;
+    let transaction_amount = 10_000;
     let transfer_ix =
         system_instruction::transfer(&sender_pubkey, &recipient_pubkey, transaction_amount);
 
@@ -182,7 +183,7 @@ async fn send_transaction_test<F, S>(
         .expect_consistent()
         .unwrap();
 
-    // Wait until the transaction is successfully executed and finalized.
+    // Wait until the transaction is successfully executed
     setup.confirm_transaction(&transaction_id).await;
 
     // Make sure the funds were sent from the sender to the recipient

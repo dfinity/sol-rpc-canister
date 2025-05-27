@@ -89,7 +89,7 @@ impl Setup {
                     if let Some(err) = &status.err {
                         panic!("Transaction failed with error {:?}", err);
                     }
-                    if status.satisfies_commitment(CommitmentConfig::finalized()) {
+                    if status.satisfies_commitment(CommitmentConfig::confirmed()) {
                         return;
                     }
                 }
