@@ -62,12 +62,9 @@ pub fn client() -> SolRpcClient<IcRuntime> {
         .with_rpc_sources(RpcSources::Default(
             read_state(|state| state.solana_network()).into(),
         ))
-        .with_rpc_config(RpcConfig {
-            response_consensus: Some(ConsensusStrategy::Threshold {
-                min: 2,
-                total: Some(3),
-            }),
-            ..RpcConfig::default()
+        .with_consensus_strategy(ConsensusStrategy::Threshold {
+            min: 2,
+            total: Some(3),
         })
         .with_default_commitment_level(read_state(State::solana_commitment_level))
         .build()

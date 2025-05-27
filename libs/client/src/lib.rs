@@ -138,7 +138,7 @@ use ic_cdk::api::call::RejectionCode;
 pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
+    CommitmentLevel, ConsensusStrategy, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
     GetRecentPrioritizationFeesParams, GetSignatureStatusesParams, GetSignaturesForAddressParams,
     GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
     Pubkey, RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot,
@@ -275,6 +275,15 @@ impl<R> ClientBuilder<R> {
     /// Mutates the builder to use the given [`RpcConfig`].
     pub fn with_rpc_config(mut self, rpc_config: RpcConfig) -> Self {
         self.config.rpc_config = Some(rpc_config);
+        self
+    }
+
+    /// Mutates the builder to use the given [`ConsensusStrategy`] in the [`RpcConfig`].
+    pub fn with_consensus_strategy(mut self, consensus_strategy: ConsensusStrategy) -> Self {
+        self.config.rpc_config = Some(RpcConfig {
+            response_consensus: Some(consensus_strategy),
+            ..self.config.rpc_config.unwrap_or_default()
+        });
         self
     }
 
