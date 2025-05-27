@@ -10,7 +10,7 @@ use sol_rpc_int_tests::{
     wallet::{decode_cycles_wallet_response, CallCanisterArgs},
 };
 use sol_rpc_types::{
-    CommitmentLevel, ConsensusStrategy, MultiRpcResult, RpcConfig, RpcSource, RpcSources,
+    CommitmentLevel, ConsensusStrategy, MultiRpcResult, RpcSource, RpcSources,
     SupportedRpcProviderId,
 };
 use solana_commitment_config::CommitmentConfig;
