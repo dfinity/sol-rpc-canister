@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `getSignaturesForAddress` RPC method ([#106](https://github.com/dfinity/sol-rpc-canister/pull/106))
 - Add `getSignatureStatuses` RPC method ([#96](https://github.com/dfinity/sol-rpc-canister/pull/96))
 - Add `getTokenAccountBalance` RPC method ([#90](https://github.com/dfinity/sol-rpc-canister/pull/90))
-- Add method to sign a transaction ([#113](https://github.com/dfinity/sol-rpc-canister/pull/113))
+- Add helper method to sign a transaction ([#113](https://github.com/dfinity/sol-rpc-canister/pull/113))
+- Add helper method to extract nonce value from a Solana account ([#117](https://github.com/dfinity/sol-rpc-canister/pull/117))
 
 ### Changed
 

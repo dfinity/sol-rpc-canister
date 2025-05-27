@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add `getRecentPrioritizationFees` RPC method ([#92](https://github.com/dfinity/sol-rpc-canister/pull/92), [108](https://github.com/dfinity/sol-rpc-canister/pull/108))
 - Add `getSignaturesForAddress` RPC method ([#106](https://github.com/dfinity/sol-rpc-canister/pull/106))
-- Add `getSignatureStatuses` RPC method ([#96](https://github.com/dfinity/sol-rpc-canister/pull/96))
+- Add `getSignatureStatuses` RPC method ([#96](https://github.com/dfinity/sol-rpc-canister/pull/96) and [#109](https://github.com/dfinity/sol-rpc-canister/pull/109))
 - Add `getTokenAccountBalance` RPC method ([#90](https://github.com/dfinity/sol-rpc-canister/pull/90))
 - Add Chainstack RPC provider ([#118](https://github.com/dfinity/sol-rpc-canister/pull/118))
 - Add `RoundingError` type ([#105](https://github.com/dfinity/sol-rpc-canister/pull/105))

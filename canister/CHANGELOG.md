@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `getSignaturesForAddress` RPC method ([#106](https://github.com/dfinity/sol-rpc-canister/pull/106))
 - Add `getSignatureStatuses` RPC method ([#96](https://github.com/dfinity/sol-rpc-canister/pull/96))
 - Add `getTokenAccountBalance` RPC method ([#90](https://github.com/dfinity/sol-rpc-canister/pull/90))
+- End-to-end tests for signing and sending a transaction ([#104](https://github.com/dfinity/sol-rpc-canister/pull/104) and [#114](https://github.com/dfinity/sol-rpc-canister/pull/114))
 
 ### Changed
 
