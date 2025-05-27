@@ -1,6 +1,9 @@
 use solana_instruction::{AccountMeta, Instruction};
 use solana_pubkey::Pubkey;
 
+#[cfg(test)]
+mod tests;
+
 mod associated_token_account_program {
     solana_pubkey::declare_id!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 }
