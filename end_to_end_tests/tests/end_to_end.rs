@@ -1,6 +1,6 @@
 use sol_rpc_client::{
     ed25519::{get_pubkey, sign_message, DerivationPath, Ed25519KeyId},
-    nonce::extract_durable_nonce,
+    nonce::nonce_from_account,
     SolRpcClient,
 };
 use sol_rpc_e2e_tests::{IcAgentRuntime, Setup};
@@ -88,7 +88,7 @@ async fn should_send_transaction_with_durable_nonce() {
             .expect_consistent()
             .expect("Call to `getAccountInfo` failed")
             .expect("Account not found");
-        extract_durable_nonce(&account).expect("Failed to extract durable nonce from account")
+        nonce_from_account(&account).expect("Failed to extract durable nonce from account")
     };
 
     let modify_instructions = |instructions: &mut Vec<Instruction>| {
