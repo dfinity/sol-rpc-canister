@@ -23,6 +23,7 @@ solana-message = { workspace = true }
 solana-pubkey = { workspace = true }
 solana-signature = { workspace = true }
 solana-transaction = { workspace = true }
+solana-transaction-status-client-types = { workspace = true }
 tokio = { workspace = true }
 
 [dev-dependencies]

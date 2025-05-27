@@ -16,6 +16,7 @@ use sol_rpc_types::{
 use solana_commitment_config::CommitmentConfig;
 use solana_pubkey::Pubkey;
 use solana_signature::Signature;
+use solana_transaction_status_client_types::TransactionStatus;
 use std::{env, time::Duration};
 
 const DEFAULT_IC_GATEWAY: &str = "https://icp0.io";
@@ -71,7 +72,7 @@ impl Setup {
             .build()
     }
 
-    pub async fn confirm_transaction(&self, transaction_id: &Signature) {
+    pub async fn confirm_transaction(&self, transaction_id: &Signature) -> TransactionStatus {
         let mut num_trials = 0;
         loop {
             num_trials += 1;
@@ -85,12 +86,12 @@ impl Setup {
                 .send()
                 .await;
             if let MultiRpcResult::Consistent(Ok(statuses)) = statuses {
-                if let Some(Some(status)) = statuses.first() {
+                if let Some(Some(status)) = statuses.into_iter().next() {
                     if let Some(err) = &status.err {
                         panic!("Transaction failed with error {:?}", err);
                     }
                     if status.satisfies_commitment(CommitmentConfig::confirmed()) {
-                        return;
+                        return status;
                     }
                 }
             }
@@ -141,6 +142,38 @@ impl Setup {
             .await
             .expect_consistent()
             .unwrap_or_else(|_| panic!("Failed to fetch account balance for account {pubkey}"))
+    }
+
+    pub async fn get_transaction_fee(&self, transaction_id: &Signature, slot: u64) -> u64 {
+        let block = self
+            .client()
+            .get_block(slot)
+            .send()
+            .await
+            .expect_consistent()
+            .expect("Call to `getBlock` failed`")
+            .unwrap_or_else(|| panic!("No block found for slot {:?}", slot));
+        let transaction_fees = block
+            .transactions
+            .expect("Block has no transactions")
+            .into_iter()
+            .find(|transaction| {
+                transaction
+                    .transaction
+                    .decode()
+                    .expect("Failed to decode transaction")
+                    .signatures
+                    .first()
+                    == Some(transaction_id)
+            })
+            .map(|transaction| transaction.meta.expect("Transaction has no metadata").fee)
+            .unwrap_or_else(|| {
+                panic!(
+                    "Unable to get transaction fee for transaction '{:?}' from block '{:?}'",
+                    transaction_id, block.blockhash
+                )
+            });
+        transaction_fees
     }
 }
 

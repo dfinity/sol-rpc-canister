@@ -4524,6 +4524,7 @@ dependencies = [
  "solana-pubkey",
  "solana-signature",
  "solana-transaction",
+ "solana-transaction-status-client-types",
  "tokio",
 ]
 

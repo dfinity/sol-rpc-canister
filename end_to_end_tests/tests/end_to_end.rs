@@ -7,8 +7,7 @@ use sol_rpc_e2e_tests::{IcAgentRuntime, Setup};
 use solana_compute_budget_interface::ComputeBudgetInstruction;
 use solana_hash::Hash;
 use solana_message::Message;
-use solana_program::instruction::Instruction;
-use solana_program::system_instruction;
+use solana_program::{instruction::Instruction, system_instruction};
 use solana_pubkey::Pubkey;
 use solana_transaction::Transaction;
 use std::str::FromStr;
@@ -28,7 +27,6 @@ const PUBKEY_B: &str = "G7Ut56qgcEphHZmLhLimM2DfHVC7QwHfT18tvj8ntn9";
 // `NONCE_ACCOUNT_B` is an initialized nonce account with nonce authority `PUBKEY_B`
 const NONCE_ACCOUNT_B: &str = "876vg5npuF9LCfc2MVWZtewBUEfcgzdbahCK7gXn5MLh";
 
-#[ignore]
 #[tokio::test(flavor = "multi_thread")]
 async fn should_send_transaction_with_recent_blockhash() {
     let sender_pubkey = Pubkey::from_str(ACCOUNT_A).unwrap();
@@ -52,6 +50,7 @@ async fn should_send_transaction_with_recent_blockhash() {
             .expect_consistent()
             .expect("Call to `getBlock` failed")
             .expect("Block not found");
+        println!("Fetched recent blockhash: {:?}", block.blockhash);
         Hash::from_str(&block.blockhash).expect("Failed to parse blockhash")
     };
 
@@ -89,7 +88,10 @@ async fn should_send_transaction_with_durable_nonce() {
             .expect_consistent()
             .expect("Call to `getAccountInfo` failed")
             .expect("Account not found");
-        nonce_from_account(&account).expect("Failed to extract durable nonce from account")
+        let blockhash =
+            nonce_from_account(&account).expect("Failed to extract durable nonce from account");
+        println!("Fetched durable nonce: {:?}", blockhash);
+        blockhash
     };
 
     let modify_instructions = |instructions: &mut Vec<Instruction>| {
@@ -123,11 +125,17 @@ async fn send_transaction_test<F, S>(
     F: AsyncFnOnce(&SolRpcClient<IcAgentRuntime>) -> Hash,
     S: FnOnce(&mut Vec<Instruction>),
 {
+    println!(
+        "Sending transaction from sender account '{sender_pubkey:?}' to recipient account '{recipient_pubkey:?}'"
+    );
+
     let setup = Setup::new();
     let client = setup.client();
 
     let sender_balance_before = setup.fund_account(&sender_pubkey, 1_000_000_000).await;
+    println!("Sender balance before sending transaction: {sender_balance_before:?} lamports");
     let recipient_balance_before = setup.fund_account(&recipient_pubkey, 1_000_000_000).await;
+    println!("Recipient balance before sending transaction: {recipient_balance_before:?} lamports");
 
     let prioritization_fees: Vec<_> = client
         .get_recent_prioritization_fees(&[sender_pubkey, recipient_pubkey])
@@ -182,19 +190,35 @@ async fn send_transaction_test<F, S>(
         .await
         .expect_consistent()
         .unwrap();
+    println!("Sent transaction with ID '{transaction_id:?}'");
 
     // Wait until the transaction is successfully executed
-    setup.confirm_transaction(&transaction_id).await;
+    let status = setup.confirm_transaction(&transaction_id).await;
+    println!(
+        "Transaction was included in a block at slot {:?}",
+        status.slot
+    );
+
+    // Extract the fees from the block in which the transaction is included
+    let transaction_fees = setup
+        .get_transaction_fee(&transaction_id, status.slot)
+        .await;
+    println!("Transaction fees for sender: {transaction_fees:?}");
 
     // Make sure the funds were sent from the sender to the recipient
     let sender_balance_after = setup.get_account_balance(&sender_pubkey).await;
+    println!("Sender balance after sending transaction: {sender_balance_before:?} lamports");
     let recipient_balance_after = setup.get_account_balance(&recipient_pubkey).await;
+    println!("Recipient balance after sending transaction: {recipient_balance_after:?} lamports");
 
     assert_eq!(
         recipient_balance_after,
         recipient_balance_before + transaction_amount
     );
-    assert!(sender_balance_after + transaction_amount <= sender_balance_before);
+    assert_eq!(
+        sender_balance_after,
+        sender_balance_before - transaction_amount - transaction_fees,
+    );
 }
 
 async fn verify_pubkey(derivation_path: &DerivationPath, expected_pubkey: &Pubkey) {
