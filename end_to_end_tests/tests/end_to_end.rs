@@ -8,7 +8,7 @@ use solana_compute_budget_interface::ComputeBudgetInstruction;
 use solana_hash::Hash;
 use solana_message::Message;
 use solana_program::{instruction::Instruction, system_instruction};
-use solana_pubkey::Pubkey;
+use solana_pubkey::{pubkey, Pubkey};
 use solana_transaction::Transaction;
 use std::str::FromStr;
 
@@ -17,23 +17,26 @@ const KEY_ID: Ed25519KeyId = Ed25519KeyId::MainnetTestKey1;
 // Pubkey `ACCOUNT_A` was obtained with the `schnorr_public_key` with the team wallet canister ID
 // the derivation path `DERIVATION_PATH_A`, and the `KEY_ID` key ID
 const DERIVATION_PATH_A: &[&[u8]] = &[&[1]];
-const ACCOUNT_A: &str = "HNELCCu1459ANnRXrQuBmEhaVVJfCk9FFRDZHL5YBXzH";
+const ACCOUNT_A: Pubkey = pubkey!("HNELCCu1459ANnRXrQuBmEhaVVJfCk9FFRDZHL5YBXzH");
 
 // Pubkey `PUBKEY_B` was obtained with the `schnorr_public_key` with the team wallet canister ID
 // the derivation path `DERIVATION_PATH_B`, and the `KEY_ID` key ID
 const DERIVATION_PATH_B: &[&[u8]] = &[&[2]];
-const PUBKEY_B: &str = "G7Ut56qgcEphHZmLhLimM2DfHVC7QwHfT18tvj8ntn9";
+const PUBKEY_B: Pubkey = pubkey!("G7Ut56qgcEphHZmLhLimM2DfHVC7QwHfT18tvj8ntn9");
 
-// `NONCE_ACCOUNT_B` is an initialized nonce account with nonce authority `PUBKEY_B`
-const NONCE_ACCOUNT_B: &str = "876vg5npuF9LCfc2MVWZtewBUEfcgzdbahCK7gXn5MLh";
+// `NONCE_ACCOUNT_B` is a nonce account with nonce authority `PUBKEY_B` which was created and
+// initialized using the following Solana CLI commands:
+//  solana-keygen new --outfile nonce-keypair.json
+//  solana create-nonce-account nonce-keypair.json 0.01 --url devnet --nonce-authority $PUBKEY_B
+const NONCE_ACCOUNT_B: Pubkey = pubkey!("876vg5npuF9LCfc2MVWZtewBUEfcgzdbahCK7gXn5MLh");
 
 #[tokio::test]
 async fn should_send_transaction_with_recent_blockhash() {
-    let sender_pubkey = Pubkey::from_str(ACCOUNT_A).unwrap();
+    let sender_pubkey = ACCOUNT_A;
     let sender_derivation_path = DerivationPath::from(DERIVATION_PATH_A);
     verify_pubkey(&sender_derivation_path, &sender_pubkey).await;
 
-    let recipient_pubkey = Pubkey::from_str(PUBKEY_B).unwrap();
+    let recipient_pubkey = PUBKEY_B;
 
     let get_blockhash = async |client: &SolRpcClient<IcAgentRuntime>| {
         // TODO XC-317: Use method to estimate recent blockhash
@@ -73,16 +76,16 @@ async fn should_send_transaction_with_recent_blockhash() {
 
 #[tokio::test]
 async fn should_send_transaction_with_durable_nonce() {
-    let sender_pubkey = Pubkey::from_str(PUBKEY_B).unwrap();
+    let sender_pubkey = PUBKEY_B;
     let sender_derivation_path = DerivationPath::from(DERIVATION_PATH_B);
     verify_pubkey(&sender_derivation_path, &sender_pubkey).await;
 
-    let sender_nonce_account = Pubkey::from_str(NONCE_ACCOUNT_B).unwrap();
-    let recipient_pubkey = Pubkey::from_str(ACCOUNT_A).unwrap();
+    let sender_nonce_account = NONCE_ACCOUNT_B;
+    let recipient_pubkey = ACCOUNT_A;
 
     let get_blockhash = async |client: &SolRpcClient<IcAgentRuntime>| {
         let account = client
-            .get_account_info(Pubkey::from_str(NONCE_ACCOUNT_B).unwrap())
+            .get_account_info(NONCE_ACCOUNT_B)
             .send()
             .await
             .expect_consistent()
@@ -137,7 +140,7 @@ async fn send_transaction_test<F, S>(
     let recipient_balance_before = setup.fund_account(&recipient_pubkey, 1_000_000_000).await;
     println!("Recipient balance before sending transaction: {recipient_balance_before:?} lamports");
 
-    let prioritization_fees: Vec<_> = client
+    let mut prioritization_fees: Vec<_> = client
         .get_recent_prioritization_fees(&[sender_pubkey, recipient_pubkey])
         .unwrap()
         .send()
@@ -149,6 +152,7 @@ async fn send_transaction_test<F, S>(
         .collect();
 
     // Set the compute unit (CU) price to the median of the recent prioritization fees
+    prioritization_fees.sort();
     let priority_fee = if !prioritization_fees.is_empty() {
         prioritization_fees[prioritization_fees.len() / 2]
     } else {
