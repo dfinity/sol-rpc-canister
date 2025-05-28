@@ -143,6 +143,31 @@ impl Setup {
             .expect_consistent()
             .unwrap_or_else(|_| panic!("Failed to fetch account balance for account {pubkey}"))
     }
+
+    pub async fn get_median_recent_prioritization_fees(
+        &self,
+        sender_pubkey: &Pubkey,
+        recipient_pubkey: &Pubkey,
+    ) -> u64 {
+        let mut prioritization_fees: Vec<_> = self
+            .client()
+            .get_recent_prioritization_fees([sender_pubkey, recipient_pubkey])
+            .unwrap()
+            .send()
+            .await
+            .expect_consistent()
+            .expect("Call to `getRecentPrioritizationFees` failed")
+            .into_iter()
+            .map(|fee| fee.prioritization_fee)
+            .collect();
+        prioritization_fees.sort();
+
+        if prioritization_fees.is_empty() {
+            0
+        } else {
+            prioritization_fees[prioritization_fees.len() / 2]
+        };
+    }
 }
 
 impl Default for Setup {

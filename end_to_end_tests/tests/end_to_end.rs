@@ -1,17 +1,18 @@
+use async_trait::async_trait;
 use sol_rpc_client::{
     ed25519::{get_pubkey, sign_message, DerivationPath, Ed25519KeyId},
     nonce::nonce_from_account,
-    SolRpcClient,
 };
-use sol_rpc_e2e_tests::{IcAgentRuntime, Setup};
+use sol_rpc_e2e_tests::Setup;
 use solana_compute_budget_interface::ComputeBudgetInstruction;
 use solana_hash::Hash;
 use solana_message::Message;
-use solana_program::{instruction::Instruction, system_instruction};
+use solana_program::system_instruction;
 use solana_pubkey::{pubkey, Pubkey};
 use solana_transaction::Transaction;
 use std::str::FromStr;
 
+const TRANSACTION_AMOUNT: u64 = 100_000;
 const KEY_ID: Ed25519KeyId = Ed25519KeyId::MainnetTestKey1;
 
 // Pubkey `ACCOUNT_A` was obtained with the `schnorr_public_key` with the team wallet canister ID
@@ -38,38 +39,15 @@ async fn should_send_transaction_with_recent_blockhash() {
 
     let recipient_pubkey = PUBKEY_B;
 
-    let get_blockhash = async |client: &SolRpcClient<IcAgentRuntime>| {
-        // TODO XC-317: Use method to estimate recent blockhash
-        let slot = client
-            .get_slot()
-            .send()
-            .await
-            .expect_consistent()
-            .expect("Call to get slot failed");
-        let block = client
-            .get_block(slot)
-            .send()
-            .await
-            .expect_consistent()
-            .expect("Call to `getBlock` failed")
-            .expect("Block not found");
-        println!("Fetched recent blockhash: {:?}", block.blockhash);
-        Hash::from_str(&block.blockhash).expect("Failed to parse blockhash")
-    };
-
-    let modify_instructions = |instructions: &mut Vec<Instruction>| {
-        // Set a CU limit for instructions to: perform a SOL transfer, set the CU price, and set
-        // the CU limit (150 CU x 3 = 450 CU)
-        let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(450);
-        instructions.insert(0, set_cu_limit_ix);
+    let create_message = CreateMessageWithRecentBlockhash {
+        setup: Setup::new(),
     };
 
     send_transaction_test(
         sender_pubkey,
         sender_derivation_path,
         recipient_pubkey,
-        get_blockhash,
-        modify_instructions,
+        create_message,
     )
     .await;
 }
@@ -80,54 +58,29 @@ async fn should_send_transaction_with_durable_nonce() {
     let sender_derivation_path = DerivationPath::from(DERIVATION_PATH_B);
     verify_pubkey(&sender_derivation_path, &sender_pubkey).await;
 
-    let sender_nonce_account = NONCE_ACCOUNT_B;
+    let nonce_account = NONCE_ACCOUNT_B;
     let recipient_pubkey = ACCOUNT_A;
 
-    let get_blockhash = async |client: &SolRpcClient<IcAgentRuntime>| {
-        let account = client
-            .get_account_info(NONCE_ACCOUNT_B)
-            .send()
-            .await
-            .expect_consistent()
-            .expect("Call to `getAccountInfo` failed")
-            .expect("Account not found");
-        let blockhash =
-            nonce_from_account(&account).expect("Failed to extract durable nonce from account");
-        println!("Fetched durable nonce: {:?}", blockhash);
-        blockhash
-    };
-
-    let modify_instructions = |instructions: &mut Vec<Instruction>| {
-        // Set a CU limit for instructions to: perform a SOL transfer, advance the nonce account,
-        // and set the CU price, and set the CU limit (150 CU x 4 = 600 CU)
-        let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(600);
-        instructions.insert(0, set_cu_limit_ix);
-        // Instruction to advance nonce account; this instruction must be first.
-        let advance_nonce_ix =
-            system_instruction::advance_nonce_account(&sender_nonce_account, &sender_pubkey);
-        instructions.insert(0, advance_nonce_ix);
+    let create_message = CreateMessageWithDurableNonce {
+        setup: Setup::new(),
+        nonce_account,
     };
 
     send_transaction_test(
         sender_pubkey,
         sender_derivation_path,
         recipient_pubkey,
-        get_blockhash,
-        modify_instructions,
+        create_message,
     )
     .await;
 }
 
-async fn send_transaction_test<F, S>(
+async fn send_transaction_test<F: CreateSolanaMessage>(
     sender_pubkey: Pubkey,
     sender_derivation_path: DerivationPath,
     recipient_pubkey: Pubkey,
-    get_blockhash: F,
-    modify_instructions: S,
-) where
-    F: AsyncFnOnce(&SolRpcClient<IcAgentRuntime>) -> Hash,
-    S: FnOnce(&mut Vec<Instruction>),
-{
+    create_message: F,
+) {
     println!(
         "Sending transaction from sender account '{sender_pubkey:?}' to recipient account '{recipient_pubkey:?}'"
     );
@@ -140,38 +93,9 @@ async fn send_transaction_test<F, S>(
     let recipient_balance_before = setup.fund_account(&recipient_pubkey, 1_000_000_000).await;
     println!("Recipient balance before sending transaction: {recipient_balance_before:?} lamports");
 
-    let mut prioritization_fees: Vec<_> = client
-        .get_recent_prioritization_fees(&[sender_pubkey, recipient_pubkey])
-        .unwrap()
-        .send()
-        .await
-        .expect_consistent()
-        .expect("Call to `getRecentPrioritizationFees` failed")
-        .into_iter()
-        .map(|fee| fee.prioritization_fee)
-        .collect();
-
-    // Set the compute unit (CU) price to the median of the recent prioritization fees
-    prioritization_fees.sort();
-    let priority_fee = if !prioritization_fees.is_empty() {
-        prioritization_fees[prioritization_fees.len() / 2]
-    } else {
-        0
-    };
-    let add_priority_fee_ix = ComputeBudgetInstruction::set_compute_unit_price(priority_fee);
-
-    // Send some SOL from sender to recipient
-    let transaction_amount = 10_000;
-    let transfer_ix =
-        system_instruction::transfer(&sender_pubkey, &recipient_pubkey, transaction_amount);
-
-    let blockhash = get_blockhash(&client).await;
-
-    let mut instructions = vec![add_priority_fee_ix, transfer_ix];
-    modify_instructions(&mut instructions);
-
-    let message =
-        Message::new_with_blockhash(instructions.as_slice(), Some(&sender_pubkey), &blockhash);
+    let message = create_message
+        .create_message(sender_pubkey, recipient_pubkey)
+        .await;
 
     // Sign transaction with t-EdDSA
     let signature = sign_message(
@@ -211,9 +135,118 @@ async fn send_transaction_test<F, S>(
 
     assert_eq!(
         recipient_balance_after,
-        recipient_balance_before + transaction_amount
+        recipient_balance_before + TRANSACTION_AMOUNT
     );
-    assert!(sender_balance_after <= sender_balance_before - transaction_amount);
+    assert!(sender_balance_after <= sender_balance_before - TRANSACTION_AMOUNT);
+}
+
+#[async_trait]
+pub trait CreateSolanaMessage {
+    async fn create_message(&self, sender_pubkey: Pubkey, recipient_pubkey: Pubkey) -> Message;
+}
+
+struct CreateMessageWithRecentBlockhash {
+    setup: Setup,
+}
+
+#[async_trait]
+impl CreateSolanaMessage for CreateMessageWithRecentBlockhash {
+    async fn create_message(&self, sender_pubkey: Pubkey, recipient_pubkey: Pubkey) -> Message {
+        let client = self.setup.client();
+
+        // Set a CU limit for instructions to: perform a SOL transfer, set the CU price, and set
+        // the CU limit (150 CU x 3 = 450 CU)
+        let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(450);
+
+        // Set the compute unit (CU) price to the median of the recent prioritization fees
+        let priority_fee = self
+            .setup
+            .get_median_recent_prioritization_fees(&sender_pubkey, &recipient_pubkey)
+            .await;
+        let add_priority_fee_ix = ComputeBudgetInstruction::set_compute_unit_price(priority_fee);
+
+        // Send some SOL from sender to recipient
+        let transfer_ix =
+            system_instruction::transfer(&sender_pubkey, &recipient_pubkey, TRANSACTION_AMOUNT);
+
+        // Fetch a recent blockhash
+        // TODO XC-317: Use method to estimate recent blockhash
+        let slot = client
+            .get_slot()
+            .send()
+            .await
+            .expect_consistent()
+            .expect("Call to get slot failed");
+        let block = client
+            .get_block(slot)
+            .send()
+            .await
+            .expect_consistent()
+            .expect("Call to `getBlock` failed")
+            .expect("Block not found");
+        println!("Fetched recent blockhash: {:?}", block.blockhash);
+        let blockhash = Hash::from_str(&block.blockhash).expect("Failed to parse blockhash");
+
+        Message::new_with_blockhash(
+            &[set_cu_limit_ix, add_priority_fee_ix, transfer_ix],
+            Some(&sender_pubkey),
+            &blockhash,
+        )
+    }
+}
+
+struct CreateMessageWithDurableNonce {
+    setup: Setup,
+    nonce_account: Pubkey,
+}
+
+#[async_trait]
+impl CreateSolanaMessage for CreateMessageWithDurableNonce {
+    async fn create_message(&self, sender_pubkey: Pubkey, recipient_pubkey: Pubkey) -> Message {
+        let client = self.setup.client();
+
+        // Instruction to advance nonce account; this instruction must be first.
+        let advance_nonce_ix =
+            system_instruction::advance_nonce_account(&self.nonce_account, &sender_pubkey);
+
+        // Set a CU limit for instructions to: perform a SOL transfer, advance the nonce account,
+        // and set the CU price, and set the CU limit (150 CU x 4 = 600 CU)
+        let set_cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(600);
+
+        // Set the compute unit (CU) price to the median of the recent prioritization fees
+        let priority_fee = self
+            .setup
+            .get_median_recent_prioritization_fees(&sender_pubkey, &recipient_pubkey)
+            .await;
+        let add_priority_fee_ix = ComputeBudgetInstruction::set_compute_unit_price(priority_fee);
+
+        // Send some SOL from sender to recipient
+        let transfer_ix =
+            system_instruction::transfer(&sender_pubkey, &recipient_pubkey, TRANSACTION_AMOUNT);
+
+        // Fetch the current durable nonce value
+        let account = client
+            .get_account_info(self.nonce_account)
+            .send()
+            .await
+            .expect_consistent()
+            .expect("Call to `getAccountInfo` failed")
+            .expect("Account not found");
+        let blockhash =
+            nonce_from_account(&account).expect("Failed to extract durable nonce from account");
+        println!("Fetched durable nonce: {:?}", blockhash);
+
+        Message::new_with_blockhash(
+            &[
+                advance_nonce_ix,
+                set_cu_limit_ix,
+                add_priority_fee_ix,
+                transfer_ix,
+            ],
+            Some(&sender_pubkey),
+            &blockhash,
+        )
+    }
 }
 
 async fn verify_pubkey(derivation_path: &DerivationPath, expected_pubkey: &Pubkey) {
