@@ -166,7 +166,7 @@ impl Setup {
             0
         } else {
             prioritization_fees[prioritization_fees.len() / 2]
-        };
+        }
     }
 }
 
