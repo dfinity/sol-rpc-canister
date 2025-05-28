@@ -127,9 +127,10 @@ mod request;
 
 use crate::request::{
     GetAccountInfoRequest, GetAccountInfoRequestBuilder, GetBalanceRequest, GetBlockRequest,
-    GetRecentPrioritizationFeesRequest, GetRecentPrioritizationFeesRequestBuilder,
-    GetSignatureStatusesRequest, GetSignatureStatusesRequestBuilder,
-    GetSignaturesForAddressRequest, GetSignaturesForAddressRequestBuilder, GetSlotRequest,
+    GetBlockRequestBuilder, GetRecentPrioritizationFeesRequest,
+    GetRecentPrioritizationFeesRequestBuilder, GetSignatureStatusesRequest,
+    GetSignatureStatusesRequestBuilder, GetSignaturesForAddressRequest,
+    GetSignaturesForAddressRequestBuilder, GetSlotRequest, GetSlotRequestBuilder,
     GetTokenAccountBalanceRequest, GetTransactionRequest, JsonRequest, SendTransactionRequest,
 };
 use async_trait::async_trait;
@@ -140,10 +141,9 @@ use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
     GetRecentPrioritizationFeesParams, GetSignatureStatusesParams, GetSignaturesForAddressParams,
-    GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
-    MultiRpcResult, Pubkey, RpcConfig, RpcError, RpcResult, RpcSources, SendTransactionParams,
-    Signature, Slot, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TokenAmount,
-    TransactionDetails, TransactionInfo,
+    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, MultiRpcResult, Pubkey, RpcConfig,
+    RpcError, RpcResult, RpcSources, SendTransactionParams, Signature, SolanaCluster,
+    SupportedRpcProvider, SupportedRpcProviderId, TokenAmount, TransactionDetails, TransactionInfo,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_hash::Hash;
@@ -382,16 +382,7 @@ impl<R> SolRpcClient<R> {
     }
 
     /// Call `getBlock` on the SOL RPC canister.
-    pub fn get_block(
-        &self,
-        params: impl Into<GetBlockParams>,
-    ) -> RequestBuilder<
-        R,
-        RpcConfig,
-        GetBlockParams,
-        MultiRpcResult<Option<sol_rpc_types::ConfirmedBlock>>,
-        MultiRpcResult<Option<solana_transaction_status_client_types::UiConfirmedBlock>>,
-    > {
+    pub fn get_block(&self, params: impl Into<GetBlockParams>) -> GetBlockRequestBuilder<R> {
         let params = params.into();
         let cycles = match params.transaction_details.unwrap_or_default() {
             TransactionDetails::Signatures => 100_000_000_000,
@@ -751,15 +742,7 @@ impl<R> SolRpcClient<R> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn get_slot(
-        &self,
-    ) -> RequestBuilder<
-        R,
-        GetSlotRpcConfig,
-        Option<GetSlotParams>,
-        MultiRpcResult<Slot>,
-        MultiRpcResult<Slot>,
-    > {
+    pub fn get_slot(&self) -> GetSlotRequestBuilder<R> {
         RequestBuilder::new(self.clone(), GetSlotRequest::default(), 10_000_000_000)
     }
 
@@ -954,7 +937,7 @@ impl<R: Runtime> SolRpcClient<R> {
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SolRpcClient::builder_for_ic()
-    /// #    .with_mocked_response(MultiRpcResult::Consistent(Ok()))
+    /// #    .with_mocked_response(MultiRpcResult::Consistent(Ok(())))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
