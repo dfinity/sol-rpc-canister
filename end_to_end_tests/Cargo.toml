@@ -1,6 +1,6 @@
 [package]
 name = "sol_rpc_e2e_tests"
-version = "0.1.0"
+version = "0.2.0"
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -14,7 +14,7 @@ ic-agent = { workspace = true }
 ic-cdk = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-sol_rpc_client = { path = "../libs/client" }
+sol_rpc_client = { path = "../libs/client", features = ["ed25519"] }
 sol_rpc_types = { path = "../libs/types" }
 sol_rpc_int_tests = { path = "../integration_tests" }
 solana-commitment-config = { workspace = true }
@@ -22,11 +22,9 @@ solana-hash = { workspace = true }
 solana-message = { workspace = true }
 solana-pubkey = { workspace = true }
 solana-signature = { workspace = true }
-solana-signer = { workspace = true }
 solana-transaction = { workspace = true }
 tokio = { workspace = true }
 
 [dev-dependencies]
 solana-compute-budget-interface = { workspace = true }
-solana-keypair = { workspace = true }
 solana-program = { workspace = true }

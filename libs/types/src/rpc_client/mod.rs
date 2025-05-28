@@ -11,7 +11,7 @@ pub use ic_cdk::api::management_canister::http_request::HttpHeader;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, num::TryFromIntError};
-use strum::Display;
+use strum::{Display, EnumIter};
 use thiserror::Error;
 
 /// An RPC result type.
@@ -325,6 +325,7 @@ pub enum SolanaCluster {
     PartialEq,
     PartialOrd,
     CandidType,
+    EnumIter,
     Deserialize,
     Serialize,
     Display,

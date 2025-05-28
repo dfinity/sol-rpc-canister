@@ -1,6 +1,6 @@
 [package]
 name = "sol_rpc_int_tests"
-version = "0.1.0"
+version = "0.2.0"
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -15,6 +15,7 @@ canlog = { workspace = true }
 const_format = { workspace = true }
 ic-cdk = { workspace = true }
 ic-http-types = { workspace = true }
+ic-management-canister-types = {workspace = true}
 ic-test-utilities-load-wasm = { workspace = true }
 num-traits = { workspace = true }
 pocket-ic = { workspace = true }

@@ -421,11 +421,12 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                 Some(Ok(priority)) => match priority {
                     Priority::Info => log.push_logs(Priority::Info),
                     Priority::Debug => log.push_logs(Priority::Debug),
-                    Priority::TraceHttp => {}
+                    Priority::TraceHttp => log.push_logs(Priority::TraceHttp),
                 },
                 Some(Err(_)) | None => {
                     log.push_logs(Priority::Info);
                     log.push_logs(Priority::Debug);
+                    log.push_logs(Priority::TraceHttp);
                 }
             }
 

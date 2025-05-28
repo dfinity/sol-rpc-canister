@@ -1,6 +1,8 @@
-use super::PROVIDERS;
+use super::{Providers, PROVIDERS};
 use crate::constants::API_KEY_REPLACE_STRING;
 use sol_rpc_types::{RpcAccess, RpcAuth, SupportedRpcProvider, SupportedRpcProviderId};
+use std::collections::BTreeSet;
+use strum::IntoEnumIterator;
 
 #[test]
 fn test_rpc_provider_url_patterns() {
@@ -49,6 +51,23 @@ fn should_have_consistent_name_for_cluster() {
                 .ends_with(&provider.cluster.to_string()));
         }
     })
+}
+
+#[test]
+fn should_partition_providers_between_solana_cluster() {
+    let mainnet_providers: BTreeSet<_> = Providers::MAINNET_PROVIDERS.iter().collect();
+    let devnet_providers: BTreeSet<_> = Providers::DEVNET_PROVIDERS.iter().collect();
+    let common_providers: BTreeSet<_> = mainnet_providers.intersection(&devnet_providers).collect();
+    assert_eq!(common_providers, BTreeSet::default());
+
+    let all_providers: BTreeSet<_> = SupportedRpcProviderId::iter().collect();
+    let partitioned_providers: BTreeSet<_> = mainnet_providers
+        .into_iter()
+        .chain(devnet_providers)
+        .copied()
+        .collect();
+
+    assert_eq!(all_providers, partitioned_providers);
 }
 
 mod providers_new {

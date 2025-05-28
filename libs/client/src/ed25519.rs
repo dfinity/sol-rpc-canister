@@ -3,7 +3,6 @@
 //! See the [documentation](https://internetcomputer.org/docs/building-apps/network-features/signatures/t-schnorr)
 //! for more detailed information on the full threshold Schnorr API.
 
-pub use crate::request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 use crate::Runtime;
 use candid::Principal;
 use derive_more::{From, Into};
@@ -171,13 +170,12 @@ pub async fn sign_message<R: Runtime>(
         },
     )
     .await?;
-    match solana_signature::Signature::try_from(response.signature) {
-        Ok(signature) => Ok(signature),
-        Err(bytes) => panic!(
+    solana_signature::Signature::try_from(response.signature).map_err(|e| {
+        panic!(
             "Expected signature to contain 64 bytes, got {} bytes",
-            bytes.len()
-        ),
-    }
+            e.len()
+        )
+    })
 }
 
 /// Fetch the Ed25519 public key for the key ID, given canister ID and derivation path, see threshold Schnorr
@@ -256,19 +254,17 @@ pub async fn get_pubkey<R: Runtime>(
             0,
         )
         .await?;
-    let pubkey = match solana_pubkey::Pubkey::try_from(public_key) {
-        Ok(pubkey) => pubkey,
-        Err(bytes) => panic!(
+    let pubkey = solana_pubkey::Pubkey::try_from(public_key).unwrap_or_else(|e| {
+        panic!(
             "Expected public key to contain 32 bytes, got {} bytes",
-            bytes.len()
-        ),
-    };
-    let chain_code = match <[u8; 32]>::try_from(chain_code) {
-        Ok(pubkey) => pubkey,
-        Err(bytes) => panic!(
+            e.len()
+        )
+    });
+    let chain_code = <[u8; 32]>::try_from(chain_code).unwrap_or_else(|e| {
+        panic!(
             "Expected chain code key to contain 32 bytes, got {} bytes",
-            bytes.len()
-        ),
-    };
+            e.len()
+        )
+    });
     Ok((pubkey, chain_code))
 }

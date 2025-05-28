@@ -15,7 +15,7 @@ use sol_rpc_int_tests::{
 use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetSignaturesForAddressLimit,
     GetSlotParams, InstallArgs, InstructionError, Mode, ProviderError, RpcAccess, RpcAuth,
-    RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster,
+    RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster,
     SupportedRpcProvider, SupportedRpcProviderId, TransactionError,
 };
 use solana_account_decoder_client_types::{
@@ -48,10 +48,7 @@ mod mock_request_tests {
         .await;
         let client = setup
             .client()
-            .with_rpc_config(RpcConfig {
-                response_size_estimate: Some(MOCK_REQUEST_MAX_RESPONSE_BYTES),
-                ..RpcConfig::default()
-            })
+            .with_response_size_estimate(MOCK_REQUEST_MAX_RESPONSE_BYTES)
             .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Custom(RpcEndpoint {
                 url: MOCK_REQUEST_URL.to_string(),
                 headers: Some(vec![HttpHeader {
@@ -2094,6 +2091,42 @@ mod get_signatures_for_address_tests {
 
         setup.drop().await;
     }
+}
+
+#[tokio::test]
+async fn should_log_request_and_response() {
+    let setup = Setup::new().await.with_mock_api_keys().await;
+
+    let client = setup
+        .client()
+        .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Supported(
+            SupportedRpcProviderId::AlchemyMainnet,
+        )]));
+
+    let results = client
+        .mock_sequential_json_rpc_responses::<1>(
+            200,
+            json!({
+                "id": Id::from(ConstantSizeId::ZERO),
+                "jsonrpc": "2.0",
+                "result": 1234,
+            }),
+        )
+        .build()
+        .get_slot()
+        .with_rounding_error(0)
+        .send()
+        .await
+        .expect_consistent();
+    assert_eq!(results, Ok(1234));
+
+    let logs = setup.retrieve_logs("TRACE_HTTP").await;
+    assert_eq!(logs.len(), 2, "Unexpected amount of logs: {logs:?}");
+
+    assert_eq!(logs[0].message, "JSON-RPC request with id `00000000000000000000` to solana-mainnet.g.alchemy.com: JsonRpcRequest { jsonrpc: V2, method: \"getSlot\", id: String(\"00000000000000000000\"), params: Some(GetSlotParams(None)) }");
+    assert_eq!(logs[1].message, "Got response for request with id `00000000000000000000`. Response with status 200 OK: JsonRpcResponse { jsonrpc: V2, id: String(\"00000000000000000000\"), result: Ok(1234) }");
+
+    setup.drop().await;
 }
 
 fn assert_within(actual: u128, expected: u128, percentage_error: u8) {

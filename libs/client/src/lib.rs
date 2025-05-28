@@ -122,14 +122,15 @@
 pub mod ed25519;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod fixtures;
+pub mod nonce;
 mod request;
 
 use crate::request::{
-    GetAccountInfoRequest, GetBalanceRequest, GetBlockRequest, GetRecentPrioritizationFeesRequest,
-    GetRecentPrioritizationFeesRequestBuilder, GetSignatureStatusesRequest,
-    GetSignatureStatusesRequestBuilder, GetSignaturesForAddressRequest,
-    GetSignaturesForAddressRequestBuilder, GetSlotRequest, GetTokenAccountBalanceRequest,
-    GetTransactionRequest, JsonRequest, SendTransactionRequest,
+    GetAccountInfoRequest, GetAccountInfoRequestBuilder, GetBalanceRequest, GetBlockRequest,
+    GetRecentPrioritizationFeesRequest, GetRecentPrioritizationFeesRequestBuilder,
+    GetSignatureStatusesRequest, GetSignatureStatusesRequestBuilder,
+    GetSignaturesForAddressRequest, GetSignaturesForAddressRequestBuilder, GetSlotRequest,
+    GetTokenAccountBalanceRequest, GetTransactionRequest, JsonRequest, SendTransactionRequest,
 };
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
@@ -137,7 +138,7 @@ use ic_cdk::api::call::RejectionCode;
 pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
-    CommitmentLevel, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
+    CommitmentLevel, ConsensusStrategy, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
     GetRecentPrioritizationFeesParams, GetSignatureStatusesParams, GetSignaturesForAddressParams,
     GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
     Pubkey, RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot,
@@ -147,7 +148,6 @@ use sol_rpc_types::{
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
 use std::{fmt::Debug, sync::Arc};
-
 /// The principal identifying the productive Solana RPC canister under NNS control.
 ///
 /// ```rust
@@ -278,6 +278,24 @@ impl<R> ClientBuilder<R> {
         self
     }
 
+    /// Mutates the builder to use the given [`ConsensusStrategy`] in the [`RpcConfig`].
+    pub fn with_consensus_strategy(mut self, consensus_strategy: ConsensusStrategy) -> Self {
+        self.config.rpc_config = Some(RpcConfig {
+            response_consensus: Some(consensus_strategy),
+            ..self.config.rpc_config.unwrap_or_default()
+        });
+        self
+    }
+
+    /// Mutates the builder to use the given `response_size_estimate` in the [`RpcConfig`].
+    pub fn with_response_size_estimate(mut self, response_size_estimate: u64) -> Self {
+        self.config.rpc_config = Some(RpcConfig {
+            response_size_estimate: Some(response_size_estimate),
+            ..self.config.rpc_config.unwrap_or_default()
+        });
+        self
+    }
+
     /// Mutates the builder to use the given [`CommitmentLevel`].
     ///
     /// All requests made by the built client will use that commitment level.
@@ -328,13 +346,7 @@ impl<R> SolRpcClient<R> {
     pub fn get_account_info(
         &self,
         params: impl Into<GetAccountInfoParams>,
-    ) -> RequestBuilder<
-        R,
-        RpcConfig,
-        GetAccountInfoParams,
-        sol_rpc_types::MultiRpcResult<Option<sol_rpc_types::AccountInfo>>,
-        sol_rpc_types::MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>,
-    > {
+    ) -> GetAccountInfoRequestBuilder<R> {
         RequestBuilder::new(
             self.clone(),
             GetAccountInfoRequest::new(params.into()),

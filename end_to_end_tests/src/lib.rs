@@ -10,7 +10,7 @@ use sol_rpc_int_tests::{
     wallet::{decode_cycles_wallet_response, CallCanisterArgs},
 };
 use sol_rpc_types::{
-    CommitmentLevel, ConsensusStrategy, MultiRpcResult, RpcConfig, RpcSource, RpcSources,
+    CommitmentLevel, ConsensusStrategy, MultiRpcResult, RpcSource, RpcSources,
     SupportedRpcProviderId,
 };
 use solana_commitment_config::CommitmentConfig;
@@ -60,12 +60,9 @@ impl Setup {
                 RpcSource::Supported(SupportedRpcProviderId::DrpcDevnet),
                 RpcSource::Supported(SupportedRpcProviderId::HeliusDevnet),
             ]))
-            .with_rpc_config(RpcConfig {
-                response_consensus: Some(ConsensusStrategy::Threshold {
-                    min: 2,
-                    total: None,
-                }),
-                ..RpcConfig::default()
+            .with_consensus_strategy(ConsensusStrategy::Threshold {
+                min: 2,
+                total: None,
             })
             .with_default_commitment_level(CommitmentLevel::Confirmed)
             .build()
