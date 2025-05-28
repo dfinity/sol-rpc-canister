@@ -15,7 +15,7 @@ use sol_rpc_int_tests::{
 use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetSignaturesForAddressLimit,
     GetSlotParams, InstallArgs, InstructionError, Mode, ProviderError, RpcAccess, RpcAuth,
-    RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster,
+    RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster,
     SupportedRpcProvider, SupportedRpcProviderId, TransactionError,
 };
 use solana_account_decoder_client_types::{
