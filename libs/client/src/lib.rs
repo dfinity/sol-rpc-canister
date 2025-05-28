@@ -287,6 +287,15 @@ impl<R> ClientBuilder<R> {
         self
     }
 
+    /// Mutates the builder to use the given `response_size_estimate` in the [`RpcConfig`].
+    pub fn with_response_size_estimate(mut self, response_size_estimate: u64) -> Self {
+        self.config.rpc_config = Some(RpcConfig {
+            response_size_estimate: Some(response_size_estimate),
+            ..self.config.rpc_config.unwrap_or_default()
+        });
+        self
+    }
+
     /// Mutates the builder to use the given [`CommitmentLevel`].
     ///
     /// All requests made by the built client will use that commitment level.
