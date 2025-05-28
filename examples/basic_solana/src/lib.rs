@@ -7,7 +7,7 @@ use crate::state::{read_state, State};
 use candid::{CandidType, Deserialize, Principal};
 use sol_rpc_client::{ed25519::Ed25519KeyId, IcRuntime, SolRpcClient};
 use sol_rpc_types::{
-    CommitmentLevel, ConsensusStrategy, MultiRpcResult, RpcSources, SolanaCluster,
+    CommitmentLevel, ConsensusStrategy, MultiRpcResult, RpcConfig, RpcSources, SolanaCluster,
 };
 use solana_hash::Hash;
 use std::str::FromStr;
