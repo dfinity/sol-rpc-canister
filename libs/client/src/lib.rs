@@ -126,11 +126,14 @@ pub mod nonce;
 mod request;
 
 use crate::request::{
-    GetAccountInfoRequest, GetAccountInfoRequestBuilder, GetBalanceRequest, GetBlockRequest,
+    GetAccountInfoRequest, GetAccountInfoRequestBuilder, GetBalanceRequest,
+    GetBalanceRequestBuilder, GetBlockRequest, GetBlockRequestBuilder,
     GetRecentPrioritizationFeesRequest, GetRecentPrioritizationFeesRequestBuilder,
     GetSignatureStatusesRequest, GetSignatureStatusesRequestBuilder,
     GetSignaturesForAddressRequest, GetSignaturesForAddressRequestBuilder, GetSlotRequest,
-    GetTokenAccountBalanceRequest, GetTransactionRequest, JsonRequest, SendTransactionRequest,
+    GetSlotRequestBuilder, GetTokenAccountBalanceRequest, GetTokenAccountBalanceRequestBuilder,
+    GetTransactionRequest, GetTransactionRequestBuilder, JsonRequest, JsonRequestBuilder,
+    SendTransactionRequest, SendTransactionRequestBuilder,
 };
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
@@ -381,16 +384,7 @@ impl<R> SolRpcClient<R> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn get_balance(
-        &self,
-        params: impl Into<GetBalanceParams>,
-    ) -> RequestBuilder<
-        R,
-        RpcConfig,
-        GetBalanceParams,
-        sol_rpc_types::MultiRpcResult<Lamport>,
-        sol_rpc_types::MultiRpcResult<Lamport>,
-    > {
+    pub fn get_balance(&self, params: impl Into<GetBalanceParams>) -> GetBalanceRequestBuilder<R> {
         RequestBuilder::new(
             self.clone(),
             GetBalanceRequest::new(params.into()),
@@ -399,18 +393,7 @@ impl<R> SolRpcClient<R> {
     }
 
     /// Call `getBlock` on the SOL RPC canister.
-    pub fn get_block(
-        &self,
-        params: impl Into<GetBlockParams>,
-    ) -> RequestBuilder<
-        R,
-        RpcConfig,
-        GetBlockParams,
-        sol_rpc_types::MultiRpcResult<Option<sol_rpc_types::ConfirmedBlock>>,
-        sol_rpc_types::MultiRpcResult<
-            Option<solana_transaction_status_client_types::UiConfirmedBlock>,
-        >,
-    > {
+    pub fn get_block(&self, params: impl Into<GetBlockParams>) -> GetBlockRequestBuilder<R> {
         let params = params.into();
         let cycles = match params.transaction_details.unwrap_or_default() {
             TransactionDetails::Signatures => 100_000_000_000,
@@ -460,13 +443,7 @@ impl<R> SolRpcClient<R> {
     pub fn get_token_account_balance(
         &self,
         params: impl Into<GetTokenAccountBalanceParams>,
-    ) -> RequestBuilder<
-        R,
-        RpcConfig,
-        GetTokenAccountBalanceParams,
-        sol_rpc_types::MultiRpcResult<TokenAmount>,
-        sol_rpc_types::MultiRpcResult<UiTokenAmount>,
-    > {
+    ) -> GetTokenAccountBalanceRequestBuilder<R> {
         RequestBuilder::new(
             self.clone(),
             GetTokenAccountBalanceRequest::new(params.into()),
@@ -770,15 +747,7 @@ impl<R> SolRpcClient<R> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn get_slot(
-        &self,
-    ) -> RequestBuilder<
-        R,
-        GetSlotRpcConfig,
-        Option<GetSlotParams>,
-        sol_rpc_types::MultiRpcResult<Slot>,
-        sol_rpc_types::MultiRpcResult<Slot>,
-    > {
+    pub fn get_slot(&self) -> GetSlotRequestBuilder<R> {
         RequestBuilder::new(self.clone(), GetSlotRequest::default(), 10_000_000_000)
     }
 
@@ -786,13 +755,7 @@ impl<R> SolRpcClient<R> {
     pub fn get_transaction(
         &self,
         params: impl Into<GetTransactionParams>,
-    ) -> RequestBuilder<
-        R,
-        RpcConfig,
-        GetTransactionParams,
-        sol_rpc_types::MultiRpcResult<Option<TransactionInfo>>,
-        sol_rpc_types::MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>,
-    > {
+    ) -> GetTransactionRequestBuilder<R> {
         RequestBuilder::new(
             self.clone(),
             GetTransactionRequest::new(params.into()),
@@ -834,16 +797,7 @@ impl<R> SolRpcClient<R> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn send_transaction<T>(
-        &self,
-        params: T,
-    ) -> RequestBuilder<
-        R,
-        RpcConfig,
-        SendTransactionParams,
-        sol_rpc_types::MultiRpcResult<Signature>,
-        sol_rpc_types::MultiRpcResult<solana_signature::Signature>,
-    >
+    pub fn send_transaction<T>(&self, params: T) -> SendTransactionRequestBuilder<R>
     where
         T: TryInto<SendTransactionParams>,
         <T as TryInto<SendTransactionParams>>::Error: Debug,
@@ -913,16 +867,7 @@ impl<R> SolRpcClient<R> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn json_request(
-        &self,
-        json_request: serde_json::Value,
-    ) -> RequestBuilder<
-        R,
-        RpcConfig,
-        String,
-        sol_rpc_types::MultiRpcResult<String>,
-        sol_rpc_types::MultiRpcResult<String>,
-    > {
+    pub fn json_request(&self, json_request: serde_json::Value) -> JsonRequestBuilder<R> {
         RequestBuilder::new(
             self.clone(),
             JsonRequest::try_from(json_request).expect("Client error: invalid JSON request"),
