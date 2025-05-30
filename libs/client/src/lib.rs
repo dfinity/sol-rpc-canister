@@ -407,22 +407,24 @@ impl<R> SolRpcClient<R> {
     /// use sol_rpc_client::SolRpcClient;
     /// use sol_rpc_types::{ConfirmedBlock, MultiRpcResult, RpcSources, SolanaCluster};
     /// use solana_pubkey::pubkey;
-    /// use solana_transaction_status_client_types::{Reward, RewardType, UiConfirmedBlock};
+    /// use solana_reward_info::RewardType;
+    /// use solana_transaction_status_client_types::{Reward, UiConfirmedBlock};
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # use std::str::FromStr;
+    /// # use sol_rpc_types::{Hash, Pubkey};
     /// let client = SolRpcClient::builder_for_ic()
     /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(ConfirmedBlock {
-    /// #     previous_blockhash: solana_hash::Hash::from_str("4yeCoXK2Q4yXcunuLtF37yTE1wVD4x8313adneZDmi8w").into(),
-    /// #     blockhash: solana_hash::Hash::from_str("C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY").into(),
+    /// #     previous_blockhash: Hash::from_str("4yeCoXK2Q4yXcunuLtF37yTE1wVD4x8313adneZDmi8w").unwrap(),
+    /// #     blockhash: Hash::from_str("C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY").unwrap(),
     /// #     parent_slot: 343459193,
     /// #     block_time: Some(1748606929),
     /// #     block_height: Some(321673899),
     /// #     signatures: None,
     /// #     rewards: Some(vec![
     /// #         sol_rpc_types::Reward {
-    /// #             pubkey: pubkey!("ChorusmmK7i1AxXeiTtQgQZhQNiXYU84ULeaYF1EH15n").into(),
+    /// #             pubkey: Pubkey::from_str("ChorusmmK7i1AxXeiTtQgQZhQNiXYU84ULeaYF1EH15n").unwrap(),
     /// #             lamports: 29444484,
     /// #             post_balance: 633539232581,
     /// #             reward_type: Some(sol_rpc_types::RewardType::Fee),
@@ -440,16 +442,16 @@ impl<R> SolRpcClient<R> {
     ///     .await
     ///     .expect_consistent();
     ///
-    /// assert_eq!(block, Ok(UiConfirmedBlock {
-    ///       previous_blockhash: solana_hash::Hash::from_str("4yeCoXK2Q4yXcunuLtF37yTE1wVD4x8313adneZDmi8w").into(),
-    ///       blockhash: solana_hash::Hash::from_str("C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY").into(),
+    /// assert_eq!(block, Ok(Some(UiConfirmedBlock {
+    ///       previous_blockhash: "4yeCoXK2Q4yXcunuLtF37yTE1wVD4x8313adneZDmi8w".to_string(),
+    ///       blockhash: "C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY".to_string(),
     ///       parent_slot: 343459193,
     ///       block_time: Some(1748606929),
     ///       block_height: Some(321673899),
     ///       signatures: None,
     ///       rewards: Some(vec![
     ///           Reward {
-    ///               pubkey: pubkey!("ChorusmmK7i1AxXeiTtQgQZhQNiXYU84ULeaYF1EH15n").into(),
+    ///               pubkey: "ChorusmmK7i1AxXeiTtQgQZhQNiXYU84ULeaYF1EH15n".to_string(),
     ///               lamports: 29444484,
     ///               post_balance: 633539232581,
     ///               reward_type: Some(RewardType::Fee),
@@ -458,7 +460,7 @@ impl<R> SolRpcClient<R> {
     ///       ]),
     ///       num_reward_partitions: None,
     ///       transactions: None,
-    /// }));
+    /// })));
     /// # Ok(())
     /// # }
     /// ```

@@ -4494,6 +4494,7 @@ dependencies = [
  "solana-nonce",
  "solana-program",
  "solana-pubkey",
+ "solana-reward-info",
  "solana-signature",
  "solana-transaction",
  "solana-transaction-error",
