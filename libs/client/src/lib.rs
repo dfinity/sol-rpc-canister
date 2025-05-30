@@ -125,7 +125,14 @@ pub mod fixtures;
 pub mod nonce;
 mod request;
 
-use crate::request::{GetAccountInfoRequest, GetAccountInfoRequestBuilder, GetBalanceRequest, GetBlockRequest, GetBlockRequestBuilder, GetRecentPrioritizationFeesRequest, GetRecentPrioritizationFeesRequestBuilder, GetSignatureStatusesRequest, GetSignatureStatusesRequestBuilder, GetSignaturesForAddressRequest, GetSignaturesForAddressRequestBuilder, GetSlotRequest, GetTokenAccountBalanceRequest, GetTransactionRequest, JsonRequest, SendTransactionRequest};
+use crate::request::{
+    GetAccountInfoRequest, GetAccountInfoRequestBuilder, GetBalanceRequest, GetBlockRequest,
+    GetBlockRequestBuilder, GetRecentPrioritizationFeesRequest,
+    GetRecentPrioritizationFeesRequestBuilder, GetSignatureStatusesRequest,
+    GetSignatureStatusesRequestBuilder, GetSignaturesForAddressRequest,
+    GetSignaturesForAddressRequestBuilder, GetSlotRequest, GetTokenAccountBalanceRequest,
+    GetTransactionRequest, JsonRequest, SendTransactionRequest,
+};
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
