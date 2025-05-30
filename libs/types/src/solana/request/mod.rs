@@ -116,7 +116,7 @@ impl From<solana_pubkey::Pubkey> for GetBalanceParams {
 }
 
 /// The parameters for a Solana [`getBlock`](https://solana.com/docs/rpc/http/getblock) RPC method call.
-// TODO XC-342: Add support for remaining values for `encoding` and `transactionDetails` fields.
+// TODO XC-342: Add support for `encoding` and remaining values of `transactionDetails`.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
 pub struct GetBlockParams {
     /// Slot number of the block to fetch.

@@ -369,7 +369,11 @@ type GetBlockParams = record {
     // Slot number of the block to fetch.
     slot: Slot;
     // Specifies what transaction details to include in the response.
-    // If this field is not specified, the default value of "none" will be used.
+    //
+    // *Warning:* If this value is not specified, the default value of [`TransactionDetails::None`]
+    // will be used, which is different from the default value in the Solana RPC API. This is
+    // because the default value of `full` for the Solana RPC API results in response sizes that
+    // are generally too large to be supported by the ICP.
     transactionDetails: opt TransactionDetails;
     // The commitment describes how finalized a block is at that point in time.
     commitment: opt variant { confirmed; finalized };
@@ -379,6 +383,8 @@ type GetBlockParams = record {
     // * If this parameter is omitted, only legacy transactions will be returned, and a block
     // containing any versioned transaction will prompt the error.
     maxSupportedTransactionVersion: opt nat8;
+    // Whether to populate the rewards array. If not provided, the default includes rewards.
+    rewards: opt bool;
 };
 
 // Unix timestamp (seconds since the Unix epoch).

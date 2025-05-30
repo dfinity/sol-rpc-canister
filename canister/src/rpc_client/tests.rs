@@ -285,10 +285,7 @@ mod request_serialization_tests {
                 GetBlockParams::from(123),
             )
             .unwrap(),
-            json!([
-                123,
-                {"rewards": false, "transactionDetails": "none"}
-            ]),
+            json!([123, {"transactionDetails": "none"}]),
         );
         assert_params_eq(
             GetBlockRequest::get_block(
