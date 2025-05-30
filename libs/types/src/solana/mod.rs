@@ -48,9 +48,10 @@ pub struct ConfirmedBlock {
     /// Signatures of the transactions in the block. Included in the response whenever
     /// `transactionDetails` is not `none`.
     pub signatures: Option<Vec<Signature>>,
-    /// TODO
+    /// Array of rewards distributed in this block.
     pub rewards: Option<Vec<Reward>>,
-    /// TODO
+    /// Number of partitions over which epoch rewards are distributed in this block.
+    #[serde(rename = "numRewardPartition")]
     pub num_reward_partitions: Option<u64>,
 }
 

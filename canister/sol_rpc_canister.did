@@ -393,7 +393,7 @@ type GetBlockParams = record {
 type Timestamp = int64;
 
 // The result of a Solana `getBlock` RPC method call.
-// TODO XC-342: Add `transactions`, `signatures`, `rewards` and `num_reward_partitions` fields.
+// TODO XC-342: Add `transactions` field.
 type ConfirmedBlock = record {
     // The blockhash of this block's parent, as base-58 encoded string; if the parent block is not
     // available due to ledger cleanup, this field will return "11111111111111111111111111111111".
@@ -409,6 +409,10 @@ type ConfirmedBlock = record {
     // The signatures of the transactions in this block. Included if the request parameter `transactionDetails` is not
     // `none`.
     signatures: opt vec Signature;
+    // Array of rewards distributed in this block.
+    rewards: opt vec Reward;
+    // Number of partitions over which epoch rewards are distributed in this block.
+    numRewardPartition: opt nat64;
 };
 
 // Represents the result of a call to the `getBlock` Solana RPC method.
