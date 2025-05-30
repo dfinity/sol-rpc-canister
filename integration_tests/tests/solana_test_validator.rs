@@ -236,7 +236,7 @@ async fn should_get_block() {
                         RpcBlockConfig {
                             encoding: None,
                             transaction_details: Some(solana_transaction_status_client_types::TransactionDetails::Signatures),
-                            rewards: Some(false),
+                            rewards: None,
                             commitment: Some(commitment_config),
                             max_supported_transaction_version: None,
                         },
@@ -244,13 +244,8 @@ async fn should_get_block() {
                         .expect("Failed to get block")
                 },
                 |ic| async move {
-                    ic.get_block(GetBlockParams {
-                        slot,
-                        commitment: Some(commitment),
-                        max_supported_transaction_version: None,
-                        transaction_details: Some(TransactionDetails::Signatures),
-                        rewards: Some(false),
-                    })
+                    ic.get_block(slot)
+                        .with_transaction_details(TransactionDetails::Signatures)
                         .send()
                         .await
                         .expect_consistent()

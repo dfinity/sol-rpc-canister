@@ -27,7 +27,7 @@ pub type MicroLamport = u64;
 pub type Timestamp = i64;
 
 /// The result of a Solana `getBlock` RPC method call.
-// TODO XC-342: Add `transactions`, `signatures`, `rewards` and `num_reward_partitions` fields.
+// TODO XC-342: Add `transactions` field.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct ConfirmedBlock {
     /// The blockhash of this block's parent, as base-58 encoded string; if the parent block is not
@@ -50,6 +50,8 @@ pub struct ConfirmedBlock {
     pub signatures: Option<Vec<Signature>>,
     /// TODO
     pub rewards: Option<Vec<Reward>>,
+    /// TODO
+    pub num_reward_partitions: Option<u64>,
 }
 
 impl TryFrom<solana_transaction_status_client_types::UiConfirmedBlock> for ConfirmedBlock {
@@ -69,6 +71,7 @@ impl TryFrom<solana_transaction_status_client_types::UiConfirmedBlock> for Confi
                 .rewards
                 .map(|rewards| rewards.into_iter().map(Reward::try_from).collect())
                 .transpose()?,
+            num_reward_partitions: block.num_reward_partitions,
         })
     }
 }
@@ -90,7 +93,7 @@ impl From<ConfirmedBlock> for solana_transaction_status_client_types::UiConfirme
                     .map(solana_transaction_status_client_types::Reward::from)
                     .collect()
             }),
-            num_reward_partitions: None,
+            num_reward_partitions: block.num_reward_partitions,
             block_time: block.block_time,
             block_height: block.block_height,
         }

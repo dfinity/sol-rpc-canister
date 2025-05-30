@@ -125,13 +125,7 @@ pub mod fixtures;
 pub mod nonce;
 mod request;
 
-use crate::request::{
-    GetAccountInfoRequest, GetAccountInfoRequestBuilder, GetBalanceRequest, GetBlockRequest,
-    GetRecentPrioritizationFeesRequest, GetRecentPrioritizationFeesRequestBuilder,
-    GetSignatureStatusesRequest, GetSignatureStatusesRequestBuilder,
-    GetSignaturesForAddressRequest, GetSignaturesForAddressRequestBuilder, GetSlotRequest,
-    GetTokenAccountBalanceRequest, GetTransactionRequest, JsonRequest, SendTransactionRequest,
-};
+use crate::request::{GetAccountInfoRequest, GetAccountInfoRequestBuilder, GetBalanceRequest, GetBlockRequest, GetBlockRequestBuilder, GetRecentPrioritizationFeesRequest, GetRecentPrioritizationFeesRequestBuilder, GetSignatureStatusesRequest, GetSignatureStatusesRequestBuilder, GetSignaturesForAddressRequest, GetSignaturesForAddressRequestBuilder, GetSlotRequest, GetTokenAccountBalanceRequest, GetTransactionRequest, JsonRequest, SendTransactionRequest};
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
@@ -399,18 +393,69 @@ impl<R> SolRpcClient<R> {
     }
 
     /// Call `getBlock` on the SOL RPC canister.
-    pub fn get_block(
-        &self,
-        params: impl Into<GetBlockParams>,
-    ) -> RequestBuilder<
-        R,
-        RpcConfig,
-        GetBlockParams,
-        sol_rpc_types::MultiRpcResult<Option<sol_rpc_types::ConfirmedBlock>>,
-        sol_rpc_types::MultiRpcResult<
-            Option<solana_transaction_status_client_types::UiConfirmedBlock>,
-        >,
-    > {
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{ConfirmedBlock, MultiRpcResult, RpcSources, SolanaCluster};
+    /// use solana_pubkey::pubkey;
+    /// use solana_transaction_status_client_types::{Reward, RewardType, UiConfirmedBlock};
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use std::str::FromStr;
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(ConfirmedBlock {
+    /// #     previous_blockhash: solana_hash::Hash::from_str("4yeCoXK2Q4yXcunuLtF37yTE1wVD4x8313adneZDmi8w").into(),
+    /// #     blockhash: solana_hash::Hash::from_str("C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY").into(),
+    /// #     parent_slot: 343459193,
+    /// #     block_time: Some(1748606929),
+    /// #     block_height: Some(321673899),
+    /// #     signatures: None,
+    /// #     rewards: Some(vec![
+    /// #         sol_rpc_types::Reward {
+    /// #             pubkey: pubkey!("ChorusmmK7i1AxXeiTtQgQZhQNiXYU84ULeaYF1EH15n").into(),
+    /// #             lamports: 29444484,
+    /// #             post_balance: 633539232581,
+    /// #             reward_type: Some(sol_rpc_types::RewardType::Fee),
+    /// #             commission: None,
+    /// #         }
+    /// #     ]),
+    /// #     num_reward_partitions: None,
+    /// # })))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let block = client
+    ///     .get_block(343_459_194)
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent();
+    ///
+    /// assert_eq!(block, Ok(UiConfirmedBlock {
+    ///       previous_blockhash: solana_hash::Hash::from_str("4yeCoXK2Q4yXcunuLtF37yTE1wVD4x8313adneZDmi8w").into(),
+    ///       blockhash: solana_hash::Hash::from_str("C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY").into(),
+    ///       parent_slot: 343459193,
+    ///       block_time: Some(1748606929),
+    ///       block_height: Some(321673899),
+    ///       signatures: None,
+    ///       rewards: Some(vec![
+    ///           Reward {
+    ///               pubkey: pubkey!("ChorusmmK7i1AxXeiTtQgQZhQNiXYU84ULeaYF1EH15n").into(),
+    ///               lamports: 29444484,
+    ///               post_balance: 633539232581,
+    ///               reward_type: Some(RewardType::Fee),
+    ///               commission: None,
+    ///           }
+    ///       ]),
+    ///       num_reward_partitions: None,
+    ///       transactions: None,
+    /// }));
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn get_block(&self, params: impl Into<GetBlockParams>) -> GetBlockRequestBuilder<R> {
         let params = params.into();
         let cycles = match params.transaction_details.unwrap_or_default() {
             TransactionDetails::Signatures => 100_000_000_000,
