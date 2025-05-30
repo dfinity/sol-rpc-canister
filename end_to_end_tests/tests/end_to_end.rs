@@ -4,6 +4,7 @@ use sol_rpc_client::{
     nonce::nonce_from_account,
 };
 use sol_rpc_e2e_tests::Setup;
+use sol_rpc_types::Lamport;
 use solana_compute_budget_interface::ComputeBudgetInstruction;
 use solana_hash::Hash;
 use solana_message::Message;
@@ -12,16 +13,30 @@ use solana_pubkey::{pubkey, Pubkey};
 use solana_transaction::Transaction;
 use std::str::FromStr;
 
-const TRANSACTION_AMOUNT: u64 = 100_000;
+const FUNDING_AMOUNT: Lamport = 1_000_000_000;
+const TRANSACTION_AMOUNT: Lamport = 100_000;
 const KEY_ID: Ed25519KeyId = Ed25519KeyId::MainnetTestKey1;
 
-// Pubkey `ACCOUNT_A` was obtained with the `schnorr_public_key` with the team wallet canister ID
-// the derivation path `DERIVATION_PATH_A`, and the `KEY_ID` key ID
+// Pubkeys `ACCOUNT_A` and `ACCOUNT_B` were obtained through the `schnorr_public_key` management
+// canister method. Since the `schnorr_public_key` method cannot be called via ingress message,
+// it must be routed through a canister (e.g. a cycles wallet canister). The public keys may be
+// obtained by calling `schnorr_public_key` with the following argument:
+//     record {
+//         canister_id: opt principal $WALLET_CANISTER_ID;
+//         derivation_path: opt $DERIVATION_PATH;
+//         key_id: record {
+//             algorithm: variant { Ed25519 };
+//             name: "test_key_1";
+//         };
+//     }
+// Where `DERIVATION_PATH` is either `DERIVATION_PATH_A` or `DERIVATION_PATH_B` encoded as a
+// vector of bytes and `WALLET_CANISTER_ID` is the principal of the team wallet canister.
+//
+// Also note that funds are sent in one test from `ACCOUNT_A` to `ACCOUNT_B` and in another test
+// from `ACCOUNT_B` to `ACCOUNT_A` so that in normal operation the net flow of funds should be 0.
+// The accounts still need to be occasionally topped-up to pay for transaction fees.
 const DERIVATION_PATH_A: &[&[u8]] = &[&[1]];
 const ACCOUNT_A: Pubkey = pubkey!("HNELCCu1459ANnRXrQuBmEhaVVJfCk9FFRDZHL5YBXzH");
-
-// Pubkey `PUBKEY_B` was obtained with the `schnorr_public_key` with the team wallet canister ID
-// the derivation path `DERIVATION_PATH_B`, and the `KEY_ID` key ID
 const DERIVATION_PATH_B: &[&[u8]] = &[&[2]];
 const PUBKEY_B: Pubkey = pubkey!("G7Ut56qgcEphHZmLhLimM2DfHVC7QwHfT18tvj8ntn9");
 
@@ -33,17 +48,20 @@ const NONCE_ACCOUNT_B: Pubkey = pubkey!("876vg5npuF9LCfc2MVWZtewBUEfcgzdbahCK7gX
 
 #[tokio::test]
 async fn should_send_transaction_with_recent_blockhash() {
+    let setup = &Setup::new();
+
     let sender_pubkey = ACCOUNT_A;
     let sender_derivation_path = DerivationPath::from(DERIVATION_PATH_A);
     verify_pubkey(&sender_derivation_path, &sender_pubkey).await;
 
     let recipient_pubkey = PUBKEY_B;
 
-    let create_message = CreateMessageWithRecentBlockhash {
-        setup: Setup::new(),
-    };
+    fund_accounts(setup, &[sender_pubkey, recipient_pubkey]);
+
+    let create_message = CreateMessageWithRecentBlockhash { setup };
 
     send_transaction_test(
+        setup,
         sender_pubkey,
         sender_derivation_path,
         recipient_pubkey,
@@ -54,6 +72,8 @@ async fn should_send_transaction_with_recent_blockhash() {
 
 #[tokio::test]
 async fn should_send_transaction_with_durable_nonce() {
+    let setup = &Setup::new();
+
     let sender_pubkey = PUBKEY_B;
     let sender_derivation_path = DerivationPath::from(DERIVATION_PATH_B);
     verify_pubkey(&sender_derivation_path, &sender_pubkey).await;
@@ -61,12 +81,15 @@ async fn should_send_transaction_with_durable_nonce() {
     let nonce_account = NONCE_ACCOUNT_B;
     let recipient_pubkey = ACCOUNT_A;
 
+    fund_accounts(setup, &[sender_pubkey, recipient_pubkey]);
+
     let create_message = CreateMessageWithDurableNonce {
-        setup: Setup::new(),
+        setup,
         nonce_account,
     };
 
     send_transaction_test(
+        setup,
         sender_pubkey,
         sender_derivation_path,
         recipient_pubkey,
@@ -76,6 +99,7 @@ async fn should_send_transaction_with_durable_nonce() {
 }
 
 async fn send_transaction_test<F: CreateSolanaMessage>(
+    setup: &Setup,
     sender_pubkey: Pubkey,
     sender_derivation_path: DerivationPath,
     recipient_pubkey: Pubkey,
@@ -85,12 +109,11 @@ async fn send_transaction_test<F: CreateSolanaMessage>(
         "Sending transaction from sender account '{sender_pubkey:?}' to recipient account '{recipient_pubkey:?}'"
     );
 
-    let setup = Setup::new();
     let client = setup.client();
 
-    let sender_balance_before = setup.fund_account(&sender_pubkey, 1_000_000_000).await;
+    let sender_balance_before = setup.get_account_balance(&sender_pubkey).await;
     println!("Sender balance before sending transaction: {sender_balance_before:?} lamports");
-    let recipient_balance_before = setup.fund_account(&recipient_pubkey, 1_000_000_000).await;
+    let recipient_balance_before = setup.get_account_balance(&recipient_pubkey).await;
     println!("Recipient balance before sending transaction: {recipient_balance_before:?} lamports");
 
     let message = create_message
@@ -145,12 +168,12 @@ pub trait CreateSolanaMessage {
     async fn create_message(&self, sender_pubkey: Pubkey, recipient_pubkey: Pubkey) -> Message;
 }
 
-struct CreateMessageWithRecentBlockhash {
-    setup: Setup,
+struct CreateMessageWithRecentBlockhash<'a> {
+    setup: &'a Setup,
 }
 
 #[async_trait]
-impl CreateSolanaMessage for CreateMessageWithRecentBlockhash {
+impl CreateSolanaMessage for CreateMessageWithRecentBlockhash<'_> {
     async fn create_message(&self, sender_pubkey: Pubkey, recipient_pubkey: Pubkey) -> Message {
         let client = self.setup.client();
 
@@ -195,13 +218,13 @@ impl CreateSolanaMessage for CreateMessageWithRecentBlockhash {
     }
 }
 
-struct CreateMessageWithDurableNonce {
-    setup: Setup,
+struct CreateMessageWithDurableNonce<'a> {
+    setup: &'a Setup,
     nonce_account: Pubkey,
 }
 
 #[async_trait]
-impl CreateSolanaMessage for CreateMessageWithDurableNonce {
+impl CreateSolanaMessage for CreateMessageWithDurableNonce<'_> {
     async fn create_message(&self, sender_pubkey: Pubkey, recipient_pubkey: Pubkey) -> Message {
         let client = self.setup.client();
 
@@ -246,6 +269,12 @@ impl CreateSolanaMessage for CreateMessageWithDurableNonce {
             Some(&sender_pubkey),
             &blockhash,
         )
+    }
+}
+
+fn fund_accounts(setup: &Setup, accounts: &[Pubkey]) {
+    for account in accounts {
+        setup.fund_account(account, FUNDING_AMOUNT);
     }
 }
 

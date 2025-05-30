@@ -4516,6 +4516,7 @@ dependencies = [
  "sol_rpc_client",
  "sol_rpc_int_tests",
  "sol_rpc_types",
+ "solana-client",
  "solana-commitment-config",
  "solana-compute-budget-interface",
  "solana-hash",

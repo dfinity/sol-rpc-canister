@@ -10,9 +10,10 @@ use sol_rpc_int_tests::{
     wallet::{decode_cycles_wallet_response, CallCanisterArgs},
 };
 use sol_rpc_types::{
-    CommitmentLevel, ConsensusStrategy, MultiRpcResult, RpcConfig, RpcSource, RpcSources,
+    CommitmentLevel, ConsensusStrategy, Lamport, MultiRpcResult, RpcConfig, RpcSource, RpcSources,
     SupportedRpcProviderId,
 };
+use solana_client::rpc_client::RpcClient as SolanaRpcClient;
 use solana_commitment_config::CommitmentConfig;
 use solana_pubkey::Pubkey;
 use solana_signature::Signature;
@@ -20,11 +21,13 @@ use solana_transaction_status_client_types::TransactionStatus;
 use std::{env, time::Duration};
 
 const DEFAULT_IC_GATEWAY: &str = "https://icp0.io";
+const SOLANA_DEVNET_URL: &str = "https://solana-devnet.io";
 
 pub struct Setup {
     agent: Agent,
     sol_rpc_canister_id: Principal,
     wallet_canister_id: Principal,
+    solana_client: SolanaRpcClient,
 }
 
 impl Setup {
@@ -40,6 +43,10 @@ impl Setup {
                 .expect("Could not build agent"),
             sol_rpc_canister_id: Principal::from_text(env("sol_rpc_canister_id")).unwrap(),
             wallet_canister_id: Principal::from_text(env("wallet_canister_id")).unwrap(),
+            solana_client: SolanaRpcClient::new_with_commitment(
+                SOLANA_DEVNET_URL,
+                CommitmentConfig::confirmed(),
+            ),
         }
     }
 
@@ -99,7 +106,7 @@ impl Setup {
         }
     }
 
-    pub async fn airdrop(&self, account: &Pubkey, amount: u64) -> u64 {
+    pub async fn airdrop(&self, account: &Pubkey, amount: Lamport) -> Lamport {
         let balance_before = self.get_account_balance(account).await;
         let _airdrop_tx = self
             .client()
@@ -126,16 +133,25 @@ impl Setup {
         }
     }
 
-    pub async fn fund_account(&self, account: &Pubkey, amount: u64) -> u64 {
-        let balance = self.get_account_balance(account).await;
+    // Fund account with the SolanaRpcClient to avoid hitting rate limits due to replicated calls.
+    pub fn fund_account(&self, account: &Pubkey, amount: Lamport) {
+        let balance = self
+            .solana_client
+            .get_balance(account)
+            .expect("Failed to get account balance");
         if balance < amount {
-            self.airdrop(account, amount).await
-        } else {
-            balance
+            self.solana_client
+                .request_airdrop(account, amount)
+                .expect("Failed to request airdrop");
+            self.solana_client.wait_for_balance_with_commitment(
+                account,
+                Some(amount),
+                CommitmentConfig::confirmed(),
+            );
         }
     }
 
-    pub async fn get_account_balance(&self, pubkey: &Pubkey) -> u64 {
+    pub async fn get_account_balance(&self, pubkey: &Pubkey) -> Lamport {
         self.client()
             .get_balance(*pubkey)
             .send()
@@ -148,7 +164,7 @@ impl Setup {
         &self,
         sender_pubkey: &Pubkey,
         recipient_pubkey: &Pubkey,
-    ) -> u64 {
+    ) -> Lamport {
         let mut prioritization_fees: Vec<_> = self
             .client()
             .get_recent_prioritization_fees([sender_pubkey, recipient_pubkey])
