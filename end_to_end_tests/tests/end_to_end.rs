@@ -46,7 +46,7 @@ const PUBKEY_B: Pubkey = pubkey!("G7Ut56qgcEphHZmLhLimM2DfHVC7QwHfT18tvj8ntn9");
 //  solana create-nonce-account nonce-keypair.json 0.01 --url devnet --nonce-authority $PUBKEY_B
 const NONCE_ACCOUNT_B: Pubkey = pubkey!("876vg5npuF9LCfc2MVWZtewBUEfcgzdbahCK7gXn5MLh");
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn should_send_transaction_with_recent_blockhash() {
     let setup = &Setup::new();
 
@@ -70,7 +70,7 @@ async fn should_send_transaction_with_recent_blockhash() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn should_send_transaction_with_durable_nonce() {
     let setup = &Setup::new();
 
