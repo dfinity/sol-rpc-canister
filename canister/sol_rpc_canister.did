@@ -370,10 +370,10 @@ type GetBlockParams = record {
     slot: Slot;
     // Specifies what transaction details to include in the response.
     //
-    // *Warning:* If this value is not specified, the default value of [`TransactionDetails::None`]
-    // will be used, which is different from the default value in the Solana RPC API. This is
-    // because the default value of `full` for the Solana RPC API results in response sizes that
-    // are generally too large to be supported by the ICP.
+    // *Warning:* If this value is not specified, the default value of `none` will be used, which
+    // is different from the default value in the Solana RPC API. This is because the default value
+    // of `full` for the Solana RPC API results in response sizes that are generally too large to
+    // be supported by the ICP.
     transactionDetails: opt TransactionDetails;
     // The commitment describes how finalized a block is at that point in time.
     commitment: opt variant { confirmed; finalized };
