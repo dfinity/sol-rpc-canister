@@ -15,7 +15,7 @@ use sol_rpc_int_tests::{
 use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetSignaturesForAddressLimit,
     GetSlotParams, InstallArgs, InstructionError, Mode, ProviderError, RpcAccess, RpcAuth,
-    RpcConfig, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster,
+    RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster,
     SupportedRpcProvider, SupportedRpcProviderId, TransactionError,
 };
 use solana_account_decoder_client_types::{
@@ -48,10 +48,7 @@ mod mock_request_tests {
         .await;
         let client = setup
             .client()
-            .with_rpc_config(RpcConfig {
-                response_size_estimate: Some(MOCK_REQUEST_MAX_RESPONSE_BYTES),
-                ..RpcConfig::default()
-            })
+            .with_response_size_estimate(MOCK_REQUEST_MAX_RESPONSE_BYTES)
             .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Custom(RpcEndpoint {
                 url: MOCK_REQUEST_URL.to_string(),
                 headers: Some(vec![HttpHeader {

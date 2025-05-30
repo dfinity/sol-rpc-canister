@@ -10,7 +10,7 @@ use sol_rpc_int_tests::{
     wallet::{decode_cycles_wallet_response, CallCanisterArgs},
 };
 use sol_rpc_types::{
-    CommitmentLevel, ConsensusStrategy, Lamport, MultiRpcResult, RpcConfig, RpcSource, RpcSources,
+    CommitmentLevel, ConsensusStrategy, Lamport, MultiRpcResult, RpcSource, RpcSources,
     SupportedRpcProviderId,
 };
 use solana_client::rpc_client::RpcClient as SolanaRpcClient;
@@ -21,7 +21,7 @@ use solana_transaction_status_client_types::TransactionStatus;
 use std::{env, time::Duration};
 
 const DEFAULT_IC_GATEWAY: &str = "https://icp0.io";
-const SOLANA_DEVNET_URL: &str = "https://solana-devnet.io";
+const SOLANA_DEVNET_URL: &str = "https://api.devnet.solana.com";
 
 pub struct Setup {
     agent: Agent,
@@ -68,12 +68,9 @@ impl Setup {
                 RpcSource::Supported(SupportedRpcProviderId::DrpcDevnet),
                 RpcSource::Supported(SupportedRpcProviderId::HeliusDevnet),
             ]))
-            .with_rpc_config(RpcConfig {
-                response_consensus: Some(ConsensusStrategy::Threshold {
-                    min: 2,
-                    total: None,
-                }),
-                ..RpcConfig::default()
+            .with_consensus_strategy(ConsensusStrategy::Threshold {
+                min: 2,
+                total: None,
             })
             .with_default_commitment_level(CommitmentLevel::Confirmed)
             .build()
