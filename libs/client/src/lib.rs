@@ -466,9 +466,12 @@ impl<R> SolRpcClient<R> {
     /// ```
     pub fn get_block(&self, params: impl Into<GetBlockParams>) -> GetBlockRequestBuilder<R> {
         let params = params.into();
-        let cycles = match params.transaction_details.unwrap_or_default() {
+        let mut cycles = match params.transaction_details.unwrap_or_default() {
             TransactionDetails::Signatures => 100_000_000_000,
             TransactionDetails::None => 10_000_000_000,
+        };
+        if params.rewards.unwrap_or(true) {
+            cycles += 10_000_000_000
         };
         RequestBuilder::new(self.clone(), GetBlockRequest::new(params), cycles)
     }
