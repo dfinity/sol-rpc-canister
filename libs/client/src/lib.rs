@@ -143,13 +143,10 @@ use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     CommitmentLevel, ConsensusStrategy, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
     GetRecentPrioritizationFeesParams, GetSignatureStatusesParams, GetSignaturesForAddressParams,
-    GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
-    Pubkey, RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot,
-    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TokenAmount, TransactionDetails,
-    TransactionInfo,
+    GetTokenAccountBalanceParams, GetTransactionParams, Pubkey, RpcConfig, RpcResult, RpcSources,
+    SendTransactionParams, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    TransactionDetails,
 };
-use solana_account_decoder_client_types::token::UiTokenAmount;
-use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
 use std::{fmt::Debug, sync::Arc};
 /// The principal identifying the productive Solana RPC canister under NNS control.
 ///
