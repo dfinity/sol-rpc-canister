@@ -12,10 +12,13 @@ use sol_rpc_types::{
     GetSignatureStatusesParams, GetSignaturesForAddressLimit, GetSignaturesForAddressParams,
     GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
     NonZeroU8, PrioritizationFee, RoundingError, RpcConfig, RpcResult, RpcSources,
-    SendTransactionParams, Signature, Slot, TokenAmount, TransactionInfo, TransactionStatus,
+    SendTransactionParams, Signature, Slot, TokenAmount, TransactionDetails, TransactionInfo,
+    TransactionStatus,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
-use solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta;
+use solana_transaction_status_client_types::{
+    EncodedConfirmedTransactionWithStatusMeta, UiConfirmedBlock,
+};
 use std::fmt::{Debug, Formatter};
 use strum::EnumIter;
 
@@ -182,9 +185,7 @@ impl SolRpcRequest for GetBlockRequest {
     type Config = RpcConfig;
     type Params = GetBlockParams;
     type CandidOutput = sol_rpc_types::MultiRpcResult<Option<ConfirmedBlock>>;
-    type Output = sol_rpc_types::MultiRpcResult<
-        Option<solana_transaction_status_client_types::UiConfirmedBlock>,
-    >;
+    type Output = sol_rpc_types::MultiRpcResult<Option<UiConfirmedBlock>>;
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetBlock
@@ -207,6 +208,34 @@ impl SolRpcRequest for GetBlockRequest {
             });
         set_default(default_block_commitment_level, &mut params.commitment);
         params
+    }
+}
+
+pub type GetBlockRequestBuilder<R> = RequestBuilder<
+    R,
+    RpcConfig,
+    GetBlockParams,
+    sol_rpc_types::MultiRpcResult<Option<ConfirmedBlock>>,
+    sol_rpc_types::MultiRpcResult<Option<UiConfirmedBlock>>,
+>;
+
+impl<R> GetBlockRequestBuilder<R> {
+    /// Change the `rewards` parameter for a `getBlock` request.
+    pub fn with_transaction_details(mut self, transaction_details: TransactionDetails) -> Self {
+        self.request.params.transaction_details = Some(transaction_details);
+        self
+    }
+
+    /// Change the `max_supported_transaction_version` parameter for a `getBlock` request.
+    pub fn with_max_supported_transaction_version(mut self, version: u8) -> Self {
+        self.request.params.max_supported_transaction_version = Some(version);
+        self
+    }
+
+    /// Change the `rewards` parameter for a `getBlock` request to `false`.
+    pub fn without_rewards(mut self) -> Self {
+        self.request.params.rewards = Some(false);
+        self
     }
 }
 

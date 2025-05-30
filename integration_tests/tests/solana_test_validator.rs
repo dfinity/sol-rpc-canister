@@ -8,9 +8,9 @@ use sol_rpc_client::SolRpcClient;
 use sol_rpc_int_tests::{spl, PocketIcLiveModeRuntime};
 use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetAccountInfoEncoding,
-    GetAccountInfoParams, GetBlockCommitmentLevel, GetBlockParams, GetTransactionEncoding,
-    GetTransactionParams, InstallArgs, Lamport, OverrideProvider, PrioritizationFee,
-    RegexSubstitution, TransactionDetails, TransactionStatus,
+    GetAccountInfoParams, GetBlockCommitmentLevel, GetTransactionEncoding, GetTransactionParams,
+    InstallArgs, Lamport, OverrideProvider, PrioritizationFee, RegexSubstitution,
+    TransactionDetails, TransactionStatus,
 };
 use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
 use solana_client::rpc_client::{
@@ -236,7 +236,7 @@ async fn should_get_block() {
                         RpcBlockConfig {
                             encoding: None,
                             transaction_details: Some(solana_transaction_status_client_types::TransactionDetails::Signatures),
-                            rewards: Some(false),
+                            rewards: None,
                             commitment: Some(commitment_config),
                             max_supported_transaction_version: None,
                         },
@@ -244,12 +244,8 @@ async fn should_get_block() {
                         .expect("Failed to get block")
                 },
                 |ic| async move {
-                    ic.get_block(GetBlockParams {
-                        slot,
-                        commitment: Some(commitment),
-                        max_supported_transaction_version: None,
-                        transaction_details: Some(TransactionDetails::Signatures),
-                    })
+                    ic.get_block(slot)
+                        .with_transaction_details(TransactionDetails::Signatures)
                         .send()
                         .await
                         .expect_consistent()

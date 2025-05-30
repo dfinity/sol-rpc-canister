@@ -57,6 +57,7 @@ GET_BLOCK_PARAMS="(
     commitment = opt variant { finalized };
     transactionDetails = opt variant { signatures };
     maxSupportedTransactionVersion = opt (0 : nat8);
+    rewards = null;
   },
 )"
 CYCLES=$(dfx canister call sol_rpc getBlockCyclesCost "$GET_BLOCK_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
