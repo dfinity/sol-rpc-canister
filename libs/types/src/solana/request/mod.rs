@@ -116,7 +116,7 @@ impl From<solana_pubkey::Pubkey> for GetBalanceParams {
 }
 
 /// The parameters for a Solana [`getBlock`](https://solana.com/docs/rpc/http/getblock) RPC method call.
-// TODO XC-342: Add `rewards`, `encoding` and `transactionDetails` fields.
+// TODO XC-342: Add support for remaining values for `encoding` and `transactionDetails` fields.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
 pub struct GetBlockParams {
     /// Slot number of the block to fetch.
@@ -138,21 +138,8 @@ pub struct GetBlockParams {
     /// are generally too large to be supported by the ICP.
     #[serde(rename = "transactionDetails")]
     pub transaction_details: Option<TransactionDetails>,
-}
-
-impl GetBlockParams {
-    /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
-    pub fn is_default_config(&self) -> bool {
-        let GetBlockParams {
-            slot: _,
-            commitment,
-            max_supported_transaction_version,
-            transaction_details,
-        } = &self;
-        commitment.is_none()
-            && max_supported_transaction_version.is_none()
-            && transaction_details.is_none()
-    }
+    /// Whether to populate the rewards array. If not provided, the default includes rewards.
+    pub rewards: Option<bool>,
 }
 
 impl From<Slot> for GetBlockParams {
@@ -162,6 +149,7 @@ impl From<Slot> for GetBlockParams {
             commitment: None,
             max_supported_transaction_version: None,
             transaction_details: None,
+            rewards: None,
         }
     }
 }

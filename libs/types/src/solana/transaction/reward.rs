@@ -35,6 +35,7 @@ impl TryFrom<solana_transaction_status_client_types::Reward> for Reward {
         })
     }
 }
+
 impl From<Reward> for solana_transaction_status_client_types::Reward {
     fn from(reward: Reward) -> Self {
         Self {

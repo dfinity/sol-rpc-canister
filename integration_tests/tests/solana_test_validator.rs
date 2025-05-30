@@ -249,6 +249,7 @@ async fn should_get_block() {
                         commitment: Some(commitment),
                         max_supported_transaction_version: None,
                         transaction_details: Some(TransactionDetails::Signatures),
+                        rewards: Some(false),
                     })
                         .send()
                         .await

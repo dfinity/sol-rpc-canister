@@ -5,7 +5,7 @@ pub mod account;
 pub mod request;
 pub mod transaction;
 
-use crate::RpcError;
+use crate::{Reward, RpcError};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, str::FromStr};
@@ -48,6 +48,8 @@ pub struct ConfirmedBlock {
     /// Signatures of the transactions in the block. Included in the response whenever
     /// `transactionDetails` is not `none`.
     pub signatures: Option<Vec<Signature>>,
+    /// TODO
+    pub rewards: Option<Vec<Reward>>,
 }
 
 impl TryFrom<solana_transaction_status_client_types::UiConfirmedBlock> for ConfirmedBlock {
@@ -63,6 +65,10 @@ impl TryFrom<solana_transaction_status_client_types::UiConfirmedBlock> for Confi
             block_time: block.block_time,
             block_height: block.block_height,
             signatures: block.signatures.map(parse_vec).transpose()?,
+            rewards: block
+                .rewards
+                .map(|rewards| rewards.into_iter().map(Reward::try_from).collect())
+                .transpose()?,
         })
     }
 }
@@ -78,7 +84,12 @@ impl From<ConfirmedBlock> for solana_transaction_status_client_types::UiConfirme
             signatures: block
                 .signatures
                 .map(|sigs| sigs.into_iter().map(|sig| sig.to_string()).collect()),
-            rewards: None,
+            rewards: block.rewards.map(|rewards| {
+                rewards
+                    .into_iter()
+                    .map(solana_transaction_status_client_types::Reward::from)
+                    .collect()
+            }),
             num_reward_partitions: None,
             block_time: block.block_time,
             block_height: block.block_height,
