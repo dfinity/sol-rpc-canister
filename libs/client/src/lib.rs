@@ -860,7 +860,7 @@ impl<R> SolRpcClient<R> {
     ///     .send()
     ///     .await
     ///     .expect_consistent();
-    /// 
+    ///
     /// match transaction {
     ///     Ok(Some(EncodedConfirmedTransactionWithStatusMeta { transaction, .. })) => {
     ///         assert_eq!(
