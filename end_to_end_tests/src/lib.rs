@@ -142,7 +142,7 @@ impl Setup {
                 .expect("Failed to request airdrop");
             self.solana_client.wait_for_balance_with_commitment(
                 account,
-                Some(amount),
+                Some(balance + amount),
                 CommitmentConfig::confirmed(),
             );
         }
