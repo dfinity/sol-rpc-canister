@@ -295,8 +295,6 @@ pub struct GetSlotParams {
     pub min_context_slot: Option<Slot>,
 }
 
-impl GetSlotParams {}
-
 /// The parameters for a Solana [`getTokenAccountBalance`](https://solana.com/docs/rpc/http/gettokenaccountbalance) RPC method call.
 #[derive(Clone, Debug, PartialEq, CandidType, Deserialize, Serialize)]
 pub struct GetTokenAccountBalanceParams {
@@ -340,8 +338,6 @@ pub struct GetTransactionParams {
     // TODO XC-343: Add notes about `jsonParsed` from https://solana.com/de/docs/rpc/http/gettransaction
     pub encoding: Option<GetTransactionEncoding>,
 }
-
-impl GetTransactionParams {}
 
 impl From<solana_signature::Signature> for GetTransactionParams {
     fn from(signature: solana_signature::Signature) -> Self {
