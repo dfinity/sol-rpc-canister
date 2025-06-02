@@ -168,8 +168,8 @@ async fn should_get_account_info() {
                     &system_program::id(),
                     CommitmentConfig::confirmed(),
                 )
-                .expect("Failed to get account")
-                .value
+                    .expect("Failed to get account")
+                    .value
             },
             |ic| async move {
                 ic.get_account_info(system_program::id())
@@ -199,8 +199,8 @@ async fn should_not_get_account_info() {
                     &system_program::id(),
                     CommitmentConfig::confirmed(),
                 )
-                .expect("Failed to get account")
-                .value
+                    .expect("Failed to get account")
+                    .value
             },
             |ic| async move {
                 ic.get_account_info(system_program::id())
@@ -246,10 +246,8 @@ async fn should_get_block() {
                         .expect("Failed to get block")
                 },
                 |ic| async move {
-                    let builder = ic.get_block(slot)
-                        .with_transaction_details(TransactionDetails::Signatures);
-                    panic!("`getBlock` request with {} cycles", builder.get_cycles());
-                    builder
+                    ic.get_block(slot)
+                        .with_transaction_details(TransactionDetails::Signatures)
                         .send()
                         .await
                         .expect_consistent()
@@ -288,7 +286,7 @@ async fn should_get_transaction() {
                         max_supported_transaction_version: None,
                     },
                 )
-                .expect("Failed to get transaction")
+                    .expect("Failed to get transaction")
             },
             |ic| async move {
                 let mut params: GetTransactionParams = signature.into();
@@ -325,6 +323,7 @@ async fn should_send_transaction() {
     let block = setup
         .icp_client()
         .get_block(slot)
+        .without_rewards()
         .send()
         .await
         .expect_consistent()
@@ -538,7 +537,7 @@ async fn should_get_signatures_for_address() {
                         commitment: Some(setup.solana_client.commitment()),
                     },
                 )
-                .unwrap_or_else(|e| panic!("Failed to get signatures for address: {e}"))
+                    .unwrap_or_else(|e| panic!("Failed to get signatures for address: {e}"))
             },
             |ic| async move {
                 ic.get_signatures_for_address(system_program::id())
@@ -596,11 +595,13 @@ impl Setup {
     const SOLANA_VALIDATOR_URL: &'static str = "http://localhost:8899";
 
     pub async fn new() -> Self {
-        let mut pic = PocketIcBuilder::new()
+        let builder = PocketIcBuilder::new()
             .with_nns_subnet() //make_live requires NNS subnet.
             .with_fiduciary_subnet()
             .build_async()
             .await;
+        panic!("here 4");
+        let mut pic = builder;
         let _endpoint = pic.make_live(None).await;
         Setup {
             solana_client: SolanaRpcClient::new_with_commitment(
@@ -621,9 +622,9 @@ impl Setup {
                     ..Default::default()
                 },
             )
-            .await
-            .with_mock_api_keys()
-            .await,
+                .await
+                .with_mock_api_keys()
+                .await,
         }
     }
 
@@ -642,7 +643,7 @@ impl Setup {
     where
         Sol: FnOnce(&SolanaRpcClient) -> SolOutput,
         Icp: FnOnce(SolRpcClient<PocketIcLiveModeRuntime<'a>>) -> Fut,
-        Fut: Future<Output = IcpOutput>,
+        Fut: Future<Output=IcpOutput>,
     {
         let a = async { solana_call(&self.solana_client) };
         let b = async { icp_call(self.icp_client()).await };

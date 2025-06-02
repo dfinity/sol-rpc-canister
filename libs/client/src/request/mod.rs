@@ -738,12 +738,6 @@ impl<Runtime, Config, Params, CandidOutput, Output>
         self
     }
 
-    /// DEBUGGING: DO NOT MERGE!
-    /// TODO: REMOVE
-    pub fn get_cycles(&self) -> u128 {
-        self.request.cycles
-    }
-
     /// Change the parameters to send for that request.
     pub fn with_params(mut self, params: impl Into<Params>) -> Self {
         *self.request.params_mut() = params.into();
