@@ -442,17 +442,13 @@ pub type GetSlotRequestBuilder<R> = RequestBuilder<
 impl<R> GetSlotRequestBuilder<R> {
     /// Change the `commitment` parameter for a `getSlot` request.
     pub fn with_commitment(mut self, commitment_level: CommitmentLevel) -> Self {
-        let mut config = self.request.params.unwrap_or_default();
-        config.commitment = Some(commitment_level);
-        self.request.params = Some(config);
+        self.request.params.get_or_insert_default().commitment = Some(commitment_level);
         self
     }
 
     /// Change the `minContextSlot` parameter for a `getSlot` request.
     pub fn with_min_context_slot(mut self, slot: Slot) -> Self {
-        let mut config = self.request.params.unwrap_or_default();
-        config.min_context_slot = Some(slot);
-        self.request.params = Some(config);
+        self.request.params.get_or_insert_default().min_context_slot = Some(slot);
         self
     }
 }
