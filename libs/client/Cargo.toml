@@ -46,4 +46,6 @@ ed25519 = [
 
 [dev-dependencies]
 assert_matches = { workspace = true }
+solana-keypair = { workspace = true }
+solana-transaction = { workspace = true }
 tokio = { workspace = true, features = ["full"] }

@@ -7,13 +7,13 @@ use derive_more::From;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
-    GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams, GetBlockCommitmentLevel,
-    GetBlockParams, GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
-    GetSignatureStatusesParams, GetSignaturesForAddressLimit, GetSignaturesForAddressParams,
-    GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionEncoding,
-    GetTransactionParams, Lamport, MultiRpcResult, NonZeroU8, PrioritizationFee, RoundingError,
-    RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot, TokenAmount,
-    TransactionDetails, TransactionInfo, TransactionStatus,
+    DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
+    GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
+    GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams, GetSignaturesForAddressLimit,
+    GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
+    GetTransactionEncoding, GetTransactionParams, Lamport, MultiRpcResult, NonZeroU8,
+    PrioritizationFee, RoundingError, RpcConfig, RpcResult, RpcSources, SendTransactionParams,
+    Signature, Slot, TokenAmount, TransactionDetails, TransactionInfo, TransactionStatus,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_transaction_status_client_types::{
@@ -138,9 +138,27 @@ pub type GetAccountInfoRequestBuilder<R> = RequestBuilder<
 >;
 
 impl<R> GetAccountInfoRequestBuilder<R> {
+    /// Change the `commitment` parameter for a `getAccountInfo` request.
+    pub fn with_commitment(mut self, commitment: impl Into<CommitmentLevel>) -> Self {
+        self.request.params.commitment = Some(commitment.into());
+        self
+    }
+
     /// Change the `encoding` parameter for a `getAccountInfo` request.
-    pub fn with_encoding(mut self, encoding: GetAccountInfoEncoding) -> Self {
-        self.request.params.encoding = Some(encoding);
+    pub fn with_encoding(mut self, encoding: impl Into<GetAccountInfoEncoding>) -> Self {
+        self.request.params.encoding = Some(encoding.into());
+        self
+    }
+
+    /// Change the `dataSlice` parameter for a `getAccountInfo` request.
+    pub fn with_data_slice(mut self, data_slice: impl Into<DataSlice>) -> Self {
+        self.request.params.data_slice = Some(data_slice.into());
+        self
+    }
+
+    /// Change the `minContextSlot` parameter for a `getAccountInfo` request.
+    pub fn with_min_context_slot(mut self, slot: Slot) -> Self {
+        self.request.params.min_context_slot = Some(slot);
         self
     }
 }
@@ -181,8 +199,8 @@ pub type GetBalanceRequestBuilder<R> = RequestBuilder<
 
 impl<R> GetBalanceRequestBuilder<R> {
     /// Change the `commitment` parameter for a `getBalance` request.
-    pub fn with_commitment(mut self, commitment_level: CommitmentLevel) -> Self {
-        self.request.params.commitment = Some(commitment_level);
+    pub fn with_commitment(mut self, commitment_level: impl Into<CommitmentLevel>) -> Self {
+        self.request.params.commitment = Some(commitment_level.into());
         self
     }
 
@@ -242,8 +260,8 @@ pub type GetBlockRequestBuilder<R> = RequestBuilder<
 
 impl<R> GetBlockRequestBuilder<R> {
     /// Change the `commitment` parameter for a `getBlock` request.
-    pub fn with_commitment(mut self, commitment_level: GetBlockCommitmentLevel) -> Self {
-        self.request.params.commitment = Some(commitment_level);
+    pub fn with_commitment(mut self, commitment_level: impl Into<GetBlockCommitmentLevel>) -> Self {
+        self.request.params.commitment = Some(commitment_level.into());
         self
     }
 
@@ -254,8 +272,11 @@ impl<R> GetBlockRequestBuilder<R> {
     }
 
     /// Change the `transactionDetails` parameter for a `getBlock` request.
-    pub fn with_transaction_details(mut self, transaction_details: TransactionDetails) -> Self {
-        self.request.params.transaction_details = Some(transaction_details);
+    pub fn with_transaction_details(
+        mut self,
+        transaction_details: impl Into<TransactionDetails>,
+    ) -> Self {
+        self.request.params.transaction_details = Some(transaction_details.into());
         self
     }
 }
@@ -318,6 +339,12 @@ impl<R> GetSignaturesForAddressRequestBuilder<R> {
     /// Change the `commitment` parameter for a `getSignaturesForAddress` request.
     pub fn with_commitment(mut self, commitment_level: CommitmentLevel) -> Self {
         self.request.params.commitment = Some(commitment_level);
+        self
+    }
+
+    /// Change the `minContextSlot` parameter for a `getSignaturesForAddress` request.
+    pub fn with_min_context_slot(mut self, slot: Slot) -> Self {
+        self.request.params.min_context_slot = Some(slot);
         self
     }
 
@@ -559,6 +586,32 @@ pub type SendTransactionRequestBuilder<R> = RequestBuilder<
     MultiRpcResult<Signature>,
     MultiRpcResult<solana_signature::Signature>,
 >;
+
+impl<R> SendTransactionRequestBuilder<R> {
+    /// Change the `skipPreflight` parameter for a `sendTransaction` request.
+    pub fn with_skip_preflight(mut self, skip_preflight: bool) -> Self {
+        self.request.params.skip_preflight = Some(skip_preflight);
+        self
+    }
+
+    /// Change the `preflightCommitment` parameter for a `sendTransaction` request.
+    pub fn with_preflight_commitment(mut self, preflight_commitment: CommitmentLevel) -> Self {
+        self.request.params.preflight_commitment = Some(preflight_commitment);
+        self
+    }
+
+    /// Change the `maxRetries` parameter for a `sendTransaction` request.
+    pub fn with_max_retries(mut self, max_retries: u32) -> Self {
+        self.request.params.max_retries = Some(max_retries);
+        self
+    }
+
+    /// Change the `minContextSlot` parameter for a `sendTransaction` request.
+    pub fn with_min_context_slot(mut self, slot: Slot) -> Self {
+        self.request.params.min_context_slot = Some(slot);
+        self
+    }
+}
 
 pub struct JsonRequest(String);
 
