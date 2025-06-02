@@ -168,8 +168,8 @@ async fn should_get_account_info() {
                     &system_program::id(),
                     CommitmentConfig::confirmed(),
                 )
-                    .expect("Failed to get account")
-                    .value
+                .expect("Failed to get account")
+                .value
             },
             |ic| async move {
                 ic.get_account_info(system_program::id())
@@ -199,8 +199,8 @@ async fn should_not_get_account_info() {
                     &system_program::id(),
                     CommitmentConfig::confirmed(),
                 )
-                    .expect("Failed to get account")
-                    .value
+                .expect("Failed to get account")
+                .value
             },
             |ic| async move {
                 ic.get_account_info(system_program::id())
@@ -286,7 +286,7 @@ async fn should_get_transaction() {
                         max_supported_transaction_version: None,
                     },
                 )
-                    .expect("Failed to get transaction")
+                .expect("Failed to get transaction")
             },
             |ic| async move {
                 let mut params: GetTransactionParams = signature.into();
@@ -537,7 +537,7 @@ async fn should_get_signatures_for_address() {
                         commitment: Some(setup.solana_client.commitment()),
                     },
                 )
-                    .unwrap_or_else(|e| panic!("Failed to get signatures for address: {e}"))
+                .unwrap_or_else(|e| panic!("Failed to get signatures for address: {e}"))
             },
             |ic| async move {
                 ic.get_signatures_for_address(system_program::id())
@@ -622,9 +622,9 @@ impl Setup {
                     ..Default::default()
                 },
             )
-                .await
-                .with_mock_api_keys()
-                .await,
+            .await
+            .with_mock_api_keys()
+            .await,
         }
     }
 
@@ -643,7 +643,7 @@ impl Setup {
     where
         Sol: FnOnce(&SolanaRpcClient) -> SolOutput,
         Icp: FnOnce(SolRpcClient<PocketIcLiveModeRuntime<'a>>) -> Fut,
-        Fut: Future<Output=IcpOutput>,
+        Fut: Future<Output = IcpOutput>,
     {
         let a = async { solana_call(&self.solana_client) };
         let b = async { icp_call(self.icp_client()).await };
