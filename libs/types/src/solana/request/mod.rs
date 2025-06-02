@@ -7,7 +7,7 @@ use candid::{CandidType, Deserialize};
 use serde::Serialize;
 
 /// The parameters for a Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method call.
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Debug, PartialEq, CandidType, Deserialize, Serialize)]
 pub struct GetAccountInfoParams {
     /// The public key of the account whose info to fetch formatted as a base-58 string.
     pub pubkey: Pubkey,
@@ -58,7 +58,7 @@ impl From<solana_pubkey::Pubkey> for GetAccountInfoParams {
 }
 
 /// Encoding for the return value of the Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method.
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Debug, PartialEq, CandidType, Deserialize, Serialize)]
 pub enum GetAccountInfoEncoding {
     /// The account data is base-58 encoded. Limited to less than 129 bytes of data.
     #[serde(rename = "base58")]
@@ -78,7 +78,7 @@ pub enum GetAccountInfoEncoding {
 }
 
 /// Represents a slice of the return value of the Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getAccountInfo) RPC method.
-#[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Debug, Default, PartialEq, CandidType, Deserialize, Serialize)]
 pub struct DataSlice {
     /// Number of bytes to return.
     pub length: u32,
@@ -87,7 +87,7 @@ pub struct DataSlice {
 }
 
 /// The parameters for a Solana [`getBalance`](https://solana.com/docs/rpc/http/getbalance) RPC method call.
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Debug, PartialEq, CandidType, Deserialize, Serialize)]
 pub struct GetBalanceParams {
     /// The public key of the account to query formatted as a base-58 string.
     pub pubkey: Pubkey,
@@ -117,7 +117,7 @@ impl From<solana_pubkey::Pubkey> for GetBalanceParams {
 
 /// The parameters for a Solana [`getBlock`](https://solana.com/docs/rpc/http/getblock) RPC method call.
 // TODO XC-342: Add `rewards`, `encoding` and `transactionDetails` fields.
-#[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Debug, Default, PartialEq, CandidType, Deserialize, Serialize)]
 pub struct GetBlockParams {
     /// Slot number of the block to fetch.
     pub slot: Slot,
@@ -172,7 +172,7 @@ impl From<Slot> for GetBlockParams {
 /// will be used, which is different from the default value in the Solana RPC API. This is
 /// because the default value of `full` for the Solana RPC API results in response sizes that
 /// are generally too large to be supported by the ICP.
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, CandidType, Deserialize, Serialize)]
 pub enum TransactionDetails {
     /// Includes transaction signatures (IDs) and block metadata only.
     #[serde(rename = "signatures")]
@@ -184,7 +184,7 @@ pub enum TransactionDetails {
 }
 
 /// The parameters for a Solana [`getRecentPrioritizationFees`](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees) RPC method call.
-#[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Debug, Default, CandidType, Deserialize, Serialize)]
 pub struct GetRecentPrioritizationFeesParams(VecWithMaxLen<Pubkey, 128>);
 
 impl<P: Into<Pubkey>> TryFrom<Vec<P>> for GetRecentPrioritizationFeesParams {
@@ -214,7 +214,7 @@ impl From<GetRecentPrioritizationFeesParams> for Vec<Pubkey> {
 }
 
 /// The parameters for a Solana [`getSignaturesForAddress`](https://solana.com/docs/rpc/http/getsignaturesforaddress) RPC method call.
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Debug, Default, PartialEq, CandidType, Deserialize, Serialize)]
 pub struct GetSignaturesForAddressParams {
     /// The account address.
     pub pubkey: Pubkey,
@@ -254,7 +254,7 @@ impl<P: Into<Pubkey>> From<P> for GetSignaturesForAddressParams {
 
 /// The maximum number of transactions to return in the response of a
 /// [`getSignaturesForAddress`](https://solana.com/docs/rpc/http/getsignaturesforaddress) request.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Copy, Debug, PartialEq, CandidType, Deserialize, Serialize)]
 #[serde(try_from = "u32", into = "u32")]
 pub struct GetSignaturesForAddressLimit(u32);
 
@@ -291,7 +291,7 @@ impl From<GetSignaturesForAddressLimit> for u32 {
 }
 
 /// The parameters for a Solana [`getSignatureStatuses`](https://solana.com/docs/rpc/http/getsignaturestatuses) RPC method call.
-#[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Debug, Default, PartialEq, CandidType, Deserialize, Serialize)]
 pub struct GetSignatureStatusesParams {
     /// An array of transaction signatures to confirm, as base-58 encoded strings (up to a maximum of 256)
     pub signatures: VecWithMaxLen<Signature, 256>,
@@ -316,7 +316,7 @@ impl<S: Into<Signature>> TryFrom<Vec<S>> for GetSignatureStatusesParams {
 }
 
 /// The parameters for a Solana [`getSlot`](https://solana.com/docs/rpc/http/getslot) RPC method call.
-#[derive(Debug, Clone, Default, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Debug, Default, PartialEq, CandidType, Deserialize, Serialize)]
 pub struct GetSlotParams {
     /// The request returns the slot that has reached this or the default commitment level.
     pub commitment: Option<CommitmentLevel>,
@@ -337,7 +337,7 @@ impl GetSlotParams {
 }
 
 /// The parameters for a Solana [`getTokenAccountBalance`](https://solana.com/docs/rpc/http/gettokenaccountbalance) RPC method call.
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Debug, PartialEq, CandidType, Deserialize, Serialize)]
 pub struct GetTokenAccountBalanceParams {
     /// The public key of the token account to query formatted as a base-58 string.
     pub pubkey: Pubkey,
@@ -362,7 +362,7 @@ impl From<solana_pubkey::Pubkey> for GetTokenAccountBalanceParams {
 }
 
 /// The parameters for a Solana [`getTransaction`](https://solana.com/docs/rpc/http/gettransaction) RPC method call.
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Debug, PartialEq, CandidType, Deserialize, Serialize)]
 pub struct GetTransactionParams {
     /// Transaction signature.
     pub signature: Signature,
@@ -407,7 +407,7 @@ impl From<solana_signature::Signature> for GetTransactionParams {
 /// Encoding format for the returned transaction from a [`getTransaction`](https://solana.com/docs/rpc/http/gettransaction)`
 /// RPC method call.
 // TODO XC-343: Add support for `json` and `jsonParsed` formats.
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Debug, PartialEq, CandidType, Deserialize, Serialize)]
 pub enum GetTransactionEncoding {
     /// The transaction is base64-encoded.
     #[serde(rename = "base64")]
@@ -418,7 +418,7 @@ pub enum GetTransactionEncoding {
 }
 
 /// The parameters for a Solana [`sendTransaction`](https://solana.com/docs/rpc/http/sendtransaction) RPC method call.
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Debug, PartialEq, CandidType, Deserialize, Serialize)]
 pub struct SendTransactionParams {
     /// Fully-signed transaction, as encoded string.
     transaction: String,
@@ -501,7 +501,7 @@ impl TryFrom<solana_transaction::Transaction> for SendTransactionParams {
 
 /// The encoding format for the transaction argument to the Solana
 /// [`sendTransaction`](https://solana.com/docs/rpc/http/sendtransaction) RPC method call.
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Debug, PartialEq, CandidType, Deserialize, Serialize)]
 pub enum SendTransactionEncoding {
     /// The transaction is base-58 encoded (slow, deprecated).
     #[serde(rename = "base58")]
@@ -513,7 +513,7 @@ pub enum SendTransactionEncoding {
 
 /// [Commitment levels](https://solana.com/docs/rpc#configuring-state-commitment) in Solana,
 /// representing finality guarantees of transactions and memory queries.
-#[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, CandidType, Deserialize, Serialize)]
 pub enum CommitmentLevel {
     /// The transaction is processed by a leader, but may be dropped.
     #[serde(rename = "processed")]
@@ -539,7 +539,7 @@ impl From<CommitmentLevel> for solana_commitment_config::CommitmentConfig {
 
 /// Subset of [`CommitmentLevel`] whose variants are allowed values for the `encoding`
 /// field of [`GetBlockParams`].
-#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Serialize, CandidType)]
+#[derive(Clone, Debug, Eq, PartialEq, CandidType, Deserialize, Serialize)]
 pub enum GetBlockCommitmentLevel {
     /// See [`CommitmentLevel::Confirmed`].
     #[serde(rename = "confirmed")]

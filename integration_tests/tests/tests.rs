@@ -1782,10 +1782,8 @@ mod get_balance_tests {
                 ])
                 .build()
                 .get_balance(USDC_PUBLIC_KEY)
-                .modify_params(|params| {
-                    params.commitment = Some(CommitmentLevel::Confirmed);
-                    params.min_context_slot = Some(100);
-                })
+                .with_min_context_slot(100)
+                .with_commitment(CommitmentLevel::Confirmed)
                 .send()
                 .await
                 .expect_consistent();
@@ -1848,9 +1846,7 @@ mod get_token_account_balance_tests {
                 ])
                 .build()
                 .get_token_account_balance(USDC_PUBLIC_KEY)
-                .modify_params(|params| {
-                    params.commitment = Some(CommitmentLevel::Confirmed);
-                })
+                .with_commitment(CommitmentLevel::Confirmed)
                 .send()
                 .await
                 .expect_consistent();
