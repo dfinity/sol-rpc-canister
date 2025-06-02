@@ -390,6 +390,51 @@ impl<R> SolRpcClient<R> {
     }
 
     /// Call `getBlock` on the SOL RPC canister.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster};
+    /// use solana_pubkey::pubkey;
+    /// use solana_transaction_status_client_types::UiConfirmedBlock;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use std::str::FromStr;
+    /// # use sol_rpc_types::{ConfirmedBlock, Hash, MultiRpcResult, Pubkey};
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(ConfirmedBlock {
+    /// #     previous_blockhash: Hash::from_str("4yeCoXK2Q4yXcunuLtF37yTE1wVD4x8313adneZDmi8w").unwrap(),
+    /// #     blockhash: Hash::from_str("C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY").unwrap(),
+    /// #     parent_slot: 343459193,
+    /// #     block_time: Some(1748606929),
+    /// #     block_height: Some(321673899),
+    /// #     signatures: None,
+    /// # })))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let block = client
+    ///     .get_block(343_459_194)
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent();
+    ///
+    /// assert_eq!(block, Ok(Some(UiConfirmedBlock {
+    ///       previous_blockhash: "4yeCoXK2Q4yXcunuLtF37yTE1wVD4x8313adneZDmi8w".to_string(),
+    ///       blockhash: "C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY".to_string(),
+    ///       parent_slot: 343459193,
+    ///       block_time: Some(1748606929),
+    ///       block_height: Some(321673899),
+    ///       signatures: None,
+    ///       rewards: None,
+    ///       num_reward_partitions: None,
+    ///       transactions: None,
+    /// })));
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn get_block(&self, params: impl Into<GetBlockParams>) -> GetBlockRequestBuilder<R> {
         let params = params.into();
         let cycles = match params.transaction_details.unwrap_or_default() {
@@ -749,6 +794,114 @@ impl<R> SolRpcClient<R> {
     }
 
     /// Call `getTransaction` on the SOL RPC canister.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster};
+    /// use solana_pubkey::pubkey;
+    /// use solana_signature::Signature;
+    /// use solana_transaction_status_client_types::{
+    ///     EncodedConfirmedTransactionWithStatusMeta, EncodedTransaction,
+    ///     EncodedTransactionWithStatusMeta, TransactionBinaryEncoding, UiConfirmedBlock,
+    ///     UiLoadedAddresses, UiTransactionStatusMeta
+    /// };
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use std::str::FromStr;
+    /// # use sol_rpc_types::{ConfirmedBlock, GetTransactionEncoding, Hash, MultiRpcResult, Pubkey, TransactionInfo, TransactionStatusMeta};
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(TransactionInfo {
+    /// #       slot: 344115445,
+    /// #       block_time: Some(1748865196),
+    /// #       version: None,
+    /// #       transaction: sol_rpc_types::EncodedTransaction::Binary(
+    /// #           "AezK+RzWcWWx92r0fdmhv7XPAaFQjkPd6MFbGVA7G48aioSd3xcYmwaPC2ih7PwypyeC/9to8mau9B\
+    /// #            i7UnL51QUBAAEDCPqP+HgQC9XiKJ57C0YTNM3SFIvOA3aVl/IgkHIZDmuTFuOuQ+TscmAh2ImY30W1\
+    /// #            llOzfsPudc98t1jqdNEmVQdhSB01dHS7fE12JOvTvbPYNV5z0RBD/A2jU4AAAAAA97B2Pa9+X8kE7k\
+    /// #            E4774GwvI3QCvLgOTJRad8txcXNsUBAgIBAJQBDgAAANXIghQAAAAAHwEfAR4BHQEcARsBGgEZARgB\
+    /// #            FwEWARUBFAETARIBEQEQAQ8BDgENAQwBCwEKAQkBCAEHAQYBBQEEAQMBAgEBiNvPO/moMFqBbr9xeM\
+    /// #            JF4bBdB8XDJJ5LLsGewMTGlm8BrJA9aAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+    /// #            AA==".to_string(),
+    /// #           sol_rpc_types::TransactionBinaryEncoding::Base64,
+    /// #       ),
+    /// #       meta: Some(TransactionStatusMeta {
+    /// #           status: Ok(()),
+    /// #           fee: 5000,
+    /// #           pre_balances: vec![43156320838, 6678633253, 1],
+    /// #           post_balances: vec![43156315838, 6678633253, 1],
+    /// #           inner_instructions: Some(vec![]),
+    /// #           log_messages: Some(vec![
+    /// #               "Program Vote111111111111111111111111111111111111111 invoke [1]".to_string(),
+    /// #               "Program Vote111111111111111111111111111111111111111 success".to_string()
+    /// #           ]).into(),
+    /// #           pre_token_balances: Some(vec![]),
+    /// #           post_token_balances: Some(vec![]),
+    /// #           rewards: Some(vec![]),
+    /// #           loaded_addresses: Some(UiLoadedAddresses {
+    /// #               writable: vec![],
+    /// #               readonly: vec![],
+    /// #           }).into(),
+    /// #           return_data: None,
+    /// #           compute_units_consumed: Some(2100),
+    /// #       }),
+    /// #   })))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let signature = Signature::from_str(
+    ///     "5jb1Z64pwRu9vNsRrs36ydtYWzw3KtMYfLVkRz56DbBYjYzpfpMbPNtMS7adxGDmjaoDsmKE5MbQM14zjrG6VXVe"
+    /// ).unwrap();
+    /// let transaction = client
+    ///     .get_transaction(signature)
+    ///     .with_encoding(GetTransactionEncoding::Base64)
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent();
+    ///
+    /// assert_eq!(transaction, Ok(Some(EncodedConfirmedTransactionWithStatusMeta {
+    ///     slot: 344115445,
+    ///     transaction: EncodedTransactionWithStatusMeta {
+    ///         transaction: EncodedTransaction::Binary(
+    ///             "AezK+RzWcWWx92r0fdmhv7XPAaFQjkPd6MFbGVA7G48aioSd3xcYmwaPC2ih7PwypyeC/9to8mau9B\
+    ///              i7UnL51QUBAAEDCPqP+HgQC9XiKJ57C0YTNM3SFIvOA3aVl/IgkHIZDmuTFuOuQ+TscmAh2ImY30W1\
+    ///              llOzfsPudc98t1jqdNEmVQdhSB01dHS7fE12JOvTvbPYNV5z0RBD/A2jU4AAAAAA97B2Pa9+X8kE7k\
+    ///              E4774GwvI3QCvLgOTJRad8txcXNsUBAgIBAJQBDgAAANXIghQAAAAAHwEfAR4BHQEcARsBGgEZARgB\
+    ///              FwEWARUBFAETARIBEQEQAQ8BDgENAQwBCwEKAQkBCAEHAQYBBQEEAQMBAgEBiNvPO/moMFqBbr9xeM\
+    ///              JF4bBdB8XDJJ5LLsGewMTGlm8BrJA9aAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+    ///              AA==".to_string(),
+    ///             TransactionBinaryEncoding::Base64,
+    ///         ),
+    ///         meta: Some(UiTransactionStatusMeta {
+    ///             err: None,
+    ///             status: Ok(()),
+    ///             fee: 5000,
+    ///             pre_balances: vec![43156320838, 6678633253, 1],
+    ///             post_balances: vec![43156315838, 6678633253, 1],
+    ///             inner_instructions: Some(vec![]).into(),
+    ///             log_messages: Some(vec![
+    ///                 "Program Vote111111111111111111111111111111111111111 invoke [1]".to_string(),
+    ///                 "Program Vote111111111111111111111111111111111111111 success".to_string()
+    ///             ]).into(),
+    ///             pre_token_balances: Some(vec![]).into(),
+    ///             post_token_balances: Some(vec![]).into(),
+    ///             rewards: Some(vec![]).into(),
+    ///             loaded_addresses: Some(UiLoadedAddresses {
+    ///                 writable: vec![],
+    ///                 readonly: vec![],
+    ///             }).into(),
+    ///             return_data: None.into(),
+    ///             compute_units_consumed: Some(2100).into(),
+    ///         }),
+    ///         version: None,
+    ///     },
+    ///     block_time: Some(1748865196),
+    /// })));
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn get_transaction(
         &self,
         params: impl Into<GetTransactionParams>,

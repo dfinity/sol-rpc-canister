@@ -467,6 +467,7 @@ mod get_slot_tests {
         setup.drop().await;
     }
 }
+
 mod get_recent_prioritization_fees_tests {
     use crate::USDC_PUBLIC_KEY;
     use canhttp::http::json::ConstantSizeId;
