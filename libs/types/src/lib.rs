@@ -46,7 +46,7 @@ pub use solana::{
 };
 
 /// A vector with a maximum capacity.
-#[derive(Debug, Clone, Deserialize, CandidType, PartialEq, Default, Into)]
+#[derive(Clone, Debug, Default, PartialEq, CandidType, Deserialize, Into)]
 #[serde(try_from = "Vec<T>")]
 pub struct VecWithMaxLen<T, const CAPACITY: usize>(Vec<T>);
 
