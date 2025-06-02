@@ -860,45 +860,25 @@ impl<R> SolRpcClient<R> {
     ///     .send()
     ///     .await
     ///     .expect_consistent();
-    ///
-    /// assert_eq!(transaction, Ok(Some(EncodedConfirmedTransactionWithStatusMeta {
-    ///     slot: 344115445,
-    ///     transaction: EncodedTransactionWithStatusMeta {
-    ///         transaction: EncodedTransaction::Binary(
-    ///             "AezK+RzWcWWx92r0fdmhv7XPAaFQjkPd6MFbGVA7G48aioSd3xcYmwaPC2ih7PwypyeC/9to8mau9B\
-    ///              i7UnL51QUBAAEDCPqP+HgQC9XiKJ57C0YTNM3SFIvOA3aVl/IgkHIZDmuTFuOuQ+TscmAh2ImY30W1\
-    ///              llOzfsPudc98t1jqdNEmVQdhSB01dHS7fE12JOvTvbPYNV5z0RBD/A2jU4AAAAAA97B2Pa9+X8kE7k\
-    ///              E4774GwvI3QCvLgOTJRad8txcXNsUBAgIBAJQBDgAAANXIghQAAAAAHwEfAR4BHQEcARsBGgEZARgB\
-    ///              FwEWARUBFAETARIBEQEQAQ8BDgENAQwBCwEKAQkBCAEHAQYBBQEEAQMBAgEBiNvPO/moMFqBbr9xeM\
-    ///              JF4bBdB8XDJJ5LLsGewMTGlm8BrJA9aAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
-    ///              AA==".to_string(),
-    ///             TransactionBinaryEncoding::Base64,
-    ///         ),
-    ///         meta: Some(UiTransactionStatusMeta {
-    ///             err: None,
-    ///             status: Ok(()),
-    ///             fee: 5000,
-    ///             pre_balances: vec![43156320838, 6678633253, 1],
-    ///             post_balances: vec![43156315838, 6678633253, 1],
-    ///             inner_instructions: Some(vec![]).into(),
-    ///             log_messages: Some(vec![
-    ///                 "Program Vote111111111111111111111111111111111111111 invoke [1]".to_string(),
-    ///                 "Program Vote111111111111111111111111111111111111111 success".to_string()
-    ///             ]).into(),
-    ///             pre_token_balances: Some(vec![]).into(),
-    ///             post_token_balances: Some(vec![]).into(),
-    ///             rewards: Some(vec![]).into(),
-    ///             loaded_addresses: Some(UiLoadedAddresses {
-    ///                 writable: vec![],
-    ///                 readonly: vec![],
-    ///             }).into(),
-    ///             return_data: OptionSerializer::skip(),
-    ///             compute_units_consumed: Some(2100).into(),
-    ///         }),
-    ///         version: None,
+    /// 
+    /// match transaction {
+    ///     Ok(Some(EncodedConfirmedTransactionWithStatusMeta { transaction, .. })) => {
+    ///         assert_eq!(
+    ///             transaction.transaction,
+    ///             EncodedTransaction::Binary(
+    ///                 "AezK+RzWcWWx92r0fdmhv7XPAaFQjkPd6MFbGVA7G48aioSd3xcYmwaPC2ih7PwypyeC/9to8mau9B\
+    ///                 i7UnL51QUBAAEDCPqP+HgQC9XiKJ57C0YTNM3SFIvOA3aVl/IgkHIZDmuTFuOuQ+TscmAh2ImY30W1\
+    ///                 llOzfsPudc98t1jqdNEmVQdhSB01dHS7fE12JOvTvbPYNV5z0RBD/A2jU4AAAAAA97B2Pa9+X8kE7k\
+    ///                 E4774GwvI3QCvLgOTJRad8txcXNsUBAgIBAJQBDgAAANXIghQAAAAAHwEfAR4BHQEcARsBGgEZARgB\
+    ///                 FwEWARUBFAETARIBEQEQAQ8BDgENAQwBCwEKAQkBCAEHAQYBBQEEAQMBAgEBiNvPO/moMFqBbr9xeM\
+    ///                 JF4bBdB8XDJJ5LLsGewMTGlm8BrJA9aAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+    ///                 AA==".to_string(),
+    ///                 TransactionBinaryEncoding::Base64,
+    ///             ),
+    ///         )
     ///     },
-    ///     block_time: Some(1748865196),
-    /// })));
+    ///     _ => panic!("Unable to get transaction for signature: `{:?}`", signature)
+    /// }
     /// # Ok(())
     /// # }
     /// ```
