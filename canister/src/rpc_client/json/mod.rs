@@ -129,6 +129,10 @@ impl GetBlockParams {
             .as_ref()
             .and_then(|config| config.transaction_details.as_ref())
     }
+
+    pub fn get_rewards(&self) -> Option<bool> {
+        self.1.as_ref().and_then(|config| config.rewards)
+    }
 }
 
 impl From<sol_rpc_types::GetBlockParams> for GetBlockParams {
