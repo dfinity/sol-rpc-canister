@@ -7,13 +7,13 @@ use derive_more::From;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
-    GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams, GetBlockCommitmentLevel,
-    GetBlockParams, GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
-    GetSignatureStatusesParams, GetSignaturesForAddressLimit, GetSignaturesForAddressParams,
-    GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionParams, Lamport,
-    NonZeroU8, PrioritizationFee, RoundingError, RpcConfig, RpcResult, RpcSources,
-    SendTransactionParams, Signature, Slot, TokenAmount, TransactionDetails, TransactionInfo,
-    TransactionStatus,
+    DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
+    GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
+    GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams, GetSignaturesForAddressLimit,
+    GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
+    GetTransactionEncoding, GetTransactionParams, Lamport, MultiRpcResult, NonZeroU8,
+    PrioritizationFee, RoundingError, RpcConfig, RpcResult, RpcSources, SendTransactionParams,
+    Signature, Slot, TokenAmount, TransactionDetails, TransactionInfo, TransactionStatus,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_transaction_status_client_types::{
@@ -115,9 +115,8 @@ impl GetAccountInfoRequest {
 impl SolRpcRequest for GetAccountInfoRequest {
     type Config = RpcConfig;
     type Params = GetAccountInfoParams;
-    type CandidOutput = sol_rpc_types::MultiRpcResult<Option<AccountInfo>>;
-    type Output =
-        sol_rpc_types::MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>;
+    type CandidOutput = MultiRpcResult<Option<AccountInfo>>;
+    type Output = MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>;
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetAccountInfo
@@ -134,14 +133,32 @@ pub type GetAccountInfoRequestBuilder<R> = RequestBuilder<
     R,
     RpcConfig,
     GetAccountInfoParams,
-    sol_rpc_types::MultiRpcResult<Option<AccountInfo>>,
-    sol_rpc_types::MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>,
+    MultiRpcResult<Option<AccountInfo>>,
+    MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>,
 >;
 
 impl<R> GetAccountInfoRequestBuilder<R> {
+    /// Change the `commitment` parameter for a `getAccountInfo` request.
+    pub fn with_commitment(mut self, commitment: impl Into<CommitmentLevel>) -> Self {
+        self.request.params.commitment = Some(commitment.into());
+        self
+    }
+
     /// Change the `encoding` parameter for a `getAccountInfo` request.
-    pub fn with_encoding(mut self, encoding: GetAccountInfoEncoding) -> Self {
-        self.request.params.encoding = Some(encoding);
+    pub fn with_encoding(mut self, encoding: impl Into<GetAccountInfoEncoding>) -> Self {
+        self.request.params.encoding = Some(encoding.into());
+        self
+    }
+
+    /// Change the `dataSlice` parameter for a `getAccountInfo` request.
+    pub fn with_data_slice(mut self, data_slice: impl Into<DataSlice>) -> Self {
+        self.request.params.data_slice = Some(data_slice.into());
+        self
+    }
+
+    /// Change the `minContextSlot` parameter for a `getAccountInfo` request.
+    pub fn with_min_context_slot(mut self, slot: Slot) -> Self {
+        self.request.params.min_context_slot = Some(slot);
         self
     }
 }
@@ -158,8 +175,8 @@ impl GetBalanceRequest {
 impl SolRpcRequest for GetBalanceRequest {
     type Config = RpcConfig;
     type Params = GetBalanceParams;
-    type CandidOutput = sol_rpc_types::MultiRpcResult<Lamport>;
-    type Output = sol_rpc_types::MultiRpcResult<Lamport>;
+    type CandidOutput = MultiRpcResult<Lamport>;
+    type Output = MultiRpcResult<Lamport>;
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetBalance
@@ -169,6 +186,28 @@ impl SolRpcRequest for GetBalanceRequest {
         let mut params = self.0;
         set_default(default_commitment_level, &mut params.commitment);
         params
+    }
+}
+
+pub type GetBalanceRequestBuilder<R> = RequestBuilder<
+    R,
+    RpcConfig,
+    GetBalanceParams,
+    MultiRpcResult<Lamport>,
+    MultiRpcResult<Lamport>,
+>;
+
+impl<R> GetBalanceRequestBuilder<R> {
+    /// Change the `commitment` parameter for a `getBalance` request.
+    pub fn with_commitment(mut self, commitment_level: impl Into<CommitmentLevel>) -> Self {
+        self.request.params.commitment = Some(commitment_level.into());
+        self
+    }
+
+    /// Change the `minContextSlot` parameter for a `getBalance` request.
+    pub fn with_min_context_slot(mut self, slot: Slot) -> Self {
+        self.request.params.min_context_slot = Some(slot);
+        self
     }
 }
 
@@ -184,8 +223,8 @@ impl GetBlockRequest {
 impl SolRpcRequest for GetBlockRequest {
     type Config = RpcConfig;
     type Params = GetBlockParams;
-    type CandidOutput = sol_rpc_types::MultiRpcResult<Option<ConfirmedBlock>>;
-    type Output = sol_rpc_types::MultiRpcResult<Option<UiConfirmedBlock>>;
+    type CandidOutput = MultiRpcResult<Option<ConfirmedBlock>>;
+    type Output = MultiRpcResult<Option<UiConfirmedBlock>>;
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetBlock
@@ -215,20 +254,29 @@ pub type GetBlockRequestBuilder<R> = RequestBuilder<
     R,
     RpcConfig,
     GetBlockParams,
-    sol_rpc_types::MultiRpcResult<Option<ConfirmedBlock>>,
-    sol_rpc_types::MultiRpcResult<Option<UiConfirmedBlock>>,
+    MultiRpcResult<Option<ConfirmedBlock>>,
+    MultiRpcResult<Option<UiConfirmedBlock>>,
 >;
 
 impl<R> GetBlockRequestBuilder<R> {
-    /// Change the `rewards` parameter for a `getBlock` request.
-    pub fn with_transaction_details(mut self, transaction_details: TransactionDetails) -> Self {
-        self.request.params.transaction_details = Some(transaction_details);
+    /// Change the `commitment` parameter for a `getBlock` request.
+    pub fn with_commitment(mut self, commitment_level: impl Into<GetBlockCommitmentLevel>) -> Self {
+        self.request.params.commitment = Some(commitment_level.into());
         self
     }
 
-    /// Change the `max_supported_transaction_version` parameter for a `getBlock` request.
+    /// Change the `maxSupportedTransactionVersion` parameter for a `getBlock` request.
     pub fn with_max_supported_transaction_version(mut self, version: u8) -> Self {
         self.request.params.max_supported_transaction_version = Some(version);
+        self
+    }
+
+    /// Change the `transactionDetails` parameter for a `getBlock` request.
+    pub fn with_transaction_details(
+        mut self,
+        transaction_details: impl Into<TransactionDetails>,
+    ) -> Self {
+        self.request.params.transaction_details = Some(transaction_details.into());
         self
     }
 
@@ -245,7 +293,7 @@ pub struct GetRecentPrioritizationFeesRequest(GetRecentPrioritizationFeesParams)
 impl SolRpcRequest for GetRecentPrioritizationFeesRequest {
     type Config = GetRecentPrioritizationFeesRpcConfig;
     type Params = GetRecentPrioritizationFeesParams;
-    type CandidOutput = sol_rpc_types::MultiRpcResult<Vec<PrioritizationFee>>;
+    type CandidOutput = MultiRpcResult<Vec<PrioritizationFee>>;
     type Output = Self::CandidOutput;
 
     fn endpoint(&self) -> SolRpcEndpoint {
@@ -272,7 +320,7 @@ impl SolRpcRequest for GetSignaturesForAddressRequest {
     type Config = RpcConfig;
     type Params = GetSignaturesForAddressParams;
     type CandidOutput = Self::Output;
-    type Output = sol_rpc_types::MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>;
+    type Output = MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>;
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetSignaturesForAddress
@@ -289,11 +337,23 @@ pub type GetSignaturesForAddressRequestBuilder<R> = RequestBuilder<
     R,
     RpcConfig,
     GetSignaturesForAddressParams,
-    sol_rpc_types::MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>,
-    sol_rpc_types::MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>,
+    MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>,
+    MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>,
 >;
 
 impl<R> GetSignaturesForAddressRequestBuilder<R> {
+    /// Change the `commitment` parameter for a `getSignaturesForAddress` request.
+    pub fn with_commitment(mut self, commitment_level: CommitmentLevel) -> Self {
+        self.request.params.commitment = Some(commitment_level);
+        self
+    }
+
+    /// Change the `minContextSlot` parameter for a `getSignaturesForAddress` request.
+    pub fn with_min_context_slot(mut self, slot: Slot) -> Self {
+        self.request.params.min_context_slot = Some(slot);
+        self
+    }
+
     /// Change the `limit` parameter for a `getSignaturesForAddress` request.
     pub fn with_limit(mut self, limit: GetSignaturesForAddressLimit) -> Self {
         self.request.params.limit = Some(limit);
@@ -319,10 +379,9 @@ pub struct GetSignatureStatusesRequest(GetSignatureStatusesParams);
 impl SolRpcRequest for GetSignatureStatusesRequest {
     type Config = RpcConfig;
     type Params = GetSignatureStatusesParams;
-    type CandidOutput = sol_rpc_types::MultiRpcResult<Vec<Option<TransactionStatus>>>;
-    type Output = sol_rpc_types::MultiRpcResult<
-        Vec<Option<solana_transaction_status_client_types::TransactionStatus>>,
-    >;
+    type CandidOutput = MultiRpcResult<Vec<Option<TransactionStatus>>>;
+    type Output =
+        MultiRpcResult<Vec<Option<solana_transaction_status_client_types::TransactionStatus>>>;
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetSignatureStatuses
@@ -337,10 +396,8 @@ pub type GetSignatureStatusesRequestBuilder<R> = RequestBuilder<
     R,
     RpcConfig,
     GetSignatureStatusesParams,
-    sol_rpc_types::MultiRpcResult<Vec<Option<TransactionStatus>>>,
-    sol_rpc_types::MultiRpcResult<
-        Vec<Option<solana_transaction_status_client_types::TransactionStatus>>,
-    >,
+    MultiRpcResult<Vec<Option<TransactionStatus>>>,
+    MultiRpcResult<Vec<Option<solana_transaction_status_client_types::TransactionStatus>>>,
 >;
 
 impl<R> GetSignatureStatusesRequestBuilder<R> {
@@ -358,7 +415,7 @@ impl SolRpcRequest for GetSlotRequest {
     type Config = GetSlotRpcConfig;
     type Params = Option<GetSlotParams>;
     type CandidOutput = Self::Output;
-    type Output = sol_rpc_types::MultiRpcResult<Slot>;
+    type Output = MultiRpcResult<Slot>;
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetSlot
@@ -380,6 +437,28 @@ impl SolRpcRequest for GetSlotRequest {
     }
 }
 
+pub type GetSlotRequestBuilder<R> = RequestBuilder<
+    R,
+    GetSlotRpcConfig,
+    Option<GetSlotParams>,
+    MultiRpcResult<Slot>,
+    MultiRpcResult<Slot>,
+>;
+
+impl<R> GetSlotRequestBuilder<R> {
+    /// Change the `commitment` parameter for a `getSlot` request.
+    pub fn with_commitment(mut self, commitment_level: CommitmentLevel) -> Self {
+        self.request.params.get_or_insert_default().commitment = Some(commitment_level);
+        self
+    }
+
+    /// Change the `minContextSlot` parameter for a `getSlot` request.
+    pub fn with_min_context_slot(mut self, slot: Slot) -> Self {
+        self.request.params.get_or_insert_default().min_context_slot = Some(slot);
+        self
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct GetTokenAccountBalanceRequest(GetTokenAccountBalanceParams);
 
@@ -392,8 +471,8 @@ impl GetTokenAccountBalanceRequest {
 impl SolRpcRequest for GetTokenAccountBalanceRequest {
     type Config = RpcConfig;
     type Params = GetTokenAccountBalanceParams;
-    type CandidOutput = sol_rpc_types::MultiRpcResult<TokenAmount>;
-    type Output = sol_rpc_types::MultiRpcResult<UiTokenAmount>;
+    type CandidOutput = MultiRpcResult<TokenAmount>;
+    type Output = MultiRpcResult<UiTokenAmount>;
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetTokenAccountBalance
@@ -403,6 +482,22 @@ impl SolRpcRequest for GetTokenAccountBalanceRequest {
         let mut params = self.0;
         set_default(default_commitment_level, &mut params.commitment);
         params
+    }
+}
+
+pub type GetTokenAccountBalanceRequestBuilder<R> = RequestBuilder<
+    R,
+    RpcConfig,
+    GetTokenAccountBalanceParams,
+    MultiRpcResult<TokenAmount>,
+    MultiRpcResult<UiTokenAmount>,
+>;
+
+impl<R> GetTokenAccountBalanceRequestBuilder<R> {
+    /// Change the `commitment` parameter for a `getTokenAccountBalance` request.
+    pub fn with_commitment(mut self, commitment_level: CommitmentLevel) -> Self {
+        self.request.params.commitment = Some(commitment_level);
+        self
     }
 }
 
@@ -418,8 +513,8 @@ impl GetTransactionRequest {
 impl SolRpcRequest for GetTransactionRequest {
     type Config = RpcConfig;
     type Params = GetTransactionParams;
-    type CandidOutput = sol_rpc_types::MultiRpcResult<Option<TransactionInfo>>;
-    type Output = sol_rpc_types::MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>;
+    type CandidOutput = MultiRpcResult<Option<TransactionInfo>>;
+    type Output = MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>;
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetTransaction
@@ -429,6 +524,34 @@ impl SolRpcRequest for GetTransactionRequest {
         let mut params = self.0;
         set_default(default_commitment_level, &mut params.commitment);
         params
+    }
+}
+
+pub type GetTransactionRequestBuilder<R> = RequestBuilder<
+    R,
+    RpcConfig,
+    GetTransactionParams,
+    MultiRpcResult<Option<TransactionInfo>>,
+    MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>,
+>;
+
+impl<R> GetTransactionRequestBuilder<R> {
+    /// Change the `commitment` parameter for a `getTransaction` request.
+    pub fn with_commitment(mut self, commitment_level: CommitmentLevel) -> Self {
+        self.request.params.commitment = Some(commitment_level);
+        self
+    }
+
+    /// Change the `maxSupportedTransaction_version` parameter for a `getTransaction` request.
+    pub fn with_max_supported_transaction_version(mut self, version: u8) -> Self {
+        self.request.params.max_supported_transaction_version = Some(version);
+        self
+    }
+
+    /// Change the `encoding` parameter for a `getTransaction` request.
+    pub fn with_encoding(mut self, encoding: GetTransactionEncoding) -> Self {
+        self.request.params.encoding = Some(encoding);
+        self
     }
 }
 
@@ -444,8 +567,8 @@ impl SendTransactionRequest {
 impl SolRpcRequest for SendTransactionRequest {
     type Config = RpcConfig;
     type Params = SendTransactionParams;
-    type CandidOutput = sol_rpc_types::MultiRpcResult<Signature>;
-    type Output = sol_rpc_types::MultiRpcResult<solana_signature::Signature>;
+    type CandidOutput = MultiRpcResult<Signature>;
+    type Output = MultiRpcResult<solana_signature::Signature>;
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::SendTransaction
@@ -455,6 +578,40 @@ impl SolRpcRequest for SendTransactionRequest {
         let mut params = self.0;
         set_default(default_commitment_level, &mut params.preflight_commitment);
         params
+    }
+}
+
+pub type SendTransactionRequestBuilder<R> = RequestBuilder<
+    R,
+    RpcConfig,
+    SendTransactionParams,
+    MultiRpcResult<Signature>,
+    MultiRpcResult<solana_signature::Signature>,
+>;
+
+impl<R> SendTransactionRequestBuilder<R> {
+    /// Change the `skipPreflight` parameter for a `sendTransaction` request.
+    pub fn with_skip_preflight(mut self, skip_preflight: bool) -> Self {
+        self.request.params.skip_preflight = Some(skip_preflight);
+        self
+    }
+
+    /// Change the `preflightCommitment` parameter for a `sendTransaction` request.
+    pub fn with_preflight_commitment(mut self, preflight_commitment: CommitmentLevel) -> Self {
+        self.request.params.preflight_commitment = Some(preflight_commitment);
+        self
+    }
+
+    /// Change the `maxRetries` parameter for a `sendTransaction` request.
+    pub fn with_max_retries(mut self, max_retries: u32) -> Self {
+        self.request.params.max_retries = Some(max_retries);
+        self
+    }
+
+    /// Change the `minContextSlot` parameter for a `sendTransaction` request.
+    pub fn with_min_context_slot(mut self, slot: Slot) -> Self {
+        self.request.params.min_context_slot = Some(slot);
+        self
     }
 }
 
@@ -473,8 +630,8 @@ impl TryFrom<serde_json::Value> for JsonRequest {
 impl SolRpcRequest for JsonRequest {
     type Config = RpcConfig;
     type Params = String;
-    type CandidOutput = sol_rpc_types::MultiRpcResult<String>;
-    type Output = sol_rpc_types::MultiRpcResult<String>;
+    type CandidOutput = MultiRpcResult<String>;
+    type Output = MultiRpcResult<String>;
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::JsonRequest
@@ -484,6 +641,9 @@ impl SolRpcRequest for JsonRequest {
         self.0
     }
 }
+
+pub type JsonRequestBuilder<R> =
+    RequestBuilder<R, RpcConfig, String, MultiRpcResult<String>, MultiRpcResult<String>>;
 
 /// A builder to construct a [`Request`].
 ///
@@ -498,8 +658,8 @@ pub type GetRecentPrioritizationFeesRequestBuilder<R> = RequestBuilder<
     R,
     GetRecentPrioritizationFeesRpcConfig,
     GetRecentPrioritizationFeesParams,
-    sol_rpc_types::MultiRpcResult<Vec<PrioritizationFee>>,
-    sol_rpc_types::MultiRpcResult<Vec<PrioritizationFee>>,
+    MultiRpcResult<Vec<PrioritizationFee>>,
+    MultiRpcResult<Vec<PrioritizationFee>>,
 >;
 
 impl<Runtime, Config: Clone, Params: Clone, CandidOutput, Output> Clone

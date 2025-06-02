@@ -46,21 +46,28 @@ pub use solana::{
 };
 
 /// A vector with a maximum capacity.
-#[derive(Debug, Clone, Deserialize, CandidType, PartialEq, Default, Into)]
+#[derive(Clone, Debug, Default, PartialEq, CandidType, Deserialize, Into)]
 #[serde(try_from = "Vec<T>")]
 pub struct VecWithMaxLen<T, const CAPACITY: usize>(Vec<T>);
 
-impl<T, const CAPACITY: usize> TryFrom<Vec<T>> for VecWithMaxLen<T, CAPACITY> {
+impl<T, const CAPACITY: usize> VecWithMaxLen<T, CAPACITY> {
+    /// Constructs a new, empty `VecWithMaxLen<T, CAPACITY>`.
+    pub fn new() -> Self {
+        Self(Vec::new())
+    }
+}
+
+impl<S: Into<T>, T, const CAPACITY: usize> TryFrom<Vec<S>> for VecWithMaxLen<T, CAPACITY> {
     type Error = RpcError;
 
-    fn try_from(value: Vec<T>) -> Result<Self, Self::Error> {
+    fn try_from(value: Vec<S>) -> Result<Self, Self::Error> {
         if value.len() > CAPACITY {
             return Err(RpcError::ValidationError(format!(
                 "Expected at most {CAPACITY} items, but got {}",
                 value.len()
             )));
         }
-        Ok(Self(value))
+        Ok(Self(value.into_iter().map(Into::into).collect()))
     }
 }
 

@@ -164,9 +164,12 @@ async fn should_get_account_info() {
     let (sol_res, ic_res) = setup
         .compare_client(
             |sol| {
-                sol.get_account_with_config(&system_program::id(), None.unwrap_or_default())
-                    .expect("Failed to get account")
-                    .value
+                sol.get_account_with_commitment(
+                    &system_program::id(),
+                    CommitmentConfig::confirmed(),
+                )
+                .expect("Failed to get account")
+                .value
             },
             |ic| async move {
                 ic.get_account_info(system_program::id())
@@ -192,9 +195,12 @@ async fn should_not_get_account_info() {
     let (sol_res, ic_res) = setup
         .compare_client(
             |sol| {
-                sol.get_account_with_config(&system_program::id(), None.unwrap_or_default())
-                    .expect("Failed to get account")
-                    .value
+                sol.get_account_with_commitment(
+                    &system_program::id(),
+                    CommitmentConfig::confirmed(),
+                )
+                .expect("Failed to get account")
+                .value
             },
             |ic| async move {
                 ic.get_account_info(system_program::id())

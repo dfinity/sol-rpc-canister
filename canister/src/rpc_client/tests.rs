@@ -7,10 +7,12 @@ use serde::Serialize;
 use serde_json::json;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
-    GetBlockCommitmentLevel, GetBlockParams, GetSignatureStatusesParams,
+    GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
+    GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams,
     GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
     GetTransactionEncoding, GetTransactionParams, Pubkey, RpcConfig, RpcSources,
     SendTransactionEncoding, SendTransactionParams, Signature, SolanaCluster, TransactionDetails,
+    VecWithMaxLen,
 };
 use solana_pubkey::pubkey;
 use std::str::FromStr;
@@ -22,7 +24,6 @@ const ANOTHER_SIGNATURE: &str =
 
 mod request_serialization_tests {
     use super::*;
-    use sol_rpc_types::{GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig};
 
     #[test]
     fn should_serialize_get_account_info_request() {
@@ -144,7 +145,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 GetSignatureStatusesParams {
-                    signatures: vec![].try_into().unwrap(),
+                    signatures: VecWithMaxLen::new(),
                     search_transaction_history: None,
                 },
             )

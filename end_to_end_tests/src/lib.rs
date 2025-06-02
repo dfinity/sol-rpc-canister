@@ -10,20 +10,24 @@ use sol_rpc_int_tests::{
     wallet::{decode_cycles_wallet_response, CallCanisterArgs},
 };
 use sol_rpc_types::{
-    CommitmentLevel, ConsensusStrategy, MultiRpcResult, RpcSource, RpcSources,
+    CommitmentLevel, ConsensusStrategy, Lamport, MultiRpcResult, RpcSource, RpcSources,
     SupportedRpcProviderId,
 };
+use solana_client::rpc_client::RpcClient as SolanaRpcClient;
 use solana_commitment_config::CommitmentConfig;
 use solana_pubkey::Pubkey;
 use solana_signature::Signature;
+use solana_transaction_status_client_types::TransactionStatus;
 use std::{env, time::Duration};
 
 const DEFAULT_IC_GATEWAY: &str = "https://icp0.io";
+const SOLANA_DEVNET_URL: &str = "https://api.devnet.solana.com";
 
 pub struct Setup {
     agent: Agent,
     sol_rpc_canister_id: Principal,
     wallet_canister_id: Principal,
+    solana_client: SolanaRpcClient,
 }
 
 impl Setup {
@@ -39,6 +43,10 @@ impl Setup {
                 .expect("Could not build agent"),
             sol_rpc_canister_id: Principal::from_text(env("sol_rpc_canister_id")).unwrap(),
             wallet_canister_id: Principal::from_text(env("wallet_canister_id")).unwrap(),
+            solana_client: SolanaRpcClient::new_with_commitment(
+                SOLANA_DEVNET_URL,
+                CommitmentConfig::confirmed(),
+            ),
         }
     }
 
@@ -68,7 +76,7 @@ impl Setup {
             .build()
     }
 
-    pub async fn confirm_transaction(&self, transaction_id: &Signature) {
+    pub async fn confirm_transaction(&self, transaction_id: &Signature) -> TransactionStatus {
         let mut num_trials = 0;
         loop {
             num_trials += 1;
@@ -82,12 +90,12 @@ impl Setup {
                 .send()
                 .await;
             if let MultiRpcResult::Consistent(Ok(statuses)) = statuses {
-                if let Some(Some(status)) = statuses.first() {
+                if let Some(Some(status)) = statuses.into_iter().next() {
                     if let Some(err) = &status.err {
                         panic!("Transaction failed with error {:?}", err);
                     }
                     if status.satisfies_commitment(CommitmentConfig::confirmed()) {
-                        return;
+                        return status;
                     }
                 }
             }
@@ -95,7 +103,7 @@ impl Setup {
         }
     }
 
-    pub async fn airdrop(&self, account: &Pubkey, amount: u64) -> u64 {
+    pub async fn airdrop(&self, account: &Pubkey, amount: Lamport) -> Lamport {
         let balance_before = self.get_account_balance(account).await;
         let _airdrop_tx = self
             .client()
@@ -122,22 +130,56 @@ impl Setup {
         }
     }
 
-    pub async fn fund_account(&self, account: &Pubkey, amount: u64) -> u64 {
-        let balance = self.get_account_balance(account).await;
+    // Fund account with the SolanaRpcClient to avoid hitting rate limits due to replicated calls.
+    pub fn fund_account(&self, account: &Pubkey, amount: Lamport) {
+        let balance = self
+            .solana_client
+            .get_balance(account)
+            .expect("Failed to get account balance");
         if balance < amount {
-            self.airdrop(account, amount).await
-        } else {
-            balance
+            self.solana_client
+                .request_airdrop(account, amount)
+                .expect("Failed to request airdrop");
+            self.solana_client.wait_for_balance_with_commitment(
+                account,
+                Some(balance + amount),
+                CommitmentConfig::confirmed(),
+            );
         }
     }
 
-    pub async fn get_account_balance(&self, pubkey: &Pubkey) -> u64 {
+    pub async fn get_account_balance(&self, pubkey: &Pubkey) -> Lamport {
         self.client()
             .get_balance(*pubkey)
             .send()
             .await
             .expect_consistent()
             .unwrap_or_else(|_| panic!("Failed to fetch account balance for account {pubkey}"))
+    }
+
+    pub async fn get_median_recent_prioritization_fees(
+        &self,
+        sender_pubkey: &Pubkey,
+        recipient_pubkey: &Pubkey,
+    ) -> Lamport {
+        let mut prioritization_fees: Vec<_> = self
+            .client()
+            .get_recent_prioritization_fees([sender_pubkey, recipient_pubkey])
+            .unwrap()
+            .send()
+            .await
+            .expect_consistent()
+            .expect("Call to `getRecentPrioritizationFees` failed")
+            .into_iter()
+            .map(|fee| fee.prioritization_fee)
+            .collect();
+        prioritization_fees.sort();
+
+        if prioritization_fees.is_empty() {
+            0
+        } else {
+            prioritization_fees[prioritization_fees.len() / 2]
+        }
     }
 }
 
