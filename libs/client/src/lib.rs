@@ -805,15 +805,15 @@ impl<R> SolRpcClient<R> {
     /// use solana_transaction_status_client_types::{
     ///     EncodedConfirmedTransactionWithStatusMeta, EncodedTransaction,
     ///     EncodedTransactionWithStatusMeta, TransactionBinaryEncoding, UiConfirmedBlock,
-    ///     UiLoadedAddresses, UiTransactionStatusMeta
+    ///     UiLoadedAddresses, UiTransactionStatusMeta, option_serializer::OptionSerializer
     /// };
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # use std::str::FromStr;
-    /// # use sol_rpc_types::{ConfirmedBlock, GetTransactionEncoding, Hash, MultiRpcResult, Pubkey, TransactionInfo, TransactionStatusMeta};
+    /// # use sol_rpc_types::{ConfirmedBlock, GetTransactionEncoding, Hash, MultiRpcResult, Pubkey};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(TransactionInfo {
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(sol_rpc_types::TransactionInfo {
     /// #       slot: 344115445,
     /// #       block_time: Some(1748865196),
     /// #       version: None,
@@ -827,7 +827,7 @@ impl<R> SolRpcClient<R> {
     /// #            AA==".to_string(),
     /// #           sol_rpc_types::TransactionBinaryEncoding::Base64,
     /// #       ),
-    /// #       meta: Some(TransactionStatusMeta {
+    /// #       meta: Some(sol_rpc_types::TransactionStatusMeta {
     /// #           status: Ok(()),
     /// #           fee: 5000,
     /// #           pre_balances: vec![43156320838, 6678633253, 1],
@@ -840,10 +840,10 @@ impl<R> SolRpcClient<R> {
     /// #           pre_token_balances: Some(vec![]),
     /// #           post_token_balances: Some(vec![]),
     /// #           rewards: Some(vec![]),
-    /// #           loaded_addresses: Some(UiLoadedAddresses {
+    /// #           loaded_addresses: Some(sol_rpc_types::LoadedAddresses {
     /// #               writable: vec![],
     /// #               readonly: vec![],
-    /// #           }).into(),
+    /// #           }),
     /// #           return_data: None,
     /// #           compute_units_consumed: Some(2100),
     /// #       }),
@@ -892,7 +892,7 @@ impl<R> SolRpcClient<R> {
     ///                 writable: vec![],
     ///                 readonly: vec![],
     ///             }).into(),
-    ///             return_data: None.into(),
+    ///             return_data: OptionSerializer::skip(),
     ///             compute_units_consumed: Some(2100).into(),
     ///         }),
     ///         version: None,
