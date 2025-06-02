@@ -595,13 +595,11 @@ impl Setup {
     const SOLANA_VALIDATOR_URL: &'static str = "http://localhost:8899";
 
     pub async fn new() -> Self {
-        let builder = PocketIcBuilder::new()
+        let mut pic = PocketIcBuilder::new()
             .with_nns_subnet() //make_live requires NNS subnet.
             .with_fiduciary_subnet()
             .build_async()
             .await;
-        panic!("here 4");
-        let mut pic = builder;
         let _endpoint = pic.make_live(None).await;
         Setup {
             solana_client: SolanaRpcClient::new_with_commitment(
