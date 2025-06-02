@@ -145,7 +145,6 @@ use sol_rpc_types::{
     GetRecentPrioritizationFeesParams, GetSignatureStatusesParams, GetSignaturesForAddressParams,
     GetTokenAccountBalanceParams, GetTransactionParams, Pubkey, RpcConfig, RpcResult, RpcSources,
     SendTransactionParams, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
-    TransactionDetails,
 };
 use std::{fmt::Debug, sync::Arc};
 /// The principal identifying the productive Solana RPC canister under NNS control.
@@ -455,15 +454,7 @@ impl<R> SolRpcClient<R> {
     /// # }
     /// ```
     pub fn get_block(&self, params: impl Into<GetBlockParams>) -> GetBlockRequestBuilder<R> {
-        let params = params.into();
-        let mut cycles = match params.transaction_details.unwrap_or_default() {
-            TransactionDetails::Signatures => 100_000_000_000,
-            TransactionDetails::None => 10_000_000_000,
-        };
-        if params.rewards.unwrap_or(true) {
-            cycles += 10_000_000_000
-        };
-        RequestBuilder::new(self.clone(), GetBlockRequest::new(params), cycles)
+        RequestBuilder::new(self.clone(), GetBlockRequest::new(params.into()), 0).update_cycles()
     }
 
     /// Call `getTokenAccountBalance` on the SOL RPC canister.

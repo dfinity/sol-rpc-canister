@@ -277,13 +277,25 @@ impl<R> GetBlockRequestBuilder<R> {
         transaction_details: impl Into<TransactionDetails>,
     ) -> Self {
         self.request.params.transaction_details = Some(transaction_details.into());
-        self
+        self.update_cycles()
     }
 
     /// Change the `rewards` parameter for a `getBlock` request to `false`.
     pub fn without_rewards(mut self) -> Self {
         self.request.params.rewards = Some(false);
-        self
+        self.update_cycles()
+    }
+
+    /// Update the cycles estimate for this request
+    pub fn update_cycles(self) -> Self {
+        let mut cycles = match self.request.params.transaction_details.unwrap_or_default() {
+            TransactionDetails::Signatures => 100_000_000_000,
+            TransactionDetails::None => 10_000_000_000,
+        };
+        if self.request.params.rewards.unwrap_or(true) {
+            cycles += 10_000_000_000
+        };
+        self.with_cycles(cycles)
     }
 }
 
