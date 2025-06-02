@@ -246,8 +246,10 @@ async fn should_get_block() {
                         .expect("Failed to get block")
                 },
                 |ic| async move {
-                    ic.get_block(slot)
-                        .with_transaction_details(TransactionDetails::Signatures)
+                    let builder = ic.get_block(slot)
+                        .with_transaction_details(TransactionDetails::Signatures);
+                    panic!("`getBlock` request with {} cycles", builder.get_cycles());
+                    builder
                         .send()
                         .await
                         .expect_consistent()
