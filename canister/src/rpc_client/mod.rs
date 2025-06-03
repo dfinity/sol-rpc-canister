@@ -154,6 +154,7 @@ impl GetBlockRequest {
             match params.get_transaction_details() {
                 None | Some(TransactionDetails::None) => 2048,
                 Some(TransactionDetails::Signatures) => 512 * 1024,
+                Some(TransactionDetails::Accounts) => 512 * 1024, // TODO XC-342
             } + match params.include_rewards() {
                 None | Some(true) => 256,
                 Some(false) => 0,

@@ -421,6 +421,7 @@ impl<R> SolRpcClient<R> {
     /// #         }
     /// #     ]),
     /// #     num_reward_partitions: None,
+    /// #     transactions: None,
     /// # })))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
