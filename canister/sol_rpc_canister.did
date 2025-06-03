@@ -578,16 +578,22 @@ type TransactionError = variant {
 };
 
 // The result of a Solana `getTransaction` RPC method call.
-type TransactionInfo = record {
+type EncodedConfirmedTransactionWithStatusMeta = record {
+  // The slot this transaction was processed in
+  slot : nat64;
   // Estimated production time, as Unix timestamp (seconds since the Unix epoch) of when the transaction was processed.
   // `null` if not available.
   blockTime : opt Timestamp;
+  // TODO XC-342
+  transaction: EncodedTransactionWithStatusMeta;
+};
+
+// TODO XC-342
+type EncodedTransactionWithStatusMeta = record {
   // [Transaction status metadata object](https://solana.com/docs/rpc/json-structures#transaction-status-metadata) or null.
   meta : opt TransactionStatusMeta;
   // Transaction object, either in JSON format or encoded binary data, depending on encoding parameter
   transaction : EncodedTransaction;
-  // The slot this transaction was processed in
-  slot : nat64;
   // Transaction version.
   // Undefined if `maxSupportedTransactionVersion` is not set in request params.
   version : opt variant { legacy; number : nat8 };
@@ -685,7 +691,7 @@ type MultiGetSignatureStatusesResult = variant {
 };
 
 // Represents the result of a call to the `getTransaction` Solana RPC method.
-type GetTransactionResult = variant { Ok : opt TransactionInfo; Err : RpcError };
+type GetTransactionResult = variant { Ok : opt EncodedConfirmedTransactionWithStatusMeta; Err : RpcError };
 
 // Represents an aggregated result from multiple RPC calls to the `getTransaction` Solana RPC method.
 type MultiGetTransactionResult = variant {
