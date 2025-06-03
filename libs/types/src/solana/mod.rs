@@ -5,7 +5,7 @@ pub mod account;
 pub mod request;
 pub mod transaction;
 
-use crate::{EncodedTransactionWithStatusMeta, Reward, RpcError};
+use crate::{Reward, RpcError};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, str::FromStr};
@@ -27,6 +27,7 @@ pub type MicroLamport = u64;
 pub type Timestamp = i64;
 
 /// The result of a Solana `getBlock` RPC method call.
+// TODO XC-342: Add `transactions` field.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct ConfirmedBlock {
     /// The blockhash of this block's parent, as base-58 encoded string; if the parent block is not
@@ -52,9 +53,6 @@ pub struct ConfirmedBlock {
     /// Number of partitions over which epoch rewards are distributed in this block.
     #[serde(rename = "numRewardPartition")]
     pub num_reward_partitions: Option<u64>,
-    /// Transaction details for the transactions included in this block. Included in the response
-    /// when `transactionDetails` is set to `accounts`.
-    pub transactions: Option<Vec<EncodedTransactionWithStatusMeta>>,
 }
 
 impl TryFrom<solana_transaction_status_client_types::UiConfirmedBlock> for ConfirmedBlock {
@@ -75,31 +73,18 @@ impl TryFrom<solana_transaction_status_client_types::UiConfirmedBlock> for Confi
                 .map(|rewards| rewards.into_iter().map(Reward::try_from).collect())
                 .transpose()?,
             num_reward_partitions: block.num_reward_partitions,
-            transactions: block
-                .transactions
-                .map(|transactions| {
-                    transactions
-                        .into_iter()
-                        .map(EncodedTransactionWithStatusMeta::try_from)
-                        .collect()
-                })
-                .transpose()?,
         })
     }
 }
 
+// TODO XC-342: Set `transactions`, `signatures`, `rewards` and `num_reward_partitions` fields.
 impl From<ConfirmedBlock> for solana_transaction_status_client_types::UiConfirmedBlock {
     fn from(block: ConfirmedBlock) -> Self {
         Self {
             previous_blockhash: block.previous_blockhash.to_string(),
             blockhash: block.blockhash.to_string(),
             parent_slot: block.parent_slot,
-            transactions: block.transactions.map(|transactions| {
-                transactions
-                    .into_iter()
-                    .map(solana_transaction_status_client_types::EncodedTransactionWithStatusMeta::from)
-                    .collect()
-            }),
+            transactions: None,
             signatures: block
                 .signatures
                 .map(|sigs| sigs.into_iter().map(|sig| sig.to_string()).collect()),

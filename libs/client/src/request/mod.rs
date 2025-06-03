@@ -7,17 +7,18 @@ use derive_more::From;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
-    DataSlice, EncodedConfirmedTransactionWithStatusMeta, GetAccountInfoEncoding,
-    GetAccountInfoParams, GetBalanceParams, GetBlockCommitmentLevel, GetBlockParams,
-    GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
-    GetSignatureStatusesParams, GetSignaturesForAddressLimit, GetSignaturesForAddressParams,
-    GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionEncoding,
-    GetTransactionParams, Lamport, MultiRpcResult, NonZeroU8, PrioritizationFee, RoundingError,
-    RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot, TokenAmount,
-    TransactionDetails, TransactionStatus,
+    DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
+    GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
+    GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams, GetSignaturesForAddressLimit,
+    GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
+    GetTransactionEncoding, GetTransactionParams, Lamport, MultiRpcResult, NonZeroU8,
+    PrioritizationFee, RoundingError, RpcConfig, RpcResult, RpcSources, SendTransactionParams,
+    Signature, Slot, TokenAmount, TransactionDetails, TransactionInfo, TransactionStatus,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
-use solana_transaction_status_client_types::UiConfirmedBlock;
+use solana_transaction_status_client_types::{
+    EncodedConfirmedTransactionWithStatusMeta, UiConfirmedBlock,
+};
 use std::fmt::{Debug, Formatter};
 use strum::EnumIter;
 
@@ -288,7 +289,6 @@ impl<R> GetBlockRequestBuilder<R> {
     /// Update the cycles estimate for this request
     pub fn update_cycles(self) -> Self {
         let mut cycles = match self.request.params.transaction_details.unwrap_or_default() {
-            TransactionDetails::Accounts => 100_000_000_000, // TODO XC-342
             TransactionDetails::Signatures => 100_000_000_000,
             TransactionDetails::None => 10_000_000_000,
         };
@@ -525,10 +525,8 @@ impl GetTransactionRequest {
 impl SolRpcRequest for GetTransactionRequest {
     type Config = RpcConfig;
     type Params = GetTransactionParams;
-    type CandidOutput = MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>;
-    type Output = MultiRpcResult<
-        Option<solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta>,
-    >;
+    type CandidOutput = MultiRpcResult<Option<TransactionInfo>>;
+    type Output = MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>;
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetTransaction
@@ -545,10 +543,8 @@ pub type GetTransactionRequestBuilder<R> = RequestBuilder<
     R,
     RpcConfig,
     GetTransactionParams,
+    MultiRpcResult<Option<TransactionInfo>>,
     MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>,
-    MultiRpcResult<
-        Option<solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta>,
-    >,
 >;
 
 impl<R> GetTransactionRequestBuilder<R> {

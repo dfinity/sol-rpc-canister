@@ -8,8 +8,8 @@ use sol_rpc_client::SolRpcClient;
 use sol_rpc_int_tests::{spl, PocketIcLiveModeRuntime};
 use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetAccountInfoEncoding,
-    GetBlockCommitmentLevel, GetTransactionEncoding, InstallArgs, Lamport, OverrideProvider,
-    PrioritizationFee, RegexSubstitution, TransactionDetails, TransactionStatus,
+    GetBlockCommitmentLevel, GetTransactionEncoding, GetTransactionParams, InstallArgs, Lamport,
+    OverrideProvider, PrioritizationFee, RegexSubstitution, TransactionDetails, TransactionStatus,
 };
 use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
 use solana_client::rpc_client::{
@@ -289,8 +289,9 @@ async fn should_get_transaction() {
                 .expect("Failed to get transaction")
             },
             |ic| async move {
-                ic.get_transaction(signature)
-                    .with_encoding(GetTransactionEncoding::Base64)
+                let mut params: GetTransactionParams = signature.into();
+                params.encoding = Some(GetTransactionEncoding::Base64);
+                ic.get_transaction(params)
                     .send()
                     .await
                     .expect_consistent()

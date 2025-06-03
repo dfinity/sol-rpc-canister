@@ -162,17 +162,13 @@ impl From<Slot> for GetBlockParams {
 /// are generally too large to be supported by the ICP.
 #[derive(Clone, Copy, Debug, Default, PartialEq, CandidType, Deserialize, Serialize)]
 pub enum TransactionDetails {
-    /// If selected, transaction details only include signatures and an annotated list of accounts
-    /// in each transaction.
-    #[serde(rename = "accounts")]
-    Accounts,
+    /// Includes transaction signatures (IDs) and block metadata only.
+    #[serde(rename = "signatures")]
+    Signatures,
     /// Omits all transaction data and signatures; returns only block metadata.
     #[default]
     #[serde(rename = "none")]
     None,
-    /// Includes transaction signatures (IDs) and block metadata only.
-    #[serde(rename = "signatures")]
-    Signatures,
 }
 
 /// The parameters for a Solana [`getRecentPrioritizationFees`](https://solana.com/de/docs/rpc/http/getrecentprioritizationfees) RPC method call.
