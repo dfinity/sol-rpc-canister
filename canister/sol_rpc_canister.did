@@ -364,7 +364,6 @@ type MultiGetBalanceResult = variant {
 type GetBalanceResult = variant { Ok : Lamport; Err : RpcError };
 
 // The parameters for a Solana `getBlock` RPC method call.
-// TODO XC-342: Add `rewards`, `encoding` and `transactionDetails` fields.
 type GetBlockParams = record {
     // Slot number of the block to fetch.
     slot: Slot;
@@ -393,7 +392,6 @@ type GetBlockParams = record {
 type Timestamp = int64;
 
 // The result of a Solana `getBlock` RPC method call.
-// TODO XC-342: Add `transactions` field.
 type ConfirmedBlock = record {
     // The blockhash of this block's parent, as base-58 encoded string; if the parent block is not
     // available due to ledger cleanup, this field will return "11111111111111111111111111111111".
@@ -415,6 +413,8 @@ type ConfirmedBlock = record {
     // [Partitioned Inflationary Rewards Distribution](https://docs.anza.xyz/proposals/partitioned-inflationary-rewards-distribution/)
     // feature for more details.
     numRewardPartition: opt nat64;
+    // TODO XC-342
+    transactions: opt vec EncodedTransactionWithStatusMeta;
 };
 
 // Represents the result of a call to the `getBlock` Solana RPC method.
