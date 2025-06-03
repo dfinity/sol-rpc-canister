@@ -1,13 +1,11 @@
 use crate::{
-    solana::account::AccountInfo, ConfirmedBlock, RpcResult, RpcSource, Signature, TokenAmount,
-    TransactionInfo, TransactionStatus,
+    solana::account::AccountInfo, ConfirmedBlock, EncodedConfirmedTransactionWithStatusMeta,
+    RpcResult, RpcSource, Signature, TokenAmount, TransactionStatus,
 };
 use candid::CandidType;
 use serde::Deserialize;
 use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
-use solana_transaction_status_client_types::{
-    EncodedConfirmedTransactionWithStatusMeta, UiConfirmedBlock,
-};
+use solana_transaction_status_client_types::UiConfirmedBlock;
 use std::fmt::Debug;
 
 /// Represents an aggregated result from multiple RPC calls to different RPC providers.
@@ -116,10 +114,22 @@ impl From<MultiRpcResult<Option<UiConfirmedBlock>>> for MultiRpcResult<Option<Co
     }
 }
 
-impl From<MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>>
-    for MultiRpcResult<Option<TransactionInfo>>
+impl
+    From<
+        MultiRpcResult<
+            Option<
+                solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta,
+            >,
+        >,
+    > for MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>
 {
-    fn from(result: MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>) -> Self {
+    fn from(
+        result: MultiRpcResult<
+            Option<
+                solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta,
+            >,
+        >,
+    ) -> Self {
         result.and_then(|maybe_transaction| {
             maybe_transaction
                 .map(|transaction| transaction.try_into())
@@ -128,10 +138,12 @@ impl From<MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>>
     }
 }
 
-impl From<MultiRpcResult<Option<TransactionInfo>>>
-    for MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>
+impl From<MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>>
+    for MultiRpcResult<
+        Option<solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta>,
+    >
 {
-    fn from(result: MultiRpcResult<Option<TransactionInfo>>) -> Self {
+    fn from(result: MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>) -> Self {
         result.map(|maybe_transaction| maybe_transaction.map(|transaction| transaction.into()))
     }
 }

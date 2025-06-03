@@ -13,13 +13,13 @@ use sol_rpc_canister::{
     rpc_client::MultiRpcRequest,
 };
 use sol_rpc_types::{
-    AccountInfo, ConfirmedBlock, ConfirmedTransactionStatusWithSignature, GetAccountInfoParams,
-    GetBalanceParams, GetBlockParams, GetRecentPrioritizationFeesParams,
-    GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams,
-    GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
-    GetTransactionParams, Lamport, MultiRpcResult, PrioritizationFee, RpcAccess, RpcConfig,
-    RpcResult, RpcSources, SendTransactionParams, Signature, Slot, SupportedRpcProvider,
-    SupportedRpcProviderId, TokenAmount, TransactionInfo, TransactionStatus,
+    AccountInfo, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
+    EncodedConfirmedTransactionWithStatusMeta, GetAccountInfoParams, GetBalanceParams,
+    GetBlockParams, GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
+    GetSignatureStatusesParams, GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig,
+    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, MultiRpcResult, PrioritizationFee,
+    RpcAccess, RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot,
+    SupportedRpcProvider, SupportedRpcProviderId, TokenAmount, TransactionStatus,
 };
 use std::str::FromStr;
 
@@ -312,7 +312,7 @@ async fn get_transaction(
     source: RpcSources,
     config: Option<RpcConfig>,
     params: GetTransactionParams,
-) -> MultiRpcResult<Option<TransactionInfo>> {
+) -> MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>> {
     let request = MultiRpcRequest::get_transaction(source, config.unwrap_or_default(), params);
     send_multi(request).await.into()
 }
