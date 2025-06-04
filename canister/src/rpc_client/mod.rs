@@ -23,7 +23,6 @@ use http::{Request, Response};
 use ic_cdk::api::management_canister::http_request::{
     CanisterHttpRequestArgument as IcHttpRequest, TransformContext,
 };
-use num_traits::clamp_max;
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
     ConfirmedTransactionStatusWithSignature, ConsensusStrategy,
@@ -41,9 +40,6 @@ use tower::ServiceExt;
 // fit in the constant defined below, and if there is a spike, then the payload size adjustment
 // should take care of that.
 pub const HEADER_SIZE_LIMIT: u64 = 2 * 1024;
-
-// The maximum allowed response size of 2MB (2_000_000B).
-pub const MAX_RESPONSE_SIZE: u64 = 2_000_000;
 
 pub struct MultiRpcRequest<Params, Output> {
     providers: Providers,
@@ -167,12 +163,12 @@ impl GetBlockRequest {
 
     fn response_size_estimate(params: &json::GetBlockParams) -> u64 {
         let cycles = match params.get_transaction_details() {
-            Some(TransactionDetails::Accounts) => MAX_RESPONSE_SIZE,
+            Some(TransactionDetails::Accounts) => CyclesCostEstimator::DEFAULT_MAX_RESPONSE_BYTES,
             Some(TransactionDetails::Signatures) => 262_144,
             Some(TransactionDetails::None) | None => 2_048,
         };
         match params.include_rewards() {
-            Some(true) | None => clamp_max(cycles + 256, MAX_RESPONSE_SIZE),
+            Some(true) | None => CyclesCostEstimator::DEFAULT_MAX_RESPONSE_BYTES.min(cycles + 256),
             Some(false) => cycles,
         }
     }
