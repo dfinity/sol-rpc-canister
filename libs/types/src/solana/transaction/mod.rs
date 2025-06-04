@@ -18,8 +18,7 @@ use solana_transaction_status_client_types::{
 };
 
 /// Solana [transaction](https://solana.com/docs/references/terminology#transaction) information
-/// as returned by the [`getTransaction`](https://solana.com/de/docs/rpc/http/gettransaction) RPC
-/// method.
+/// for a confirmed transaction.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct EncodedConfirmedTransactionWithStatusMeta {
     /// The slot this transaction was processed in.
@@ -27,7 +26,7 @@ pub struct EncodedConfirmedTransactionWithStatusMeta {
     /// Estimated production time of when the transaction was processed. [`None`] if not available
     #[serde(rename = "blockTime")]
     pub block_time: Option<Timestamp>,
-    /// TODO XC-342
+    /// Transaction information including the metadata, version and encoded transaction.
     pub transaction: EncodedTransactionWithStatusMeta,
 }
 
@@ -42,7 +41,7 @@ impl TryFrom<solana_transaction_status_client_types::EncodedConfirmedTransaction
         Ok(Self {
             slot: transaction.slot,
             block_time: transaction.block_time,
-            transaction: transaction.transaction.try_into()?,
+            transaction: EncodedTransactionWithStatusMeta::try_from(transaction.transaction)?,
         })
     }
 }
@@ -62,7 +61,7 @@ impl From<EncodedConfirmedTransactionWithStatusMeta>
     }
 }
 
-/// TODO XC-342
+/// Solana [transaction](https://solana.com/docs/references/terminology#transaction) information.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct EncodedTransactionWithStatusMeta {
     /// Transaction status [metadata](https://solana.com/de/docs/rpc/json-structures#transaction-status-metadata)
@@ -84,9 +83,12 @@ impl TryFrom<solana_transaction_status_client_types::EncodedTransactionWithStatu
         transaction: solana_transaction_status_client_types::EncodedTransactionWithStatusMeta,
     ) -> Result<Self, Self::Error> {
         Ok(Self {
-            meta: transaction.meta.map(TryInto::try_into).transpose()?,
-            transaction: transaction.transaction.try_into()?,
-            version: transaction.version.map(Into::into),
+            meta: transaction
+                .meta
+                .map(TransactionStatusMeta::try_from)
+                .transpose()?,
+            transaction: EncodedTransaction::try_from(transaction.transaction)?,
+            version: transaction.version.map(TransactionVersion::from),
         })
     }
 }

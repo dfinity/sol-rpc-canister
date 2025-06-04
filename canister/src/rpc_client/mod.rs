@@ -23,6 +23,7 @@ use http::{Request, Response};
 use ic_cdk::api::management_canister::http_request::{
     CanisterHttpRequestArgument as IcHttpRequest, TransformContext,
 };
+use num_traits::clamp_max;
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
     ConfirmedTransactionStatusWithSignature, ConsensusStrategy,
@@ -40,6 +41,9 @@ use tower::ServiceExt;
 // fit in the constant defined below, and if there is a spike, then the payload size adjustment
 // should take care of that.
 pub const HEADER_SIZE_LIMIT: u64 = 2 * 1024;
+
+// The maximum allowed response size of 2MB (2_000_000B).
+pub const MAX_RESPONSE_SIZE: u64 = 2_000_000;
 
 pub struct MultiRpcRequest<Params, Output> {
     providers: Providers,
@@ -150,16 +154,7 @@ impl GetBlockRequest {
         let params = params.into();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
         let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
-        let max_response_bytes = config.response_size_estimate.unwrap_or(
-            match params.get_transaction_details() {
-                None | Some(TransactionDetails::None) => 2048,
-                Some(TransactionDetails::Signatures) => 512 * 1024,
-                Some(TransactionDetails::Accounts) => 512 * 1024, // TODO XC-342
-            } + match params.include_rewards() {
-                None | Some(true) => 256,
-                Some(false) => 0,
-            } + HEADER_SIZE_LIMIT,
-        );
+        let max_response_bytes = Self::response_size_estimate(&params);
 
         Ok(MultiRpcRequest::new(
             providers,
@@ -168,6 +163,18 @@ impl GetBlockRequest {
             ResponseTransform::GetBlock,
             ReductionStrategy::from(consensus_strategy),
         ))
+    }
+
+    fn response_size_estimate(params: &json::GetBlockParams) -> u64 {
+        let cycles = match params.get_transaction_details() {
+            Some(TransactionDetails::Accounts) => MAX_RESPONSE_SIZE,
+            Some(TransactionDetails::Signatures) => 262_144,
+            Some(TransactionDetails::None) | None => 2_048,
+        };
+        match params.get_rewards() {
+            Some(true) | None => clamp_max(cycles + 256, MAX_RESPONSE_SIZE),
+            Some(false) => cycles,
+        }
     }
 }
 

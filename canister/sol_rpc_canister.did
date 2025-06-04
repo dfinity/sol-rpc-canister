@@ -413,7 +413,8 @@ type ConfirmedBlock = record {
     // [Partitioned Inflationary Rewards Distribution](https://docs.anza.xyz/proposals/partitioned-inflationary-rewards-distribution/)
     // feature for more details.
     numRewardPartition: opt nat64;
-    // TODO XC-342
+    // Transaction details for the transactions included in this block. Included in the response
+    // when `transactionDetails` is set to `accounts`.
     transactions: opt vec EncodedTransactionWithStatusMeta;
 };
 
@@ -577,25 +578,24 @@ type TransactionError = variant {
   BlockhashNotFound;
 };
 
-// The result of a Solana `getTransaction` RPC method call.
+// Represents an encoded confirmed Solana transaction with status metadata object.
 type EncodedConfirmedTransactionWithStatusMeta = record {
   // The slot this transaction was processed in
   slot : nat64;
   // Estimated production time, as Unix timestamp (seconds since the Unix epoch) of when the transaction was processed.
   // `null` if not available.
   blockTime : opt Timestamp;
-  // TODO XC-342
+  // Transaction information including the metadata, version and encoded transaction.
   transaction: EncodedTransactionWithStatusMeta;
 };
 
-// TODO XC-342
+// Represents an encoded Solana transaction with status metadata object.
 type EncodedTransactionWithStatusMeta = record {
   // [Transaction status metadata object](https://solana.com/docs/rpc/json-structures#transaction-status-metadata) or null.
   meta : opt TransactionStatusMeta;
-  // Transaction object, either in JSON format or encoded binary data, depending on encoding parameter
+  // Transaction object, either in JSON format or encoded binary data.
   transaction : EncodedTransaction;
-  // Transaction version.
-  // Undefined if `maxSupportedTransactionVersion` is not set in request params.
+  // Transaction version. `null` if `maxSupportedTransactionVersion` is not set in request params.
   version : opt variant { legacy; number : nat8 };
 };
 

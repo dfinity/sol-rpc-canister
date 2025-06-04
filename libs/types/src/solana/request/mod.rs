@@ -5,6 +5,7 @@ use crate::{solana::Pubkey, RpcError, Signature, Slot, VecWithMaxLen};
 use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
+use strum::EnumIter;
 
 /// The parameters for a Solana [`getAccountInfo`](https://solana.com/docs/rpc/http/getaccountinfo) RPC method call.
 #[derive(Clone, Debug, PartialEq, CandidType, Deserialize, Serialize)]
@@ -101,7 +102,6 @@ impl From<solana_pubkey::Pubkey> for GetBalanceParams {
 }
 
 /// The parameters for a Solana [`getBlock`](https://solana.com/docs/rpc/http/getblock) RPC method call.
-// TODO XC-342: Add support for `encoding` and remaining values of `transactionDetails`.
 #[derive(Clone, Debug, Default, PartialEq, CandidType, Deserialize, Serialize)]
 pub struct GetBlockParams {
     /// Slot number of the block to fetch.
@@ -145,7 +145,7 @@ impl From<Slot> for GetBlockParams {
 /// will be used, which is different from the default value in the Solana RPC API. This is
 /// because the default value of `full` for the Solana RPC API results in response sizes that
 /// are generally too large to be supported by the ICP.
-#[derive(Clone, Copy, Debug, Default, PartialEq, CandidType, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, CandidType, Deserialize, Serialize, EnumIter)]
 pub enum TransactionDetails {
     /// If selected, transaction details only include signatures and an annotated list of accounts
     /// in each transaction.

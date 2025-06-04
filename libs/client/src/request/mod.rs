@@ -287,13 +287,13 @@ impl<R> GetBlockRequestBuilder<R> {
 
     /// Update the cycles estimate for this request
     pub fn update_cycles(self) -> Self {
-        let mut cycles = match self.request.params.transaction_details.unwrap_or_default() {
-            TransactionDetails::Accounts => 100_000_000_000, // TODO XC-342
+        let cycles = match self.request.params.transaction_details.unwrap_or_default() {
+            TransactionDetails::Accounts => 1_000_000_000_000,
             TransactionDetails::Signatures => 100_000_000_000,
-            TransactionDetails::None => 10_000_000_000,
-        };
-        if self.request.params.rewards.unwrap_or(true) {
-            cycles += 10_000_000_000
+            TransactionDetails::None => match self.request.params.rewards {
+                Some(true) | None => 20_000_000_000,
+                Some(false) => 10_000_000_000,
+            },
         };
         self.with_cycles(cycles)
     }
