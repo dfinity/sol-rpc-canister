@@ -15,12 +15,16 @@ pub struct GetSlotParams(Option<GetSlotConfig>);
 
 impl From<sol_rpc_types::GetSlotParams> for GetSlotParams {
     fn from(params: sol_rpc_types::GetSlotParams) -> Self {
-        let config = if params.is_default_config() {
+        let sol_rpc_types::GetSlotParams {
+            commitment,
+            min_context_slot,
+        } = params;
+        let config = if commitment.is_none() && min_context_slot.is_none() {
             None
         } else {
             Some(GetSlotConfig {
-                commitment: params.commitment,
-                min_context_slot: params.min_context_slot,
+                commitment,
+                min_context_slot,
             })
         };
         Self(config)
@@ -48,17 +52,28 @@ pub struct GetAccountInfoParams(String, Option<GetAccountInfoConfig>);
 
 impl From<sol_rpc_types::GetAccountInfoParams> for GetAccountInfoParams {
     fn from(params: sol_rpc_types::GetAccountInfoParams) -> Self {
-        let config = if params.is_default_config() {
+        let sol_rpc_types::GetAccountInfoParams {
+            pubkey,
+            commitment,
+            encoding,
+            data_slice,
+            min_context_slot,
+        } = params;
+        let config = if commitment.is_none()
+            && encoding.is_none()
+            && data_slice.is_none()
+            && min_context_slot.is_none()
+        {
             None
         } else {
             Some(GetAccountInfoConfig {
-                commitment: params.commitment,
-                encoding: params.encoding,
-                data_slice: params.data_slice,
-                min_context_slot: params.min_context_slot,
+                commitment,
+                encoding,
+                data_slice,
+                min_context_slot,
             })
         };
-        Self(params.pubkey.to_string(), config)
+        Self(pubkey.to_string(), config)
     }
 }
 
@@ -316,16 +331,25 @@ pub struct GetTransactionParams(String, Option<GetTransactionConfig>);
 
 impl From<sol_rpc_types::GetTransactionParams> for GetTransactionParams {
     fn from(params: sol_rpc_types::GetTransactionParams) -> Self {
-        let config = if params.is_default_config() {
+        let sol_rpc_types::GetTransactionParams {
+            signature,
+            commitment,
+            max_supported_transaction_version,
+            encoding,
+        } = params;
+        let config = if commitment.is_none()
+            && max_supported_transaction_version.is_none()
+            && encoding.is_none()
+        {
             None
         } else {
             Some(GetTransactionConfig {
-                commitment: params.commitment,
-                max_supported_transaction_version: params.max_supported_transaction_version,
-                encoding: params.encoding,
+                commitment,
+                max_supported_transaction_version,
+                encoding,
             })
         };
-        Self(params.signature.to_string(), config)
+        Self(signature.to_string(), config)
     }
 }
 
@@ -352,15 +376,28 @@ pub struct SendTransactionParams(String, Option<SendTransactionConfig>);
 impl From<sol_rpc_types::SendTransactionParams> for SendTransactionParams {
     fn from(params: sol_rpc_types::SendTransactionParams) -> Self {
         let transaction = params.get_transaction().to_string();
-        let config = if params.is_default_config() {
+        let encoding = params.get_encoding().cloned();
+        let sol_rpc_types::SendTransactionParams {
+            skip_preflight,
+            preflight_commitment,
+            max_retries,
+            min_context_slot,
+            ..
+        } = params;
+        let config = if encoding.is_none()
+            && skip_preflight.is_none()
+            && preflight_commitment.is_none()
+            && max_retries.is_none()
+            && min_context_slot.is_none()
+        {
             None
         } else {
             Some(SendTransactionConfig {
-                encoding: params.get_encoding().cloned(),
-                skip_preflight: params.skip_preflight,
-                preflight_commitment: params.preflight_commitment,
-                max_retries: params.max_retries,
-                min_context_slot: params.min_context_slot,
+                encoding,
+                skip_preflight,
+                preflight_commitment,
+                max_retries,
+                min_context_slot,
             })
         };
         Self(transaction, config)
