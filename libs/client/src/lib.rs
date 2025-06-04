@@ -133,7 +133,7 @@ use crate::request::{
     GetSignaturesForAddressRequest, GetSignaturesForAddressRequestBuilder, GetSlotRequest,
     GetSlotRequestBuilder, GetTokenAccountBalanceRequest, GetTokenAccountBalanceRequestBuilder,
     GetTransactionRequest, GetTransactionRequestBuilder, JsonRequest, JsonRequestBuilder,
-    SendTransactionRequest, SendTransactionRequestBuilder,
+    RecentBlockhashRequestBuilder, SendTransactionRequest, SendTransactionRequestBuilder,
 };
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
@@ -953,6 +953,23 @@ impl<R: Runtime> SolRpcClient<R> {
             )
             .await
             .unwrap()
+    }
+
+    /// Estimate a recent blockhash based on successive calls to `getSlot` and `getBlock`.
+    ///
+    /// Due to Solana's fast block time, the `getRecentBlockhash` RPC method cannot directly be
+    /// called by a canister running on the Internet Computer. Instead, to fetch a recent blockhash
+    /// (e.g. in order to build a transaction), one must instead first get the current slot with
+    /// `getSlot`, then get the corresponding block with `getBlock`, and finally extract the
+    /// blockhash from the resulting block.
+    ///
+    /// Since `getSlot` can fail due to consensus errors and `getBlock` can fail due to not every
+    /// slot having a block, this method allows retrying to fetch a recent blockhash until either
+    /// a blockhash is successfully retrieved, or a maximum number of RPC calls is performed. Each
+    /// additional RPC method call (i.e. `getSlot` or `getBlock` counts as one retry). By default,
+    /// no retries will be performed.
+    pub fn estimate_recent_blockhash(&self) -> RecentBlockhashRequestBuilder<R> {
+        RecentBlockhashRequestBuilder::new(self.clone())
     }
 
     async fn execute_request<Config, Params, CandidOutput, Output>(

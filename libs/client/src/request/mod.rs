@@ -12,15 +12,19 @@ use sol_rpc_types::{
     GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams, GetSignaturesForAddressLimit,
     GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
     GetTransactionEncoding, GetTransactionParams, Lamport, MultiRpcResult, NonZeroU8,
-    PrioritizationFee, RoundingError, RpcConfig, RpcResult, RpcSources, SendTransactionParams,
-    Signature, Slot, TokenAmount, TransactionDetails, TransactionInfo, TransactionStatus,
+    PrioritizationFee, RoundingError, RpcConfig, RpcError, RpcResult, RpcSource, RpcSources,
+    SendTransactionParams, Signature, Slot, TokenAmount, TransactionDetails, TransactionInfo,
+    TransactionStatus,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
+use solana_hash::Hash;
 use solana_transaction_status_client_types::{
     EncodedConfirmedTransactionWithStatusMeta, UiConfirmedBlock,
 };
 use std::fmt::{Debug, Formatter};
+use std::str::FromStr;
 use strum::EnumIter;
+use thiserror::Error;
 
 /// Solana RPC endpoint supported by the SOL RPC canister.
 pub trait SolRpcRequest {
@@ -766,8 +770,8 @@ impl<Runtime, Config, Params, CandidOutput, Output>
     }
 
     /// Change the RPC configuration to use for that request.
-    pub fn with_rpc_config(mut self, rpc_config: impl Into<Option<Config>>) -> Self {
-        *self.request.rpc_config_mut() = rpc_config.into();
+    pub fn with_rpc_config(mut self, rpc_config: impl Into<Config>) -> Self {
+        *self.request.rpc_config_mut() = Some(rpc_config.into());
         self
     }
 }
@@ -939,5 +943,127 @@ impl<R: Runtime, Config, Params> RequestCostBuilder<R, Config, Params> {
 fn set_default<T>(default_value: Option<T>, value: &mut Option<T>) {
     if default_value.is_some() && value.is_none() {
         *value = Some(default_value.unwrap())
+    }
+}
+
+#[derive(Debug, Clone, Error, From)]
+pub enum EstimateRecentBlockhashError {
+    #[error("Inconsistent result while fetching slot: {0:?}")]
+    GetSlotConsensusError(Vec<(RpcSource, RpcResult<Slot>)>),
+    #[error("Inconsistent result while fetching block: {0:?}")]
+    GetBlockConsensusError(Vec<(RpcSource, RpcResult<Option<UiConfirmedBlock>>)>),
+    #[error("Error while fetching slot: {0}")]
+    #[from(ignore)]
+    GetSlotRpcError(RpcError),
+    #[error("Error while fetching block: {0}")]
+    #[from(ignore)]
+    GetBlockRpcError(RpcError),
+    #[error("No block for slot: {0}")]
+    MissingBlock(Slot),
+}
+
+/// TODO XC-317
+pub struct RecentBlockhashRequestBuilder<R> {
+    client: SolRpcClient<R>,
+    num_retries: usize,
+    rounding_error: Option<RoundingError>,
+    rpc_config: Option<RpcConfig>,
+}
+
+impl<R> RecentBlockhashRequestBuilder<R> {
+    pub fn new(client: SolRpcClient<R>) -> Self {
+        Self {
+            client,
+            num_retries: 0,
+            rounding_error: None,
+            rpc_config: None,
+        }
+    }
+
+    /// Sets the maximum number of RPC call re-tries to perform. The maximum amount of RPC calls
+    /// performed will be `2 + num_tries` (i.e. one call to `getSlot` and one call to `getBlock`
+    /// must always take place.
+    pub fn with_num_retries(mut self, num_retries: usize) -> Self {
+        self.num_retries = num_retries;
+        self
+    }
+
+    /// TODO XC-317
+    pub fn with_rpc_config(mut self, rpc_config: RpcConfig) -> Self {
+        self.rpc_config = Some(rpc_config);
+        self
+    }
+
+    /// TODO XC-317
+    pub fn with_rounding_error(mut self, rounding_error: RoundingError) -> Self {
+        self.rounding_error = Some(rounding_error);
+        self
+    }
+}
+
+impl<R: Runtime> RecentBlockhashRequestBuilder<R> {
+    pub async fn send(self) -> Result<Hash, Vec<EstimateRecentBlockhashError>> {
+        let mut errors = Vec::with_capacity(self.num_retries);
+        loop {
+            if errors.len() >= self.num_retries {
+                return Err(errors);
+            }
+            match self.get_slot().await {
+                MultiRpcResult::Consistent(Ok(slot)) => match self.get_block(slot).await {
+                    MultiRpcResult::Consistent(Ok(Some(block))) => {
+                        match Hash::from_str(&block.blockhash) {
+                            Ok(blockhash) => return Ok(blockhash),
+                            Err(e) => errors.push(EstimateRecentBlockhashError::GetBlockRpcError(
+                                RpcError::from(e),
+                            )),
+                        }
+                        continue;
+                    }
+                    MultiRpcResult::Consistent(Ok(None)) => {
+                        errors.push(slot.into());
+                        continue;
+                    }
+                    MultiRpcResult::Inconsistent(results) => {
+                        errors.push(results.into());
+                        continue;
+                    }
+                    MultiRpcResult::Consistent(Err(e)) => {
+                        errors.push(EstimateRecentBlockhashError::GetBlockRpcError(e));
+                        continue;
+                    }
+                },
+                MultiRpcResult::Inconsistent(results) => {
+                    errors.push(results.into());
+                    continue;
+                }
+                MultiRpcResult::Consistent(Err(e)) => {
+                    errors.push(EstimateRecentBlockhashError::GetSlotRpcError(e));
+                    continue;
+                }
+            }
+        }
+    }
+
+    async fn get_slot(&self) -> MultiRpcResult<Slot> {
+        let mut request = self.client.get_slot();
+        if let Some(rpc_config) = self.rpc_config.as_ref() {
+            request = request.with_rpc_config(rpc_config.clone());
+        }
+        if let Some(rounding_error) = self.rounding_error {
+            request = request.with_rounding_error(rounding_error);
+        }
+        request.send().await
+    }
+
+    async fn get_block(&self, slot: Slot) -> MultiRpcResult<Option<UiConfirmedBlock>> {
+        let mut request = self
+            .client
+            .get_block(slot)
+            .with_transaction_details(TransactionDetails::None)
+            .with_max_supported_transaction_version(0);
+        if let Some(rpc_config) = self.rpc_config.as_ref() {
+            request = request.with_rpc_config(rpc_config.clone());
+        }
+        request.send().await
     }
 }
