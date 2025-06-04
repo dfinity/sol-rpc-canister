@@ -411,7 +411,9 @@ type ConfirmedBlock = record {
     signatures: opt vec Signature;
     // Array of rewards distributed in this block.
     rewards: opt vec Reward;
-    // Number of partitions over which epoch rewards are distributed in this block.
+    // The epoch rewards are distributed over `1 + numRewardPartition` blocks. See the
+    // [Partitioned Inflationary Rewards Distribution](https://docs.anza.xyz/proposals/partitioned-inflationary-rewards-distribution/)
+    // feature for more details.
     numRewardPartition: opt nat64;
 };
 

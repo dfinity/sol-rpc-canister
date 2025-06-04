@@ -50,7 +50,9 @@ pub struct ConfirmedBlock {
     pub signatures: Option<Vec<Signature>>,
     /// Array of rewards distributed in this block.
     pub rewards: Option<Vec<Reward>>,
-    /// Number of partitions over which epoch rewards are distributed in this block.
+    /// The epoch rewards are distributed over `1 + num_reward_partitions` blocks. See the
+    /// [Partitioned Inflationary Rewards Distribution](https://docs.anza.xyz/proposals/partitioned-inflationary-rewards-distribution/)
+    /// feature for more details.
     #[serde(rename = "numRewardPartition")]
     pub num_reward_partitions: Option<u64>,
 }
