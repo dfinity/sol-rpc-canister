@@ -24,21 +24,6 @@ pub struct GetAccountInfoParams {
 }
 
 impl GetAccountInfoParams {
-    /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
-    pub fn is_default_config(&self) -> bool {
-        let GetAccountInfoParams {
-            pubkey: _,
-            commitment,
-            encoding,
-            data_slice,
-            min_context_slot,
-        } = &self;
-        commitment.is_none()
-            && encoding.is_none()
-            && data_slice.is_none()
-            && min_context_slot.is_none()
-    }
-
     /// Parameters for a `getAccountInfo` request with the given pubkey.
     pub fn from_pubkey<P: Into<Pubkey>>(pubkey: P) -> Self {
         Self {
@@ -313,17 +298,6 @@ pub struct GetSlotParams {
     pub min_context_slot: Option<Slot>,
 }
 
-impl GetSlotParams {
-    /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
-    pub fn is_default_config(&self) -> bool {
-        let GetSlotParams {
-            commitment,
-            min_context_slot,
-        } = &self;
-        commitment.is_none() && min_context_slot.is_none()
-    }
-}
-
 /// The parameters for a Solana [`getTokenAccountBalance`](https://solana.com/docs/rpc/http/gettokenaccountbalance) RPC method call.
 #[derive(Clone, Debug, PartialEq, CandidType, Deserialize, Serialize)]
 pub struct GetTokenAccountBalanceParams {
@@ -366,19 +340,6 @@ pub struct GetTransactionParams {
     /// Encoding for the returned transaction
     // TODO XC-343: Add notes about `jsonParsed` from https://solana.com/de/docs/rpc/http/gettransaction
     pub encoding: Option<GetTransactionEncoding>,
-}
-
-impl GetTransactionParams {
-    /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
-    pub fn is_default_config(&self) -> bool {
-        let GetTransactionParams {
-            signature: _,
-            commitment,
-            max_supported_transaction_version,
-            encoding,
-        } = &self;
-        commitment.is_none() && max_supported_transaction_version.is_none() && encoding.is_none()
-    }
 }
 
 impl From<solana_signature::Signature> for GetTransactionParams {
@@ -443,23 +404,6 @@ impl SendTransactionParams {
             max_retries: None,
             min_context_slot: None,
         }
-    }
-
-    /// Returns `true` if all of the optional config parameters are `None` and `false` otherwise.
-    pub fn is_default_config(&self) -> bool {
-        let SendTransactionParams {
-            transaction: _,
-            encoding,
-            skip_preflight,
-            preflight_commitment,
-            max_retries,
-            min_context_slot,
-        } = &self;
-        encoding.is_none()
-            && skip_preflight.is_none()
-            && preflight_commitment.is_none()
-            && max_retries.is_none()
-            && min_context_slot.is_none()
     }
 
     /// The transaction being sent as an encoded string.
