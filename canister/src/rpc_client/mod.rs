@@ -150,15 +150,7 @@ impl GetBlockRequest {
         let params = params.into();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
         let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
-        let max_response_bytes = config.response_size_estimate.unwrap_or(
-            match params.get_transaction_details() {
-                None | Some(TransactionDetails::None) => 2048,
-                Some(TransactionDetails::Signatures) => 512 * 1024,
-            } + match params.include_rewards() {
-                None | Some(true) => 256,
-                Some(false) => 0,
-            } + HEADER_SIZE_LIMIT,
-        );
+        let max_response_bytes = Self::response_size_estimate(&params);
 
         Ok(MultiRpcRequest::new(
             providers,
@@ -167,6 +159,18 @@ impl GetBlockRequest {
             ResponseTransform::GetBlock,
             ReductionStrategy::from(consensus_strategy),
         ))
+    }
+
+    fn response_size_estimate(params: &json::GetBlockParams) -> u64 {
+        let cycles = match params.get_transaction_details() {
+            Some(TransactionDetails::Accounts) => CyclesCostEstimator::DEFAULT_MAX_RESPONSE_BYTES,
+            Some(TransactionDetails::Signatures) => 262_144,
+            Some(TransactionDetails::None) | None => 2_048,
+        };
+        match params.include_rewards() {
+            Some(true) | None => CyclesCostEstimator::DEFAULT_MAX_RESPONSE_BYTES.min(cycles + 256),
+            Some(false) => cycles,
+        }
     }
 }
 

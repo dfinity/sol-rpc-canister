@@ -173,7 +173,6 @@ impl From<GetBlockParams> for (Slot, Option<GetBlockConfig>) {
 
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Debug)]
-// TODO XC-342: Use values for `rewards`, `encoding` and `transactionDetails` fields.
 pub struct GetBlockConfig {
     pub encoding: Option<UiTransactionEncoding>,
     #[serde(rename = "transactionDetails")]

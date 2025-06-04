@@ -1453,6 +1453,7 @@ fn rpc_sources() -> Vec<RpcSources> {
 
 mod cycles_cost_tests {
     use super::*;
+    use sol_rpc_types::TransactionDetails;
 
     #[tokio::test]
     async fn should_be_idempotent() {
@@ -1662,9 +1663,22 @@ mod cycles_cost_tests {
                     check(&setup, client.get_balance(USDC_PUBLIC_KEY), 1_731_769_600).await;
                 }
                 SolRpcEndpoint::GetBlock => {
-                    check(&setup, client.get_block(577996), 1_898_192_800).await;
+                    for transaction_details in TransactionDetails::iter() {
+                        let expected_cycles_cost = match transaction_details {
+                            TransactionDetails::Accounts => 164_743_232_800,
+                            TransactionDetails::None => 1_731_076_000,
+                            TransactionDetails::Signatures => 22_955_154_400,
+                        };
+                        check(
+                            &setup,
+                            client
+                                .get_block(577996)
+                                .with_transaction_details(transaction_details),
+                            expected_cycles_cost,
+                        )
+                        .await
+                    }
                 }
-
                 SolRpcEndpoint::GetRecentPrioritizationFees => {
                     check(
                         &setup,

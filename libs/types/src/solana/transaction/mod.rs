@@ -13,21 +13,57 @@ use reward::Reward;
 use serde::Serialize;
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_transaction_status_client_types::{
-    option_serializer::OptionSerializer, EncodedConfirmedTransactionWithStatusMeta,
-    EncodedTransactionWithStatusMeta, UiReturnDataEncoding, UiTransactionReturnData,
+    option_serializer::OptionSerializer, UiReturnDataEncoding, UiTransactionReturnData,
     UiTransactionStatusMeta,
 };
 
 /// Solana [transaction](https://solana.com/docs/references/terminology#transaction) information
-/// as returned by the [`getTransaction`](https://solana.com/de/docs/rpc/http/gettransaction) RPC
-/// method.
+/// for a confirmed transaction.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
-pub struct TransactionInfo {
+pub struct EncodedConfirmedTransactionWithStatusMeta {
     /// The slot this transaction was processed in.
     pub slot: Slot,
     /// Estimated production time of when the transaction was processed. [`None`] if not available
     #[serde(rename = "blockTime")]
     pub block_time: Option<Timestamp>,
+    /// Transaction information including the metadata, version and encoded transaction.
+    pub transaction: EncodedTransactionWithStatusMeta,
+}
+
+impl TryFrom<solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta>
+    for EncodedConfirmedTransactionWithStatusMeta
+{
+    type Error = RpcError;
+
+    fn try_from(
+        transaction: solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta,
+    ) -> Result<Self, Self::Error> {
+        Ok(Self {
+            slot: transaction.slot,
+            block_time: transaction.block_time,
+            transaction: EncodedTransactionWithStatusMeta::try_from(transaction.transaction)?,
+        })
+    }
+}
+
+impl From<EncodedConfirmedTransactionWithStatusMeta>
+    for solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta
+{
+    fn from(transaction: EncodedConfirmedTransactionWithStatusMeta) -> Self {
+        Self {
+            slot: transaction.slot,
+            transaction:
+                solana_transaction_status_client_types::EncodedTransactionWithStatusMeta::from(
+                    transaction.transaction,
+                ),
+            block_time: transaction.block_time,
+        }
+    }
+}
+
+/// Solana [transaction](https://solana.com/docs/references/terminology#transaction) information.
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
+pub struct EncodedTransactionWithStatusMeta {
     /// Transaction status [metadata](https://solana.com/de/docs/rpc/json-structures#transaction-status-metadata)
     /// object or [`None`].
     pub meta: Option<TransactionStatusMeta>,
@@ -38,36 +74,33 @@ pub struct TransactionInfo {
     pub version: Option<TransactionVersion>,
 }
 
-impl TryFrom<EncodedConfirmedTransactionWithStatusMeta> for TransactionInfo {
+impl TryFrom<solana_transaction_status_client_types::EncodedTransactionWithStatusMeta>
+    for EncodedTransactionWithStatusMeta
+{
     type Error = RpcError;
 
     fn try_from(
-        transaction: EncodedConfirmedTransactionWithStatusMeta,
+        transaction: solana_transaction_status_client_types::EncodedTransactionWithStatusMeta,
     ) -> Result<Self, Self::Error> {
         Ok(Self {
-            slot: transaction.slot,
-            block_time: transaction.block_time,
             meta: transaction
-                .transaction
                 .meta
-                .map(TryInto::try_into)
+                .map(TransactionStatusMeta::try_from)
                 .transpose()?,
-            transaction: transaction.transaction.transaction.try_into()?,
-            version: transaction.transaction.version.map(Into::into),
+            transaction: EncodedTransaction::try_from(transaction.transaction)?,
+            version: transaction.version.map(TransactionVersion::from),
         })
     }
 }
 
-impl From<TransactionInfo> for EncodedConfirmedTransactionWithStatusMeta {
-    fn from(transaction: TransactionInfo) -> Self {
+impl From<EncodedTransactionWithStatusMeta>
+    for solana_transaction_status_client_types::EncodedTransactionWithStatusMeta
+{
+    fn from(transaction: EncodedTransactionWithStatusMeta) -> Self {
         Self {
-            slot: transaction.slot,
-            transaction: EncodedTransactionWithStatusMeta {
-                transaction: transaction.transaction.into(),
-                meta: transaction.meta.map(Into::into),
-                version: transaction.version.map(Into::into),
-            },
-            block_time: transaction.block_time,
+            transaction: transaction.transaction.into(),
+            meta: transaction.meta.map(Into::into),
+            version: transaction.version.map(Into::into),
         }
     }
 }
