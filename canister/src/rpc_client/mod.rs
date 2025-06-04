@@ -171,7 +171,7 @@ impl GetBlockRequest {
             Some(TransactionDetails::Signatures) => 262_144,
             Some(TransactionDetails::None) | None => 2_048,
         };
-        match params.get_rewards() {
+        match params.include_rewards() {
             Some(true) | None => clamp_max(cycles + 256, MAX_RESPONSE_SIZE),
             Some(false) => cycles,
         }
