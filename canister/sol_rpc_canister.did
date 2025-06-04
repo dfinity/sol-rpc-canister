@@ -595,8 +595,6 @@ type EncodedTransactionWithStatusMeta = record {
   meta : opt TransactionStatusMeta;
   // Transaction object, either in JSON format or encoded binary data.
   transaction : EncodedTransaction;
-  // The slot this transaction was processed in
-  slot : Slot;
   // Transaction version. `null` if `maxSupportedTransactionVersion` is not set in request params.
   version : opt variant { legacy; number : nat8 };
 };
