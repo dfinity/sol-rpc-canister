@@ -5,7 +5,7 @@ pub mod account;
 pub mod request;
 pub mod transaction;
 
-use crate::RpcError;
+use crate::{Reward, RpcError};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, str::FromStr};
@@ -27,7 +27,7 @@ pub type MicroLamport = u64;
 pub type Timestamp = i64;
 
 /// The result of a Solana `getBlock` RPC method call.
-// TODO XC-342: Add `transactions`, `signatures`, `rewards` and `num_reward_partitions` fields.
+// TODO XC-342: Add `transactions` field.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
 pub struct ConfirmedBlock {
     /// The blockhash of this block's parent, as base-58 encoded string; if the parent block is not
@@ -48,6 +48,13 @@ pub struct ConfirmedBlock {
     /// Signatures of the transactions in the block. Included in the response whenever
     /// `transactionDetails` is not `none`.
     pub signatures: Option<Vec<Signature>>,
+    /// Array of rewards distributed in this block.
+    pub rewards: Option<Vec<Reward>>,
+    /// The epoch rewards are distributed over `1 + num_reward_partitions` blocks. See the
+    /// [Partitioned Inflationary Rewards Distribution](https://docs.anza.xyz/proposals/partitioned-inflationary-rewards-distribution/)
+    /// feature for more details.
+    #[serde(rename = "numRewardPartition")]
+    pub num_reward_partitions: Option<u64>,
 }
 
 impl TryFrom<solana_transaction_status_client_types::UiConfirmedBlock> for ConfirmedBlock {
@@ -63,6 +70,11 @@ impl TryFrom<solana_transaction_status_client_types::UiConfirmedBlock> for Confi
             block_time: block.block_time,
             block_height: block.block_height,
             signatures: block.signatures.map(parse_vec).transpose()?,
+            rewards: block
+                .rewards
+                .map(|rewards| rewards.into_iter().map(Reward::try_from).collect())
+                .transpose()?,
+            num_reward_partitions: block.num_reward_partitions,
         })
     }
 }
@@ -78,8 +90,13 @@ impl From<ConfirmedBlock> for solana_transaction_status_client_types::UiConfirme
             signatures: block
                 .signatures
                 .map(|sigs| sigs.into_iter().map(|sig| sig.to_string()).collect()),
-            rewards: None,
-            num_reward_partitions: None,
+            rewards: block.rewards.map(|rewards| {
+                rewards
+                    .into_iter()
+                    .map(solana_transaction_status_client_types::Reward::from)
+                    .collect()
+            }),
+            num_reward_partitions: block.num_reward_partitions,
             block_time: block.block_time,
             block_height: block.block_height,
         }

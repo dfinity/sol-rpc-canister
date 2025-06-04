@@ -145,7 +145,6 @@ use sol_rpc_types::{
     GetRecentPrioritizationFeesParams, GetSignatureStatusesParams, GetSignaturesForAddressParams,
     GetTokenAccountBalanceParams, GetTransactionParams, Pubkey, RpcConfig, RpcResult, RpcSources,
     SendTransactionParams, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
-    TransactionDetails,
 };
 use std::{fmt::Debug, sync::Arc};
 /// The principal identifying the productive Solana RPC canister under NNS control.
@@ -395,14 +394,15 @@ impl<R> SolRpcClient<R> {
     ///
     /// ```rust
     /// use sol_rpc_client::SolRpcClient;
-    /// use sol_rpc_types::{RpcSources, SolanaCluster};
+    /// use sol_rpc_types::{ConfirmedBlock, MultiRpcResult, RpcSources, SolanaCluster};
     /// use solana_pubkey::pubkey;
-    /// use solana_transaction_status_client_types::UiConfirmedBlock;
+    /// use solana_reward_info::RewardType;
+    /// use solana_transaction_status_client_types::{Reward, UiConfirmedBlock};
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # use std::str::FromStr;
-    /// # use sol_rpc_types::{ConfirmedBlock, Hash, MultiRpcResult, Pubkey};
+    /// # use sol_rpc_types::{Hash, Pubkey};
     /// let client = SolRpcClient::builder_for_ic()
     /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(ConfirmedBlock {
     /// #     previous_blockhash: Hash::from_str("4yeCoXK2Q4yXcunuLtF37yTE1wVD4x8313adneZDmi8w").unwrap(),
@@ -411,6 +411,16 @@ impl<R> SolRpcClient<R> {
     /// #     block_time: Some(1748606929),
     /// #     block_height: Some(321673899),
     /// #     signatures: None,
+    /// #     rewards: Some(vec![
+    /// #         sol_rpc_types::Reward {
+    /// #             pubkey: Pubkey::from_str("ChorusmmK7i1AxXeiTtQgQZhQNiXYU84ULeaYF1EH15n").unwrap(),
+    /// #             lamports: 29444484,
+    /// #             post_balance: 633539232581,
+    /// #             reward_type: Some(sol_rpc_types::RewardType::Fee),
+    /// #             commission: None,
+    /// #         }
+    /// #     ]),
+    /// #     num_reward_partitions: None,
     /// # })))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
@@ -428,7 +438,15 @@ impl<R> SolRpcClient<R> {
     ///       block_time: Some(1748606929),
     ///       block_height: Some(321673899),
     ///       signatures: None,
-    ///       rewards: None,
+    ///       rewards: Some(vec![
+    ///           Reward {
+    ///               pubkey: "ChorusmmK7i1AxXeiTtQgQZhQNiXYU84ULeaYF1EH15n".to_string(),
+    ///               lamports: 29444484,
+    ///               post_balance: 633539232581,
+    ///               reward_type: Some(RewardType::Fee),
+    ///               commission: None,
+    ///           }
+    ///       ]),
     ///       num_reward_partitions: None,
     ///       transactions: None,
     /// })));
@@ -436,12 +454,7 @@ impl<R> SolRpcClient<R> {
     /// # }
     /// ```
     pub fn get_block(&self, params: impl Into<GetBlockParams>) -> GetBlockRequestBuilder<R> {
-        let params = params.into();
-        let cycles = match params.transaction_details.unwrap_or_default() {
-            TransactionDetails::Signatures => 100_000_000_000,
-            TransactionDetails::None => 10_000_000_000,
-        };
-        RequestBuilder::new(self.clone(), GetBlockRequest::new(params), cycles)
+        RequestBuilder::new(self.clone(), GetBlockRequest::new(params.into()), 0).update_cycles()
     }
 
     /// Call `getTokenAccountBalance` on the SOL RPC canister.

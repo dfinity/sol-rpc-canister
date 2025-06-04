@@ -1662,7 +1662,7 @@ mod cycles_cost_tests {
                     check(&setup, client.get_balance(USDC_PUBLIC_KEY), 1_731_769_600).await;
                 }
                 SolRpcEndpoint::GetBlock => {
-                    check(&setup, client.get_block(577996), 1_791_868_000).await;
+                    check(&setup, client.get_block(577996), 1_898_192_800).await;
                 }
 
                 SolRpcEndpoint::GetRecentPrioritizationFees => {
