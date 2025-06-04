@@ -2,15 +2,15 @@
 //! and the SOL RPC client that uses the SOL RPC canister that uses the local validator as JSON RPC provider.
 //! Excepted for timing differences, the same behavior should be observed.
 
+use assert_matches::assert_matches;
 use futures::future;
 use pocket_ic::PocketIcBuilder;
 use sol_rpc_client::SolRpcClient;
 use sol_rpc_int_tests::{spl, PocketIcLiveModeRuntime};
 use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetAccountInfoEncoding,
-    GetAccountInfoParams, GetBlockCommitmentLevel, GetBlockParams, GetTransactionEncoding,
-    GetTransactionParams, InstallArgs, Lamport, OverrideProvider, PrioritizationFee,
-    RegexSubstitution, TransactionDetails, TransactionStatus,
+    GetBlockCommitmentLevel, GetTransactionEncoding, GetTransactionParams, InstallArgs, Lamport,
+    OverrideProvider, PrioritizationFee, RegexSubstitution, TransactionDetails, TransactionStatus,
 };
 use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
 use solana_client::rpc_client::{
@@ -22,7 +22,7 @@ use solana_hash::Hash;
 use solana_keypair::Keypair;
 use solana_program::{
     instruction::{AccountMeta, Instruction},
-    system_instruction, sysvar,
+    system_instruction, system_program, sysvar,
 };
 use solana_pubkey::{pubkey, Pubkey};
 use solana_rpc_client_api::{
@@ -38,7 +38,6 @@ use std::{
     iter::zip,
     num::NonZeroU8,
     str::FromStr,
-    thread,
     thread::sleep,
     time::{Duration, Instant},
 };
@@ -162,20 +161,20 @@ async fn should_get_recent_prioritization_fees() {
 #[tokio::test(flavor = "multi_thread")]
 async fn should_get_account_info() {
     let setup = Setup::new().await;
-    let pubkey = Pubkey::from_str("11111111111111111111111111111111").unwrap();
-    let params = GetAccountInfoParams {
-        pubkey: pubkey.into(),
-        commitment: None,
-        encoding: Some(GetAccountInfoEncoding::Base64),
-        data_slice: None,
-        min_context_slot: None,
-    };
 
     let (sol_res, ic_res) = setup
         .compare_client(
-            |sol| solana_rpc_client_get_account(&pubkey, sol, None),
+            |sol| {
+                sol.get_account_with_commitment(
+                    &system_program::id(),
+                    CommitmentConfig::confirmed(),
+                )
+                .expect("Failed to get account")
+                .value
+            },
             |ic| async move {
-                ic.get_account_info(params)
+                ic.get_account_info(system_program::id())
+                    .with_encoding(GetAccountInfoEncoding::Base64)
                     .send()
                     .await
                     .expect_consistent()
@@ -185,6 +184,8 @@ async fn should_get_account_info() {
         )
         .await;
 
+    assert_matches!(sol_res, Some(_));
+    assert_matches!(ic_res, Some(_));
     assert_eq!(sol_res, ic_res);
 
     setup.setup.drop().await;
@@ -193,11 +194,15 @@ async fn should_get_account_info() {
 #[tokio::test(flavor = "multi_thread")]
 async fn should_not_get_account_info() {
     let setup = Setup::new().await;
-    let pubkey = Pubkey::from_str("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v").unwrap();
+    let pubkey = Pubkey::new_unique();
 
     let (sol_res, ic_res) = setup
         .compare_client(
-            |sol| solana_rpc_client_get_account(&pubkey, sol, None),
+            |sol| {
+                sol.get_account_with_commitment(&pubkey, CommitmentConfig::confirmed())
+                    .expect("Failed to get account")
+                    .value
+            },
             |ic| async move {
                 ic.get_account_info(pubkey)
                     .send()
@@ -209,7 +214,8 @@ async fn should_not_get_account_info() {
         )
         .await;
 
-    assert_eq!(sol_res, ic_res);
+    assert_eq!(sol_res, None);
+    assert_eq!(ic_res, None);
 
     setup.setup.drop().await;
 }
@@ -234,22 +240,16 @@ async fn should_get_block() {
                     sol.get_block_with_config(
                         slot,
                         RpcBlockConfig {
-                            encoding: None,
                             transaction_details: Some(solana_transaction_status_client_types::TransactionDetails::Signatures),
-                            rewards: Some(false),
                             commitment: Some(commitment_config),
-                            max_supported_transaction_version: None,
+                            ..RpcBlockConfig::default()
                         },
                     )
                         .expect("Failed to get block")
                 },
                 |ic| async move {
-                    ic.get_block(GetBlockParams {
-                        slot,
-                        commitment: Some(commitment),
-                        max_supported_transaction_version: None,
-                        transaction_details: Some(TransactionDetails::Signatures),
-                    })
+                    ic.get_block(slot)
+                        .with_transaction_details(TransactionDetails::Signatures)
                         .send()
                         .await
                         .expect_consistent()
@@ -325,6 +325,7 @@ async fn should_send_transaction() {
     let block = setup
         .icp_client()
         .get_block(slot)
+        .without_rewards()
         .send()
         .await
         .expect_consistent()
@@ -530,7 +531,7 @@ async fn should_get_signatures_for_address() {
         .compare_client(
             |sol| {
                 sol.get_signatures_for_address_with_config(
-                    &Pubkey::default(), // address of the Solana system program
+                    &system_program::id(),
                     GetConfirmedSignaturesForAddress2Config {
                         before: Some(before),
                         until: None,
@@ -541,7 +542,7 @@ async fn should_get_signatures_for_address() {
                 .unwrap_or_else(|e| panic!("Failed to get signatures for address: {e}"))
             },
             |ic| async move {
-                ic.get_signatures_for_address(Pubkey::default())
+                ic.get_signatures_for_address(system_program::id())
                     .with_limit(10.try_into().unwrap())
                     .with_before(before)
                     .send()
@@ -579,16 +580,6 @@ fn from_confirmed_transaction_status_with_signature(
         block_time,
         confirmation_status: confirmation_status.map(Into::into),
     }
-}
-
-fn solana_rpc_client_get_account(
-    pubkey: &Pubkey,
-    sol: &SolanaRpcClient,
-    config: Option<solana_rpc_client_api::config::RpcAccountInfoConfig>,
-) -> Option<solana_account::Account> {
-    sol.get_account_with_config(pubkey, config.unwrap_or_default())
-        .expect("Failed to get account")
-        .value
 }
 
 fn decode_ui_account(account: UiAccount) -> solana_account::Account {
@@ -819,7 +810,7 @@ impl Setup {
                     break;
                 }
                 _ => {
-                    thread::sleep(Duration::from_millis(400));
+                    sleep(Duration::from_millis(400));
                     continue;
                 }
             }

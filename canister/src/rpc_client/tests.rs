@@ -286,10 +286,7 @@ mod request_serialization_tests {
                 GetBlockParams::from(123),
             )
             .unwrap(),
-            json!([
-                123,
-                {"rewards": false, "transactionDetails": "none"}
-            ]),
+            json!([123, {"transactionDetails": "none"}]),
         );
         assert_params_eq(
             GetBlockRequest::get_block(
@@ -300,13 +297,14 @@ mod request_serialization_tests {
                     commitment: Some(GetBlockCommitmentLevel::Finalized),
                     max_supported_transaction_version: Some(2u8),
                     transaction_details: Some(TransactionDetails::Signatures),
+                    rewards: Some(true),
                 },
             )
             .unwrap(),
             json!([
                 123,
                 {
-                    "rewards": false,
+                    "rewards": true,
                     "transactionDetails": "signatures",
                     "commitment": "finalized",
                     "maxSupportedTransactionVersion": 2

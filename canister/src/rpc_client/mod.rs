@@ -154,6 +154,9 @@ impl GetBlockRequest {
             match params.get_transaction_details() {
                 None | Some(TransactionDetails::None) => 2048,
                 Some(TransactionDetails::Signatures) => 512 * 1024,
+            } + match params.include_rewards() {
+                None | Some(true) => 256,
+                Some(false) => 0,
             } + HEADER_SIZE_LIMIT,
         );
 

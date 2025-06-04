@@ -369,7 +369,11 @@ type GetBlockParams = record {
     // Slot number of the block to fetch.
     slot: Slot;
     // Specifies what transaction details to include in the response.
-    // If this field is not specified, the default value of "none" will be used.
+    //
+    // *Warning:* If this value is not specified, the default value of `none` will be used, which
+    // is different from the default value in the Solana RPC API. This is because the default value
+    // of `full` for the Solana RPC API results in response sizes that are generally too large to
+    // be supported by the ICP.
     transactionDetails: opt TransactionDetails;
     // The commitment describes how finalized a block is at that point in time.
     commitment: opt variant { confirmed; finalized };
@@ -379,6 +383,8 @@ type GetBlockParams = record {
     // * If this parameter is omitted, only legacy transactions will be returned, and a block
     // containing any versioned transaction will prompt the error.
     maxSupportedTransactionVersion: opt nat8;
+    // Whether to populate the rewards array. If not provided, the default includes rewards.
+    rewards: opt bool;
 };
 
 // Unix timestamp (seconds since the Unix epoch).
@@ -387,7 +393,7 @@ type GetBlockParams = record {
 type Timestamp = int64;
 
 // The result of a Solana `getBlock` RPC method call.
-// TODO XC-342: Add `transactions`, `signatures`, `rewards` and `num_reward_partitions` fields.
+// TODO XC-342: Add `transactions` field.
 type ConfirmedBlock = record {
     // The blockhash of this block's parent, as base-58 encoded string; if the parent block is not
     // available due to ledger cleanup, this field will return "11111111111111111111111111111111".
@@ -403,6 +409,12 @@ type ConfirmedBlock = record {
     // The signatures of the transactions in this block. Included if the request parameter `transactionDetails` is not
     // `none`.
     signatures: opt vec Signature;
+    // Array of rewards distributed in this block.
+    rewards: opt vec Reward;
+    // The epoch rewards are distributed over `1 + numRewardPartition` blocks. See the
+    // [Partitioned Inflationary Rewards Distribution](https://docs.anza.xyz/proposals/partitioned-inflationary-rewards-distribution/)
+    // feature for more details.
+    numRewardPartition: opt nat64;
 };
 
 // Represents the result of a call to the `getBlock` Solana RPC method.

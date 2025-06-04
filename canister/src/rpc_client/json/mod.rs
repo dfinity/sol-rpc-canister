@@ -139,21 +139,25 @@ impl From<GetBalanceParams> for (String, Option<GetBalanceConfig>) {
 pub struct GetBlockParams(Slot, Option<GetBlockConfig>);
 
 impl GetBlockParams {
-    pub fn get_transaction_details(&self) -> Option<&TransactionDetails> {
+    pub fn get_transaction_details(&self) -> Option<TransactionDetails> {
         self.1
             .as_ref()
-            .and_then(|config| config.transaction_details.as_ref())
+            .and_then(|config| config.transaction_details)
+    }
+
+    pub fn include_rewards(&self) -> Option<bool> {
+        self.1.as_ref().and_then(|config| config.rewards)
     }
 }
 
 impl From<sol_rpc_types::GetBlockParams> for GetBlockParams {
     fn from(params: sol_rpc_types::GetBlockParams) -> Self {
-        // TODO XC-342: Check if all config fields are null, and if so, serialize it as null.
-        //  Currently, we do not want it to be null since rewards=false is not the default value.
+        // We always use a non-null config since the default value for `transaction_details` is
+        // `none` which is different from the Solana RPC API default of `full`.
         let config = Some(GetBlockConfig {
             encoding: None,
             transaction_details: Some(params.transaction_details.unwrap_or_default()),
-            rewards: Some(false),
+            rewards: params.rewards,
             commitment: params.commitment,
             max_supported_transaction_version: params.max_supported_transaction_version,
         });

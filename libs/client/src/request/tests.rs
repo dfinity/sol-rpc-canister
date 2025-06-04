@@ -147,12 +147,14 @@ fn should_set_request_parameters() {
                     .get_block(123)
                     .with_commitment(GetBlockCommitmentLevel::Confirmed)
                     .with_max_supported_transaction_version(0)
-                    .with_transaction_details(TransactionDetails::Signatures),
-                client.get_block(123).with_params(GetBlockParams {
+                    .with_transaction_details(TransactionDetails::Signatures)
+                    .without_rewards(),
+                client.get_block(GetBlockParams {
                     slot: 123,
                     commitment: Some(GetBlockCommitmentLevel::Confirmed),
                     max_supported_transaction_version: Some(0),
                     transaction_details: Some(TransactionDetails::Signatures),
+                    rewards: Some(false),
                 }),
             ),
             SolRpcEndpoint::GetRecentPrioritizationFees => {
@@ -166,16 +168,14 @@ fn should_set_request_parameters() {
                     .with_limit(456.try_into().unwrap())
                     .with_before(signature())
                     .with_until(another_signature()),
-                client.get_signatures_for_address(PUBKEY).with_params(
-                    GetSignaturesForAddressParams {
-                        pubkey: PUBKEY.into(),
-                        commitment: Some(CommitmentLevel::Confirmed),
-                        min_context_slot: Some(MIN_CONTEXT_SLOT),
-                        limit: Some(456.try_into().unwrap()),
-                        before: Some(signature().into()),
-                        until: Some(another_signature().into()),
-                    },
-                ),
+                client.get_signatures_for_address(GetSignaturesForAddressParams {
+                    pubkey: PUBKEY.into(),
+                    commitment: Some(CommitmentLevel::Confirmed),
+                    min_context_slot: Some(MIN_CONTEXT_SLOT),
+                    limit: Some(456.try_into().unwrap()),
+                    before: Some(signature().into()),
+                    until: Some(another_signature().into()),
+                }),
             ),
             SolRpcEndpoint::GetSignatureStatuses => assert_params_eq(
                 client
@@ -204,12 +204,10 @@ fn should_set_request_parameters() {
                 client
                     .get_token_account_balance(PUBKEY)
                     .with_commitment(CommitmentLevel::Confirmed),
-                client.get_token_account_balance(PUBKEY).with_params(
-                    GetTokenAccountBalanceParams {
-                        pubkey: PUBKEY.into(),
-                        commitment: Some(CommitmentLevel::Confirmed),
-                    },
-                ),
+                client.get_token_account_balance(GetTokenAccountBalanceParams {
+                    pubkey: PUBKEY.into(),
+                    commitment: Some(CommitmentLevel::Confirmed),
+                }),
             ),
             SolRpcEndpoint::GetTransaction => assert_params_eq(
                 client
@@ -217,14 +215,12 @@ fn should_set_request_parameters() {
                     .with_commitment(CommitmentLevel::Confirmed)
                     .with_max_supported_transaction_version(0)
                     .with_encoding(GetTransactionEncoding::Base64),
-                client
-                    .get_transaction(signature())
-                    .with_params(GetTransactionParams {
-                        signature: signature().into(),
-                        commitment: Some(CommitmentLevel::Confirmed),
-                        max_supported_transaction_version: Some(0),
-                        encoding: Some(GetTransactionEncoding::Base64),
-                    }),
+                client.get_transaction(GetTransactionParams {
+                    signature: signature().into(),
+                    commitment: Some(CommitmentLevel::Confirmed),
+                    max_supported_transaction_version: Some(0),
+                    encoding: Some(GetTransactionEncoding::Base64),
+                }),
             ),
             SolRpcEndpoint::JsonRequest => {
                 // No optional request parameters
