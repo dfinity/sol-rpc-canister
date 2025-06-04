@@ -2,6 +2,7 @@
 //! and the SOL RPC client that uses the SOL RPC canister that uses the local validator as JSON RPC provider.
 //! Excepted for timing differences, the same behavior should be observed.
 
+use assert_matches::assert_matches;
 use futures::future;
 use pocket_ic::PocketIcBuilder;
 use sol_rpc_client::SolRpcClient;
@@ -183,6 +184,8 @@ async fn should_get_account_info() {
         )
         .await;
 
+    assert_matches!(sol_res, Some(_));
+    assert_matches!(ic_res, Some(_));
     assert_eq!(sol_res, ic_res);
 
     setup.setup.drop().await;
@@ -191,19 +194,17 @@ async fn should_get_account_info() {
 #[tokio::test(flavor = "multi_thread")]
 async fn should_not_get_account_info() {
     let setup = Setup::new().await;
+    let pubkey = Pubkey::new_unique();
 
     let (sol_res, ic_res) = setup
         .compare_client(
             |sol| {
-                sol.get_account_with_commitment(
-                    &system_program::id(),
-                    CommitmentConfig::confirmed(),
-                )
-                .expect("Failed to get account")
-                .value
+                sol.get_account_with_commitment(&pubkey, CommitmentConfig::confirmed())
+                    .expect("Failed to get account")
+                    .value
             },
             |ic| async move {
-                ic.get_account_info(system_program::id())
+                ic.get_account_info(pubkey)
                     .send()
                     .await
                     .expect_consistent()
@@ -213,7 +214,8 @@ async fn should_not_get_account_info() {
         )
         .await;
 
-    assert_eq!(sol_res, ic_res);
+    assert_eq!(sol_res, None);
+    assert_eq!(ic_res, None);
 
     setup.setup.drop().await;
 }
