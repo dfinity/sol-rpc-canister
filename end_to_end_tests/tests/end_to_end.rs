@@ -6,12 +6,10 @@ use sol_rpc_client::{
 use sol_rpc_e2e_tests::Setup;
 use sol_rpc_types::Lamport;
 use solana_compute_budget_interface::ComputeBudgetInstruction;
-use solana_hash::Hash;
 use solana_message::Message;
 use solana_program::system_instruction;
 use solana_pubkey::{pubkey, Pubkey};
 use solana_transaction::Transaction;
-use std::str::FromStr;
 
 const FUNDING_AMOUNT: Lamport = 1_000_000_000;
 const TRANSACTION_AMOUNT: Lamport = 100_000;
