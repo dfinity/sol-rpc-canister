@@ -21,8 +21,10 @@ use solana_hash::Hash;
 use solana_transaction_status_client_types::{
     EncodedConfirmedTransactionWithStatusMeta, UiConfirmedBlock,
 };
-use std::fmt::{Debug, Formatter};
-use std::str::FromStr;
+use std::{
+    fmt::{Debug, Formatter},
+    str::FromStr,
+};
 use strum::EnumIter;
 use thiserror::Error;
 
