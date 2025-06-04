@@ -531,7 +531,7 @@ async fn should_get_signatures_for_address() {
         .compare_client(
             |sol| {
                 sol.get_signatures_for_address_with_config(
-                    &system_program::id(), // address of the Solana system program
+                    &system_program::id(),
                     GetConfirmedSignaturesForAddress2Config {
                         before: Some(before),
                         until: None,
