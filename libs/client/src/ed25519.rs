@@ -83,7 +83,7 @@ impl Ed25519KeyId {
 /// use solana_transaction::Transaction;
 /// use sol_rpc_client::{
 ///     ed25519::{get_pubkey, sign_message, DerivationPath, Ed25519KeyId},
-///     IcRuntime
+///     IcRuntime, SolRpcClient
 /// };
 ///
 /// # #[tokio::main]
@@ -112,12 +112,22 @@ impl Ed25519KeyId {
 ///
 /// let recipient = pubkey!("BPebStjcgCPnWTK3FXZJ8KhqwNYLk9aubC9b4Cgqb6oE");
 ///
-/// # // TODO XC-317: Use client method to fetch recent blockhash
-/// # let recent_blockhash = Hash::default();
+/// # use sol_rpc_types::MultiRpcResult;
+/// let blockhash = SolRpcClient::builder_for_ic()
+/// #   .with_mocked_responses(
+/// #        MultiRpcResult::Consistent(Ok(332_577_897_u64)),
+/// #        MultiRpcResult::Consistent(Ok(332_577_897_u64)),
+/// #    )
+///     .build()
+///     .estimate_recent_blockhash()
+///     .send()
+///     .await
+///     .expect("Failed to fetch recent blockhash");
+///
 /// let message = Message::new_with_blockhash(
 ///     &[transfer(&payer, &recipient, 1_000_000)],
 ///     Some(&payer),
-///     &recent_blockhash,
+///     &blockhash,
 ///  );
 ///
 /// # let runtime = MockRuntime::same_response(SignWithSchnorrResponse {

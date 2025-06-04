@@ -133,7 +133,7 @@ use crate::request::{
     GetSignaturesForAddressRequest, GetSignaturesForAddressRequestBuilder, GetSlotRequest,
     GetSlotRequestBuilder, GetTokenAccountBalanceRequest, GetTokenAccountBalanceRequestBuilder,
     GetTransactionRequest, GetTransactionRequestBuilder, JsonRequest, JsonRequestBuilder,
-    RecentBlockhashRequestBuilder, SendTransactionRequest, SendTransactionRequestBuilder,
+    EstimateBlockhashRequestBuilder, SendTransactionRequest, SendTransactionRequestBuilder,
 };
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
@@ -968,8 +968,8 @@ impl<R: Runtime> SolRpcClient<R> {
     /// a blockhash is successfully retrieved, or a maximum number of RPC calls is performed. Each
     /// additional RPC method call (i.e. `getSlot` or `getBlock` counts as one retry). By default,
     /// no retries will be performed.
-    pub fn estimate_recent_blockhash(&self) -> RecentBlockhashRequestBuilder<R> {
-        RecentBlockhashRequestBuilder::new(self.clone())
+    pub fn estimate_recent_blockhash(&self) -> EstimateBlockhashRequestBuilder<R> {
+        EstimateBlockhashRequestBuilder::new(self.clone())
     }
 
     async fn execute_request<Config, Params, CandidOutput, Output>(

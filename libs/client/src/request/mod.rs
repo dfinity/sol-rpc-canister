@@ -962,15 +962,21 @@ pub enum EstimateRecentBlockhashError {
     MissingBlock(Slot),
 }
 
-/// TODO XC-317
-pub struct RecentBlockhashRequestBuilder<R> {
+/// A builder to construct an [`EstimateBlockhashRequestBuilder`].
+///
+/// To construct an [`EstimateBlockhashRequestBuilder`], use the
+/// [`SolRpcClient::estimate_recent_blockhash`] method.
+#[must_use = "EstimateBlockhashRequestBuilder does nothing until you 'send' it"]
+pub struct EstimateBlockhashRequestBuilder<R> {
     client: SolRpcClient<R>,
     num_retries: usize,
     rounding_error: Option<RoundingError>,
     rpc_config: Option<RpcConfig>,
 }
 
-impl<R> RecentBlockhashRequestBuilder<R> {
+impl<R> EstimateBlockhashRequestBuilder<R> {
+    /// Create a new [`EstimateBlockhashRequestBuilder`] request with the given [`SolRpcClient`]
+    /// and default parameters.
     pub fn new(client: SolRpcClient<R>) -> Self {
         Self {
             client,
@@ -981,27 +987,32 @@ impl<R> RecentBlockhashRequestBuilder<R> {
     }
 
     /// Sets the maximum number of RPC call re-tries to perform. The maximum amount of RPC calls
-    /// performed will be `2 + num_tries` (i.e. one call to `getSlot` and one call to `getBlock`
-    /// must always take place.
+    /// performed will be `2 + num_retries` since at least one call to `getSlot` and one call to
+    /// `getBlock` must take place to fetch a blockhash.
     pub fn with_num_retries(mut self, num_retries: usize) -> Self {
         self.num_retries = num_retries;
         self
     }
 
-    /// TODO XC-317
+    /// Sets an [`RpcConfig`] for the `getSlot` and `getBlock` calls. If not set, the default
+    /// client [`RpcConfig`] is used.
     pub fn with_rpc_config(mut self, rpc_config: RpcConfig) -> Self {
         self.rpc_config = Some(rpc_config);
         self
     }
 
-    /// TODO XC-317
+    /// Sets a [`RoundingError`] for the `getSlot` calls. If not set, the default value for the
+    /// rounding error is used.
     pub fn with_rounding_error(mut self, rounding_error: RoundingError) -> Self {
         self.rounding_error = Some(rounding_error);
         self
     }
 }
 
-impl<R: Runtime> RecentBlockhashRequestBuilder<R> {
+impl<R: Runtime> EstimateBlockhashRequestBuilder<R> {
+    /// Constructs the required `getSlot` and `getBlock` requests and try to estimate a recent
+    /// blockhash using the [`SolRpcClient`], possibly with re-tries (see
+    /// [`SolRpcClient::estimate_recent_blockhash`]).
     pub async fn send(self) -> Result<Hash, Vec<EstimateRecentBlockhashError>> {
         let mut errors = Vec::with_capacity(self.num_retries);
         loop {
