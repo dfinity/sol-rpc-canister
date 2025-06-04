@@ -139,13 +139,13 @@ impl From<GetBalanceParams> for (String, Option<GetBalanceConfig>) {
 pub struct GetBlockParams(Slot, Option<GetBlockConfig>);
 
 impl GetBlockParams {
-    pub fn get_transaction_details(&self) -> Option<&TransactionDetails> {
+    pub fn get_transaction_details(&self) -> Option<TransactionDetails> {
         self.1
             .as_ref()
-            .and_then(|config| config.transaction_details.as_ref())
+            .and_then(|config| config.transaction_details)
     }
 
-    pub fn get_rewards(&self) -> Option<bool> {
+    pub fn include_rewards(&self) -> Option<bool> {
         self.1.as_ref().and_then(|config| config.rewards)
     }
 }
