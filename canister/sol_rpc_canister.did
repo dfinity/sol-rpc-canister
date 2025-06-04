@@ -208,7 +208,7 @@ type GetAccountInfoParams = record {
   commitment: opt CommitmentLevel;
   encoding: opt GetAccountInfoEncoding;
   dataSlice: opt DataSlice;
-  minContextSlot: opt nat64;
+  minContextSlot: opt Slot;
 };
 
 // Address of a [Solana account][acc].
@@ -314,7 +314,7 @@ type SendTransactionParams = record {
     // finalized or until the blockhash expires.
     maxRetries: opt nat32;
     // Set the minimum slot at which to perform preflight transaction checks
-    minContextSlot: opt nat64;
+    minContextSlot: opt Slot;
 };
 
 // The encoding format for the transaction argument to the Solana `sendTransaction` RPC method call.
@@ -343,7 +343,7 @@ type GetBalanceParams = record {
   // The commitment describes how finalized a block is at that point in time.
   commitment: opt CommitmentLevel;
   // The minimum slot that the request can be evaluated at.
-  minContextSlot: opt nat64;
+  minContextSlot: opt Slot;
 };
 
 // Smallest denomination of SOL, the native token on Solana, i.e.
@@ -399,7 +399,7 @@ type ConfirmedBlock = record {
     // The blockhash of this block, as base-58 encoded string.
     blockhash: Hash;
     // The slot index of this block's parent.
-    parentSlot: nat64;
+    parentSlot: Slot;
     // Estimated production time.
     blockTime: opt Timestamp;
     // The number of blocks beneath this block.
@@ -581,7 +581,7 @@ type TransactionError = variant {
 // Represents an encoded confirmed Solana transaction with status metadata object.
 type EncodedConfirmedTransactionWithStatusMeta = record {
   // The slot this transaction was processed in
-  slot : nat64;
+  slot : Slot;
   // Estimated production time, as Unix timestamp (seconds since the Unix epoch) of when the transaction was processed.
   // `null` if not available.
   blockTime : opt Timestamp;
@@ -595,7 +595,10 @@ type EncodedTransactionWithStatusMeta = record {
   meta : opt TransactionStatusMeta;
   // Transaction object, either in JSON format or encoded binary data.
   transaction : EncodedTransaction;
-  // Transaction version. `null` if `maxSupportedTransactionVersion` is not set in request params.
+  // The slot this transaction was processed in
+  slot : Slot;
+  // Transaction version.
+  // Undefined if `maxSupportedTransactionVersion` is not set in request params.
   version : opt variant { legacy; number : nat8 };
 };
 
@@ -801,7 +804,7 @@ type GetSignatureStatusesParams = record {
 // The parameters for a call to the `getSlot` Solana RPC method.
 type GetSlotParams = record {
   commitment: opt CommitmentLevel;
-  minContextSlot: opt nat64;
+  minContextSlot: opt Slot;
 };
 
 // Represents the result of a raw JSON-RPC request.
