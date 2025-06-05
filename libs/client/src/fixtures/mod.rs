@@ -9,7 +9,6 @@ use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo};
 use std::collections::HashMap;
-use std::fmt::Debug;
 
 impl<R> ClientBuilder<R> {
     /// Change the runtime to return the given mocked response for all calls.
@@ -28,7 +27,7 @@ impl ClientBuilder<MockRuntime> {
     }
 
     /// Change the runtime to return the given mocked response for calls to the given method.
-    pub fn with_response_for_method<Out: CandidType + DeserializeOwned + PartialEq + Debug>(
+    pub fn with_response_for_method<Out: CandidType>(
         self,
         method_name: &str,
         mocked_response: Out,
@@ -63,15 +62,15 @@ impl MockRuntime {
     }
 
     /// Modify a [`MockRuntime`] to return the given response for the given method
-    pub fn with_response_for_method<Out: CandidType + DeserializeOwned + PartialEq + Debug>(
+    pub fn with_response_for_method<Out: CandidType>(
         mut self,
         method: &str,
         mocked_response: Out,
     ) -> Self {
-        let result = Encode!(&mocked_response).expect("Failed to encode Candid mocked response");
-        assert_eq!(Decode!(&result, Out).unwrap(), mocked_response);
-        self.method_to_call_result_map
-            .insert(method.to_string(), result);
+        self.method_to_call_result_map.insert(
+            method.to_string(),
+            Encode!(&mocked_response).expect("Failed to encode Candid mocked response"),
+        );
         self
     }
 
