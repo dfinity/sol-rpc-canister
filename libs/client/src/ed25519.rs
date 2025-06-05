@@ -214,7 +214,7 @@ pub async fn sign_message<R: Runtime>(
 /// # use sol_rpc_client::fixtures::MockRuntime;
 /// # use ic_cdk::api::management_canister::schnorr::SchnorrPublicKeyResponse;
 /// let runtime = IcRuntime;
-/// # let runtime = MockRuntime::new()
+/// # let runtime = MockRuntime::default()
 /// # .with_response_for_method("schnorr_public_key", SchnorrPublicKeyResponse {
 /// #     public_key: pubkey!("BPebStjcgCPnWTK3FXZJ8KhqwNYLk9aubC9b4Cgqb6oE").as_ref().to_vec(),
 /// #     chain_code: "UWbC6EgDnWEJIU4KFBqASTCYAzEiJGsR".as_bytes().to_vec(),

@@ -13,7 +13,7 @@ use std::collections::HashMap;
 impl<R> ClientBuilder<R> {
     /// Change the runtime to return the given mocked response for all calls.
     pub fn with_mocked_responses(self) -> ClientBuilder<MockRuntime> {
-        self.with_runtime(|_runtime| MockRuntime::new())
+        self.with_runtime(|_runtime| MockRuntime::default())
     }
 }
 
@@ -87,6 +87,12 @@ impl MockRuntime {
     }
 }
 
+impl Default for MockRuntime {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[async_trait]
 impl Runtime for MockRuntime {
     async fn update_call<In, Out>(
@@ -100,7 +106,7 @@ impl Runtime for MockRuntime {
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
     {
-        self.call(&method)
+        self.call(method)
     }
 
     async fn query_call<In, Out>(
@@ -113,7 +119,7 @@ impl Runtime for MockRuntime {
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
     {
-        self.call(&method)
+        self.call(method)
     }
 }
 
