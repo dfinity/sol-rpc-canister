@@ -835,40 +835,24 @@ impl<R> SolRpcClient<R> {
     /// # use std::str::FromStr;
     /// # use sol_rpc_types::{ConfirmedBlock, GetTransactionEncoding, Hash, MultiRpcResult, Pubkey};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(sol_rpc_types::TransactionInfo {
+    /// #   .with_mocked_responses()
+    /// #   .with_default_response(MultiRpcResult::Consistent(Ok(sol_rpc_types::EncodedConfirmedTransactionWithStatusMeta {
     /// #       slot: 344115445,
     /// #       block_time: Some(1748865196),
-    /// #       version: None,
-    /// #       transaction: sol_rpc_types::EncodedTransaction::Binary(
-    /// #           "AezK+RzWcWWx92r0fdmhv7XPAaFQjkPd6MFbGVA7G48aioSd3xcYmwaPC2ih7PwypyeC/9to8mau9B\
-    /// #            i7UnL51QUBAAEDCPqP+HgQC9XiKJ57C0YTNM3SFIvOA3aVl/IgkHIZDmuTFuOuQ+TscmAh2ImY30W1\
-    /// #            llOzfsPudc98t1jqdNEmVQdhSB01dHS7fE12JOvTvbPYNV5z0RBD/A2jU4AAAAAA97B2Pa9+X8kE7k\
-    /// #            E4774GwvI3QCvLgOTJRad8txcXNsUBAgIBAJQBDgAAANXIghQAAAAAHwEfAR4BHQEcARsBGgEZARgB\
-    /// #            FwEWARUBFAETARIBEQEQAQ8BDgENAQwBCwEKAQkBCAEHAQYBBQEEAQMBAgEBiNvPO/moMFqBbr9xeM\
-    /// #            JF4bBdB8XDJJ5LLsGewMTGlm8BrJA9aAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
-    /// #            AA==".to_string(),
-    /// #           sol_rpc_types::TransactionBinaryEncoding::Base64,
-    /// #       ),
-    /// #       meta: Some(sol_rpc_types::TransactionStatusMeta {
-    /// #           status: Ok(()),
-    /// #           fee: 5000,
-    /// #           pre_balances: vec![43156320838, 6678633253, 1],
-    /// #           post_balances: vec![43156315838, 6678633253, 1],
-    /// #           inner_instructions: Some(vec![]),
-    /// #           log_messages: Some(vec![
-    /// #               "Program Vote111111111111111111111111111111111111111 invoke [1]".to_string(),
-    /// #               "Program Vote111111111111111111111111111111111111111 success".to_string()
-    /// #           ]).into(),
-    /// #           pre_token_balances: Some(vec![]),
-    /// #           post_token_balances: Some(vec![]),
-    /// #           rewards: Some(vec![]),
-    /// #           loaded_addresses: Some(sol_rpc_types::LoadedAddresses {
-    /// #               writable: vec![],
-    /// #               readonly: vec![],
-    /// #           }),
-    /// #           return_data: None,
-    /// #           compute_units_consumed: Some(2100),
-    /// #       }),
+    /// #       transaction: sol_rpc_types::EncodedTransactionWithStatusMeta {
+    /// #           transaction: sol_rpc_types::EncodedTransaction::Binary(
+    /// #               "AezK+RzWcWWx92r0fdmhv7XPAaFQjkPd6MFbGVA7G48aioSd3xcYmwaPC2ih7PwypyeC/9to8mau9B\
+    /// #                i7UnL51QUBAAEDCPqP+HgQC9XiKJ57C0YTNM3SFIvOA3aVl/IgkHIZDmuTFuOuQ+TscmAh2ImY30W1\
+    /// #                llOzfsPudc98t1jqdNEmVQdhSB01dHS7fE12JOvTvbPYNV5z0RBD/A2jU4AAAAAA97B2Pa9+X8kE7k\
+    /// #                E4774GwvI3QCvLgOTJRad8txcXNsUBAgIBAJQBDgAAANXIghQAAAAAHwEfAR4BHQEcARsBGgEZARgB\
+    /// #                FwEWARUBFAETARIBEQEQAQ8BDgENAQwBCwEKAQkBCAEHAQYBBQEEAQMBAgEBiNvPO/moMFqBbr9xeM\
+    /// #                JF4bBdB8XDJJ5LLsGewMTGlm8BrJA9aAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+    /// #                AA==".to_string(),
+    /// #               sol_rpc_types::TransactionBinaryEncoding::Base64,
+    /// #           ),
+    /// #           version: None,
+    /// #           meta: None,
+    /// #       }
     /// #   })))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
