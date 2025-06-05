@@ -4,67 +4,87 @@
 
 use crate::{ClientBuilder, Runtime};
 use async_trait::async_trait;
-use candid::{utils::ArgumentEncoder, CandidType, Principal};
+use candid::{utils::ArgumentEncoder, CandidType, Decode, Encode, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo};
+use std::collections::HashMap;
+use std::fmt::Debug;
 
 impl<R> ClientBuilder<R> {
-    /// Change the runtime to return the same mocked response for both update and query calls.
-    pub fn with_mocked_response<Out: CandidType>(
+    /// Change the runtime to return the given mocked response for all calls.
+    pub fn with_mocked_responses(self) -> ClientBuilder<MockRuntime> {
+        self.with_runtime(|_runtime| MockRuntime::new())
+    }
+}
+
+impl ClientBuilder<MockRuntime> {
+    /// Change the runtime to return the given mocked response for all calls.
+    pub fn with_default_response<Out: CandidType>(
         self,
         mocked_response: Out,
     ) -> ClientBuilder<MockRuntime> {
-        self.with_runtime(|_runtime| MockRuntime::same_response(mocked_response))
+        self.with_runtime(|runtime| runtime.with_default_response(mocked_response))
     }
 
-    /// Change the runtime to return different mocked responses between update and query calls.
-    pub fn with_mocked_responses<UpdateOut: CandidType, QueryOut: CandidType>(
+    /// Change the runtime to return the given mocked response for calls to the given method.
+    pub fn with_response_for_method<Out: CandidType + DeserializeOwned + PartialEq + Debug>(
         self,
-        mocked_response_for_update_call: UpdateOut,
-        mocked_response_for_query_call: QueryOut,
+        method_name: &str,
+        mocked_response: Out,
     ) -> ClientBuilder<MockRuntime> {
-        self.with_runtime(|_runtime| {
-            MockRuntime::new(
-                mocked_response_for_update_call,
-                mocked_response_for_query_call,
-            )
-        })
+        self.with_runtime(|runtime| runtime.with_response_for_method(method_name, mocked_response))
     }
 }
 
-/// A dummy implementation of [`Runtime`] that always return the same candid-encoded response.
+/// A dummy implementation of [`Runtime`] that always returns the same candid-encoded response
+/// for a given method.
 ///
 /// Implement your own [`Runtime`] in case a more refined approach is needed.
 pub struct MockRuntime {
-    update_call_result: Vec<u8>,
-    query_call_result: Vec<u8>,
+    default_call_result: Option<Vec<u8>>,
+    method_to_call_result_map: HashMap<String, Vec<u8>>,
 }
 
 impl MockRuntime {
-    /// Create a new [`MockRuntime`] to always return the given parameter.
-    pub fn same_response<Out: CandidType>(mocked_response: Out) -> Self {
-        let result = candid::encode_args((&mocked_response,))
-            .expect("Failed to encode Candid mocked response");
+    /// Create a new [`MockRuntime`] with the given default mocked response.
+    pub fn new() -> Self {
         Self {
-            update_call_result: result.clone(),
-            query_call_result: result,
+            default_call_result: None,
+            method_to_call_result_map: HashMap::new(),
         }
     }
 
-    /// Create a new [`MockRuntime`] to always return the given parameters.
-    pub fn new<UpdateOut: CandidType, QueryOut: CandidType>(
-        mocked_update_result: UpdateOut,
-        mocked_query_result: QueryOut,
+    /// Create a new [`MockRuntime`] with the given default mocked response.
+    pub fn with_default_response<Out: CandidType>(mut self, mocked_response: Out) -> Self {
+        let result = Encode!(&mocked_response).expect("Failed to encode Candid mocked response");
+        self.default_call_result = Some(result);
+        self
+    }
+
+    /// Modify a [`MockRuntime`] to return the given response for the given method
+    pub fn with_response_for_method<Out: CandidType + DeserializeOwned + PartialEq + Debug>(
+        mut self,
+        method: &str,
+        mocked_response: Out,
     ) -> Self {
-        let update_call_result = candid::encode_args((&mocked_update_result,))
-            .expect("Failed to encode Candid mocked response");
-        let query_call_result = candid::encode_args((&mocked_query_result,))
-            .expect("Failed to encode Candid mocked response");
-        Self {
-            update_call_result,
-            query_call_result,
-        }
+        let result = Encode!(&mocked_response).expect("Failed to encode Candid mocked response");
+        assert_eq!(Decode!(&result, Out).unwrap(), mocked_response);
+        self.method_to_call_result_map
+            .insert(method.to_string(), result);
+        self
+    }
+
+    fn call<Out>(&self, method: &str) -> Result<Out, (RejectionCode, String)>
+    where
+        Out: CandidType + DeserializeOwned,
+    {
+        let bytes = self
+            .method_to_call_result_map
+            .get(method)
+            .or(self.default_call_result.as_ref())
+            .unwrap_or_else(|| panic!("No available call response value for method `{method}`"));
+        Ok(Decode!(bytes, Out).expect("Failed to decode Candid mocked response"))
     }
 }
 
@@ -73,7 +93,7 @@ impl Runtime for MockRuntime {
     async fn update_call<In, Out>(
         &self,
         _id: Principal,
-        _method: &str,
+        method: &str,
         _args: In,
         _cycles: u128,
     ) -> Result<Out, (RejectionCode, String)>
@@ -81,24 +101,20 @@ impl Runtime for MockRuntime {
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
     {
-        Ok(candid::decode_args(&self.update_call_result)
-            .map(|(r,)| r)
-            .expect("Failed to decode Candid mocked response"))
+        self.call(&method)
     }
 
     async fn query_call<In, Out>(
         &self,
         _id: Principal,
-        _method: &str,
+        method: &str,
         _args: In,
     ) -> Result<Out, (RejectionCode, String)>
     where
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
     {
-        Ok(candid::decode_args(&self.query_call_result)
-            .map(|(r,)| r)
-            .expect("Failed to decode Candid mocked response"))
+        self.call(&method)
     }
 }
 
@@ -125,6 +141,6 @@ pub fn nonce_account() -> AccountInfo {
         owner: "11111111111111111111111111111111".to_string(),
         executable: false,
         rent_epoch: 18_446_744_073_709_551_615,
-        space: 80
+        space: 80,
     }
 }

@@ -1017,32 +1017,38 @@ impl<R: Runtime> EstimateBlockhashRequestBuilder<R> {
     /// [`SolRpcClient::estimate_recent_blockhash`]).
     pub async fn send(self) -> Result<Hash, Vec<EstimateRecentBlockhashError>> {
         let mut errors = Vec::with_capacity(self.num_retries);
+        let mut num_calls = 0;
         loop {
-            if errors.len() >= self.num_retries {
+            // If we get to this point, we still need at least 2 more calls to fetch a blockhash.
+            if num_calls > self.num_retries {
                 return Err(errors);
             }
+            num_calls += 1;
             match self.get_slot().await {
-                MultiRpcResult::Consistent(Ok(slot)) => match self.get_block(slot).await {
-                    MultiRpcResult::Consistent(Ok(Some(block))) => {
-                        match Hash::from_str(&block.blockhash) {
-                            Ok(blockhash) => return Ok(blockhash),
-                            Err(e) => errors.push(EstimateRecentBlockhashError::GetBlockRpcError(
-                                RpcError::from(e),
-                            )),
+                MultiRpcResult::Consistent(Ok(slot)) => {
+                    num_calls += 1;
+                    match self.get_block(slot).await {
+                        MultiRpcResult::Consistent(Ok(Some(block))) => {
+                            match Hash::from_str(&block.blockhash) {
+                                Ok(blockhash) => return Ok(blockhash),
+                                Err(e) => errors.push(EstimateRecentBlockhashError::GetBlockRpcError(
+                                    RpcError::from(e),
+                                )),
+                            }
+                            continue;
                         }
-                        continue;
-                    }
-                    MultiRpcResult::Consistent(Ok(None)) => {
-                        errors.push(slot.into());
-                        continue;
-                    }
-                    MultiRpcResult::Inconsistent(results) => {
-                        errors.push(results.into());
-                        continue;
-                    }
-                    MultiRpcResult::Consistent(Err(e)) => {
-                        errors.push(EstimateRecentBlockhashError::GetBlockRpcError(e));
-                        continue;
+                        MultiRpcResult::Consistent(Ok(None)) => {
+                            errors.push(slot.into());
+                            continue;
+                        }
+                        MultiRpcResult::Inconsistent(results) => {
+                            errors.push(results.into());
+                            continue;
+                        }
+                        MultiRpcResult::Consistent(Err(e)) => {
+                            errors.push(EstimateRecentBlockhashError::GetBlockRpcError(e));
+                            continue;
+                        }
                     }
                 },
                 MultiRpcResult::Inconsistent(results) => {

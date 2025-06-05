@@ -24,7 +24,8 @@ mod tests;
 /// # use sol_rpc_client::fixtures::nonce_account;
 /// # use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo, MultiRpcResult};
 /// let client = SolRpcClient::builder_for_ic()
-/// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(Some(nonce_account()))))
+/// #   .with_mocked_responses()
+/// #   .with_default_response(MultiRpcResult::Consistent(Ok(Some(nonce_account()))))
 ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Devnet))
 ///     .build();
 ///
@@ -63,7 +64,8 @@ mod tests;
 /// # use sol_rpc_client::fixtures::usdc_account;
 /// # use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo, MultiRpcResult};
 /// let client = SolRpcClient::builder_for_ic()
-/// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(Some(usdc_account()))))
+/// #   .with_mocked_responses()
+/// #   .with_default_response(MultiRpcResult::Consistent(Ok(Some(usdc_account()))))
 ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
 ///     .build();
 ///

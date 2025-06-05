@@ -89,20 +89,37 @@ impl Ed25519KeyId {
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # use sol_rpc_client::fixtures::MockRuntime;
+/// # use sol_rpc_types::{ConfirmedBlock, MultiRpcResult};
 /// # use std::str::FromStr;
 /// # use ic_cdk::api::management_canister::schnorr::{SchnorrPublicKeyResponse, SignWithSchnorrResponse};
-/// let runtime = IcRuntime;
-/// # let runtime = MockRuntime::same_response(SchnorrPublicKeyResponse {
-/// #     public_key: pubkey!("BPebStjcgCPnWTK3FXZJ8KhqwNYLk9aubC9b4Cgqb6oE").as_ref().to_vec(),
-/// #     chain_code: "UWbC6EgDnWEJIU4KFBqASTCYAzEiJGsR".as_bytes().to_vec(),
-/// # });
+/// let client = SolRpcClient::builder_for_ic()
+/// #   .with_mocked_responses()
+/// #   .with_response_for_method("getSlot", MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+/// #   .with_response_for_method("getBlock", MultiRpcResult::Consistent(Ok(ConfirmedBlock {
+/// #       previous_blockhash: Default::default(),
+/// #       blockhash: Default::default(),
+/// #       parent_slot: 0,
+/// #       block_time: None,
+/// #       block_height: None,
+/// #       signatures: None,
+/// #       rewards: None,
+/// #       num_reward_partitions: None,
+/// #   })))
+/// #   .with_response_for_method("schnorr_public_key", SchnorrPublicKeyResponse {
+/// #       public_key: pubkey!("BPebStjcgCPnWTK3FXZJ8KhqwNYLk9aubC9b4Cgqb6oE").as_ref().to_vec(),
+/// #       chain_code: "UWbC6EgDnWEJIU4KFBqASTCYAzEiJGsR".as_bytes().to_vec(),
+/// #   })
+/// #   .with_response_for_method("sign_with_schnorr", SignWithSchnorrResponse {
+/// #       signature: Signature::from_str("37HbmunhjSC1xxnVsaFX2xaS8gYnb5JYiLy9B51Ky9Up69aF7Qra6dHSLMCaiurRYq3Y8ZxSVUwC5sntziWuhZee").unwrap().as_ref().to_vec()
+/// #    })
+///     .build();
 ///
 /// let key_id = Ed25519KeyId::MainnetTestKey1;
 /// let derivation_path = DerivationPath::from(
 ///     Principal::from_text("vaupb-eqaaa-aaaai-qplka-cai").unwrap()
 /// );
 /// let (payer, _) = get_pubkey(
-///     &runtime,
+///     client.runtime(),
 ///     None,
 ///     Some(&derivation_path),
 ///     key_id
@@ -112,13 +129,7 @@ impl Ed25519KeyId {
 ///
 /// let recipient = pubkey!("BPebStjcgCPnWTK3FXZJ8KhqwNYLk9aubC9b4Cgqb6oE");
 ///
-/// # use sol_rpc_types::MultiRpcResult;
-/// let blockhash = SolRpcClient::builder_for_ic()
-/// #   .with_mocked_responses(
-/// #        MultiRpcResult::Consistent(Ok(332_577_897_u64)),
-/// #        MultiRpcResult::Consistent(Ok(332_577_897_u64)),
-/// #    )
-///     .build()
+/// let blockhash = client
 ///     .estimate_recent_blockhash()
 ///     .send()
 ///     .await
@@ -130,11 +141,8 @@ impl Ed25519KeyId {
 ///     &blockhash,
 ///  );
 ///
-/// # let runtime = MockRuntime::same_response(SignWithSchnorrResponse {
-/// #     signature: Signature::from_str("37HbmunhjSC1xxnVsaFX2xaS8gYnb5JYiLy9B51Ky9Up69aF7Qra6dHSLMCaiurRYq3Y8ZxSVUwC5sntziWuhZee").unwrap().as_ref().to_vec(),
-/// # });
 /// let signature = sign_message(
-///     &runtime,
+///     client.runtime(),
 ///     &message,
 ///     key_id,
 ///     Some(&derivation_path),
@@ -167,20 +175,20 @@ pub async fn sign_message<R: Runtime>(
             name: key_id.id().to_string(),
         },
     };
-    let response: SignWithSchnorrResponse = R::update_call(
-        runtime,
-        Principal::management_canister(),
-        "sign_with_schnorr",
-        (arg,),
-        match key_id {
-            Ed25519KeyId::LocalDevelopment | Ed25519KeyId::MainnetTestKey1 => {
-                SIGN_WITH_SCHNORR_TEST_FEE
-            }
-            Ed25519KeyId::MainnetProdKey1 => SIGN_WITH_SCHNORR_PRODUCTION_FEE,
-        },
-    )
-    .await?;
-    solana_signature::Signature::try_from(response.signature).map_err(|e| {
+    let SignWithSchnorrResponse { signature } = runtime
+        .update_call(
+            Principal::management_canister(),
+            "sign_with_schnorr",
+            (arg,),
+            match key_id {
+                Ed25519KeyId::LocalDevelopment | Ed25519KeyId::MainnetTestKey1 => {
+                    SIGN_WITH_SCHNORR_TEST_FEE
+                }
+                Ed25519KeyId::MainnetProdKey1 => SIGN_WITH_SCHNORR_PRODUCTION_FEE,
+            },
+        )
+        .await?;
+    solana_signature::Signature::try_from(signature).map_err(|e| {
         panic!(
             "Expected signature to contain 64 bytes, got {} bytes",
             e.len()
@@ -204,9 +212,10 @@ pub async fn sign_message<R: Runtime>(
 /// #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # use sol_rpc_client::fixtures::MockRuntime;
-/// # use ic_cdk::api::management_canister::schnorr::{SchnorrPublicKeyResponse, SignWithSchnorrResponse};
+/// # use ic_cdk::api::management_canister::schnorr::SchnorrPublicKeyResponse;
 /// let runtime = IcRuntime;
-/// # let runtime = MockRuntime::same_response(SchnorrPublicKeyResponse {
+/// # let runtime = MockRuntime::new()
+/// # .with_response_for_method("schnorr_public_key", SchnorrPublicKeyResponse {
 /// #     public_key: pubkey!("BPebStjcgCPnWTK3FXZJ8KhqwNYLk9aubC9b4Cgqb6oE").as_ref().to_vec(),
 /// #     chain_code: "UWbC6EgDnWEJIU4KFBqASTCYAzEiJGsR".as_bytes().to_vec(),
 /// # });
