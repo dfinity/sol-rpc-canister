@@ -35,11 +35,10 @@ use solana_transaction_status_client_types::UiTransactionEncoding;
 use std::{
     future::Future,
     iter::zip,
-    num::NonZeroU8,
+    num::{NonZeroU8, NonZeroUsize},
     thread::sleep,
     time::{Duration, Instant},
 };
-use std::num::NonZeroUsize;
 
 pub const SPL_TOKEN_2022_ID: Pubkey = pubkey!("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
 
@@ -316,8 +315,7 @@ async fn should_send_transaction() {
     let blockhash = setup
         .icp_client()
         .estimate_recent_blockhash()
-        .with_num_tries(3)
-        .unwrap()
+        .with_num_tries(NonZeroUsize::new(3).unwrap())
         .send()
         .await
         .unwrap();

@@ -19,9 +19,9 @@ use sol_rpc_types::{
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_hash::Hash;
 use solana_transaction_status_client_types::UiConfirmedBlock;
-use std::num::NonZeroUsize;
 use std::{
     fmt::{Debug, Formatter},
+    num::NonZeroUsize,
     str::FromStr,
 };
 use strum::EnumIter;
@@ -1001,9 +1001,9 @@ impl<R> EstimateBlockhashRequestBuilder<R> {
     ///
     /// Each attempt consists of at most one `getSlot` and one `getBlock` call, such that the
     /// maximum number of RPC calls performed is `2 * num_tries`.
-    pub fn with_num_tries(mut self, num_tries: usize) -> Result<Self, std::num::TryFromIntError> {
-        self.num_tries = NonZeroUsize::try_from(num_tries)?;
-        Ok(self)
+    pub fn with_num_tries(mut self, num_tries: NonZeroUsize) -> Self {
+        self.num_tries = num_tries;
+        self
     }
 
     /// Sets an [`RpcConfig`] for the `getSlot` and `getBlock` calls. If not set, the default
