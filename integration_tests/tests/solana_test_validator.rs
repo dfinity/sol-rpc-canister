@@ -39,6 +39,7 @@ use std::{
     thread::sleep,
     time::{Duration, Instant},
 };
+use std::num::NonZeroUsize;
 
 pub const SPL_TOKEN_2022_ID: Pubkey = pubkey!("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
 
@@ -315,7 +316,8 @@ async fn should_send_transaction() {
     let blockhash = setup
         .icp_client()
         .estimate_recent_blockhash()
-        .with_num_retries(3)
+        .with_num_tries(3)
+        .unwrap()
         .send()
         .await
         .unwrap();

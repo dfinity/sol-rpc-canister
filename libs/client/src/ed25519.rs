@@ -88,14 +88,13 @@ impl Ed25519KeyId {
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # use sol_rpc_client::fixtures::MockRuntime;
 /// # use sol_rpc_types::{ConfirmedBlock, MultiRpcResult};
 /// # use std::str::FromStr;
 /// # use ic_cdk::api::management_canister::schnorr::{SchnorrPublicKeyResponse, SignWithSchnorrResponse};
 /// let client = SolRpcClient::builder_for_ic()
 /// #   .with_mocked_responses()
 /// #   .with_response_for_method("getSlot", MultiRpcResult::Consistent(Ok(332_577_897_u64)))
-/// #   .with_response_for_method("getBlock", MultiRpcResult::Consistent(Ok(ConfirmedBlock {
+/// #   .with_response_for_method("getBlock", MultiRpcResult::Consistent(Ok(Some(ConfirmedBlock {
 /// #       previous_blockhash: Default::default(),
 /// #       blockhash: Default::default(),
 /// #       parent_slot: 0,
@@ -104,7 +103,8 @@ impl Ed25519KeyId {
 /// #       signatures: None,
 /// #       rewards: None,
 /// #       num_reward_partitions: None,
-/// #   })))
+/// #       transactions: None,
+/// #   }))))
 /// #   .with_response_for_method("schnorr_public_key", SchnorrPublicKeyResponse {
 /// #       public_key: pubkey!("BPebStjcgCPnWTK3FXZJ8KhqwNYLk9aubC9b4Cgqb6oE").as_ref().to_vec(),
 /// #       chain_code: "UWbC6EgDnWEJIU4KFBqASTCYAzEiJGsR".as_bytes().to_vec(),

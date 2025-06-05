@@ -126,8 +126,8 @@ pub mod nonce;
 mod request;
 
 use crate::request::{
-    EstimateBlockhashRequestBuilder, GetAccountInfoRequest, GetAccountInfoRequestBuilder,
-    GetBalanceRequest, GetBalanceRequestBuilder, GetBlockRequest, GetBlockRequestBuilder,
+    GetAccountInfoRequest, GetAccountInfoRequestBuilder, GetBalanceRequest,
+    GetBalanceRequestBuilder, GetBlockRequest, GetBlockRequestBuilder,
     GetRecentPrioritizationFeesRequest, GetRecentPrioritizationFeesRequestBuilder,
     GetSignatureStatusesRequest, GetSignatureStatusesRequestBuilder,
     GetSignaturesForAddressRequest, GetSignaturesForAddressRequestBuilder, GetSlotRequest,
@@ -138,7 +138,10 @@ use crate::request::{
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
-pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
+pub use request::{
+    EstimateBlockhashRequestBuilder, EstimateRecentBlockhashError, Request, RequestBuilder,
+    SolRpcEndpoint, SolRpcRequest,
+};
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     CommitmentLevel, ConsensusStrategy, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
@@ -1048,9 +1051,74 @@ impl<R: Runtime> SolRpcClient<R> {
     ///
     /// Since `getSlot` can fail due to consensus errors and `getBlock` can fail due to not every
     /// slot having a block, this method allows retrying to fetch a recent blockhash until either
-    /// a blockhash is successfully retrieved, or a maximum number of RPC calls is performed. Each
-    /// additional RPC method call (i.e. `getSlot` or `getBlock` counts as one retry). By default,
-    /// no retries will be performed.
+    /// a blockhash is successfully retrieved, or a maximum number of attempts if performed. By
+    /// default, a single attempt is performed.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use solana_hash::Hash;
+    /// use sol_rpc_client::{SolRpcClient};
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use sol_rpc_types::{ConfirmedBlock, MultiRpcResult};
+    /// # use std::str::FromStr;
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_responses()
+    /// #   .with_response_for_method("getSlot", MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+    /// #   .with_response_for_method("getBlock", MultiRpcResult::Consistent(Ok(ConfirmedBlock {
+    /// #       previous_blockhash: Default::default(),
+    /// #       blockhash: Hash::from_str("C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY").unwrap().into(),
+    /// #       parent_slot: 0,
+    /// #       block_time: None,
+    /// #       block_height: None,
+    /// #       signatures: None,
+    /// #       rewards: None,
+    /// #       num_reward_partitions: None,
+    /// #       transactions: None,
+    /// #   })))
+    ///     .build();
+    ///
+    /// // Try to fetch a slot and the corresponding block up to 3 times
+    /// let blockhash = client
+    ///     .estimate_recent_blockhash()
+    ///     .with_num_tries(3)
+    ///     .unwrap()
+    ///     .send()
+    ///     .await;
+    ///
+    /// assert_eq!(blockhash, Ok(Hash::from_str("C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY").unwrap()));
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// ```rust
+    /// use solana_hash::Hash;
+    /// use sol_rpc_client::{EstimateRecentBlockhashError, SolRpcClient};
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use sol_rpc_types::{ConfirmedBlock, MultiRpcResult};
+    /// # use std::str::FromStr;
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_responses()
+    /// #   .with_response_for_method("getSlot", MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+    /// #   .with_response_for_method("getBlock", MultiRpcResult::Consistent(Ok(None::<ConfirmedBlock>)))
+    ///     .build();
+    ///
+    /// let blockhash = client
+    ///     .estimate_recent_blockhash()
+    ///     .send()
+    ///     .await;
+    ///
+    /// // Only one attempt was performed and there was no block for the fetched slot
+    /// assert_eq!(blockhash, Err(vec![EstimateRecentBlockhashError::MissingBlock(332_577_897_u64)]));
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn estimate_recent_blockhash(&self) -> EstimateBlockhashRequestBuilder<R> {
         EstimateBlockhashRequestBuilder::new(self.clone())
     }
