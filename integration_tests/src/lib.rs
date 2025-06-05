@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use candid::{decode_args, utils::ArgumentEncoder, CandidType, Encode, Principal};
+use candid::{decode_args, utils::ArgumentEncoder, CandidType, Decode, Encode, Principal};
 use canhttp::http::json::ConstantSizeId;
 use canlog::{Log, LogEntry};
 use ic_cdk::api::call::RejectionCode;
@@ -497,11 +497,7 @@ pub trait SolRpcTestClient<R: Runtime> {
     fn mock_http(self, mock: impl Into<MockOutcall>) -> Self;
     fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self;
     fn mock_http_sequence(self, mocks: Vec<impl Into<MockOutcall>>) -> Self;
-    fn mock_sequential_json_rpc_responses<const N: usize>(
-        self,
-        status: u16,
-        body: serde_json::Value,
-    ) -> Self;
+    fn mock_sequential_json_rpc_responses<const N: usize>(self, body: serde_json::Value) -> Self;
 }
 
 #[async_trait]
@@ -522,14 +518,10 @@ impl SolRpcTestClient<PocketIcRuntime<'_>> for ClientBuilder<PocketIcRuntime<'_>
         })
     }
 
-    fn mock_sequential_json_rpc_responses<const N: usize>(
-        self,
-        status: u16,
-        body: serde_json::Value,
-    ) -> Self {
+    fn mock_sequential_json_rpc_responses<const N: usize>(self, body: serde_json::Value) -> Self {
         let mocks = json_rpc_sequential_id::<N>(body)
             .into_iter()
-            .map(|response| MockOutcallBuilder::new(status, &response))
+            .map(|response| MockOutcallBuilder::new(200, &response))
             .collect();
         self.mock_http_sequence(mocks)
     }
