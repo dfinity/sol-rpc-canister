@@ -7,20 +7,18 @@ use derive_more::From;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
-    DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
-    GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
-    GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams, GetSignaturesForAddressLimit,
-    GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
-    GetTransactionEncoding, GetTransactionParams, Lamport, MultiRpcResult, NonZeroU8,
-    PrioritizationFee, RoundingError, RpcConfig, RpcError, RpcResult, RpcSource, RpcSources,
-    SendTransactionParams, Signature, Slot, TokenAmount, TransactionDetails, TransactionInfo,
-    TransactionStatus,
+    DataSlice, EncodedConfirmedTransactionWithStatusMeta, GetAccountInfoEncoding,
+    GetAccountInfoParams, GetBalanceParams, GetBlockCommitmentLevel, GetBlockParams,
+    GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
+    GetSignatureStatusesParams, GetSignaturesForAddressLimit, GetSignaturesForAddressParams,
+    GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionEncoding,
+    GetTransactionParams, Lamport, MultiRpcResult, NonZeroU8, PrioritizationFee, RoundingError,
+    RpcConfig, RpcError, RpcResult, RpcSource, RpcSources, SendTransactionParams, Signature, Slot,
+    TokenAmount, TransactionDetails, TransactionStatus,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_hash::Hash;
-use solana_transaction_status_client_types::{
-    EncodedConfirmedTransactionWithStatusMeta, UiConfirmedBlock,
-};
+use solana_transaction_status_client_types::UiConfirmedBlock;
 use std::{
     fmt::{Debug, Formatter},
     str::FromStr,
@@ -294,12 +292,13 @@ impl<R> GetBlockRequestBuilder<R> {
 
     /// Update the cycles estimate for this request
     pub fn update_cycles(self) -> Self {
-        let mut cycles = match self.request.params.transaction_details.unwrap_or_default() {
+        let cycles = match self.request.params.transaction_details.unwrap_or_default() {
+            TransactionDetails::Accounts => 1_000_000_000_000,
             TransactionDetails::Signatures => 100_000_000_000,
-            TransactionDetails::None => 10_000_000_000,
-        };
-        if self.request.params.rewards.unwrap_or(true) {
-            cycles += 10_000_000_000
+            TransactionDetails::None => match self.request.params.rewards {
+                Some(true) | None => 20_000_000_000,
+                Some(false) => 10_000_000_000,
+            },
         };
         self.with_cycles(cycles)
     }
@@ -531,8 +530,10 @@ impl GetTransactionRequest {
 impl SolRpcRequest for GetTransactionRequest {
     type Config = RpcConfig;
     type Params = GetTransactionParams;
-    type CandidOutput = MultiRpcResult<Option<TransactionInfo>>;
-    type Output = MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>;
+    type CandidOutput = MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>;
+    type Output = MultiRpcResult<
+        Option<solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta>,
+    >;
 
     fn endpoint(&self) -> SolRpcEndpoint {
         SolRpcEndpoint::GetTransaction
@@ -549,8 +550,10 @@ pub type GetTransactionRequestBuilder<R> = RequestBuilder<
     R,
     RpcConfig,
     GetTransactionParams,
-    MultiRpcResult<Option<TransactionInfo>>,
     MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>>,
+    MultiRpcResult<
+        Option<solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta>,
+    >,
 >;
 
 impl<R> GetTransactionRequestBuilder<R> {
@@ -1031,9 +1034,11 @@ impl<R: Runtime> EstimateBlockhashRequestBuilder<R> {
                         MultiRpcResult::Consistent(Ok(Some(block))) => {
                             match Hash::from_str(&block.blockhash) {
                                 Ok(blockhash) => return Ok(blockhash),
-                                Err(e) => errors.push(EstimateRecentBlockhashError::GetBlockRpcError(
-                                    RpcError::from(e),
-                                )),
+                                Err(e) => {
+                                    errors.push(EstimateRecentBlockhashError::GetBlockRpcError(
+                                        RpcError::from(e),
+                                    ))
+                                }
                             }
                             continue;
                         }
@@ -1050,7 +1055,7 @@ impl<R: Runtime> EstimateBlockhashRequestBuilder<R> {
                             continue;
                         }
                     }
-                },
+                }
                 MultiRpcResult::Inconsistent(results) => {
                     errors.push(results.into());
                     continue;
