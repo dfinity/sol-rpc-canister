@@ -31,7 +31,7 @@ pub async fn get_ed25519_public_key(
     derivation_path: &DerivationPath,
 ) -> Ed25519ExtendedPublicKey {
     let (pubkey, chain_code) = sol_rpc_client::ed25519::get_pubkey(
-        &IcRuntime,
+        &mut IcRuntime,
         None,
         Some(derivation_path),
         key_name.into(),

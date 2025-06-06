@@ -42,7 +42,7 @@ impl SolanaAccount {
 
     pub async fn sign_message(&self, message: &Message) -> Signature {
         sign_message(
-            &IcRuntime,
+            &mut IcRuntime,
             message,
             read_state(|s| s.ed25519_key_name()).into(),
             Some(&self.derivation_path),

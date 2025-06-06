@@ -4480,6 +4480,7 @@ dependencies = [
  "bincode",
  "candid",
  "derive_more",
+ "futures",
  "ic-cdk",
  "ic-ed25519",
  "serde",

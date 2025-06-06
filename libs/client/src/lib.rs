@@ -125,6 +125,8 @@ pub mod fixtures;
 pub mod nonce;
 mod request;
 
+#[cfg(feature = "ed25519")]
+use crate::ed25519::{get_pubkey, sign_message, DerivationPath, Ed25519KeyId};
 use crate::request::{
     GetAccountInfoRequest, GetAccountInfoRequestBuilder, GetBalanceRequest,
     GetBalanceRequestBuilder, GetBlockRequest, GetBlockRequestBuilder,
@@ -137,6 +139,7 @@ use crate::request::{
 };
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
+use futures::lock::Mutex;
 use ic_cdk::api::call::RejectionCode;
 pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
 use serde::de::DeserializeOwned;
@@ -147,6 +150,7 @@ use sol_rpc_types::{
     SendTransactionParams, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use std::{fmt::Debug, sync::Arc};
+
 /// The principal identifying the productive Solana RPC canister under NNS control.
 ///
 /// ```rust
@@ -165,7 +169,7 @@ pub const SOL_RPC_CANISTER: Principal = Principal::from_slice(&[0, 0, 0, 0, 2, 4
 pub trait Runtime {
     /// Defines how asynchronous inter-canister update calls are made.
     async fn update_call<In, Out>(
-        &self,
+        &mut self,
         id: Principal,
         method: &str,
         args: In,
@@ -177,7 +181,7 @@ pub trait Runtime {
 
     /// Defines how asynchronous inter-canister query calls are made.
     async fn query_call<In, Out>(
-        &self,
+        &mut self,
         id: Principal,
         method: &str,
         args: In,
@@ -208,8 +212,12 @@ impl<R> SolRpcClient<R> {
     }
 
     /// Returns a reference to the client's runtime.
-    pub fn runtime(&self) -> &R {
-        &self.config.runtime
+    pub async fn with_mut_runtime<F, S>(&mut self, f: F) -> S
+    where
+        F: AsyncFnOnce(&mut R) -> S,
+    {
+        let mut guard = self.config.runtime.lock().await;
+        f(&mut *guard).await
     }
 }
 
@@ -222,9 +230,9 @@ impl SolRpcClient<IcRuntime> {
 }
 
 /// Client to interact with the SOL RPC canister.
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Debug)]
 pub struct ClientConfig<R> {
-    runtime: R,
+    runtime: Mutex<R>,
     sol_rpc_canister: Principal,
     rpc_config: Option<RpcConfig>,
     default_commitment_level: Option<CommitmentLevel>,
@@ -241,7 +249,7 @@ impl<R> ClientBuilder<R> {
     fn new(runtime: R, sol_rpc_canister: Principal) -> Self {
         Self {
             config: ClientConfig {
-                runtime,
+                runtime: Mutex::new(runtime),
                 sol_rpc_canister,
                 rpc_config: None,
                 default_commitment_level: None,
@@ -256,7 +264,10 @@ impl<R> ClientBuilder<R> {
     pub fn with_runtime<S, F: FnOnce(R) -> S>(self, other_runtime: F) -> ClientBuilder<S> {
         ClientBuilder {
             config: ClientConfig {
-                runtime: other_runtime(self.config.runtime),
+                runtime: {
+                    let runtime = other_runtime(self.config.runtime.into_inner());
+                    Mutex::new(runtime)
+                },
                 sol_rpc_canister: self.config.sol_rpc_canister,
                 rpc_config: self.config.rpc_config,
                 default_commitment_level: self.config.default_commitment_level,
@@ -827,40 +838,23 @@ impl<R> SolRpcClient<R> {
     /// # use std::str::FromStr;
     /// # use sol_rpc_types::{ConfirmedBlock, GetTransactionEncoding, Hash, MultiRpcResult, Pubkey};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(sol_rpc_types::TransactionInfo {
+    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(sol_rpc_types::EncodedConfirmedTransactionWithStatusMeta {
     /// #       slot: 344115445,
     /// #       block_time: Some(1748865196),
-    /// #       version: None,
-    /// #       transaction: sol_rpc_types::EncodedTransaction::Binary(
-    /// #           "AezK+RzWcWWx92r0fdmhv7XPAaFQjkPd6MFbGVA7G48aioSd3xcYmwaPC2ih7PwypyeC/9to8mau9B\
-    /// #            i7UnL51QUBAAEDCPqP+HgQC9XiKJ57C0YTNM3SFIvOA3aVl/IgkHIZDmuTFuOuQ+TscmAh2ImY30W1\
-    /// #            llOzfsPudc98t1jqdNEmVQdhSB01dHS7fE12JOvTvbPYNV5z0RBD/A2jU4AAAAAA97B2Pa9+X8kE7k\
-    /// #            E4774GwvI3QCvLgOTJRad8txcXNsUBAgIBAJQBDgAAANXIghQAAAAAHwEfAR4BHQEcARsBGgEZARgB\
-    /// #            FwEWARUBFAETARIBEQEQAQ8BDgENAQwBCwEKAQkBCAEHAQYBBQEEAQMBAgEBiNvPO/moMFqBbr9xeM\
-    /// #            JF4bBdB8XDJJ5LLsGewMTGlm8BrJA9aAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
-    /// #            AA==".to_string(),
-    /// #           sol_rpc_types::TransactionBinaryEncoding::Base64,
-    /// #       ),
-    /// #       meta: Some(sol_rpc_types::TransactionStatusMeta {
-    /// #           status: Ok(()),
-    /// #           fee: 5000,
-    /// #           pre_balances: vec![43156320838, 6678633253, 1],
-    /// #           post_balances: vec![43156315838, 6678633253, 1],
-    /// #           inner_instructions: Some(vec![]),
-    /// #           log_messages: Some(vec![
-    /// #               "Program Vote111111111111111111111111111111111111111 invoke [1]".to_string(),
-    /// #               "Program Vote111111111111111111111111111111111111111 success".to_string()
-    /// #           ]).into(),
-    /// #           pre_token_balances: Some(vec![]),
-    /// #           post_token_balances: Some(vec![]),
-    /// #           rewards: Some(vec![]),
-    /// #           loaded_addresses: Some(sol_rpc_types::LoadedAddresses {
-    /// #               writable: vec![],
-    /// #               readonly: vec![],
-    /// #           }),
-    /// #           return_data: None,
-    /// #           compute_units_consumed: Some(2100),
-    /// #       }),
+    /// #       transaction: sol_rpc_types::EncodedTransactionWithStatusMeta {
+    /// #           transaction: sol_rpc_types::EncodedTransaction::Binary(
+    /// #               "AezK+RzWcWWx92r0fdmhv7XPAaFQjkPd6MFbGVA7G48aioSd3xcYmwaPC2ih7PwypyeC/9to8mau9B\
+    /// #               i7UnL51QUBAAEDCPqP+HgQC9XiKJ57C0YTNM3SFIvOA3aVl/IgkHIZDmuTFuOuQ+TscmAh2ImY30W1\
+    /// #               llOzfsPudc98t1jqdNEmVQdhSB01dHS7fE12JOvTvbPYNV5z0RBD/A2jU4AAAAAA97B2Pa9+X8kE7k\
+    /// #               E4774GwvI3QCvLgOTJRad8txcXNsUBAgIBAJQBDgAAANXIghQAAAAAHwEfAR4BHQEcARsBGgEZARgB\
+    /// #               FwEWARUBFAETARIBEQEQAQ8BDgENAQwBCwEKAQkBCAEHAQYBBQEEAQMBAgEBiNvPO/moMFqBbr9xeM\
+    /// #               JF4bBdB8XDJJ5LLsGewMTGlm8BrJA9aAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+    /// #               AA==".to_string(),
+    /// #               sol_rpc_types::TransactionBinaryEncoding::Base64,
+    /// #           ),
+    /// #           version: None,
+    /// #           meta: None,
+    /// #       }
     /// #   })))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
@@ -1025,6 +1019,8 @@ impl<R: Runtime> SolRpcClient<R> {
     pub async fn get_providers(&self) -> Vec<(SupportedRpcProviderId, SupportedRpcProvider)> {
         self.config
             .runtime
+            .lock()
+            .await
             .query_call(self.config.sol_rpc_canister, "getProviders", ())
             .await
             .unwrap()
@@ -1034,6 +1030,8 @@ impl<R: Runtime> SolRpcClient<R> {
     pub async fn update_api_keys(&self, api_keys: &[(SupportedRpcProviderId, Option<String>)]) {
         self.config
             .runtime
+            .lock()
+            .await
             .update_call(
                 self.config.sol_rpc_canister,
                 "updateApiKeys",
@@ -1042,6 +1040,34 @@ impl<R: Runtime> SolRpcClient<R> {
             )
             .await
             .unwrap()
+    }
+
+    /// Call [`ed25519::sign_message`] using this client's runtime.
+    #[cfg(feature = "ed25519")]
+    pub async fn sign_message(
+        &mut self,
+        message: &solana_message::Message,
+        key_id: Ed25519KeyId,
+        derivation_path: Option<&DerivationPath>,
+    ) -> Result<solana_signature::Signature, (RejectionCode, String)> {
+        self.with_mut_runtime(async |runtime| {
+            sign_message(&mut *runtime, message, key_id, derivation_path).await
+        })
+        .await
+    }
+
+    /// Call [`ed25519::get_pubkey`] using this client's runtime.
+    #[cfg(feature = "ed25519")]
+    pub async fn get_pubkey(
+        &mut self,
+        canister_id: Option<Principal>,
+        derivation_path: Option<&DerivationPath>,
+        key_id: Ed25519KeyId,
+    ) -> Result<(solana_pubkey::Pubkey, [u8; 32]), (RejectionCode, String)> {
+        self.with_mut_runtime(async |runtime| {
+            get_pubkey(runtime, canister_id, derivation_path, key_id).await
+        })
+        .await
     }
 
     async fn execute_request<Config, Params, CandidOutput, Output>(
@@ -1055,6 +1081,8 @@ impl<R: Runtime> SolRpcClient<R> {
     {
         self.config
             .runtime
+            .lock()
+            .await
             .update_call::<(RpcSources, Option<Config>, Params), CandidOutput>(
                 self.config.sol_rpc_canister,
                 request.endpoint.rpc_method(),
@@ -1082,6 +1110,8 @@ impl<R: Runtime> SolRpcClient<R> {
     {
         self.config
             .runtime
+            .lock()
+            .await
             .query_call::<(RpcSources, Option<Config>, Params), CandidOutput>(
                 self.config.sol_rpc_canister,
                 request.endpoint.cycles_cost_method(),
@@ -1105,7 +1135,7 @@ pub struct IcRuntime;
 #[async_trait]
 impl Runtime for IcRuntime {
     async fn update_call<In, Out>(
-        &self,
+        &mut self,
         id: Principal,
         method: &str,
         args: In,
@@ -1121,7 +1151,7 @@ impl Runtime for IcRuntime {
     }
 
     async fn query_call<In, Out>(
-        &self,
+        &mut self,
         id: Principal,
         method: &str,
         args: In,

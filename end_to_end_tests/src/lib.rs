@@ -211,7 +211,7 @@ impl<'a> IcAgentRuntime<'a> {
 #[async_trait]
 impl Runtime for IcAgentRuntime<'_> {
     async fn update_call<In, Out>(
-        &self,
+        &mut self,
         id: Principal,
         method: &str,
         args: In,
@@ -233,7 +233,7 @@ impl Runtime for IcAgentRuntime<'_> {
     }
 
     async fn query_call<In, Out>(
-        &self,
+        &mut self,
         id: Principal,
         method: &str,
         args: In,
