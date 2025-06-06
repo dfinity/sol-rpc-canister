@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use sol_rpc_client::{
-    ed25519::{get_pubkey, sign_message, DerivationPath, Ed25519KeyId},
+    ed25519::{DerivationPath, Ed25519KeyId},
     nonce::nonce_from_account,
 };
 use sol_rpc_e2e_tests::Setup;
@@ -109,7 +109,7 @@ async fn send_transaction_test<F: CreateSolanaMessage>(
         "Sending transaction from sender account '{sender_pubkey:?}' to recipient account '{recipient_pubkey:?}'"
     );
 
-    let client = setup.client();
+    let mut client = setup.client();
 
     let sender_balance_before = setup.get_account_balance(&sender_pubkey).await;
     println!("Sender balance before sending transaction: {sender_balance_before:?} lamports");
@@ -121,14 +121,10 @@ async fn send_transaction_test<F: CreateSolanaMessage>(
         .await;
 
     // Sign transaction with t-EdDSA
-    let signature = sign_message(
-        client.runtime(),
-        &message,
-        KEY_ID,
-        Some(&sender_derivation_path),
-    )
-    .await
-    .expect("Failed to sign transaction");
+    let signature = client
+        .sign_message(&message, KEY_ID, Some(&sender_derivation_path))
+        .await
+        .expect("Failed to sign transaction");
 
     let transaction = Transaction {
         message,
@@ -279,13 +275,10 @@ fn fund_accounts(setup: &Setup, accounts: &[Pubkey]) {
 }
 
 async fn verify_pubkey(derivation_path: &DerivationPath, expected_pubkey: &Pubkey) {
-    let (pubkey, _) = get_pubkey(
-        Setup::new().client().runtime(),
-        None,
-        Some(derivation_path),
-        KEY_ID,
-    )
-    .await
-    .unwrap_or_else(|e| panic!("Failed to get Ed25519 public key: {e:?}"));
+    let (pubkey, _) = Setup::new()
+        .client()
+        .get_pubkey(None, Some(derivation_path), KEY_ID)
+        .await
+        .unwrap_or_else(|e| panic!("Failed to get Ed25519 public key: {e:?}"));
     assert_eq!(&pubkey, expected_pubkey);
 }

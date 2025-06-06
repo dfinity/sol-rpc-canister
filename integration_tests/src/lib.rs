@@ -150,8 +150,7 @@ impl Setup {
     }
 
     pub async fn verify_api_key(&self, api_key: (SupportedRpcProviderId, Option<String>)) {
-        let runtime = self.new_pocket_ic_runtime();
-        runtime
+        self.new_pocket_ic_runtime()
             .query_call(self.sol_rpc_canister_id, "verifyApiKey", (api_key,))
             .await
             .unwrap()
@@ -164,8 +163,8 @@ impl Setup {
             headers: vec![],
             body: serde_bytes::ByteBuf::new(),
         };
-        let runtime = self.new_pocket_ic_runtime();
-        let response: HttpResponse = runtime
+        let response: HttpResponse = self
+            .new_pocket_ic_runtime()
             .query_call(self.sol_rpc_canister_id, "http_request", (request,))
             .await
             .unwrap();
@@ -274,7 +273,7 @@ pub struct PocketIcRuntime<'a> {
 #[async_trait]
 impl Runtime for PocketIcRuntime<'_> {
     async fn update_call<In, Out>(
-        &self,
+        &mut self,
         id: Principal,
         method: &str,
         args: In,
@@ -305,7 +304,7 @@ impl Runtime for PocketIcRuntime<'_> {
     }
 
     async fn query_call<In, Out>(
-        &self,
+        &mut self,
         id: Principal,
         method: &str,
         args: In,
@@ -424,7 +423,7 @@ pub struct PocketIcLiveModeRuntime<'a> {
 #[async_trait]
 impl Runtime for PocketIcLiveModeRuntime<'_> {
     async fn update_call<In, Out>(
-        &self,
+        &mut self,
         id: Principal,
         method: &str,
         args: In,
@@ -454,7 +453,7 @@ impl Runtime for PocketIcLiveModeRuntime<'_> {
     }
 
     async fn query_call<In, Out>(
-        &self,
+        &mut self,
         id: Principal,
         method: &str,
         args: In,

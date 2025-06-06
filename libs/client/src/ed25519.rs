@@ -91,8 +91,8 @@ impl Ed25519KeyId {
 /// # use sol_rpc_client::fixtures::MockRuntime;
 /// # use std::str::FromStr;
 /// # use ic_cdk::api::management_canister::schnorr::{SchnorrPublicKeyResponse, SignWithSchnorrResponse};
-/// let runtime = IcRuntime;
-/// # let runtime = MockRuntime::same_response(SchnorrPublicKeyResponse {
+/// let mut runtime = IcRuntime;
+/// # let mut runtime = MockRuntime::same_response(SchnorrPublicKeyResponse {
 /// #     public_key: pubkey!("BPebStjcgCPnWTK3FXZJ8KhqwNYLk9aubC9b4Cgqb6oE").as_ref().to_vec(),
 /// #     chain_code: "UWbC6EgDnWEJIU4KFBqASTCYAzEiJGsR".as_bytes().to_vec(),
 /// # });
@@ -102,7 +102,7 @@ impl Ed25519KeyId {
 ///     Principal::from_text("vaupb-eqaaa-aaaai-qplka-cai").unwrap()
 /// );
 /// let (payer, _) = get_pubkey(
-///     &runtime,
+///     &mut runtime,
 ///     None,
 ///     Some(&derivation_path),
 ///     key_id
@@ -120,11 +120,11 @@ impl Ed25519KeyId {
 ///     &recent_blockhash,
 ///  );
 ///
-/// # let runtime = MockRuntime::same_response(SignWithSchnorrResponse {
+/// # let mut runtime = MockRuntime::same_response(SignWithSchnorrResponse {
 /// #     signature: Signature::from_str("37HbmunhjSC1xxnVsaFX2xaS8gYnb5JYiLy9B51Ky9Up69aF7Qra6dHSLMCaiurRYq3Y8ZxSVUwC5sntziWuhZee").unwrap().as_ref().to_vec(),
 /// # });
 /// let signature = sign_message(
-///     &runtime,
+///     &mut runtime,
 ///     &message,
 ///     key_id,
 ///     Some(&derivation_path),
@@ -144,7 +144,7 @@ impl Ed25519KeyId {
 /// # }
 /// ```
 pub async fn sign_message<R: Runtime>(
-    runtime: &R,
+    runtime: &mut R,
     message: &solana_message::Message,
     key_id: Ed25519KeyId,
     derivation_path: Option<&DerivationPath>,
@@ -157,19 +157,19 @@ pub async fn sign_message<R: Runtime>(
             name: key_id.id().to_string(),
         },
     };
-    let response: SignWithSchnorrResponse = R::update_call(
-        runtime,
-        Principal::management_canister(),
-        "sign_with_schnorr",
-        (arg,),
-        match key_id {
-            Ed25519KeyId::LocalDevelopment | Ed25519KeyId::MainnetTestKey1 => {
-                SIGN_WITH_SCHNORR_TEST_FEE
-            }
-            Ed25519KeyId::MainnetProdKey1 => SIGN_WITH_SCHNORR_PRODUCTION_FEE,
-        },
-    )
-    .await?;
+    let response: SignWithSchnorrResponse = runtime
+        .update_call(
+            Principal::management_canister(),
+            "sign_with_schnorr",
+            (arg,),
+            match key_id {
+                Ed25519KeyId::LocalDevelopment | Ed25519KeyId::MainnetTestKey1 => {
+                    SIGN_WITH_SCHNORR_TEST_FEE
+                }
+                Ed25519KeyId::MainnetProdKey1 => SIGN_WITH_SCHNORR_PRODUCTION_FEE,
+            },
+        )
+        .await?;
     solana_signature::Signature::try_from(response.signature).map_err(|e| {
         panic!(
             "Expected signature to contain 64 bytes, got {} bytes",
@@ -196,7 +196,7 @@ pub async fn sign_message<R: Runtime>(
 /// # use sol_rpc_client::fixtures::MockRuntime;
 /// # use ic_cdk::api::management_canister::schnorr::{SchnorrPublicKeyResponse, SignWithSchnorrResponse};
 /// let runtime = IcRuntime;
-/// # let runtime = MockRuntime::same_response(SchnorrPublicKeyResponse {
+/// # let mut runtime = MockRuntime::same_response(SchnorrPublicKeyResponse {
 /// #     public_key: pubkey!("BPebStjcgCPnWTK3FXZJ8KhqwNYLk9aubC9b4Cgqb6oE").as_ref().to_vec(),
 /// #     chain_code: "UWbC6EgDnWEJIU4KFBqASTCYAzEiJGsR".as_bytes().to_vec(),
 /// # });
@@ -207,7 +207,7 @@ pub async fn sign_message<R: Runtime>(
 ///     Principal::from_text("vaupb-eqaaa-aaaai-qplka-cai").unwrap()
 /// );
 /// let (payer, _) = get_pubkey(
-///     &runtime,
+///     &mut runtime,
 ///     None,
 ///     Some(&derivation_path),
 ///     key_id
@@ -216,7 +216,7 @@ pub async fn sign_message<R: Runtime>(
 /// .unwrap();
 ///
 /// let (pubkey, _) = get_pubkey(
-///     &runtime,
+///     &mut runtime,
 ///     Some(canister_id),
 ///     Some(&derivation_path),
 ///     key_id
@@ -230,7 +230,7 @@ pub async fn sign_message<R: Runtime>(
 /// # }
 /// ```
 pub async fn get_pubkey<R: Runtime>(
-    runtime: &R,
+    runtime: &mut R,
     canister_id: Option<Principal>,
     derivation_path: Option<&DerivationPath>,
     key_id: Ed25519KeyId,

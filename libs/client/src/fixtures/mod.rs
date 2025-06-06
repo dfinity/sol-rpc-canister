@@ -71,7 +71,7 @@ impl MockRuntime {
 #[async_trait]
 impl Runtime for MockRuntime {
     async fn update_call<In, Out>(
-        &self,
+        &mut self,
         _id: Principal,
         _method: &str,
         _args: In,
@@ -87,7 +87,7 @@ impl Runtime for MockRuntime {
     }
 
     async fn query_call<In, Out>(
-        &self,
+        &mut self,
         _id: Principal,
         _method: &str,
         _args: In,
