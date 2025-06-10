@@ -12,7 +12,7 @@ use solana_message::Message;
 use solana_program::system_instruction;
 use solana_pubkey::Pubkey;
 use solana_transaction::Transaction;
-use std::{num::NonZeroUsize, str::FromStr};
+use std::str::FromStr;
 
 #[init]
 pub fn init(init_arg: InitArg) {
