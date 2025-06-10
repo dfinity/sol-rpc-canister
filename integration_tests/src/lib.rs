@@ -18,12 +18,12 @@ use serde::de::DeserializeOwned;
 use sol_rpc_canister::logs::Priority;
 use sol_rpc_client::{ClientBuilder, Runtime, SolRpcClient};
 use sol_rpc_types::{InstallArgs, RpcAccess, SupportedRpcProviderId};
-use std::collections::VecDeque;
-use std::iter::zip;
-use std::sync::Arc;
 use std::{
+    collections::VecDeque,
     env::{set_var, var},
+    iter::zip,
     path::PathBuf,
+    sync::Arc,
     time::Duration,
 };
 use tokio::sync::Mutex;
