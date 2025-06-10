@@ -339,7 +339,7 @@ mod get_slot_tests {
         });
 
         let slot = client
-            .mock_json_rpc_request::<3>(request_body, response_body)
+            .mock_json_rpc_response_for_request::<3>(request_body, response_body)
             .build()
             .get_slot()
             .with_params(GetSlotParams {
@@ -1089,7 +1089,7 @@ mod get_recent_prioritization_fees_tests {
         let setup = Setup::new().await.with_mock_api_keys().await;
         let client = setup.client();
         let fees = client
-            .mock_json_rpc_request::<3>(request_body, response_body)
+            .mock_json_rpc_response_for_request::<3>(request_body, response_body)
             .build()
             .get_recent_prioritization_fees(&[USDC_PUBLIC_KEY])
             .unwrap()
@@ -1769,7 +1769,10 @@ mod get_balance_tests {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
-                .mock_json_rpc_request::<3>(request_body(first_id), response_body(first_id))
+                .mock_json_rpc_response_for_request::<3>(
+                    request_body(first_id),
+                    response_body(first_id),
+                )
                 .build()
                 .get_balance(USDC_PUBLIC_KEY)
                 .with_min_context_slot(100)
@@ -1826,7 +1829,10 @@ mod get_token_account_balance_tests {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
-                .mock_json_rpc_request::<3>(request_body(first_id), response_body(first_id))
+                .mock_json_rpc_response_for_request::<3>(
+                    request_body(first_id),
+                    response_body(first_id),
+                )
                 .build()
                 .get_token_account_balance(USDC_PUBLIC_KEY)
                 .with_commitment(CommitmentLevel::Confirmed)
@@ -1896,7 +1902,10 @@ mod get_signature_statuses_tests {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
-                .mock_json_rpc_request::<3>(request_body(first_id), response_body(first_id))
+                .mock_json_rpc_response_for_request::<3>(
+                    request_body(first_id),
+                    response_body(first_id),
+                )
                 .build()
                 .get_signature_statuses(&[some_signature(), another_signature()])
                 .unwrap()
@@ -2000,7 +2009,10 @@ mod get_signatures_for_address_tests {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
-                .mock_json_rpc_request::<3>(request_body(first_id), response_body(first_id))
+                .mock_json_rpc_response_for_request::<3>(
+                    request_body(first_id),
+                    response_body(first_id),
+                )
                 .build()
                 .get_signatures_for_address(USDC_PUBLIC_KEY)
                 .with_limit(GetSignaturesForAddressLimit::try_from(5).unwrap())
@@ -2068,28 +2080,28 @@ mod estimate_recent_blockhash_tests {
         let hash = Hash::from_str("8QeCusqSTKeC23NwjTKRBDcPuEfVLtszkxbpL6mXQEp4").unwrap();
         let setup = Setup::new().await.with_mock_api_keys().await;
 
-        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 6, 9]) {
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 6, 12]) {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
-                .mock_json_rpc_response::<3>(
+                .mock_sequential_json_rpc_responses::<3>(vec![
                     json!({
                         "id": Id::from(ConstantSizeId::from(first_id)),
                         "jsonrpc": "2.0",
                         "result": 372877612,
                     }),
-                    // json!({
-                    //     "id": Id::from(ConstantSizeId::from(3 + first_id)),
-                    //     "jsonrpc": "2.0",
-                    //     "result": {
-                    //         "blockHeight": 360854634,
-                    //         "blockTime": 1744122369,
-                    //         "parentSlot": 372877611,
-                    //         "blockhash": hash.to_string(),
-                    //         "previousBlockhash": "4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3"
-                    //     }
-                    // }),
-                )
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(3 + first_id)),
+                        "jsonrpc": "2.0",
+                        "result": {
+                            "blockHeight": 360854634,
+                            "blockTime": 1744122369,
+                            "parentSlot": 372877611,
+                            "blockhash": hash.to_string(),
+                            "previousBlockhash": "4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3"
+                        }
+                    }),
+                ])
                 .build()
                 .estimate_recent_blockhash()
                 .send()
@@ -2103,44 +2115,10 @@ mod estimate_recent_blockhash_tests {
 
     #[tokio::test]
     async fn should_not_try_again_to_get_recent_blockhash() {
-        let setup = Setup::new().await.with_mock_api_keys().await;
-
-        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 6, 9]) {
-            let client = setup.client().with_rpc_sources(sources);
-
-            let results = client
-                .mock_sequential_json_rpc_responses::<3>(vec![
-                    json!({
-                        "id": Id::from(ConstantSizeId::from(first_id)),
-                        "jsonrpc": "2.0",
-                        "result": 372877612,
-                    }),
-                    json!({
-                        "id": Id::from(ConstantSizeId::from(3 + first_id)),
-                        "jsonrpc": "2.0",
-                        "result": null
-                    }),
-                ])
-                .build()
-                .estimate_recent_blockhash()
-                .send()
-                .await;
-
-            assert_eq!(
-                results,
-                Err(vec![EstimateRecentBlockhashError::MissingBlock(372877610)])
-            );
-        }
-
-        setup.drop().await;
-    }
-
-    #[tokio::test]
-    async fn should_try_again_to_get_recent_blockhash() {
         let hash = Hash::from_str("8QeCusqSTKeC23NwjTKRBDcPuEfVLtszkxbpL6mXQEp4").unwrap();
         let setup = Setup::new().await.with_mock_api_keys().await;
 
-        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 12, 24]) {
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 6, 12]) {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
@@ -2148,7 +2126,7 @@ mod estimate_recent_blockhash_tests {
                     json!({
                         "id": Id::from(ConstantSizeId::from(first_id)),
                         "jsonrpc": "2.0",
-                        "result": 372877612,
+                        "result": 372877610,
                     }),
                     json!({
                         "id": Id::from(ConstantSizeId::from(3 + first_id)),
@@ -2173,7 +2151,58 @@ mod estimate_recent_blockhash_tests {
                 ])
                 .build()
                 .estimate_recent_blockhash()
-                .with_num_tries(NonZeroUsize::new(2).unwrap())
+                .with_num_tries(NonZeroUsize::MIN)
+                .send()
+                .await;
+
+            assert_eq!(
+                results,
+                // Note: the slot value is rounded down to the nearest 20 (i.e. the default rounding error)
+                Err(vec![EstimateRecentBlockhashError::MissingBlock(372877600)])
+            );
+        }
+
+        setup.drop().await;
+    }
+
+    #[tokio::test]
+    async fn should_try_again_to_get_recent_blockhash() {
+        let hash = Hash::from_str("8QeCusqSTKeC23NwjTKRBDcPuEfVLtszkxbpL6mXQEp4").unwrap();
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 12, 24]) {
+            let client = setup.client().with_rpc_sources(sources);
+
+            let results = client
+                .mock_sequential_json_rpc_responses::<3>(vec![
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(first_id)),
+                        "jsonrpc": "2.0",
+                        "result": 372877610,
+                    }),
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(3 + first_id)),
+                        "jsonrpc": "2.0",
+                        "result": null
+                    }),
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(6 + first_id)),
+                        "jsonrpc": "2.0",
+                        "result": 372877612,
+                    }),
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(9 + first_id)),
+                        "jsonrpc": "2.0",
+                        "result":{
+                            "blockHeight": 360854634,
+                            "blockTime": 1744122369,
+                            "parentSlot": 372877611,
+                            "blockhash": hash.to_string(),
+                            "previousBlockhash": "4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3"}
+                    }),
+                ])
+                .build()
+                .estimate_recent_blockhash()
                 .send()
                 .await;
 

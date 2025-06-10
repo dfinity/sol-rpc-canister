@@ -4540,6 +4540,7 @@ dependencies = [
  "canhttp",
  "canlog",
  "const_format",
+ "derive_more",
  "futures",
  "ic-cdk",
  "ic-http-types",

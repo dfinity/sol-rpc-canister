@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use candid::{decode_args, utils::ArgumentEncoder, CandidType, Encode, Principal};
 use canhttp::http::json::ConstantSizeId;
 use canlog::{Log, LogEntry};
+use derive_more::From;
 use ic_cdk::api::call::RejectionCode;
 use ic_http_types::{HttpRequest, HttpResponse};
 use ic_management_canister_types::{CanisterId, CanisterSettings};
@@ -17,6 +18,7 @@ use serde::de::DeserializeOwned;
 use sol_rpc_canister::logs::Priority;
 use sol_rpc_client::{ClientBuilder, Runtime, SolRpcClient};
 use sol_rpc_types::{InstallArgs, RpcAccess, SupportedRpcProviderId};
+use std::collections::VecDeque;
 use std::iter::zip;
 use std::sync::Arc;
 use std::{
@@ -200,7 +202,7 @@ impl Setup {
         PocketIcRuntime {
             env: &self.env,
             caller: self.caller,
-            mock_strategies: Arc::new(Mutex::new(Vec::new())),
+            mock_strategies: Arc::new(Mutex::default()),
             controller: self.controller,
             wallet: self.wallet_canister_id,
         }
@@ -265,11 +267,10 @@ impl AsRef<PocketIc> for Setup {
     }
 }
 
-#[derive(Clone)]
 pub struct PocketIcRuntime<'a> {
     env: &'a PocketIc,
     caller: Principal,
-    mock_strategies: Arc<Mutex<Vec<MockStrategy>>>,
+    mock_strategies: Arc<Mutex<MockStrategies>>,
     wallet: Principal,
     controller: Principal,
 }
@@ -327,24 +328,31 @@ impl Runtime for PocketIcRuntime<'_> {
 }
 
 impl PocketIcRuntime<'_> {
+    fn block_on<F: std::future::Future>(future: F) -> F::Output {
+        let handle = tokio::runtime::Handle::try_current()
+            .unwrap_or_else(|_| panic!("Could not get current tokio runtime"));
+        let _ = handle.enter();
+        futures::executor::block_on(future)
+    }
+
     fn with_strategy(self, strategy: MockStrategy) -> Self {
-        tokio::runtime::Runtime::new().unwrap().block_on(async {
+        Self::block_on(async {
             let mut guard = self.mock_strategies.lock().await;
-            *guard = vec![strategy];
+            *guard = strategy.into();
         });
         self
     }
 
     fn with_strategies(self, strategies: Vec<MockStrategy>) -> Self {
-        tokio::runtime::Runtime::new().unwrap().block_on(async {
+        Self::block_on(async {
             let mut guard = self.mock_strategies.lock().await;
-            *guard = strategies;
+            *guard = VecDeque::from(strategies).into()
         });
         self
     }
 
     async fn execute_mock(&self) {
-        match &self.mock_strategies.lock().await.pop() {
+        match &self.mock_strategies.lock().await.next() {
             None => (),
             Some(MockStrategy::Mock(mock)) => {
                 self.mock_http_once_inner(mock).await;
@@ -504,7 +512,7 @@ where
 #[async_trait]
 pub trait SolRpcTestClient<R: Runtime> {
     fn mock_http(self, mock: impl Into<MockOutcall>) -> Self;
-    fn mock_json_rpc_request<const N: usize>(
+    fn mock_json_rpc_response_for_request<const N: usize>(
         self,
         request_body: serde_json::Value,
         response_body: serde_json::Value,
@@ -523,7 +531,7 @@ impl SolRpcTestClient<PocketIcRuntime<'_>> for ClientBuilder<PocketIcRuntime<'_>
         self.with_runtime(|r| r.with_strategy(MockStrategy::Mock(mock.into())))
     }
 
-    fn mock_json_rpc_request<const N: usize>(
+    fn mock_json_rpc_response_for_request<const N: usize>(
         self,
         request_body: serde_json::Value,
         response_body: serde_json::Value,
@@ -598,4 +606,22 @@ pub fn json_rpc_sequential_id<const N: usize>(
 enum MockStrategy {
     Mock(MockOutcall),
     MockSequence(Vec<MockOutcall>),
+}
+
+#[derive(Clone, Debug, Default, From)]
+enum MockStrategies {
+    #[default]
+    None,
+    Repeat(MockStrategy),
+    Sequence(VecDeque<MockStrategy>),
+}
+
+impl MockStrategies {
+    pub fn next(&mut self) -> Option<MockStrategy> {
+        match self {
+            MockStrategies::None => None,
+            MockStrategies::Repeat(mock) => Some(mock.clone()),
+            MockStrategies::Sequence(mocks) => mocks.pop_front(),
+        }
+    }
 }
