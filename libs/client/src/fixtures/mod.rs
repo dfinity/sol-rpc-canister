@@ -8,7 +8,7 @@ use candid::{utils::ArgumentEncoder, CandidType, Decode, Encode, Principal};
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 impl<R> ClientBuilder<R> {
     /// Change the runtime to return the given mocked response for all calls.
@@ -42,7 +42,7 @@ impl ClientBuilder<MockRuntime> {
 /// Implement your own [`Runtime`] in case a more refined approach is needed.
 pub struct MockRuntime {
     default_call_result: Option<Vec<u8>>,
-    method_to_call_result_map: HashMap<String, Vec<u8>>,
+    method_to_call_result_map: BTreeMap<String, Vec<u8>>,
 }
 
 impl MockRuntime {
@@ -50,7 +50,7 @@ impl MockRuntime {
     pub fn new() -> Self {
         Self {
             default_call_result: None,
-            method_to_call_result_map: HashMap::new(),
+            method_to_call_result_map: BTreeMap::new(),
         }
     }
 
