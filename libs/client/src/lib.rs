@@ -1032,14 +1032,14 @@ impl<R: Runtime> SolRpcClient<R> {
     /// Estimate a recent blockhash based on successive calls to `getSlot` and `getBlock`.
     ///
     /// Due to Solana's fast block time, the [`getLatestBlockhash`](https://solana.com/de/docs/rpc/http/getlatestblockhash)
-    /// RPC method cannot directly be called by a canister running on the Internet Computer. 
-    /// Instead, to fetch a recent blockhash (e.g. to build a transaction), one must instead first 
-    /// get the current slot with `getSlot`, then get the corresponding block with `getBlock`, and 
+    /// RPC method cannot directly be called by a canister running on the Internet Computer.
+    /// Instead, to fetch a recent blockhash (e.g. to build a transaction), one must instead first
+    /// get the current slot with `getSlot`, then get the corresponding block with `getBlock`, and
     /// finally extract the blockhash from the resulting block.
     ///
     /// Since `getSlot` can fail due to consensus errors (despite rounding) and `getBlock` can fail
-    /// due to not every slot having a block, this method allows retrying to fetch a recent 
-    /// blockhash until either a blockhash is successfully retrieved, or a maximum number of 
+    /// due to not every slot having a block, this method allows retrying to fetch a recent
+    /// blockhash until either a blockhash is successfully retrieved, or a maximum number of
     /// attempts is performed. By default, 3 attempts are performed.
     ///
     /// # Examples

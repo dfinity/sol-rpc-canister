@@ -139,11 +139,7 @@ pub async fn create_nonce_account(owner: Option<Principal>) -> String {
     let message = Message::new_with_blockhash(
         instructions.as_slice(),
         Some(payer.as_ref()),
-        &client
-            .estimate_recent_blockhash()
-            .send()
-            .await
-            .unwrap(),
+        &client.estimate_recent_blockhash().send().await.unwrap(),
     );
 
     let signatures = vec![
@@ -206,11 +202,7 @@ pub async fn create_associated_token_account(
     let message = Message::new_with_blockhash(
         &[instruction],
         Some(payer.as_ref()),
-        &client
-            .estimate_recent_blockhash()
-            .send()
-            .await
-            .unwrap(),
+        &client.estimate_recent_blockhash().send().await.unwrap(),
     );
 
     let signatures = vec![payer.sign_message(&message).await];
@@ -250,11 +242,7 @@ pub async fn send_sol(owner: Option<Principal>, to: String, amount: Nat) -> Stri
     let message = Message::new_with_blockhash(
         &[instruction],
         Some(payer.as_ref()),
-        &client
-            .estimate_recent_blockhash()
-            .send()
-            .await
-            .unwrap(),
+        &client.estimate_recent_blockhash().send().await.unwrap(),
     );
     let signatures = vec![payer.sign_message(&message).await];
     let transaction = Transaction {
@@ -343,11 +331,7 @@ pub async fn send_spl_token(
     let message = Message::new_with_blockhash(
         &[instruction],
         Some(payer.as_ref()),
-        &client
-            .estimate_recent_blockhash()
-            .send()
-            .await
-            .unwrap(),
+        &client.estimate_recent_blockhash().send().await.unwrap(),
     );
     let signatures = vec![payer.sign_message(&message).await];
     let transaction = Transaction {
