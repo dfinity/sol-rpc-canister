@@ -1049,10 +1049,10 @@ impl<R: Runtime> SolRpcClient<R> {
     /// get the current slot with `getSlot`, then get the corresponding block with `getBlock`, and 
     /// finally extract the blockhash from the resulting block.
     ///
-    /// Since `getSlot` can fail due to consensus errors and `getBlock` can fail due to not every
-    /// slot having a block, this method allows retrying to fetch a recent blockhash until either
-    /// a blockhash is successfully retrieved, or a maximum number of attempts if performed. By
-    /// default, a single attempt is performed.
+    /// Since `getSlot` can fail due to consensus errors (despite rounding) and `getBlock` can fail
+    /// due to not every slot having a block, this method allows retrying to fetch a recent 
+    /// blockhash until either a blockhash is successfully retrieved, or a maximum number of 
+    /// attempts is performed. By default, 3 attempts are performed.
     ///
     /// # Examples
     ///
@@ -1083,7 +1083,6 @@ impl<R: Runtime> SolRpcClient<R> {
     /// // Try to fetch a slot and the corresponding block up to 3 times
     /// let blockhash = client
     ///     .estimate_recent_blockhash()
-    ///     .with_num_tries(NonZeroUsize::new(3).unwrap())
     ///     .send()
     ///     .await;
     ///

@@ -988,10 +988,12 @@ pub struct EstimateBlockhashRequestBuilder<R> {
 impl<R> EstimateBlockhashRequestBuilder<R> {
     /// Create a new [`EstimateBlockhashRequestBuilder`] request with the given [`SolRpcClient`]
     /// and default parameters.
+    ///
+    /// The maximum number of attempts that will be performed to retrieve a blockhash is set to 3.
     pub fn new(client: SolRpcClient<R>) -> Self {
         Self {
             client,
-            num_tries: NonZeroUsize::MIN,
+            num_tries: NonZeroUsize::new(3).unwrap(),
             rounding_error: None,
             rpc_config: None,
         }
