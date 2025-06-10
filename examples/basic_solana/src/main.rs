@@ -141,7 +141,6 @@ pub async fn create_nonce_account(owner: Option<Principal>) -> String {
         Some(payer.as_ref()),
         &client
             .estimate_recent_blockhash()
-            .with_num_tries(NonZeroUsize::new(3).unwrap())
             .send()
             .await
             .unwrap(),
@@ -209,7 +208,6 @@ pub async fn create_associated_token_account(
         Some(payer.as_ref()),
         &client
             .estimate_recent_blockhash()
-            .with_num_tries(NonZeroUsize::new(3).unwrap())
             .send()
             .await
             .unwrap(),
@@ -254,7 +252,6 @@ pub async fn send_sol(owner: Option<Principal>, to: String, amount: Nat) -> Stri
         Some(payer.as_ref()),
         &client
             .estimate_recent_blockhash()
-            .with_num_tries(NonZeroUsize::new(3).unwrap())
             .send()
             .await
             .unwrap(),
@@ -348,7 +345,6 @@ pub async fn send_spl_token(
         Some(payer.as_ref()),
         &client
             .estimate_recent_blockhash()
-            .with_num_tries(NonZeroUsize::new(3).unwrap())
             .send()
             .await
             .unwrap(),

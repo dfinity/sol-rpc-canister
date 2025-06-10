@@ -315,7 +315,6 @@ async fn should_send_transaction() {
     let blockhash = setup
         .icp_client()
         .estimate_recent_blockhash()
-        .with_num_tries(NonZeroUsize::new(3).unwrap())
         .send()
         .await
         .unwrap();

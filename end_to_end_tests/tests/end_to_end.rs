@@ -10,7 +10,6 @@ use solana_message::Message;
 use solana_program::system_instruction;
 use solana_pubkey::{pubkey, Pubkey};
 use solana_transaction::Transaction;
-use std::num::NonZeroUsize;
 
 const FUNDING_AMOUNT: Lamport = 1_000_000_000;
 const TRANSACTION_AMOUNT: Lamport = 100_000;
@@ -194,7 +193,6 @@ impl CreateSolanaMessage for CreateMessageWithRecentBlockhash<'_> {
         // Fetch a recent blockhash
         let blockhash = client
             .estimate_recent_blockhash()
-            .with_num_tries(NonZeroUsize::new(3).unwrap())
             .send()
             .await
             .expect("Failed to fetch recent blockhash");
