@@ -85,8 +85,7 @@
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! let client = SolRpcClient::builder_for_ic()
-//! #   .with_mocked_responses()
-//! #   .with_default_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+//! #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
 //!     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
 //!     .with_rpc_config(RpcConfig {
 //!         response_consensus: Some(ConsensusStrategy::Threshold {
@@ -330,8 +329,7 @@ impl<R> SolRpcClient<R> {
     /// # use sol_rpc_client::fixtures::usdc_account;
     /// # use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo, MultiRpcResult};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_responses()
-    /// #   .with_default_response(MultiRpcResult::Consistent(Ok(Some(usdc_account()))))
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(Some(usdc_account()))))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
@@ -370,8 +368,7 @@ impl<R> SolRpcClient<R> {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # use sol_rpc_types::MultiRpcResult;
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_responses()
-    /// #   .with_default_response(MultiRpcResult::Consistent(Ok(389_086_612_571_u64)))
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(389_086_612_571_u64)))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
@@ -409,8 +406,7 @@ impl<R> SolRpcClient<R> {
     /// # use std::str::FromStr;
     /// # use sol_rpc_types::{Hash, Pubkey};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_responses()
-    /// #   .with_default_response(MultiRpcResult::Consistent(Ok(ConfirmedBlock {
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(ConfirmedBlock {
     /// #     previous_blockhash: Hash::from_str("4yeCoXK2Q4yXcunuLtF37yTE1wVD4x8313adneZDmi8w").unwrap(),
     /// #     blockhash: Hash::from_str("C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY").unwrap(),
     /// #     parent_slot: 343459193,
@@ -478,8 +474,7 @@ impl<R> SolRpcClient<R> {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # use sol_rpc_types::{MultiRpcResult, TokenAmount};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_responses()
-    /// #   .with_default_response(MultiRpcResult::Consistent(Ok(TokenAmount {
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(TokenAmount {
     /// #       ui_amount: Some(251153323.575906),
     /// #       decimals: 6,
     /// #       amount: "251153323575906".to_string(),
@@ -528,8 +523,7 @@ impl<R> SolRpcClient<R> {
     /// use std::num::NonZeroU8;
     /// use sol_rpc_types::{MultiRpcResult, PrioritizationFee, TokenAmount};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_responses()
-    /// #   .with_default_response(MultiRpcResult::Consistent(Ok(vec![PrioritizationFee{slot: 338637772, prioritization_fee: 166667}])))
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(vec![PrioritizationFee{slot: 338637772, prioritization_fee: 166667}])))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
@@ -610,8 +604,7 @@ impl<R> SolRpcClient<R> {
     /// # use std::str::FromStr;
     /// # use sol_rpc_types::MultiRpcResult;
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_responses()
-    /// #   .with_default_response(MultiRpcResult::Consistent(Ok(vec![
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(vec![
     /// #        ConfirmedTransactionStatusWithSignature {
     /// #            signature: Signature::from_str("3jPA8CnZb9sfs4zVAypa9KB7VAGwrTdXB6mg9H1H9XpATN6Y8iek4Y21Nb9LjbrpYACbF9USV8RBWvXFFhVoQUAs").unwrap(),
     /// #            confirmation_status: Some(TransactionConfirmationStatus::Finalized),
@@ -690,8 +683,7 @@ impl<R> SolRpcClient<R> {
     /// # use std::str::FromStr;
     /// # use sol_rpc_types::MultiRpcResult;
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_responses()
-    /// #   .with_default_response(MultiRpcResult::Consistent(Ok(vec![
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(vec![
     /// #        Some(sol_rpc_types::TransactionStatus {
     /// #            slot: 338837593,
     /// #            status: Ok(()),
@@ -795,8 +787,7 @@ impl<R> SolRpcClient<R> {
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_responses()
-    /// #   .with_default_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
@@ -838,8 +829,7 @@ impl<R> SolRpcClient<R> {
     /// # use std::str::FromStr;
     /// # use sol_rpc_types::{ConfirmedBlock, GetTransactionEncoding, Hash, MultiRpcResult, Pubkey};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_responses()
-    /// #   .with_default_response(MultiRpcResult::Consistent(Ok(sol_rpc_types::EncodedConfirmedTransactionWithStatusMeta {
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(sol_rpc_types::EncodedConfirmedTransactionWithStatusMeta {
     /// #       slot: 344115445,
     /// #       block_time: Some(1748865196),
     /// #       transaction: sol_rpc_types::EncodedTransactionWithStatusMeta {
@@ -916,8 +906,7 @@ impl<R> SolRpcClient<R> {
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_responses()
-    /// #   .with_default_response(MultiRpcResult::Consistent(Ok("tspfR5p1PFphquz4WzDb7qM4UhJdgQXkEZtW88BykVEdX2zL2kBT9kidwQBviKwQuA3b6GMCR1gknHvzQ3r623T")))
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok("tspfR5p1PFphquz4WzDb7qM4UhJdgQXkEZtW88BykVEdX2zL2kBT9kidwQBviKwQuA3b6GMCR1gknHvzQ3r623T")))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
@@ -969,8 +958,7 @@ impl<R> SolRpcClient<R> {
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SolRpcClient::builder_for_ic()
-    /// #    .with_mocked_responses()
-    /// #   .with_default_response(MultiRpcResult::Consistent(Ok(json!({
+    /// #    .with_default_mocked_response(MultiRpcResult::Consistent(Ok(json!({
     /// #            "jsonrpc": "2.0",
     /// #            "result": {
     /// #                "feature-set": 3271415109_u32,

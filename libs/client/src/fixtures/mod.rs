@@ -11,9 +11,18 @@ use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo};
 use std::collections::BTreeMap;
 
 impl<R> ClientBuilder<R> {
-    /// Change the runtime to return the given mocked response for all calls.
+    /// Set the runtime to a [`MockRuntime`].
     pub fn with_mocked_responses(self) -> ClientBuilder<MockRuntime> {
         self.with_runtime(|_runtime| MockRuntime::default())
+    }
+
+    /// Change the runtime to return the given mocked response for all calls.
+    pub fn with_default_mocked_response<Out: CandidType>(
+        self,
+        mocked_response: Out,
+    ) -> ClientBuilder<MockRuntime> {
+        self.with_mocked_responses()
+            .with_default_response(mocked_response)
     }
 }
 
