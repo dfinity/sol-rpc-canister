@@ -1047,7 +1047,7 @@ impl<R: Runtime> SolRpcClient<R> {
     /// ```rust
     /// use solana_hash::Hash;
     /// use sol_rpc_client::{SolRpcClient};
-    /// use std::{num::NonZeroUsize, str::FromStr};
+    /// use std::str::FromStr;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -1084,11 +1084,11 @@ impl<R: Runtime> SolRpcClient<R> {
     /// ```rust
     /// use solana_hash::Hash;
     /// use sol_rpc_client::{EstimateRecentBlockhashError, SolRpcClient};
+    /// use std::num::NonZeroUsize;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # use sol_rpc_types::{ConfirmedBlock, MultiRpcResult};
-    /// # use std::str::FromStr;
     /// let client = SolRpcClient::builder_for_ic()
     /// #   .with_mocked_responses()
     /// #   .with_response_for_method("getSlot", MultiRpcResult::Consistent(Ok(332_577_897_u64)))
@@ -1097,6 +1097,7 @@ impl<R: Runtime> SolRpcClient<R> {
     ///
     /// let blockhash = client
     ///     .estimate_recent_blockhash()
+    ///     .with_num_tries(NonZeroUsize::MIN)
     ///     .send()
     ///     .await;
     ///

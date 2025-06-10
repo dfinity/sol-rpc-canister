@@ -35,7 +35,7 @@ use solana_transaction_status_client_types::UiTransactionEncoding;
 use std::{
     future::Future,
     iter::zip,
-    num::{NonZeroU8, NonZeroUsize},
+    num::NonZeroU8,
     thread::sleep,
     time::{Duration, Instant},
 };
