@@ -168,7 +168,7 @@ mod get_account_info_tests {
                 solana_pubkey::Pubkey::from_str("11111111111111111111111111111111").unwrap();
 
             let results = client
-                .mock_sequential_json_rpc_responses::<3>(json!({
+                .mock_json_rpc_response::<3>(json!({
                     "id": Id::from(ConstantSizeId::from(first_id)),
                     "jsonrpc": "2.0",
                     "result": {
@@ -216,7 +216,7 @@ mod get_account_info_tests {
                 solana_pubkey::Pubkey::from_str("11111111111111111111111111111111").unwrap();
 
             let results = client
-                .mock_sequential_json_rpc_responses::<3>(json!({
+                .mock_json_rpc_response::<3>(json!({
                     "id": Id::from(ConstantSizeId::from(first_id)),
                     "jsonrpc": "2.0",
                     "result": {
@@ -248,18 +248,16 @@ mod get_block_tests {
             let slot: Slot = 123;
 
             let results = client
-                .mock_sequential_json_rpc_responses::<3>(
-                    json!({
-                        "id": Id::from(ConstantSizeId::from(first_id)),
-                        "jsonrpc": "2.0",
-                        "result":{
-                            "blockHeight": 360854634,
-                            "blockTime": 1744122369,
-                            "parentSlot": 372877611,
-                            "blockhash": "8QeCusqSTKeC23NwjTKRBDcPuEfVLtszkxbpL6mXQEp4",
-                            "previousBlockhash": "4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3"}
-                    }),
-                )
+                .mock_json_rpc_response::<3>(json!({
+                    "id": Id::from(ConstantSizeId::from(first_id)),
+                    "jsonrpc": "2.0",
+                    "result":{
+                        "blockHeight": 360854634,
+                        "blockTime": 1744122369,
+                        "parentSlot": 372877611,
+                        "blockhash": "8QeCusqSTKeC23NwjTKRBDcPuEfVLtszkxbpL6mXQEp4",
+                        "previousBlockhash": "4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3"}
+                }))
                 .build()
                 .get_block(slot)
                 .send()
@@ -297,13 +295,11 @@ mod get_block_tests {
             let slot: Slot = 123;
 
             let results = client
-                .mock_sequential_json_rpc_responses::<3>(
-                    json!({
-                        "id": Id::from(ConstantSizeId::from(first_id)),
-                        "jsonrpc": "2.0",
-                        "result": null
-                    }),
-                )
+                .mock_json_rpc_response::<3>(json!({
+                    "id": Id::from(ConstantSizeId::from(first_id)),
+                    "jsonrpc": "2.0",
+                    "result": null
+                }))
                 .build()
                 .get_block(slot)
                 .send()
@@ -322,25 +318,28 @@ mod get_slot_tests {
 
     #[tokio::test]
     async fn should_get_slot_with_full_params() {
-        fn request_body(id: u8) -> serde_json::Value {
-            let id = ConstantSizeId::from(id).to_string();
-            json!({ "jsonrpc": "2.0", "id": id, "method": "getSlot", "params": [{"commitment": "processed", "minContextSlot": 100}] })
-        }
-
-        fn response_body(id: u8) -> serde_json::Value {
-            let id = ConstantSizeId::from(id).to_string();
-            json!({ "id": id, "jsonrpc": "2.0", "result": 1234, })
-        }
-
         let setup = Setup::new().await.with_mock_api_keys().await;
         let client = setup.client();
 
+        let request_body = json!({
+            "id": ConstantSizeId::ZERO.to_string(),
+            "jsonrpc": "2.0",
+            "method": "getSlot",
+            "params": [
+                {
+                    "commitment": "processed",
+                    "minContextSlot": 100
+                }
+            ]
+        });
+        let response_body = json!({
+            "id": ConstantSizeId::ZERO.to_string(),
+            "jsonrpc": "2.0",
+            "result": 1234,
+        });
+
         let slot = client
-            .mock_http_sequence(vec![
-                MockOutcallBuilder::new(200, response_body(0)).with_request_body(request_body(0)),
-                MockOutcallBuilder::new(200, response_body(1)).with_request_body(request_body(1)),
-                MockOutcallBuilder::new(200, response_body(2)).with_request_body(request_body(2)),
-            ])
+            .mock_json_rpc_request::<3>(request_body, response_body)
             .build()
             .get_slot()
             .with_params(GetSlotParams {
@@ -365,13 +364,11 @@ mod get_slot_tests {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
-                .mock_sequential_json_rpc_responses::<3>(
-                    json!({
-                        "id": Id::from(ConstantSizeId::from(first_id)),
-                        "jsonrpc": "2.0",
-                        "result": 1234,
-                    }),
-                )
+                .mock_json_rpc_response::<3>(json!({
+                    "id": Id::from(ConstantSizeId::from(first_id)),
+                    "jsonrpc": "2.0",
+                    "result": 1234,
+                }))
                 .build()
                 .get_slot()
                 .with_rounding_error(0)
@@ -389,25 +386,27 @@ mod get_slot_tests {
     async fn should_get_consistent_result_with_rounding() {
         let setup = Setup::new().await.with_mock_api_keys().await;
 
-        for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
-            let responses = [1234, 1229, 1237]
-                .iter()
-                .enumerate()
-                .map(|(id, slot)| {
-                    MockOutcallBuilder::new(
-                        200,
-                        json!({
-                            "id": Id::from(ConstantSizeId::from(id as u64 + first_id as u64)),
-                            "jsonrpc": "2.0",
-                            "result": slot,
-                        }),
-                    )
-                })
-                .collect();
+        for (sources, first_id) in zip(rpc_sources(), vec![0_u64, 3, 6]) {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
-                .mock_http_sequence(responses)
+                .mock_json_rpc_responses([
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(first_id)),
+                        "jsonrpc": "2.0",
+                        "result": 1234,
+                    }),
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(first_id + 1)),
+                        "jsonrpc": "2.0",
+                        "result": 1229,
+                    }),
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(first_id + 2)),
+                        "jsonrpc": "2.0",
+                        "result": 1237,
+                    }),
+                ])
                 .build()
                 .get_slot()
                 .send()
@@ -425,24 +424,26 @@ mod get_slot_tests {
         let setup = Setup::new().await.with_mock_api_keys().await;
 
         for (sources, first_id) in zip(rpc_sources(), vec![0_u8, 3, 6]) {
-            let responses = [1234, 1229, 1237]
-                .iter()
-                .enumerate()
-                .map(|(id, slot)| {
-                    MockOutcallBuilder::new(
-                        200,
-                        json!({
-                            "id": Id::from(ConstantSizeId::from(id as u64 + first_id as u64)),
-                            "jsonrpc": "2.0",
-                            "result": slot,
-                        }),
-                    )
-                })
-                .collect();
             let client = setup.client().with_rpc_sources(sources);
 
             let results: Vec<RpcResult<_>> = client
-                .mock_http_sequence(responses)
+                .mock_json_rpc_responses([
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(first_id)),
+                        "jsonrpc": "2.0",
+                        "result": 1234,
+                    }),
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(first_id + 1)),
+                        "jsonrpc": "2.0",
+                        "result": 1229,
+                    }),
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(first_id + 2)),
+                        "jsonrpc": "2.0",
+                        "result": 1237,
+                    }),
+                ])
                 .build()
                 .get_slot()
                 .with_rounding_error(0)
@@ -464,636 +465,631 @@ mod get_recent_prioritization_fees_tests {
     use crate::USDC_PUBLIC_KEY;
     use canhttp::http::json::ConstantSizeId;
     use serde_json::json;
-    use sol_rpc_int_tests::{mock::MockOutcallBuilder, Setup, SolRpcTestClient};
+    use sol_rpc_int_tests::{Setup, SolRpcTestClient};
     use sol_rpc_types::PrioritizationFee;
     use std::num::NonZeroU8;
 
     #[tokio::test]
     async fn should_get_fees_with_rounding() {
-        fn request_body(id: u8) -> serde_json::Value {
-            let id = ConstantSizeId::from(id).to_string();
-            json!( { "jsonrpc": "2.0", "id": id, "method": "getRecentPrioritizationFees", "params": [ [ USDC_PUBLIC_KEY.to_string() ] ] } )
-        }
+        let request_body = json!({
+            "id": ConstantSizeId::ZERO.to_string(),
+            "jsonrpc": "2.0",
+            "method":
+            "getRecentPrioritizationFees",
+            "params": [ [ USDC_PUBLIC_KEY.to_string() ] ]
+        });
 
-        fn response_body(id: u8) -> serde_json::Value {
-            let id = ConstantSizeId::from(id).to_string();
-            json!({
-                "jsonrpc": "2.0",
-                "result": [
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225766
-                    },
-                    {
-                        "prioritizationFee": 203228,
-                        "slot": 338225767
-                    },
-                    {
-                        "prioritizationFee": 110788,
-                        "slot": 338225768
-                    },
-                    {
-                        "prioritizationFee": 395962,
-                        "slot": 338225769
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225770
-                    },
-                    {
-                        "prioritizationFee": 395477,
-                        "slot": 338225771
-                    },
-                    {
-                        "prioritizationFee": 202136,
-                        "slot": 338225772
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225773
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225774
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225775
-                    },
-                    {
-                        "prioritizationFee": 2894338,
-                        "slot": 338225776
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225777
-                    },
-                    {
-                        "prioritizationFee": 162918,
-                        "slot": 338225778
-                    },
-                    {
-                        "prioritizationFee": 238785,
-                        "slot": 338225779
-                    },
-                    {
-                        "prioritizationFee": 10714,
-                        "slot": 338225780
-                    },
-                    {
-                        "prioritizationFee": 81000,
-                        "slot": 338225781
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225782
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225783
-                    },
-                    {
-                        "prioritizationFee": 202136,
-                        "slot": 338225784
-                    },
-                    {
-                        "prioritizationFee": 166667,
-                        "slot": 338225785
-                    },
-                    {
-                        "prioritizationFee": 166667,
-                        "slot": 338225786
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225787
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225788
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225789
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225790
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225791
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225792
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225793
-                    },
-                    {
-                        "prioritizationFee": 494120,
-                        "slot": 338225794
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225795
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225796
-                    },
-                    {
-                        "prioritizationFee": 202136,
-                        "slot": 338225797
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225798
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225799
-                    },
-                    {
-                        "prioritizationFee": 202136,
-                        "slot": 338225800
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225801
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225802
-                    },
-                    {
-                        "prioritizationFee": 10001,
-                        "slot": 338225803
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225804
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225805
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225806
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225807
-                    },
-                    {
-                        "prioritizationFee": 202136,
-                        "slot": 338225808
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225809
-                    },
-                    {
-                        "prioritizationFee": 202136,
-                        "slot": 338225810
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225811
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225812
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225813
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225814
-                    },
-                    {
-                        "prioritizationFee": 6064097,
-                        "slot": 338225815
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225816
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225817
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225818
-                    },
-                    {
-                        "prioritizationFee": 517927,
-                        "slot": 338225819
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225820
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225821
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225822
-                    },
-                    {
-                        "prioritizationFee": 602011,
-                        "slot": 338225823
-                    },
-                    {
-                        "prioritizationFee": 187015,
-                        "slot": 338225824
-                    },
-                    {
-                        "prioritizationFee": 50000,
-                        "slot": 338225825
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225826
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225827
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225828
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225829
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225830
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225831
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225832
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225833
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225834
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225835
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225836
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225837
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225838
-                    },
-                    {
-                        "prioritizationFee": 487330,
-                        "slot": 338225839
-                    },
-                    {
-                        "prioritizationFee": 149432,
-                        "slot": 338225840
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225841
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225842
-                    },
-                    {
-                        "prioritizationFee": 68526,
-                        "slot": 338225843
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225844
-                    },
-                    {
-                        "prioritizationFee": 310090,
-                        "slot": 338225845
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225846
-                    },
-                    {
-                        "prioritizationFee": 2173913,
-                        "slot": 338225847
-                    },
-                    {
-                        "prioritizationFee": 99725,
-                        "slot": 338225848
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225849
-                    },
-                    {
-                        "prioritizationFee": 88441,
-                        "slot": 338225850
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225851
-                    },
-                    {
-                        "prioritizationFee": 400000,
-                        "slot": 338225852
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225853
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225854
-                    },
-                    {
-                        "prioritizationFee": 164507,
-                        "slot": 338225855
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225856
-                    },
-                    {
-                        "prioritizationFee": 4898,
-                        "slot": 338225857
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225858
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225859
-                    },
-                    {
-                        "prioritizationFee": 142369,
-                        "slot": 338225860
-                    },
-                    {
-                        "prioritizationFee": 84566,
-                        "slot": 338225861
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225862
-                    },
-                    {
-                        "prioritizationFee": 10001,
-                        "slot": 338225863
-                    },
-                    {
-                        "prioritizationFee": 187015,
-                        "slot": 338225864
-                    },
-                    {
-                        "prioritizationFee": 8902,
-                        "slot": 338225865
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225866
-                    },
-                    {
-                        "prioritizationFee": 75000,
-                        "slot": 338225867
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225868
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225869
-                    },
-                    {
-                        "prioritizationFee": 1771477,
-                        "slot": 338225870
-                    },
-                    {
-                        "prioritizationFee": 1110536,
-                        "slot": 338225871
-                    },
-                    {
-                        "prioritizationFee": 215920,
-                        "slot": 338225872
-                    },
-                    {
-                        "prioritizationFee": 68408,
-                        "slot": 338225873
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225874
-                    },
-                    {
-                        "prioritizationFee": 260520,
-                        "slot": 338225875
-                    },
-                    {
-                        "prioritizationFee": 2143332,
-                        "slot": 338225876
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225877
-                    },
-                    {
-                        "prioritizationFee": 84168,
-                        "slot": 338225878
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225879
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225880
-                    },
-                    {
-                        "prioritizationFee": 501111,
-                        "slot": 338225881
-                    },
-                    {
-                        "prioritizationFee": 88060,
-                        "slot": 338225882
-                    },
-                    {
-                        "prioritizationFee": 10001,
-                        "slot": 338225883
-                    },
-                    {
-                        "prioritizationFee": 171521,
-                        "slot": 338225884
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225885
-                    },
-                    {
-                        "prioritizationFee": 6064097,
-                        "slot": 338225886
-                    },
-                    {
-                        "prioritizationFee": 6064097,
-                        "slot": 338225887
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225888
-                    },
-                    {
-                        "prioritizationFee": 7578,
-                        "slot": 338225889
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225890
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225891
-                    },
-                    {
-                        "prioritizationFee": 202136,
-                        "slot": 338225892
-                    },
-                    {
-                        "prioritizationFee": 106090,
-                        "slot": 338225893
-                    },
-                    {
-                        "prioritizationFee": 80776,
-                        "slot": 338225894
-                    },
-                    {
-                        "prioritizationFee": 111939,
-                        "slot": 338225895
-                    },
-                    {
-                        "prioritizationFee": 75000,
-                        "slot": 338225896
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225897
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225898
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225899
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225900
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225901
-                    },
-                    {
-                        "prioritizationFee": 183582,
-                        "slot": 338225902
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225903
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225904
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225905
-                    },
-                    {
-                        "prioritizationFee": 535775,
-                        "slot": 338225906
-                    },
-                    {
-                        "prioritizationFee": 65038,
-                        "slot": 338225907
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225908
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225909
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225910
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225911
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225912
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225913
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225914
-                    },
-                    {
-                        "prioritizationFee": 0,
-                        "slot": 338225915
-                    }
-                ],
-                "id": id
+        let response_body = json!({
+            "id": ConstantSizeId::ZERO.to_string(),
+            "jsonrpc": "2.0",
+            "result": [
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225766
+                },
+                {
+                    "prioritizationFee": 203228,
+                    "slot": 338225767
+                },
+                {
+                    "prioritizationFee": 110788,
+                    "slot": 338225768
+                },
+                {
+                    "prioritizationFee": 395962,
+                    "slot": 338225769
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225770
+                },
+                {
+                    "prioritizationFee": 395477,
+                    "slot": 338225771
+                },
+                {
+                    "prioritizationFee": 202136,
+                    "slot": 338225772
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225773
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225774
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225775
+                },
+                {
+                    "prioritizationFee": 2894338,
+                    "slot": 338225776
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225777
+                },
+                {
+                    "prioritizationFee": 162918,
+                    "slot": 338225778
+                },
+                {
+                    "prioritizationFee": 238785,
+                    "slot": 338225779
+                },
+                {
+                    "prioritizationFee": 10714,
+                    "slot": 338225780
+                },
+                {
+                    "prioritizationFee": 81000,
+                    "slot": 338225781
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225782
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225783
+                },
+                {
+                    "prioritizationFee": 202136,
+                    "slot": 338225784
+                },
+                {
+                    "prioritizationFee": 166667,
+                    "slot": 338225785
+                },
+                {
+                    "prioritizationFee": 166667,
+                    "slot": 338225786
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225787
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225788
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225789
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225790
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225791
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225792
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225793
+                },
+                {
+                    "prioritizationFee": 494120,
+                    "slot": 338225794
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225795
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225796
+                },
+                {
+                    "prioritizationFee": 202136,
+                    "slot": 338225797
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225798
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225799
+                },
+                {
+                    "prioritizationFee": 202136,
+                    "slot": 338225800
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225801
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225802
+                },
+                {
+                    "prioritizationFee": 10001,
+                    "slot": 338225803
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225804
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225805
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225806
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225807
+                },
+                {
+                    "prioritizationFee": 202136,
+                    "slot": 338225808
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225809
+                },
+                {
+                    "prioritizationFee": 202136,
+                    "slot": 338225810
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225811
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225812
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225813
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225814
+                },
+                {
+                    "prioritizationFee": 6064097,
+                    "slot": 338225815
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225816
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225817
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225818
+                },
+                {
+                    "prioritizationFee": 517927,
+                    "slot": 338225819
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225820
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225821
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225822
+                },
+                {
+                    "prioritizationFee": 602011,
+                    "slot": 338225823
+                },
+                {
+                    "prioritizationFee": 187015,
+                    "slot": 338225824
+                },
+                {
+                    "prioritizationFee": 50000,
+                    "slot": 338225825
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225826
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225827
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225828
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225829
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225830
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225831
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225832
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225833
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225834
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225835
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225836
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225837
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225838
+                },
+                {
+                    "prioritizationFee": 487330,
+                    "slot": 338225839
+                },
+                {
+                    "prioritizationFee": 149432,
+                    "slot": 338225840
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225841
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225842
+                },
+                {
+                    "prioritizationFee": 68526,
+                    "slot": 338225843
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225844
+                },
+                {
+                    "prioritizationFee": 310090,
+                    "slot": 338225845
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225846
+                },
+                {
+                    "prioritizationFee": 2173913,
+                    "slot": 338225847
+                },
+                {
+                    "prioritizationFee": 99725,
+                    "slot": 338225848
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225849
+                },
+                {
+                    "prioritizationFee": 88441,
+                    "slot": 338225850
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225851
+                },
+                {
+                    "prioritizationFee": 400000,
+                    "slot": 338225852
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225853
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225854
+                },
+                {
+                    "prioritizationFee": 164507,
+                    "slot": 338225855
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225856
+                },
+                {
+                    "prioritizationFee": 4898,
+                    "slot": 338225857
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225858
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225859
+                },
+                {
+                    "prioritizationFee": 142369,
+                    "slot": 338225860
+                },
+                {
+                    "prioritizationFee": 84566,
+                    "slot": 338225861
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225862
+                },
+                {
+                    "prioritizationFee": 10001,
+                    "slot": 338225863
+                },
+                {
+                    "prioritizationFee": 187015,
+                    "slot": 338225864
+                },
+                {
+                    "prioritizationFee": 8902,
+                    "slot": 338225865
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225866
+                },
+                {
+                    "prioritizationFee": 75000,
+                    "slot": 338225867
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225868
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225869
+                },
+                {
+                    "prioritizationFee": 1771477,
+                    "slot": 338225870
+                },
+                {
+                    "prioritizationFee": 1110536,
+                    "slot": 338225871
+                },
+                {
+                    "prioritizationFee": 215920,
+                    "slot": 338225872
+                },
+                {
+                    "prioritizationFee": 68408,
+                    "slot": 338225873
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225874
+                },
+                {
+                    "prioritizationFee": 260520,
+                    "slot": 338225875
+                },
+                {
+                    "prioritizationFee": 2143332,
+                    "slot": 338225876
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225877
+                },
+                {
+                    "prioritizationFee": 84168,
+                    "slot": 338225878
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225879
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225880
+                },
+                {
+                    "prioritizationFee": 501111,
+                    "slot": 338225881
+                },
+                {
+                    "prioritizationFee": 88060,
+                    "slot": 338225882
+                },
+                {
+                    "prioritizationFee": 10001,
+                    "slot": 338225883
+                },
+                {
+                    "prioritizationFee": 171521,
+                    "slot": 338225884
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225885
+                },
+                {
+                    "prioritizationFee": 6064097,
+                    "slot": 338225886
+                },
+                {
+                    "prioritizationFee": 6064097,
+                    "slot": 338225887
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225888
+                },
+                {
+                    "prioritizationFee": 7578,
+                    "slot": 338225889
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225890
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225891
+                },
+                {
+                    "prioritizationFee": 202136,
+                    "slot": 338225892
+                },
+                {
+                    "prioritizationFee": 106090,
+                    "slot": 338225893
+                },
+                {
+                    "prioritizationFee": 80776,
+                    "slot": 338225894
+                },
+                {
+                    "prioritizationFee": 111939,
+                    "slot": 338225895
+                },
+                {
+                    "prioritizationFee": 75000,
+                    "slot": 338225896
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225897
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225898
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225899
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225900
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225901
+                },
+                {
+                    "prioritizationFee": 183582,
+                    "slot": 338225902
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225903
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225904
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225905
+                },
+                {
+                    "prioritizationFee": 535775,
+                    "slot": 338225906
+                },
+                {
+                    "prioritizationFee": 65038,
+                    "slot": 338225907
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225908
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225909
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225910
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225911
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225912
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225913
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225914
+                },
+                {
+                    "prioritizationFee": 0,
+                    "slot": 338225915
                 }
-            )
-        }
+            ],
+        });
 
         let setup = Setup::new().await.with_mock_api_keys().await;
         let client = setup.client();
         let fees = client
-            .mock_http_sequence(vec![
-                MockOutcallBuilder::new(200, response_body(0)).with_request_body(request_body(0)),
-                MockOutcallBuilder::new(200, response_body(1)).with_request_body(request_body(1)),
-                MockOutcallBuilder::new(200, response_body(2)).with_request_body(request_body(2)),
-            ])
+            .mock_json_rpc_request::<3>(request_body, response_body)
             .build()
             .get_recent_prioritization_fees(&[USDC_PUBLIC_KEY])
             .unwrap()
@@ -1145,7 +1141,7 @@ mod send_transaction_tests {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
-                .mock_sequential_json_rpc_responses::<3>(json!({
+                .mock_json_rpc_response::<3>(json!({
                     "id": Id::from(ConstantSizeId::from(first_id)),
                     "jsonrpc": "2.0",
                     "result": signature
@@ -1208,7 +1204,7 @@ mod generic_request_tests {
         let client = setup.client();
 
         let result = client
-            .mock_sequential_json_rpc_responses::<3>(json!({
+            .mock_json_rpc_response::<3>(json!({
                 "id": Id::from(ConstantSizeId::ZERO),
                 "jsonrpc": "2.0",
                 "result": serde_json::Value::from_str(MOCK_RESPONSE_RESULT).unwrap()
@@ -1773,14 +1769,7 @@ mod get_balance_tests {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
-                .mock_http_sequence(vec![
-                    MockOutcallBuilder::new(200, response_body(first_id))
-                        .with_request_body(request_body(first_id)),
-                    MockOutcallBuilder::new(200, response_body(first_id + 1))
-                        .with_request_body(request_body(first_id + 1)),
-                    MockOutcallBuilder::new(200, response_body(first_id + 2))
-                        .with_request_body(request_body(first_id + 2)),
-                ])
+                .mock_json_rpc_request::<3>(request_body(first_id), response_body(first_id))
                 .build()
                 .get_balance(USDC_PUBLIC_KEY)
                 .with_min_context_slot(100)
@@ -1837,14 +1826,7 @@ mod get_token_account_balance_tests {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
-                .mock_http_sequence(vec![
-                    MockOutcallBuilder::new(200, response_body(first_id))
-                        .with_request_body(request_body(first_id)),
-                    MockOutcallBuilder::new(200, response_body(first_id + 1))
-                        .with_request_body(request_body(first_id + 1)),
-                    MockOutcallBuilder::new(200, response_body(first_id + 2))
-                        .with_request_body(request_body(first_id + 2)),
-                ])
+                .mock_json_rpc_request::<3>(request_body(first_id), response_body(first_id))
                 .build()
                 .get_token_account_balance(USDC_PUBLIC_KEY)
                 .with_commitment(CommitmentLevel::Confirmed)
@@ -1914,14 +1896,7 @@ mod get_signature_statuses_tests {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
-                .mock_http_sequence(vec![
-                    MockOutcallBuilder::new(200, response_body(first_id))
-                        .with_request_body(request_body(first_id)),
-                    MockOutcallBuilder::new(200, response_body(first_id + 1))
-                        .with_request_body(request_body(first_id + 1)),
-                    MockOutcallBuilder::new(200, response_body(first_id + 2))
-                        .with_request_body(request_body(first_id + 2)),
-                ])
+                .mock_json_rpc_request::<3>(request_body(first_id), response_body(first_id))
                 .build()
                 .get_signature_statuses(&[some_signature(), another_signature()])
                 .unwrap()
@@ -2025,14 +2000,7 @@ mod get_signatures_for_address_tests {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
-                .mock_http_sequence(vec![
-                    MockOutcallBuilder::new(200, response_body(first_id))
-                        .with_request_body(request_body(first_id)),
-                    MockOutcallBuilder::new(200, response_body(first_id + 1))
-                        .with_request_body(request_body(first_id + 1)),
-                    MockOutcallBuilder::new(200, response_body(first_id + 2))
-                        .with_request_body(request_body(first_id + 2)),
-                ])
+                .mock_json_rpc_request::<3>(request_body(first_id), response_body(first_id))
                 .build()
                 .get_signatures_for_address(USDC_PUBLIC_KEY)
                 .with_limit(GetSignaturesForAddressLimit::try_from(5).unwrap())
@@ -2104,7 +2072,7 @@ mod estimate_recent_blockhash_tests {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
-                .mock_sequential_json_rpc_responses::<3>(
+                .mock_json_rpc_response::<3>(
                     json!({
                         "id": Id::from(ConstantSizeId::from(first_id)),
                         "jsonrpc": "2.0",
@@ -2141,7 +2109,7 @@ mod estimate_recent_blockhash_tests {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
-                .mock_sequential_json_rpc_sequences::<3>(vec![
+                .mock_sequential_json_rpc_responses::<3>(vec![
                     json!({
                         "id": Id::from(ConstantSizeId::from(first_id)),
                         "jsonrpc": "2.0",
@@ -2176,7 +2144,7 @@ mod estimate_recent_blockhash_tests {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
-                .mock_sequential_json_rpc_sequences::<3>(vec![
+                .mock_sequential_json_rpc_responses::<3>(vec![
                     json!({
                         "id": Id::from(ConstantSizeId::from(first_id)),
                         "jsonrpc": "2.0",
@@ -2227,7 +2195,7 @@ async fn should_log_request_and_response() {
         )]));
 
     let results = client
-        .mock_sequential_json_rpc_responses::<1>(json!({
+        .mock_json_rpc_response::<1>(json!({
             "id": Id::from(ConstantSizeId::ZERO),
             "jsonrpc": "2.0",
             "result": 1234,

@@ -37,6 +37,7 @@ solana-signature = { workspace = true }
 solana-signer = { workspace = true }
 solana-transaction = { workspace = true }
 solana-transaction-status-client-types = { workspace = true }
+tokio = { workspace = true }
 
 [dev-dependencies]
 assert_matches = { workspace = true }
@@ -46,4 +47,3 @@ solana-compute-budget-interface = { workspace = true }
 solana-keypair = { workspace = true }
 solana-program = { workspace = true }
 strum = { workspace = true }
-tokio = { workspace = true }

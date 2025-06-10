@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use candid::{decode_args, utils::ArgumentEncoder, CandidType, Decode, Encode, Principal};
+use candid::{decode_args, utils::ArgumentEncoder, CandidType, Encode, Principal};
 use canhttp::http::json::ConstantSizeId;
 use canlog::{Log, LogEntry};
 use ic_cdk::api::call::RejectionCode;
@@ -17,11 +17,14 @@ use serde::de::DeserializeOwned;
 use sol_rpc_canister::logs::Priority;
 use sol_rpc_client::{ClientBuilder, Runtime, SolRpcClient};
 use sol_rpc_types::{InstallArgs, RpcAccess, SupportedRpcProviderId};
+use std::iter::zip;
+use std::sync::Arc;
 use std::{
     env::{set_var, var},
     path::PathBuf,
     time::Duration,
 };
+use tokio::sync::Mutex;
 
 pub mod mock;
 pub mod spl;
@@ -197,7 +200,7 @@ impl Setup {
         PocketIcRuntime {
             env: &self.env,
             caller: self.caller,
-            mock_strategy: None,
+            mock_strategies: Arc::new(Mutex::new(Vec::new())),
             controller: self.controller,
             wallet: self.wallet_canister_id,
         }
@@ -266,7 +269,7 @@ impl AsRef<PocketIc> for Setup {
 pub struct PocketIcRuntime<'a> {
     env: &'a PocketIc,
     caller: Principal,
-    mock_strategy: Option<MockStrategy>,
+    mock_strategies: Arc<Mutex<Vec<MockStrategy>>>,
     wallet: Principal,
     controller: Principal,
 }
@@ -325,21 +328,27 @@ impl Runtime for PocketIcRuntime<'_> {
 
 impl PocketIcRuntime<'_> {
     fn with_strategy(self, strategy: MockStrategy) -> Self {
-        Self {
-            mock_strategy: Some(strategy),
-            ..self
-        }
+        tokio::runtime::Runtime::new().unwrap().block_on(async {
+            let mut guard = self.mock_strategies.lock().await;
+            *guard = vec![strategy];
+        });
+        self
+    }
+
+    fn with_strategies(self, strategies: Vec<MockStrategy>) -> Self {
+        tokio::runtime::Runtime::new().unwrap().block_on(async {
+            let mut guard = self.mock_strategies.lock().await;
+            *guard = strategies;
+        });
+        self
     }
 
     async fn execute_mock(&self) {
-        match &self.mock_strategy {
+        match &self.mock_strategies.lock().await.pop() {
             None => (),
             Some(MockStrategy::Mock(mock)) => {
                 self.mock_http_once_inner(mock).await;
                 while self.try_mock_http_inner(mock).await {}
-            }
-            Some(MockStrategy::MockOnce(mock)) => {
-                self.mock_http_once_inner(mock).await;
             }
             Some(MockStrategy::MockSequence(mocks)) => {
                 for mock in mocks {
@@ -495,9 +504,17 @@ where
 #[async_trait]
 pub trait SolRpcTestClient<R: Runtime> {
     fn mock_http(self, mock: impl Into<MockOutcall>) -> Self;
-    fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self;
-    fn mock_http_sequence(self, mocks: Vec<impl Into<MockOutcall>>) -> Self;
-    fn mock_sequential_json_rpc_responses<const N: usize>(self, body: serde_json::Value) -> Self;
+    fn mock_json_rpc_request<const N: usize>(
+        self,
+        request_body: serde_json::Value,
+        response_body: serde_json::Value,
+    ) -> Self;
+    fn mock_json_rpc_response<const N: usize>(self, body: serde_json::Value) -> Self;
+    fn mock_json_rpc_responses<const N: usize>(self, bodies: [serde_json::Value; N]) -> Self;
+    fn mock_sequential_json_rpc_responses<const N: usize>(
+        self,
+        bodies: Vec<serde_json::Value>,
+    ) -> Self;
 }
 
 #[async_trait]
@@ -506,24 +523,56 @@ impl SolRpcTestClient<PocketIcRuntime<'_>> for ClientBuilder<PocketIcRuntime<'_>
         self.with_runtime(|r| r.with_strategy(MockStrategy::Mock(mock.into())))
     }
 
-    fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self {
-        self.with_runtime(|r| r.with_strategy(MockStrategy::MockOnce(mock.into())))
+    fn mock_json_rpc_request<const N: usize>(
+        self,
+        request_body: serde_json::Value,
+        response_body: serde_json::Value,
+    ) -> Self {
+        let request_bodies = json_rpc_sequential_id::<N>(request_body);
+        let response_bodies = json_rpc_sequential_id::<N>(response_body);
+        let mocks = zip(request_bodies, response_bodies)
+            .map(|(request, response)| {
+                MockOutcallBuilder::new(200, &response).with_request_body(request)
+            })
+            .map(|builder| builder.build())
+            .collect();
+        self.with_runtime(|r| r.with_strategy(MockStrategy::MockSequence(mocks)))
     }
 
-    fn mock_http_sequence(self, mocks: Vec<impl Into<MockOutcall>>) -> Self {
-        self.with_runtime(|r| {
-            r.with_strategy(MockStrategy::MockSequence(
-                mocks.into_iter().map(|mock| mock.into()).collect(),
-            ))
-        })
-    }
-
-    fn mock_sequential_json_rpc_responses<const N: usize>(self, body: serde_json::Value) -> Self {
+    fn mock_json_rpc_response<const N: usize>(self, body: serde_json::Value) -> Self {
         let mocks = json_rpc_sequential_id::<N>(body)
             .into_iter()
             .map(|response| MockOutcallBuilder::new(200, &response))
+            .map(|builder| builder.build())
             .collect();
-        self.mock_http_sequence(mocks)
+        self.with_runtime(|r| r.with_strategy(MockStrategy::MockSequence(mocks)))
+    }
+
+    fn mock_json_rpc_responses<const N: usize>(self, bodies: [serde_json::Value; N]) -> Self {
+        let mocks = bodies
+            .into_iter()
+            .map(|response| MockOutcallBuilder::new(200, &response))
+            .map(|builder| builder.build())
+            .collect();
+        self.with_runtime(|r| r.with_strategy(MockStrategy::MockSequence(mocks)))
+    }
+
+    fn mock_sequential_json_rpc_responses<const N: usize>(
+        self,
+        bodies: Vec<serde_json::Value>,
+    ) -> Self {
+        let strategies = bodies
+            .into_iter()
+            .map(|body| {
+                let mocks = json_rpc_sequential_id::<N>(body)
+                    .into_iter()
+                    .map(|response| MockOutcallBuilder::new(200, &response))
+                    .map(|builder| builder.build())
+                    .collect();
+                MockStrategy::MockSequence(mocks)
+            })
+            .collect();
+        self.with_runtime(|r| r.with_strategies(strategies))
     }
 }
 
@@ -548,6 +597,5 @@ pub fn json_rpc_sequential_id<const N: usize>(
 #[derive(Clone, Debug)]
 enum MockStrategy {
     Mock(MockOutcall),
-    MockOnce(MockOutcall),
     MockSequence(Vec<MockOutcall>),
 }
