@@ -1017,7 +1017,7 @@ impl<R> EstimateBlockhashRequestBuilder<R> {
 
     /// Sets a [`RoundingError`] for the `getSlot` calls. If not set, the default value for the
     /// rounding error is used.
-    pub fn with_rounding_error(mut self, rounding_error: RoundingError) -> Self {
+    pub fn with_get_slot_rounding_error(mut self, rounding_error: RoundingError) -> Self {
         self.rounding_error = Some(rounding_error);
         self
     }
