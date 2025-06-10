@@ -954,7 +954,7 @@ fn set_default<T>(default_value: Option<T>, value: &mut Option<T>) {
 
 /// An error that occurred while trying to fetch a recent blockhash.
 /// See [`SolRpcClient::estimate_recent_blockhash`]
-#[derive(Debug, Clone, PartialEq, Error, From)]
+#[derive(Debug, Clone, PartialEq, Error)]
 pub enum EstimateRecentBlockhashError {
     /// The results from the different providers were not consistent for a `getSlot` call.
     #[error("Inconsistent result while fetching slot: {0:?}")]
@@ -974,6 +974,8 @@ pub enum EstimateRecentBlockhashError {
     #[error("No block for slot: {0}")]
     MissingBlock(Slot),
 }
+
+type EstimateRecentBlockhashResult<T> = Result<T, EstimateRecentBlockhashError>;
 
 /// A builder to build a request to fetch a recent blockhash.
 /// See [`SolRpcClient::estimate_recent_blockhash`].
@@ -1029,47 +1031,25 @@ impl<R: Runtime> EstimateBlockhashRequestBuilder<R> {
     /// [`SolRpcClient::estimate_recent_blockhash`]).
     pub async fn send(self) -> Result<Hash, Vec<EstimateRecentBlockhashError>> {
         let mut errors = Vec::with_capacity(self.num_tries.into());
-        loop {
-            if errors.len() >= usize::from(self.num_tries) {
-                return Err(errors);
+        while errors.len() < usize::from(self.num_tries) {
+            match self.get_slot_then_get_blockhash().await {
+                Ok(hash) => return Ok(hash),
+                Err(error) => errors.push(error),
             }
-            match self.get_slot().await {
-                MultiRpcResult::Consistent(Ok(slot)) => match self.get_block(slot).await {
-                    MultiRpcResult::Consistent(Ok(Some(block))) => {
-                        match Hash::from_str(&block.blockhash) {
-                            Ok(blockhash) => return Ok(blockhash),
-                            Err(e) => errors.push(EstimateRecentBlockhashError::GetBlockRpcError(
-                                RpcError::from(e),
-                            )),
-                        }
-                        continue;
-                    }
-                    MultiRpcResult::Consistent(Ok(None)) => {
-                        errors.push(slot.into());
-                        continue;
-                    }
-                    MultiRpcResult::Inconsistent(results) => {
-                        errors.push(results.into());
-                        continue;
-                    }
-                    MultiRpcResult::Consistent(Err(e)) => {
-                        errors.push(EstimateRecentBlockhashError::GetBlockRpcError(e));
-                        continue;
-                    }
-                },
-                MultiRpcResult::Inconsistent(results) => {
-                    errors.push(results.into());
-                    continue;
-                }
-                MultiRpcResult::Consistent(Err(e)) => {
-                    errors.push(EstimateRecentBlockhashError::GetSlotRpcError(e));
-                    continue;
-                }
-            }
+        }
+        Err(errors)
+    }
+
+    async fn get_slot_then_get_blockhash(&self) -> EstimateRecentBlockhashResult<Hash> {
+        let slot = self.get_slot().await?;
+        let block = self.get_block(slot).await?;
+        match Hash::from_str(&block.blockhash) {
+            Ok(blockhash) => Ok(blockhash),
+            Err(e) => Err(EstimateRecentBlockhashError::GetBlockRpcError(e.into())),
         }
     }
 
-    async fn get_slot(&self) -> MultiRpcResult<Slot> {
+    async fn get_slot(&self) -> EstimateRecentBlockhashResult<Slot> {
         let mut request = self.client.get_slot();
         if let Some(rpc_config) = self.rpc_config.as_ref() {
             request = request.with_rpc_config(rpc_config.clone());
@@ -1077,10 +1057,18 @@ impl<R: Runtime> EstimateBlockhashRequestBuilder<R> {
         if let Some(rounding_error) = self.rounding_error {
             request = request.with_rounding_error(rounding_error);
         }
-        request.send().await
+        match request.send().await {
+            MultiRpcResult::Consistent(Ok(slot)) => Ok(slot),
+            MultiRpcResult::Consistent(Err(e)) => {
+                Err(EstimateRecentBlockhashError::GetSlotRpcError(e))
+            }
+            MultiRpcResult::Inconsistent(results) => {
+                Err(EstimateRecentBlockhashError::GetSlotConsensusError(results))
+            }
+        }
     }
 
-    async fn get_block(&self, slot: Slot) -> MultiRpcResult<Option<UiConfirmedBlock>> {
+    async fn get_block(&self, slot: Slot) -> EstimateRecentBlockhashResult<UiConfirmedBlock> {
         let mut request = self
             .client
             .get_block(slot)
@@ -1089,6 +1077,17 @@ impl<R: Runtime> EstimateBlockhashRequestBuilder<R> {
         if let Some(rpc_config) = self.rpc_config.as_ref() {
             request = request.with_rpc_config(rpc_config.clone());
         }
-        request.send().await
+        match request.send().await {
+            MultiRpcResult::Consistent(Ok(Some(block))) => Ok(block),
+            MultiRpcResult::Consistent(Ok(None)) => {
+                Err(EstimateRecentBlockhashError::MissingBlock(slot))
+            }
+            MultiRpcResult::Consistent(Err(e)) => {
+                Err(EstimateRecentBlockhashError::GetBlockRpcError(e))
+            }
+            MultiRpcResult::Inconsistent(results) => Err(
+                EstimateRecentBlockhashError::GetBlockConsensusError(results),
+            ),
+        }
     }
 }
