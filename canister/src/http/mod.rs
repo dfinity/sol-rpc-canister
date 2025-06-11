@@ -84,7 +84,7 @@ where
                 })
                 .on_response(|req_data: MetricData, response: &HttpJsonRpcResponse<O>| {
                     observe_response(req_data.method.clone(), req_data.host.clone(), response.status().as_u16(), req_data.start_ns);
-                    observe_json_rpc_response(req_data.method, req_data.host, &response);
+                    observe_json_rpc_response(req_data.method, req_data.host, response);
                     log!(
                         Priority::TraceHttp,
                         "Got response for request with id `{}`. Response with status {}: {:?}",
