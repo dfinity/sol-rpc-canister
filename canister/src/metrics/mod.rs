@@ -123,10 +123,29 @@ impl MetricLabels for RejectionCode {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize, From)]
+pub struct MetricRpcErrorCode(pub String);
+
+impl From<i64> for MetricRpcErrorCode {
+    fn from(value: i64) -> Self {
+        MetricRpcErrorCode(value.to_string())
+    }
+}
+
+impl MetricLabels for MetricRpcErrorCode {
+    fn metric_labels(&self) -> Vec<(&str, &str)> {
+        vec![("code", &self.0)]
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Eq, CandidType, Deserialize)]
 pub struct Metrics {
     pub requests: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
     pub responses: HashMap<(MetricRpcMethod, MetricRpcHost, MetricHttpStatusCode), u64>,
+    #[serde(rename = "jsonRpcSuccesses")]
+    pub json_rpc_successes: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
+    #[serde(rename = "jsonRpcErrors")]
+    pub json_rpc_errors: HashMap<(MetricRpcMethod, MetricRpcHost, MetricRpcErrorCode), u64>,
     #[serde(rename = "inconsistentResponses")]
     pub inconsistent_responses: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
     #[serde(rename = "errHttpOutcall")]
@@ -197,6 +216,16 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
             "solrpc_responses",
             &m.responses,
             "Number of JSON-RPC responses",
+        );
+        w.counter_entries(
+            "solrpc_json_rpc_successes",
+            &m.json_rpc_successes,
+            "Number of JSON-RPC successes",
+        );
+        w.counter_entries(
+            "solrpc_json_rpc_errors",
+            &m.json_rpc_errors,
+            "Number of JSON-RPC errors",
         );
         w.counter_entries(
             "solrpc_inconsistent_responses",

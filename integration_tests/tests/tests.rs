@@ -2106,30 +2106,58 @@ mod get_signatures_for_address_tests {
 
 mod metrics_tests {
     use super::*;
+    use sol_rpc_types::{ConsensusStrategy, MultiRpcResult};
 
     #[tokio::test]
     async fn should_retrieve_metrics() {
         let setup = Setup::new().await.with_mock_api_keys().await;
-        let client = setup.client().with_rpc_sources(RpcSources::Custom(vec![
-            RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
-            RpcSource::Supported(SupportedRpcProviderId::HeliusMainnet),
-            RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
-        ]));
+        let client = setup
+            .client()
+            .with_consensus_strategy(ConsensusStrategy::Threshold {
+                total: Some(3),
+                min: 2,
+            })
+            .with_rpc_sources(RpcSources::Custom(vec![
+                RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::HeliusMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
+            ]));
 
         let client = client
-            .mock_sequential_json_rpc_responses::<3>(
-                200,
-                json!({
-                    "id": Id::from(ConstantSizeId::ZERO),
-                    "jsonrpc": "2.0",
-                    "result": 1_450_315,
-                }),
-            )
+            .mock_http_sequence(vec![
+                MockOutcallBuilder::new(
+                    200,
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(0_u8)),
+                        "jsonrpc": "2.0",
+                        "result": 1_450_305,
+                    }),
+                ),
+                MockOutcallBuilder::new(
+                    200,
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(1_u8)),
+                        "jsonrpc": "2.0",
+                        "result": 1_450_318,
+                    }),
+                ),
+                MockOutcallBuilder::new(
+                    200,
+                    json!({
+                      "jsonrpc": "2.0",
+                      "error": {
+                          "code": -32603,
+                          "message": "Internal error: failed to get slot: Node is behind",
+                          "data": null
+                      },
+                      "id": Id::from(ConstantSizeId::from(2_u8)),
+                    }),
+                ),
+            ])
             .build();
 
-        let result = client.get_slot().send().await.expect_consistent();
-
-        assert!(result.is_ok());
+        let result = client.get_slot().send().await;
+        assert_eq!(result, MultiRpcResult::Consistent(Ok(1_450_300)));
 
         setup
             .check_metrics()
@@ -2139,7 +2167,13 @@ mod metrics_tests {
             .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-rpc.publicnode.com"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="lb.drpc.org",status="200"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="mainnet.helius-rpc.com",status="200"\} 1 \d+"#)
-            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-rpc.publicnode.com",status="200"\} 1 \d+"#);
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-rpc.publicnode.com",status="200"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_json_rpc_successes\{method="getSlot",host="lb.drpc.org"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_json_rpc_successes\{method="getSlot",host="mainnet.helius-rpc.com"\} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_json_rpc_successes\{method="getSlot",host="solana-rpc.publicnode.com"\} .*"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_json_rpc_errors\{method="getSlot",host="lb.drpc.org",code=.*\} .*"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_json_rpc_errors\{method="getSlot",host="mainnet.helius-rpc.com",code=.*\} .*"#)
+            .assert_contains_metric_matching(r#"solrpc_json_rpc_errors\{method="getSlot",host="solana-rpc.publicnode.com",code="-32603\"\} 1 \d+"#);
     }
 }
 

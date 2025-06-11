@@ -1,5 +1,6 @@
 pub mod errors;
 
+use crate::metrics::MetricRpcErrorCode;
 use crate::{
     add_metric_entry,
     constants::{COLLATERAL_CYCLES_PER_NODE, CONTENT_TYPE_VALUE},
@@ -81,7 +82,8 @@ where
                     req_data
                 })
                 .on_response(|req_data: MetricData, response: &HttpJsonRpcResponse<O>| {
-                    observe_response(req_data.method, req_data.host, response.status().as_u16());
+                    observe_response(req_data.method.clone(), req_data.host.clone(), response.status().as_u16());
+                    observe_json_rpc_response(req_data.method, req_data.host, &response);
                     log!(
                         Priority::TraceHttp,
                         "Got response for request with id `{}`. Response with status {}: {:?}",
@@ -179,6 +181,33 @@ fn generate_request_id<I>(request: HttpJsonRpcRequest<I>) -> HttpJsonRpcRequest<
 fn observe_response(method: MetricRpcMethod, host: MetricRpcHost, status: u16) {
     let status: u32 = status as u32;
     add_metric_entry!(responses, (method, host, status.into()), 1);
+}
+
+fn observe_json_rpc_response<O>(
+    method: MetricRpcMethod,
+    host: MetricRpcHost,
+    response: &HttpJsonRpcResponse<O>,
+) {
+    match response.body().as_result() {
+        Ok(_) => observe_json_rpc_success(method, host),
+        Err(error) => observe_json_rpc_error(method, host, error),
+    }
+}
+
+fn observe_json_rpc_success(method: MetricRpcMethod, host: MetricRpcHost) {
+    add_metric_entry!(json_rpc_successes, (method, host), 1);
+}
+
+fn observe_json_rpc_error(
+    method: MetricRpcMethod,
+    host: MetricRpcHost,
+    error: &canhttp::http::json::JsonRpcError,
+) {
+    add_metric_entry!(
+        json_rpc_errors,
+        (method, host, MetricRpcErrorCode::from(error.code)),
+        1
+    );
 }
 
 struct MetricData {
