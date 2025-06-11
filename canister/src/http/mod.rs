@@ -2,7 +2,7 @@ pub mod errors;
 
 use crate::metrics::MetricRpcErrorCode;
 use crate::{
-    add_metric_entry,
+    add_latency_metric, add_metric_entry,
     constants::{COLLATERAL_CYCLES_PER_NODE, CONTENT_TYPE_VALUE},
     http::errors::HttpClientError,
     logs::Priority,
@@ -68,6 +68,7 @@ where
                         method: rpc_method.clone(),
                         host: MetricRpcHost(req.uri().host().unwrap().to_string()),
                         request_id: req.body().id().clone(),
+                        start_ns: ic_cdk::api::time()
                     };
                     add_metric_entry!(
                         requests,
@@ -82,7 +83,7 @@ where
                     req_data
                 })
                 .on_response(|req_data: MetricData, response: &HttpJsonRpcResponse<O>| {
-                    observe_response(req_data.method.clone(), req_data.host.clone(), response.status().as_u16());
+                    observe_response(req_data.method.clone(), req_data.host.clone(), response.status().as_u16(), req_data.start_ns);
                     observe_json_rpc_response(req_data.method, req_data.host, &response);
                     log!(
                         Priority::TraceHttp,
@@ -107,7 +108,7 @@ where
                             observe_response(
                                 req_data.method,
                                 req_data.host,
-                                response.status().as_u16(),
+                                response.status().as_u16(), req_data.start_ns
                             );
                             log!(
                                 Priority::TraceHttp,
@@ -124,7 +125,7 @@ where
                                 parsing_error: _,
                             },
                         ) => {
-                            observe_response(req_data.method, req_data.host, *status);
+                            observe_response(req_data.method, req_data.host, *status, req_data.start_ns);
                             log!(
                                 Priority::TraceHttp,
                                 "Invalid JSON RPC response for request with id `{}`: {}",
@@ -133,7 +134,7 @@ where
                             );
                         }
                         HttpClientError::InvalidJsonResponseId(ConsistentResponseIdFilterError::InconsistentId { status, request_id: _, response_id: _ }) => {
-                            observe_response(req_data.method, req_data.host, *status);
+                            observe_response(req_data.method, req_data.host, *status, req_data.start_ns);
                             log!(
                                 Priority::TraceHttp,
                                 "Invalid JSON RPC response for request with id `{}`: {}",
@@ -178,9 +179,10 @@ fn generate_request_id<I>(request: HttpJsonRpcRequest<I>) -> HttpJsonRpcRequest<
     http::Request::from_parts(parts, body)
 }
 
-fn observe_response(method: MetricRpcMethod, host: MetricRpcHost, status: u16) {
+fn observe_response(method: MetricRpcMethod, host: MetricRpcHost, status: u16, start_ns: u64) {
     let status: u32 = status as u32;
-    add_metric_entry!(responses, (method, host, status.into()), 1);
+    add_metric_entry!(responses, (method.clone(), host.clone(), status.into()), 1);
+    add_latency_metric!(latencies, (method, host), start_ns);
 }
 
 fn observe_json_rpc_response<O>(
@@ -214,6 +216,7 @@ struct MetricData {
     method: MetricRpcMethod,
     host: MetricRpcHost,
     request_id: Id,
+    start_ns: u64,
 }
 
 type JsonRpcServiceBuilder<I> = ServiceBuilder<

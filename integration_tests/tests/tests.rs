@@ -2162,18 +2162,26 @@ mod metrics_tests {
         setup
             .check_metrics()
             .await
+            // `solrpc_requests` counters
             .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="lb.drpc.org"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="mainnet.helius-rpc.com"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-rpc.publicnode.com"\} 1 \d+"#)
+            // `solrpc_responses` counters
             .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="lb.drpc.org",status="200"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="mainnet.helius-rpc.com",status="200"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-rpc.publicnode.com",status="200"\} 1 \d+"#)
+            // `solrpc_json_rpc_successes` counters
             .assert_contains_metric_matching(r#"solrpc_json_rpc_successes\{method="getSlot",host="lb.drpc.org"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_json_rpc_successes\{method="getSlot",host="mainnet.helius-rpc.com"\} 1 \d+"#)
             .assert_does_not_contain_metric_matching(r#"solrpc_json_rpc_successes\{method="getSlot",host="solana-rpc.publicnode.com"\} .*"#)
+            // `solrpc_json_rpc_errors` counters
             .assert_does_not_contain_metric_matching(r#"solrpc_json_rpc_errors\{method="getSlot",host="lb.drpc.org",code=.*\} .*"#)
             .assert_does_not_contain_metric_matching(r#"solrpc_json_rpc_errors\{method="getSlot",host="mainnet.helius-rpc.com",code=.*\} .*"#)
-            .assert_contains_metric_matching(r#"solrpc_json_rpc_errors\{method="getSlot",host="solana-rpc.publicnode.com",code="-32603\"\} 1 \d+"#);
+            .assert_contains_metric_matching(r#"solrpc_json_rpc_errors\{method="getSlot",host="solana-rpc.publicnode.com",code="-32603\"\} 1 \d+"#)
+            // `solrpc_json_rpc_call_latencies` latency histogram
+            .assert_contains_metric_matching(r#"\{method="getSlot",host="lb.drpc.org",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"\{method="getSlot",host="mainnet.helius-rpc.com",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"\{method="getSlot",host="solana-rpc.publicnode.com",le="\d+"\} 1 \d+"#);
     }
 }
 
