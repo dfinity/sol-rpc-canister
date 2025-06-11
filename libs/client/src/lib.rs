@@ -46,10 +46,9 @@
 //! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! # use sol_rpc_types::RpcError;
 //! let client = SolRpcClient::builder_for_ic()
-//! #   .with_mocked_responses(
-//! #        MultiRpcResult::Consistent(Ok(332_577_897_u64)),
-//! #        Ok::<u128, RpcError>(100_000_000_000),
-//! #    )
+//! #   .with_mocked_responses()
+//! #   .with_response_for_method("getSlotCyclesCost", Ok::<u128, RpcError>(100_000_000_000))
+//! #   .with_response_for_method("getSlot", MultiRpcResult::Consistent(Ok(332_577_897_u64)))
 //!     .build();
 //!
 //! let request = client.get_slot();
@@ -86,7 +85,7 @@
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! let client = SolRpcClient::builder_for_ic()
-//! #   .with_mocked_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+//! #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
 //!     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
 //!     .with_rpc_config(RpcConfig {
 //!         response_consensus: Some(ConsensusStrategy::Threshold {
@@ -138,7 +137,10 @@ use crate::request::{
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_cdk::api::call::RejectionCode;
-pub use request::{Request, RequestBuilder, SolRpcEndpoint, SolRpcRequest};
+pub use request::{
+    EstimateBlockhashRequestBuilder, EstimateRecentBlockhashError, Request, RequestBuilder,
+    SolRpcEndpoint, SolRpcRequest,
+};
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     CommitmentLevel, ConsensusStrategy, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
@@ -327,7 +329,7 @@ impl<R> SolRpcClient<R> {
     /// # use sol_rpc_client::fixtures::usdc_account;
     /// # use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo, MultiRpcResult};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(Some(usdc_account()))))
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(Some(usdc_account()))))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
@@ -366,7 +368,7 @@ impl<R> SolRpcClient<R> {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # use sol_rpc_types::MultiRpcResult;
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(389_086_612_571_u64)))
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(389_086_612_571_u64)))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
@@ -404,7 +406,7 @@ impl<R> SolRpcClient<R> {
     /// # use std::str::FromStr;
     /// # use sol_rpc_types::{Hash, Pubkey};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(ConfirmedBlock {
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(ConfirmedBlock {
     /// #     previous_blockhash: Hash::from_str("4yeCoXK2Q4yXcunuLtF37yTE1wVD4x8313adneZDmi8w").unwrap(),
     /// #     blockhash: Hash::from_str("C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY").unwrap(),
     /// #     parent_slot: 343459193,
@@ -472,7 +474,7 @@ impl<R> SolRpcClient<R> {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # use sol_rpc_types::{MultiRpcResult, TokenAmount};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(TokenAmount {
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(TokenAmount {
     /// #       ui_amount: Some(251153323.575906),
     /// #       decimals: 6,
     /// #       amount: "251153323575906".to_string(),
@@ -521,7 +523,7 @@ impl<R> SolRpcClient<R> {
     /// use std::num::NonZeroU8;
     /// use sol_rpc_types::{MultiRpcResult, PrioritizationFee, TokenAmount};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(vec![PrioritizationFee{slot: 338637772, prioritization_fee: 166667}])))
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(vec![PrioritizationFee{slot: 338637772, prioritization_fee: 166667}])))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
@@ -602,7 +604,7 @@ impl<R> SolRpcClient<R> {
     /// # use std::str::FromStr;
     /// # use sol_rpc_types::MultiRpcResult;
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(vec![
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(vec![
     /// #        ConfirmedTransactionStatusWithSignature {
     /// #            signature: Signature::from_str("3jPA8CnZb9sfs4zVAypa9KB7VAGwrTdXB6mg9H1H9XpATN6Y8iek4Y21Nb9LjbrpYACbF9USV8RBWvXFFhVoQUAs").unwrap(),
     /// #            confirmation_status: Some(TransactionConfirmationStatus::Finalized),
@@ -681,7 +683,7 @@ impl<R> SolRpcClient<R> {
     /// # use std::str::FromStr;
     /// # use sol_rpc_types::MultiRpcResult;
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(vec![
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(vec![
     /// #        Some(sol_rpc_types::TransactionStatus {
     /// #            slot: 338837593,
     /// #            status: Ok(()),
@@ -785,7 +787,7 @@ impl<R> SolRpcClient<R> {
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
@@ -827,40 +829,23 @@ impl<R> SolRpcClient<R> {
     /// # use std::str::FromStr;
     /// # use sol_rpc_types::{ConfirmedBlock, GetTransactionEncoding, Hash, MultiRpcResult, Pubkey};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok(sol_rpc_types::TransactionInfo {
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(sol_rpc_types::EncodedConfirmedTransactionWithStatusMeta {
     /// #       slot: 344115445,
     /// #       block_time: Some(1748865196),
-    /// #       version: None,
-    /// #       transaction: sol_rpc_types::EncodedTransaction::Binary(
-    /// #           "AezK+RzWcWWx92r0fdmhv7XPAaFQjkPd6MFbGVA7G48aioSd3xcYmwaPC2ih7PwypyeC/9to8mau9B\
-    /// #            i7UnL51QUBAAEDCPqP+HgQC9XiKJ57C0YTNM3SFIvOA3aVl/IgkHIZDmuTFuOuQ+TscmAh2ImY30W1\
-    /// #            llOzfsPudc98t1jqdNEmVQdhSB01dHS7fE12JOvTvbPYNV5z0RBD/A2jU4AAAAAA97B2Pa9+X8kE7k\
-    /// #            E4774GwvI3QCvLgOTJRad8txcXNsUBAgIBAJQBDgAAANXIghQAAAAAHwEfAR4BHQEcARsBGgEZARgB\
-    /// #            FwEWARUBFAETARIBEQEQAQ8BDgENAQwBCwEKAQkBCAEHAQYBBQEEAQMBAgEBiNvPO/moMFqBbr9xeM\
-    /// #            JF4bBdB8XDJJ5LLsGewMTGlm8BrJA9aAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
-    /// #            AA==".to_string(),
-    /// #           sol_rpc_types::TransactionBinaryEncoding::Base64,
-    /// #       ),
-    /// #       meta: Some(sol_rpc_types::TransactionStatusMeta {
-    /// #           status: Ok(()),
-    /// #           fee: 5000,
-    /// #           pre_balances: vec![43156320838, 6678633253, 1],
-    /// #           post_balances: vec![43156315838, 6678633253, 1],
-    /// #           inner_instructions: Some(vec![]),
-    /// #           log_messages: Some(vec![
-    /// #               "Program Vote111111111111111111111111111111111111111 invoke [1]".to_string(),
-    /// #               "Program Vote111111111111111111111111111111111111111 success".to_string()
-    /// #           ]).into(),
-    /// #           pre_token_balances: Some(vec![]),
-    /// #           post_token_balances: Some(vec![]),
-    /// #           rewards: Some(vec![]),
-    /// #           loaded_addresses: Some(sol_rpc_types::LoadedAddresses {
-    /// #               writable: vec![],
-    /// #               readonly: vec![],
-    /// #           }),
-    /// #           return_data: None,
-    /// #           compute_units_consumed: Some(2100),
-    /// #       }),
+    /// #       transaction: sol_rpc_types::EncodedTransactionWithStatusMeta {
+    /// #           transaction: sol_rpc_types::EncodedTransaction::Binary(
+    /// #               "AezK+RzWcWWx92r0fdmhv7XPAaFQjkPd6MFbGVA7G48aioSd3xcYmwaPC2ih7PwypyeC/9to8mau9B\
+    /// #                i7UnL51QUBAAEDCPqP+HgQC9XiKJ57C0YTNM3SFIvOA3aVl/IgkHIZDmuTFuOuQ+TscmAh2ImY30W1\
+    /// #                llOzfsPudc98t1jqdNEmVQdhSB01dHS7fE12JOvTvbPYNV5z0RBD/A2jU4AAAAAA97B2Pa9+X8kE7k\
+    /// #                E4774GwvI3QCvLgOTJRad8txcXNsUBAgIBAJQBDgAAANXIghQAAAAAHwEfAR4BHQEcARsBGgEZARgB\
+    /// #                FwEWARUBFAETARIBEQEQAQ8BDgENAQwBCwEKAQkBCAEHAQYBBQEEAQMBAgEBiNvPO/moMFqBbr9xeM\
+    /// #                JF4bBdB8XDJJ5LLsGewMTGlm8BrJA9aAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+    /// #                AA==".to_string(),
+    /// #               sol_rpc_types::TransactionBinaryEncoding::Base64,
+    /// #           ),
+    /// #           version: None,
+    /// #           meta: None,
+    /// #       }
     /// #   })))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
@@ -921,7 +906,7 @@ impl<R> SolRpcClient<R> {
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_response(MultiRpcResult::Consistent(Ok("tspfR5p1PFphquz4WzDb7qM4UhJdgQXkEZtW88BykVEdX2zL2kBT9kidwQBviKwQuA3b6GMCR1gknHvzQ3r623T")))
+    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok("tspfR5p1PFphquz4WzDb7qM4UhJdgQXkEZtW88BykVEdX2zL2kBT9kidwQBviKwQuA3b6GMCR1gknHvzQ3r623T")))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
@@ -973,7 +958,7 @@ impl<R> SolRpcClient<R> {
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SolRpcClient::builder_for_ic()
-    /// #    .with_mocked_response(MultiRpcResult::Consistent(Ok(json!({
+    /// #    .with_default_mocked_response(MultiRpcResult::Consistent(Ok(json!({
     /// #            "jsonrpc": "2.0",
     /// #            "result": {
     /// #                "feature-set": 3271415109_u32,
@@ -1042,6 +1027,87 @@ impl<R: Runtime> SolRpcClient<R> {
             )
             .await
             .unwrap()
+    }
+
+    /// Estimate a recent blockhash based on successive calls to `getSlot` and `getBlock`.
+    ///
+    /// Due to Solana's fast block time, the [`getLatestBlockhash`](https://solana.com/de/docs/rpc/http/getlatestblockhash)
+    /// RPC method cannot directly be called by a canister running on the Internet Computer.
+    /// Instead, to fetch a recent blockhash (e.g. to build a transaction), one must instead first
+    /// get the current slot with `getSlot`, then get the corresponding block with `getBlock`, and
+    /// finally extract the blockhash from the resulting block.
+    ///
+    /// Since `getSlot` can fail due to consensus errors (despite rounding) and `getBlock` can fail
+    /// due to not every slot having a block, this method allows retrying to fetch a recent
+    /// blockhash until either a blockhash is successfully retrieved, or a maximum number of
+    /// attempts is performed. By default, 3 attempts are performed.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use solana_hash::Hash;
+    /// use sol_rpc_client::{SolRpcClient};
+    /// use std::str::FromStr;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use sol_rpc_types::{ConfirmedBlock, MultiRpcResult};
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_responses()
+    /// #   .with_response_for_method("getSlot", MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+    /// #   .with_response_for_method("getBlock", MultiRpcResult::Consistent(Ok(ConfirmedBlock {
+    /// #       previous_blockhash: Default::default(),
+    /// #       blockhash: Hash::from_str("C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY").unwrap().into(),
+    /// #       parent_slot: 0,
+    /// #       block_time: None,
+    /// #       block_height: None,
+    /// #       signatures: None,
+    /// #       rewards: None,
+    /// #       num_reward_partitions: None,
+    /// #       transactions: None,
+    /// #   })))
+    ///     .build();
+    ///
+    /// // Try to fetch a slot and the corresponding block up to 3 times
+    /// let blockhash = client
+    ///     .estimate_recent_blockhash()
+    ///     .send()
+    ///     .await;
+    ///
+    /// assert_eq!(blockhash, Ok(Hash::from_str("C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY").unwrap()));
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// ```rust
+    /// use solana_hash::Hash;
+    /// use sol_rpc_client::{EstimateRecentBlockhashError, SolRpcClient};
+    /// use std::num::NonZeroUsize;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use sol_rpc_types::{ConfirmedBlock, MultiRpcResult};
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_mocked_responses()
+    /// #   .with_response_for_method("getSlot", MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+    /// #   .with_response_for_method("getBlock", MultiRpcResult::Consistent(Ok(None::<ConfirmedBlock>)))
+    ///     .build();
+    ///
+    /// let blockhash = client
+    ///     .estimate_recent_blockhash()
+    ///     .with_num_tries(NonZeroUsize::MIN)
+    ///     .send()
+    ///     .await;
+    ///
+    /// // Only one attempt was performed and there was no block for the fetched slot
+    /// assert_eq!(blockhash, Err(vec![EstimateRecentBlockhashError::MissingBlock(332_577_897_u64)]));
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn estimate_recent_blockhash(&self) -> EstimateBlockhashRequestBuilder<R> {
+        EstimateBlockhashRequestBuilder::new(self.clone())
     }
 
     async fn execute_request<Config, Params, CandidOutput, Output>(

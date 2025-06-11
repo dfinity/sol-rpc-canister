@@ -18,7 +18,6 @@ use solana_client::rpc_client::{
 };
 use solana_commitment_config::CommitmentConfig;
 use solana_compute_budget_interface::ComputeBudgetInstruction;
-use solana_hash::Hash;
 use solana_keypair::Keypair;
 use solana_program::{
     instruction::{AccountMeta, Instruction},
@@ -37,7 +36,6 @@ use std::{
     future::Future,
     iter::zip,
     num::NonZeroU8,
-    str::FromStr,
     thread::sleep,
     time::{Duration, Instant},
 };
@@ -314,23 +312,12 @@ async fn should_send_transaction() {
     let (sender, sender_balance_before) = setup.generate_keypair_and_fund_account();
     let (recipient, recipient_balance_before) = setup.generate_keypair_and_fund_account();
 
-    let slot = setup
+    let blockhash = setup
         .icp_client()
-        .get_slot()
+        .estimate_recent_blockhash()
         .send()
         .await
-        .expect_consistent()
-        .expect("Call to get slot failed");
-    let block = setup
-        .icp_client()
-        .get_block(slot)
-        .without_rewards()
-        .send()
-        .await
-        .expect_consistent()
-        .expect("Call to get block failed")
-        .expect("Block not found");
-    let blockhash = Hash::from_str(&block.blockhash).expect("Failed to parse blockhash");
+        .unwrap();
 
     let transaction_amount = 1_000;
     let instruction =

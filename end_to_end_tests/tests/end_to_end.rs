@@ -6,12 +6,10 @@ use sol_rpc_client::{
 use sol_rpc_e2e_tests::Setup;
 use sol_rpc_types::Lamport;
 use solana_compute_budget_interface::ComputeBudgetInstruction;
-use solana_hash::Hash;
 use solana_message::Message;
 use solana_program::system_instruction;
 use solana_pubkey::{pubkey, Pubkey};
 use solana_transaction::Transaction;
-use std::str::FromStr;
 
 const FUNDING_AMOUNT: Lamport = 1_000_000_000;
 const TRANSACTION_AMOUNT: Lamport = 100_000;
@@ -193,22 +191,12 @@ impl CreateSolanaMessage for CreateMessageWithRecentBlockhash<'_> {
             system_instruction::transfer(&sender_pubkey, &recipient_pubkey, TRANSACTION_AMOUNT);
 
         // Fetch a recent blockhash
-        // TODO XC-317: Use method to estimate recent blockhash
-        let slot = client
-            .get_slot()
+        let blockhash = client
+            .estimate_recent_blockhash()
             .send()
             .await
-            .expect_consistent()
-            .expect("Call to get slot failed");
-        let block = client
-            .get_block(slot)
-            .send()
-            .await
-            .expect_consistent()
-            .expect("Call to `getBlock` failed")
-            .expect("Block not found");
-        println!("Fetched recent blockhash: {:?}", block.blockhash);
-        let blockhash = Hash::from_str(&block.blockhash).expect("Failed to parse blockhash");
+            .expect("Failed to fetch recent blockhash");
+        println!("Fetched recent blockhash: {blockhash}");
 
         Message::new_with_blockhash(
             &[set_cu_limit_ix, add_priority_fee_ix, transfer_ix],
