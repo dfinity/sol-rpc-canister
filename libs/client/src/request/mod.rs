@@ -1073,7 +1073,8 @@ impl<R: Runtime> EstimateBlockhashRequestBuilder<R> {
             .client
             .get_block(slot)
             .with_transaction_details(TransactionDetails::None)
-            .with_max_supported_transaction_version(0);
+            .with_max_supported_transaction_version(0)
+            .without_rewards();
         if let Some(rpc_config) = self.rpc_config.as_ref() {
             request = request.with_rpc_config(rpc_config.clone());
         }
