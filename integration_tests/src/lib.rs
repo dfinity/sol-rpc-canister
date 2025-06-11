@@ -5,6 +5,7 @@ use canlog::{Log, LogEntry};
 use ic_cdk::api::call::RejectionCode;
 use ic_http_types::{HttpRequest, HttpResponse};
 use ic_management_canister_types::{CanisterId, CanisterSettings};
+use ic_metrics_assert::{AsyncCanisterHttpQuery, MetricsAssert};
 use num_traits::ToPrimitive;
 use pocket_ic::{
     common::rest::{
@@ -222,6 +223,24 @@ impl Setup {
 
     pub fn sol_rpc_canister_id(&self) -> CanisterId {
         self.sol_rpc_canister_id
+    }
+
+    pub async fn check_metrics(self) -> MetricsAssert<Self> {
+        MetricsAssert::from_async_http_query(self).await
+    }
+}
+
+#[async_trait]
+impl AsyncCanisterHttpQuery<RejectResponse> for Setup {
+    async fn http_query(&self, request: Vec<u8>) -> Result<Vec<u8>, RejectResponse> {
+        self.env
+            .query_call(
+                self.sol_rpc_canister_id,
+                Principal::anonymous(),
+                "http_request",
+                request,
+            )
+            .await
     }
 }
 

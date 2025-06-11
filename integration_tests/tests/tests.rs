@@ -2104,6 +2104,45 @@ mod get_signatures_for_address_tests {
     }
 }
 
+mod metrics_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn should_retrieve_metrics() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+        let client = setup.client().with_rpc_sources(RpcSources::Custom(vec![
+            RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
+            RpcSource::Supported(SupportedRpcProviderId::HeliusMainnet),
+            RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
+        ]));
+
+        let client = client
+            .mock_sequential_json_rpc_responses::<3>(
+                200,
+                json!({
+                    "id": Id::from(ConstantSizeId::ZERO),
+                    "jsonrpc": "2.0",
+                    "result": 1_450_315,
+                }),
+            )
+            .build();
+
+        let result = client.get_slot().send().await.expect_consistent();
+
+        assert!(result.is_ok());
+
+        setup
+            .check_metrics()
+            .await
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="lb.drpc.org"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="mainnet.helius-rpc.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-rpc.publicnode.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="lb.drpc.org",status="200"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="mainnet.helius-rpc.com",status="200"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-rpc.publicnode.com",status="200"\} 1 \d+"#);
+    }
+}
+
 #[tokio::test]
 async fn should_log_request_and_response() {
     let setup = Setup::new().await.with_mock_api_keys().await;
