@@ -19,7 +19,6 @@ ic-cdk = { workspace = true }
 ic-ed25519 = { workspace = true, optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-solana-account = { workspace = true }
 solana-account-decoder-client-types = { workspace = true, features = ["zstd"] }
 solana-hash = { workspace = true }
 solana-instruction = { workspace = true }
