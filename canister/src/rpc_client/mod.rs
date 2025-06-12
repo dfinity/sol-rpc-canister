@@ -100,7 +100,7 @@ impl GetAccountInfoRequest {
         let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
         let max_response_bytes = config
             .response_size_estimate
-            .unwrap_or(1024 + HEADER_SIZE_LIMIT);
+            .unwrap_or(512 + HEADER_SIZE_LIMIT);
 
         Ok(MultiRpcRequest::new(
             providers,
@@ -162,15 +162,17 @@ impl GetBlockRequest {
     }
 
     fn response_size_estimate(params: &json::GetBlockParams) -> u64 {
-        let cycles = match params.get_transaction_details() {
+        let mut cycles = HEADER_SIZE_LIMIT;
+        cycles += match params.get_transaction_details() {
             Some(TransactionDetails::Accounts) => CyclesCostEstimator::DEFAULT_MAX_RESPONSE_BYTES,
-            Some(TransactionDetails::Signatures) => 262_144,
-            Some(TransactionDetails::None) | None => 2_048,
+            Some(TransactionDetails::Signatures) => 256 * 1024,
+            Some(TransactionDetails::None) | None => 512,
         };
-        match params.include_rewards() {
-            Some(true) | None => CyclesCostEstimator::DEFAULT_MAX_RESPONSE_BYTES.min(cycles + 256),
-            Some(false) => cycles,
-        }
+        cycles += match params.include_rewards() {
+            Some(true) | None => 256,
+            Some(false) => 0,
+        };
+        CyclesCostEstimator::DEFAULT_MAX_RESPONSE_BYTES.min(cycles)
     }
 }
 
@@ -246,7 +248,7 @@ impl GetSlotRequest {
         let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
         let max_response_bytes = config
             .response_size_estimate
-            .unwrap_or(1024 + HEADER_SIZE_LIMIT);
+            .unwrap_or(64 + HEADER_SIZE_LIMIT);
         let rounding_error = config.rounding_error.unwrap_or_default();
 
         Ok(MultiRpcRequest::new(
@@ -303,7 +305,7 @@ impl GetTokenAccountBalanceRequest {
         let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
         let max_response_bytes = config
             .response_size_estimate
-            .unwrap_or(1024 + HEADER_SIZE_LIMIT);
+            .unwrap_or(256 + HEADER_SIZE_LIMIT);
 
         Ok(MultiRpcRequest::new(
             providers,
@@ -330,8 +332,7 @@ impl GetTransactionRequest {
         let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
         let max_response_bytes = config
             .response_size_estimate
-            // TODO XC-343: Revisit this when we add support for more values of `encoding`
-            .unwrap_or(10 * 1024 + HEADER_SIZE_LIMIT);
+            .unwrap_or(8 * 1024 + HEADER_SIZE_LIMIT);
 
         Ok(MultiRpcRequest::new(
             providers,
