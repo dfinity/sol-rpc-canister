@@ -8,10 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2025-06-13
 
 ### Added
+
 - Add a helper method to estimate recent blockhash ([#121](https://github.com/dfinity/sol-rpc-canister/pull/121))
 - Add support for `transactionDetails=accounts` ([#139](https://github.com/dfinity/sol-rpc-canister/pull/139))
 - Add support for `rewards` parameter for `getBlock` ([#135](https://github.com/dfinity/sol-rpc-canister/pull/135))
 - Add client and request builder methods for optional parameters ([#133](https://github.com/dfinity/sol-rpc-canister/pull/133) and [#136](https://github.com/dfinity/sol-rpc-canister/pull/136))
+
+### Fixed
+
+- Fix response estimates for some endpoints ([#147](https://github.com/dfinity/sol-rpc-canister/pull/147))
 
 ## [0.2.0] - 2025-05-27
 
