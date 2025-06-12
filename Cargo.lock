@@ -297,7 +297,7 @@ checksum = "55248b47b0caf0546f7988906588779981c43bb1bc9d0c44087278f80cdb44ba"
 
 [[package]]
 name = "basic_solana"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "bs58",
  "candid",
@@ -4412,7 +4412,7 @@ dependencies = [
 
 [[package]]
 name = "sol_rpc_canister"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "assert_matches",
  "candid",
@@ -4456,7 +4456,7 @@ dependencies = [
 
 [[package]]
 name = "sol_rpc_client"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "assert_matches",
  "async-trait",
@@ -4488,7 +4488,7 @@ dependencies = [
 
 [[package]]
 name = "sol_rpc_e2e_tests"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "async-trait",
  "candid",
@@ -4513,7 +4513,7 @@ dependencies = [
 
 [[package]]
 name = "sol_rpc_int_tests"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "assert_matches",
  "async-trait",
@@ -4556,7 +4556,7 @@ dependencies = [
 
 [[package]]
 name = "sol_rpc_types"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "base64 0.22.1",
  "bincode",

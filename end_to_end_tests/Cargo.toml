@@ -1,6 +1,6 @@
 [package]
 name = "sol_rpc_e2e_tests"
-version = "0.2.0"
+version = "1.0.0"
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
