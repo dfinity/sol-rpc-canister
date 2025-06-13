@@ -13,8 +13,7 @@ Target canister: `tghme-zyaaa-aaaar-qarca-cai`
 ---
 
 ## Motivation
-TODO: THIS MUST BE FILLED OUT
-
+This proposal installs the SOL RPC canister to the NNS-controlled canister ID `tghme-zyaaa-aaaar-qarca-cai` on subnet `pzp6e-ekpqk-3c5x7-2h6so-njoeq-mt45d-h3h6c-q3mxf-vpeq5-fk5o7-yae`.
 
 ## Install args
 
