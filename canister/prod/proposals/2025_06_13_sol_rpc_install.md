@@ -20,8 +20,14 @@ This proposal installs the SOL RPC canister to the NNS-controlled canister ID `t
 ```
 git fetch
 git checkout e3e416aea9292deaa1a757537bfef76948890eb6
-didc encode -d canister/sol_rpc_canister.did -t '(InstallArgs)' '( record { manageApiKeys = opt vec { principal "mf7xa-laaaa-aaaar-qaaaa-cai" }; overrideProvider = null; logFilter = null; numSubnetNodes = null; mode = null;  } )' | xxd -r -p | sha256sum
+didc encode -d canister/sol_rpc_canister.did -t '(InstallArgs)' '( record { manageApiKeys = opt vec { principal "mf7xa-laaaa-aaaar-qaaaa-cai" }; overrideProvider = null; logFilter = null; numSubnetNodes = opt 34; mode = opt variant { Normal };  } )' | xxd -r -p | sha256sum
 ```
+
+* The principal `mf7xa-laaaa-aaaar-qaaaa-cai` is a DFINITY-controlled wallet that can manage API keys.
+* `overrideProvider` is set to `null`, meaning that the RPC provider URLs are unchanged in the requests made by the canister.
+* The `logFilter` is set to `null`, meaning that all logs will be visible.
+* `numSubnetNodes` is set to `34`, the number of nodes in the subnet `pzp6e-ekpqk-3c5x7-2h6so-njoeq-mt45d-h3h6c-q3mxf-vpeq5-fk5o7-yae`.
+* The `mode` is set to `Normal`, requiring callers to attach cycles to use the SOL RPC canister.
 
 ## Wasm Verification
 
