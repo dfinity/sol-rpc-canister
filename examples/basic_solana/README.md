@@ -49,32 +49,45 @@ equivalent of "gas" on other blockchains).
 
 ### Deploy the smart contract to the Internet Computer
 
+#### Mainnet deployment
+
+To deploy the Solana wallet smart contract to the ICP Mainnet, navigate to `examples/basic_solana/mainnet` and execute
+the following command:
+
 ```bash
-dfx deploy --ic basic_solana --argument ( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { TestKey1 }; sol_rpc_canister_id = null } )
+dfx deploy
 ```
 
-#### What this does
+This deploys a wallet canister to the ICP Mainnet which is configured to interact with the Solana Devnet via the SOL RPC
+canister at [`tghme-zyaaa-aaaar-qarca-cai`](https://dashboard.internetcomputer.org/canister/tghme-zyaaa-aaaar-qarca-cai).
+Note that you will need to pay for your requests with cycles. If you do not have cycles available for testing, consider
+running this example locally as described in the next section.
 
-- `dfx deploy` tells the command line interface (CLI) to `deploy` the smart contract.
-- `--ic` tells the CLI to deploy the smart contract to the mainnet ICP blockchain. You may also omit this flag
-  to deploy the basic example locally instead (in this case you will also have to change the `sol_rpc_canister_id` to
-  that of a locally deployed canister). **Warning:** local testing hides some of the complexities involved with
-  deployment on the IC. Most notably, only a single instance of the canister is used meaning that consensus issues due
-  to Solana's fast block time may be hidden, and RPC providers that are only IPv4 compatible may be used which is not
-  the case on the IC where IPv6 compatibility is required.
-- `--argument (record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { TestKey1 }; sol_rpc_canister_id = null })`
-initializes the smart contract with the provided arguments:
-  - `solana_network = opt variant { Devnet }`: the canister interacts with the [Solana Devnet](https://solana.com/docs/core/clusters)
-    network.
-  - `ed25519_key_name = opt variant { MainnetTestKey1 }`: the canister uses a test key for signing via threshold EdDSA that is available on the ICP mainnet.
-    See [signing messages](https://internetcomputer.org/docs/current/developer-docs/smart-contracts/encryption/signing-messages#signing-messages-1)
-    for more details. 
-  - `sol_rpc_canister_id = null`: the canister makes RPC requests to the Solana network via the standard SOL RPC 
-  - canister on the ICP mainnet ([`tghme-zyaaa-aaaar-qarca-cai`](https://dashboard.internetcomputer.org/canister/tghme-zyaaa-aaaar-qarca-cai)). 
-    This can be replaced by the canister ID of another SOL RPC canister, e.g. a locally deployed one if running this 
-    tutorial locally.
+#### Local deployment
 
-If successful, you should see an output that looks like this:
+To deploy the Solana wallet smart contract locally, navigate to `examples/basic_solana/mainnet` and execute the 
+following commands:
+
+```bash
+dfx start --clean --background 
+dfx deploy
+./provision.sh
+```
+
+What this does:
+- `dfx start --clean --background` starts a local instance of the ICP blockchain. 
+- `dfx deploy` deploys a wallet canister as well as a SOL RPC canister, both locally. The wallet canister interacts with
+  the Solana Devnet via the local SOL RPC canister.
+- `./provision.sh` provisions dummy API keys for the JSON-RPC providers. This is because the locally deployed instance
+  of the SOL RPC canister is configured to make RPC requests to the public RPC endpoint offered by the Solana foundation
+  (see [here](https://solana.com/docs/references/clusters)) instead of via the RPC providers that the SOL RPC canister
+  deployed on Mainnet is configured to use.
+
+**NOTE:** If running this example locally, you will need to skip the `--ic` flag in all subsequent `dfx` commands.
+
+### Getting the canister ID
+
+If the canister deployment is successful (whether on Mainnet of locally), you should see an output that looks like this:
 
 ```bash
 Deploying: basic_solana
@@ -262,7 +275,7 @@ dfx canister call basic_solana get_spl_token_balance '(opt principal "<RECIPIENT
 In this tutorial, you were able to:
 
 * Deploy a canister smart contract on the ICP blockchain that can receive and send SOL.
-* Acquire cycles to deploy the canister to the ICP mainnet.
+* Acquire cycles to deploy the canister to the ICP Mainnet.
 * Connect the canister to the Solana Devnet.
 * Send the canister some Devnet SOL.
 * Use the canister to send SOL to another Solana account.

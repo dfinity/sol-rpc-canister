@@ -7,18 +7,13 @@
       "build": [
         "cargo build --no-default-features --target wasm32-unknown-unknown --release"
       ],
-      "wasm": "../../target/wasm32-unknown-unknown/release/basic_solana.wasm",
+      "wasm": "../../../target/wasm32-unknown-unknown/release/basic_solana.wasm",
       "metadata": [
         {
           "name": "candid:service"
         }
-      ]
-    }
-  },
-  "defaults": {
-    "build": {
-      "args": "",
-      "packtool": ""
+      ],
+      "init_arg": "( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { MainnetTestKey1 }; sol_rpc_canister_id = null } )"
     }
   },
   "version": 1
