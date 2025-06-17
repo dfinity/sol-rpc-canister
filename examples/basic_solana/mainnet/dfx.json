@@ -1,7 +1,7 @@
 {
   "canisters": {
     "basic_solana": {
-      "candid": "basic_solana.did",
+      "candid": "../../../canister/sol_rpc_canister.did",
       "package": "basic_solana",
       "type": "custom",
       "build": [
@@ -13,7 +13,7 @@
           "name": "candid:service"
         }
       ],
-      "init_arg": "( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { MainnetTestKey1 }; sol_rpc_canister_id = null } )"
+      "init_arg": "( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { MainnetTestKey1 }; sol_rpc_canister_id = opt principal \"tghme-zyaaa-aaaar-qarca-cai\" } )"
     }
   },
   "version": 1

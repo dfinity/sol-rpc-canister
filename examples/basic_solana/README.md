@@ -47,7 +47,7 @@ Deploying to the Internet Computer
 requires [cycles](https://internetcomputer.org/docs/current/developer-docs/getting-started/tokens-and-cycles) (the
 equivalent of "gas" on other blockchains).
 
-### Deploy the smart contract to the Internet Computer
+### Deployment
 
 #### Mainnet deployment
 
@@ -55,7 +55,7 @@ To deploy the Solana wallet smart contract to the ICP Mainnet, navigate to `exam
 the following command:
 
 ```bash
-dfx deploy
+dfx deploy --ic
 ```
 
 This deploys a wallet canister to the ICP Mainnet which is configured to interact with the Solana Devnet via the SOL RPC
@@ -65,7 +65,7 @@ running this example locally as described in the next section.
 
 #### Local deployment
 
-To deploy the Solana wallet smart contract locally, navigate to `examples/basic_solana/mainnet` and execute the 
+To deploy the Solana wallet smart contract locally, navigate to `examples/basic_solana/local` and execute the 
 following commands:
 
 ```bash
