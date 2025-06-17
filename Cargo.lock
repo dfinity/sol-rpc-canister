@@ -2209,6 +2209,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-metrics-assert"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2c57a72ade40e4c6659658d69929318bdaf94cbb6c98dbbde9115db155d437f"
+dependencies = [
+ "async-trait",
+ "candid",
+ "ic-http-types",
+ "ic-management-canister-types",
+ "pocket-ic",
+ "regex",
+ "serde",
+ "serde_bytes",
+]
+
+[[package]]
 name = "ic-metrics-encoder"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4525,6 +4541,7 @@ dependencies = [
  "ic-cdk",
  "ic-http-types",
  "ic-management-canister-types",
+ "ic-metrics-assert",
  "ic-test-utilities-load-wasm",
  "num-traits",
  "pocket-ic",

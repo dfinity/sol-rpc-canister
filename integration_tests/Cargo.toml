@@ -15,7 +15,8 @@ canlog = { workspace = true }
 const_format = { workspace = true }
 ic-cdk = { workspace = true }
 ic-http-types = { workspace = true }
-ic-management-canister-types = {workspace = true}
+ic-management-canister-types = { workspace = true }
+ic-metrics-assert = { workspace = true, features = ["pocket_ic"] }
 ic-test-utilities-load-wasm = { workspace = true }
 num-traits = { workspace = true }
 pocket-ic = { workspace = true }
