@@ -2198,36 +2198,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "ic-http-types"
-version = "0.1.0"
-source = "git+https://github.com/dfinity/ic?branch=lpahlavi%2FXC-296-ic-metrics-assert-nonblocking-pocketic#3e68ec043ffe5a904b40268c6ad9c520f52e01d0"
-dependencies = [
- "candid",
- "serde",
- "serde_bytes",
-]
-
-[[package]]
 name = "ic-management-canister-types"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "98554c2d8a30c00b6bfda18062fdcef21215cad07a52d8b8b1eb3130e51bfe71"
 dependencies = [
  "candid",
- "serde",
- "serde_bytes",
-]
-
-[[package]]
-name = "ic-metrics-assert"
-version = "0.1.0"
-source = "git+https://github.com/dfinity/ic?branch=lpahlavi%2FXC-296-ic-metrics-assert-nonblocking-pocketic#3e68ec043ffe5a904b40268c6ad9c520f52e01d0"
-dependencies = [
- "async-trait",
- "candid",
- "ic-http-types 0.1.0 (git+https://github.com/dfinity/ic?branch=lpahlavi%2FXC-296-ic-metrics-assert-nonblocking-pocketic)",
- "ic-management-canister-types",
- "regex",
  "serde",
  "serde_bytes",
 ]
@@ -4465,7 +4441,7 @@ dependencies = [
  "hex",
  "http 1.3.1",
  "ic-cdk",
- "ic-http-types 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ic-http-types",
  "ic-metrics-encoder",
  "ic-stable-structures",
  "maplit",
@@ -4563,7 +4539,7 @@ dependencies = [
  "const_format",
  "futures",
  "ic-cdk",
- "ic-http-types 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ic-http-types",
  "ic-management-canister-types",
  "ic-metrics-assert",
  "ic-test-utilities-load-wasm",
