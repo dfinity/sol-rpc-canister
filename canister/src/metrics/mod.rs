@@ -156,7 +156,7 @@ impl<A: MetricLabels, B: MetricLabels, C: MetricLabels> MetricLabels for (A, B, 
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, From)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, From)]
 pub struct MetricRpcMethod(pub String);
 
 impl MetricLabels for MetricRpcMethod {
@@ -165,7 +165,7 @@ impl MetricLabels for MetricRpcMethod {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, From)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, From)]
 pub struct MetricRpcHost(pub String);
 
 impl From<&str> for MetricRpcHost {
@@ -180,7 +180,7 @@ impl MetricLabels for MetricRpcHost {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, From)]
 pub struct MetricHttpStatusCode(pub String);
 
 impl From<u32> for MetricHttpStatusCode {
@@ -210,7 +210,7 @@ impl MetricLabels for RejectionCode {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, From)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, From)]
 pub struct MetricRpcErrorCode(pub String);
 
 impl From<i64> for MetricRpcErrorCode {
