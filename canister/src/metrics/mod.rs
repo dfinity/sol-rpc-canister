@@ -1,6 +1,6 @@
 use derive_more::From;
 use ic_cdk::api::call::RejectionCode;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::time::Duration;
 
 pub const BUCKETS_DEFAULT_MS: [u64; 8] =
@@ -227,20 +227,20 @@ impl MetricLabels for MetricRpcErrorCode {
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Metrics {
-    pub requests: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
-    pub responses: HashMap<(MetricRpcMethod, MetricRpcHost, MetricHttpStatusCode), u64>,
-    pub json_rpc_successes: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
-    pub json_rpc_errors: HashMap<(MetricRpcMethod, MetricRpcHost, MetricRpcErrorCode), u64>,
-    pub inconsistent_responses: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
-    pub err_http_outcall: HashMap<(MetricRpcMethod, MetricRpcHost, RejectionCode), u64>,
-    pub latencies: HashMap<(MetricRpcMethod, MetricRpcHost), LatencyHistogram>,
+    pub requests: BTreeMap<(MetricRpcMethod, MetricRpcHost), u64>,
+    pub responses: BTreeMap<(MetricRpcMethod, MetricRpcHost, MetricHttpStatusCode), u64>,
+    pub json_rpc_successes: BTreeMap<(MetricRpcMethod, MetricRpcHost), u64>,
+    pub json_rpc_errors: BTreeMap<(MetricRpcMethod, MetricRpcHost, MetricRpcErrorCode), u64>,
+    pub inconsistent_responses: BTreeMap<(MetricRpcMethod, MetricRpcHost), u64>,
+    pub err_http_outcall: BTreeMap<(MetricRpcMethod, MetricRpcHost, RejectionCode), u64>,
+    pub latencies: BTreeMap<(MetricRpcMethod, MetricRpcHost), LatencyHistogram>,
 }
 
 trait EncoderExtensions {
     fn counter_entries<K: MetricLabels, V: MetricValue>(
         &mut self,
         name: &str,
-        map: &HashMap<K, V>,
+        map: &BTreeMap<K, V>,
         help: &str,
     );
 }
@@ -249,7 +249,7 @@ impl EncoderExtensions for ic_metrics_encoder::MetricsEncoder<Vec<u8>> {
     fn counter_entries<K: MetricLabels, V: MetricValue>(
         &mut self,
         name: &str,
-        map: &HashMap<K, V>,
+        map: &BTreeMap<K, V>,
         help: &str,
     ) {
         map.iter().for_each(|(k, v)| {
