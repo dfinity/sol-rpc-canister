@@ -1,6 +1,6 @@
 [package]
 name = "sol_rpc_e2e_tests"
-version = "0.2.0"
+version = "1.0.0"
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -18,7 +18,6 @@ sol_rpc_client = { path = "../libs/client", features = ["ed25519"] }
 sol_rpc_types = { path = "../libs/types" }
 sol_rpc_int_tests = { path = "../integration_tests" }
 solana-commitment-config = { workspace = true }
-solana-hash = { workspace = true }
 solana-message = { workspace = true }
 solana-pubkey = { workspace = true }
 solana-signature = { workspace = true }

@@ -1655,7 +1655,7 @@ mod cycles_cost_tests {
                     check(
                         &setup,
                         client.get_account_info(USDC_PUBLIC_KEY),
-                        1_793_744_800,
+                        1_752_822_400,
                     )
                     .await;
                 }
@@ -1666,8 +1666,8 @@ mod cycles_cost_tests {
                     for transaction_details in TransactionDetails::iter() {
                         let expected_cycles_cost = match transaction_details {
                             TransactionDetails::Accounts => 164_743_232_800,
-                            TransactionDetails::None => 1_731_076_000,
-                            TransactionDetails::Signatures => 22_955_154_400,
+                            TransactionDetails::None => 1_772_855_200,
+                            TransactionDetails::Signatures => 23_122_271_200,
                         };
                         check(
                             &setup,
@@ -1707,7 +1707,7 @@ mod cycles_cost_tests {
                     check(
                         &setup,
                         client.get_slot().with_params(GetSlotParams::default()),
-                        1_792_548_000,
+                        1_714_103_200,
                     )
                     .await;
                 }
@@ -1723,7 +1723,7 @@ mod cycles_cost_tests {
                     check(
                         &setup,
                         client.get_transaction(some_signature()),
-                        2_548_381_600,
+                        2_381_264_800,
                     )
                     .await;
                 }

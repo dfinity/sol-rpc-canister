@@ -1,6 +1,6 @@
 [package]
 name = "sol_rpc_client"
-version = "0.2.0"
+version = "1.0.0"
 description = "Client to interact with the SOL RPC canister"
 authors.workspace = true
 edition.workspace = true
@@ -19,7 +19,6 @@ ic-cdk = { workspace = true }
 ic-ed25519 = { workspace = true, optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-solana-account = { workspace = true }
 solana-account-decoder-client-types = { workspace = true, features = ["zstd"] }
 solana-hash = { workspace = true }
 solana-instruction = { workspace = true }
@@ -33,7 +32,7 @@ solana-reward-info = { workspace = true }
 solana-transaction = { workspace = true, optional = true }
 solana-transaction-error = { workspace = true }
 solana-transaction-status-client-types = { workspace = true }
-sol_rpc_types = { version = "0.2.0", path = "../types" }
+sol_rpc_types = { version = "1.0.0", path = "../types" }
 strum = { workspace = true }
 thiserror = { workspace = true }
 
