@@ -1,7 +1,7 @@
 {
   "canisters": {
     "sol_rpc": {
-      "specified_id": "be2us-64aaa-aaaaa-qaabq-cai",
+      "specified_id": "kc2ee-duaaa-aaaaa-qaaaq-d7y",
       "candid": "../../../canister/sol_rpc_canister.did",
       "package": "sol_rpc_canister",
       "type": "custom",
@@ -29,8 +29,7 @@
           "name": "candid:service"
         }
       ],
-      "init_arg": "( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { LocalDevelopment }; sol_rpc_canister_id = opt principal \"be2us-64aaa-aaaaa-qaabq-cai\" } )",
-      "post_install": "./provision.sh"
+      "init_arg": "( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { LocalDevelopment }; sol_rpc_canister_id = opt principal \"kc2ee-duaaa-aaaaa-qaaaq-d7y\" } )"
     }
   },
   "version": 1
