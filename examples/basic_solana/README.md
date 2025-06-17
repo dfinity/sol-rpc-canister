@@ -78,10 +78,6 @@ What this does:
 - `dfx start --clean --background` starts a local instance of the ICP blockchain. 
 - `dfx deploy` deploys a wallet canister as well as a SOL RPC canister, both locally. The wallet canister interacts with
   the Solana Devnet via the local SOL RPC canister.
-- `./provision.sh` provisions dummy API keys for the JSON-RPC providers. This is because the locally deployed instance
-  of the SOL RPC canister is configured to make RPC requests to the public RPC endpoint offered by the Solana foundation
-  (see [here](https://solana.com/docs/references/clusters)) instead of via the RPC providers that the SOL RPC canister
-  deployed on Mainnet is configured to use.
 
 **NOTE:** If running this example locally, you will need to skip the `--ic` flag in all subsequent `dfx` commands.
 

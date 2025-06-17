@@ -29,7 +29,8 @@
           "name": "candid:service"
         }
       ],
-      "init_arg": "( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { LocalDevelopment }; sol_rpc_canister_id = opt principal \"be2us-64aaa-aaaaa-qaabq-cai\" } )"
+      "init_arg": "( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { LocalDevelopment }; sol_rpc_canister_id = opt principal \"be2us-64aaa-aaaaa-qaabq-cai\" } )",
+      "post_install": "./provision.sh"
     }
   },
   "version": 1
