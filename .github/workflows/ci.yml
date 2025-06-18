@@ -142,7 +142,7 @@ jobs:
       - name: 'Install dfx'
         uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365
         with:
-          dfx-version: "0.25.0"
+          dfx-version: "0.27.0"
 
       - name: 'Confirm dfx successful installation'
         run: dfx --version
@@ -171,7 +171,7 @@ jobs:
         working-directory: canister/ci
         run: ../scripts/examples.sh 2>&1 | tee e2e_examples.log
 
-      - name: "Deploy examples locally"
+      - name: "Deploy basic_solana locally"
         working-directory: examples/basic_solana/local
         run: |
           dfx start --clean --background
@@ -179,7 +179,7 @@ jobs:
           dfx canister call basic_solana solana_account "(null)" | grep -E '^\([[:alnum:]]\)*' || exit 1
           dfx canister call basic_solana get_balance "(null)" | grep -E '^\([0-9](_?[0-9]{3})* : nat\)$' || exit 1
 
-      - name: "Deploy examples on IC"
+      - name: "Deploy basic_solana on IC"
         working-directory: examples/basic_solana/mainnet
         run: |
           dfx deploy --ic
