@@ -43,7 +43,8 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
-      - name: Docker build
+
+      - name: 'Docker build'
         run: |
           ./scripts/docker-build
 
@@ -120,7 +121,6 @@ jobs:
         run: cargo test --locked --package sol_rpc_int_tests -- --test-threads 2 --nocapture
 
   basic-solana-deployment:
-    needs: [ reproducible-build ]
     runs-on: ubuntu-22.04
     env:
       # Needed to surpass dfx error to use the insecure plaintext identity
@@ -128,11 +128,6 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
-
-      - name: 'Download artifacts'
-        uses: actions/download-artifact@v4
-        with:
-          name: sol_rpc_canister.wasm.gz
 
       - name: 'Install dfx'
         uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365
@@ -155,22 +150,22 @@ jobs:
           dfx identity set-wallet --ic --force "${{ env.wallet_canister_id }}"
           dfx wallet balance --ic
 
+      - name: "Build basic_solana"
+        working-directory: examples/basic_solana
+        run: |
+          cargo build --no-default-features --target wasm32-unknown-unknown --release
+
       - name: "Deploy basic_solana locally"
         working-directory: examples/basic_solana/local
         run: |
-          dfx build basic_solana
-          dfx start --clean --background
-          dfx canister create --all
-          dfx canister install --all
+          dfx deploy
           dfx canister call basic_solana solana_account "(null)"
           dfx canister call basic_solana get_balance "(null)"
 
       - name: "Deploy basic_solana on IC"
         working-directory: examples/basic_solana/mainnet
         run: |
-          dfx build basic_solana
-          dfx canister create --ic --all
-          dfx canister install --ic --all
+          dfx deploy
           dfx canister call --ic basic_solana solana_account "(null)"
           dfx canister call --ic basic_solana get_balance "(null)"
 
