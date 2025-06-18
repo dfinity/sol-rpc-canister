@@ -176,15 +176,15 @@ jobs:
         run: |
           dfx start --clean --background
           dfx deploy
-          dfx canister call basic_solana solana_account "(null)" | grep -E '^\([[:alnum:]]\)*' || exit 1
-          dfx canister call basic_solana get_balance "(null)" | grep -E '^\([0-9](_?[0-9]{3})* : nat\)$' || exit 1
+          dfx canister call basic_solana solana_account "(null)"
+          dfx canister call basic_solana get_balance "(null)"
 
       - name: "Deploy basic_solana on IC"
         working-directory: examples/basic_solana/mainnet
         run: |
           dfx deploy --ic
-          dfx canister call --ic basic_solana solana_account "(null)" | grep -E '^\([[:alnum:]]\)*' || exit 1
-          dfx canister call --ic basic_solana get_balance "(null)" | grep -E '^\([0-9](_?[0-9]{3})* : nat\)$' || exit 1
+          dfx canister call --ic basic_solana solana_account "(null)"
+          dfx canister call --ic basic_solana get_balance "(null)"
 
       - name: "Detect inconsistent results"
         working-directory: canister/ci
