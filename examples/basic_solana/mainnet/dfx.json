@@ -1,7 +1,7 @@
 {
   "canisters": {
     "basic_solana": {
-      "candid": "../../../canister/sol_rpc_canister.did",
+      "candid": "../basic_solana.did",
       "package": "basic_solana",
       "type": "custom",
       "build": [
