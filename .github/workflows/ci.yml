@@ -153,6 +153,7 @@ jobs:
       - name: "Deploy basic_solana locally"
         working-directory: examples/basic_solana/local
         run: |
+          dfx start --clean --background
           dfx deploy
           dfx canister call basic_solana solana_account "(null)"
           dfx canister call basic_solana get_balance "(null)"
@@ -208,6 +209,7 @@ jobs:
       - name: "Deploy basic_solana locally"
         working-directory: examples/basic_solana/local
         run: |
+          dfx start --clean --background
           dfx deploy
           dfx canister call basic_solana solana_account "(null)"
           dfx canister call basic_solana get_balance "(null)"
