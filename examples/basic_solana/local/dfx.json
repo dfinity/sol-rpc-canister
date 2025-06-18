@@ -1,7 +1,7 @@
 {
   "canisters": {
     "sol_rpc": {
-      "specified_id": "kc2ee-duaaa-aaaaa-qaaaq-d7y",
+      "specified_id": "lxzze-o7777-77777-aaaaa-cai",
       "candid": "../../../canister/sol_rpc_canister.did",
       "package": "sol_rpc_canister",
       "type": "custom",
@@ -30,7 +30,7 @@
           "name": "candid:service"
         }
       ],
-      "init_arg": "( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { LocalDevelopment }; sol_rpc_canister_id = opt principal \"kc2ee-duaaa-aaaaa-qaaaq-d7y\" } )"
+      "init_arg": "( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { LocalDevelopment }; sol_rpc_canister_id = opt principal \"lxzze-o7777-77777-aaaaa-cai\" } )"
     }
   },
   "version": 1

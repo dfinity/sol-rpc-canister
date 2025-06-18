@@ -24,7 +24,11 @@ the [chain fusion overview](https://internetcomputer.org/docs/building-apps/chai
 
 ## Prerequisites
 
-* [x] Install the [IC SDK](https://internetcomputer.org/docs/current/developer-docs/setup/install/index.mdx).
+* [ ] Install the [IC SDK](https://internetcomputer.org/docs/current/developer-docs/setup/install/index.mdx) v0.27.0. If the IC SDK is already installed with an old version, install 0.27.0 with [`dfxvm`](https://internetcomputer.org/docs/building-apps/developer-tools/dev-tools-overview#dfxvm).
+* [ ] Confirm the IC SDK has been installed with the correct version:
+```shell
+dfx --version
+```
 
 ## Step 1: Building and deploying sample code
 
@@ -278,7 +282,7 @@ In this tutorial, you were able to:
 * Create a Solana nonce account and use the canister to send some SOL to another Solana account using durable nonces.
 * Create an associated token account for an SPL token use the canister to send some tokens to another Solana account.
 
-Additional examples regarding the ICP < > SOL integration can be
+Additional examples regarding the ICP <> SOL integration can be
 found [here](https://github.com/dfinity/sol-rpc-canister/tree/main/examples).
 
 ## Security considerations and best practices
