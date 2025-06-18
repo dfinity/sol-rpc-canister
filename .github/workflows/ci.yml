@@ -120,51 +120,6 @@ jobs:
       - name: 'Test sol_rpc_int_tests'
         run: cargo test --locked --package sol_rpc_int_tests -- --test-threads 2 --nocapture
 
-  basic-solana-deployment:
-    runs-on: ubuntu-22.04
-    env:
-      # Needed to surpass dfx error to use the insecure plaintext identity
-      DFX_WARNING: -mainnet_plaintext_identity
-    steps:
-      - name: 'Checkout'
-        uses: actions/checkout@v4
-
-      - name: 'Install dfx'
-        uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365
-        with:
-          dfx-version: "0.27.0"
-
-      - name: 'Confirm dfx successful installation'
-        run: dfx --version
-
-      - name: "Import dfx deploy key"
-        env:
-          DFX_DEPLOY_KEY: ${{ secrets.DFX_DEPLOY_KEY }}
-        run: |
-          key_pem=$(mktemp)
-          printenv "DFX_DEPLOY_KEY" > "$key_pem"
-          dfx identity import --storage-mode plaintext ci "$key_pem"
-          rm "$key_pem"
-          dfx identity use ci
-          dfx identity get-principal
-          dfx identity set-wallet --ic --force "${{ env.wallet_canister_id }}"
-          dfx wallet balance --ic
-
-      - name: "Deploy basic_solana locally"
-        working-directory: examples/basic_solana/local
-        run: |
-          dfx start --clean --background
-          dfx deploy
-          dfx canister call basic_solana solana_account "(null)"
-          dfx canister call basic_solana get_balance "(null)"
-
-      - name: "Deploy basic_solana on IC"
-        working-directory: examples/basic_solana/mainnet
-        run: |
-          dfx deploy
-          dfx canister call --ic basic_solana solana_account "(null)"
-          dfx canister call --ic basic_solana get_balance "(null)"
-
   end-to-end-tests:
     needs: [ reproducible-build ]
     runs-on: ubuntu-22.04
@@ -217,7 +172,7 @@ jobs:
       - name: "Deploy basic_solana on IC"
         working-directory: examples/basic_solana/mainnet
         run: |
-          dfx deploy
+          dfx deploy --ic
           dfx canister call --ic basic_solana solana_account "(null)"
           dfx canister call --ic basic_solana get_balance "(null)"
 
