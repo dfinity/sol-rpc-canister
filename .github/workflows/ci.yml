@@ -205,6 +205,20 @@ jobs:
           dfx identity set-wallet --ic --force "${{ env.wallet_canister_id }}"
           dfx wallet balance --ic
 
+      - name: "Deploy basic_solana locally"
+        working-directory: examples/basic_solana/local
+        run: |
+          dfx deploy
+          dfx canister call basic_solana solana_account "(null)"
+          dfx canister call basic_solana get_balance "(null)"
+
+      - name: "Deploy basic_solana on IC"
+        working-directory: examples/basic_solana/mainnet
+        run: |
+          dfx deploy
+          dfx canister call --ic basic_solana solana_account "(null)"
+          dfx canister call --ic basic_solana get_balance "(null)"
+
       - name: "Deploy SOL RPC Canister"
         run: |
           wallet="${{ env.wallet_canister_id }}"
