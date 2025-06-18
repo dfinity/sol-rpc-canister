@@ -150,11 +150,6 @@ jobs:
           dfx identity set-wallet --ic --force "${{ env.wallet_canister_id }}"
           dfx wallet balance --ic
 
-      - name: "Build basic_solana"
-        working-directory: examples/basic_solana
-        run: |
-          cargo build --no-default-features --target wasm32-unknown-unknown --release
-
       - name: "Deploy basic_solana locally"
         working-directory: examples/basic_solana/local
         run: |
