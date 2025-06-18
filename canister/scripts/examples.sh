@@ -170,7 +170,7 @@ GET_SIGNATURES_FOR_ADDRESS_PARAMS="(
     pubkey = \"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v\";
     commitment = null;
     minContextSlot = null;
-    limit = opt (10 : nat16);
+    limit = opt (10 : nat32);
     before = opt \"${FIRST_SIGNATURE}\";
     until = null;
   },
