@@ -1,5 +1,5 @@
 ---
-keywords: [ advanced, rust, solana, sol, integration, solana integration ]
+keywords: [ advanced, chain fusion, integration, rust, sol, solana, solana integration, spl ]
 ---
 
 # Basic Solana
@@ -7,8 +7,8 @@ keywords: [ advanced, rust, solana, sol, integration, solana integration ]
 ## Overview
 
 This tutorial will walk you through how to deploy a simple smart contract on the Internet Computer
-(known as [canisters](https://internetcomputer.org/docs/building-apps/essentials/canisters)) **that can control digital assets**
-on the Solana blockchain:
+(known as [canisters](https://internetcomputer.org/docs/building-apps/essentials/canisters)) **that can control digital
+assets** on the Solana blockchain:
 1. SOL, the native currency on Solana;
 2. any other token (known as [SPL tokens](https://solana.com/docs/tokens)).
 
@@ -19,11 +19,16 @@ the [threshold EdDSA](https://internetcomputer.org/docs/current/developer-docs/s
 and [HTTPs outcalls](https://internetcomputer.org/docs/current/developer-docs/smart-contracts/advanced-features/https-outcalls/https-outcalls-overview)
 features of the Internet Computer.
 
-For a deeper understanding of the ICP < > SOL integration, see the [chain fusion overview](https://internetcomputer.org/docs/building-apps/chain-fusion/overview).
+For a deeper understanding of the ICP <> SOL integration, see
+the [chain fusion overview](https://internetcomputer.org/docs/building-apps/chain-fusion/solana/overview#sol-rpc-canister).
 
 ## Prerequisites
 
-* [x] Install the [IC SDK](https://internetcomputer.org/docs/current/developer-docs/setup/install/index.mdx).
+* [ ] Install the [IC SDK](https://internetcomputer.org/docs/current/developer-docs/setup/install/index.mdx) v0.27.0. If the IC SDK is already installed with an old version, install 0.27.0 with [`dfxvm`](https://internetcomputer.org/docs/building-apps/developer-tools/dev-tools-overview#dfxvm).
+* [ ] Confirm the IC SDK has been installed with the correct version:
+```shell
+dfx --version
+```
 
 ## Step 1: Building and deploying sample code
 
@@ -37,8 +42,8 @@ cd examples/basic_solana
 git submodule update --init --recursive
 ```
 
-**If you are using MacOS, you'll need to install Homebrew and run `brew install llvm` to be able to compile the example.
-**
+**If you are using macOS, you'll need to install Homebrew and run `brew install llvm` to be able to
+compile the example.**
 
 ### Acquire cycles to deploy
 
@@ -46,30 +51,43 @@ Deploying to the Internet Computer
 requires [cycles](https://internetcomputer.org/docs/current/developer-docs/getting-started/tokens-and-cycles) (the
 equivalent of "gas" on other blockchains).
 
-### Deploy the smart contract to the Internet Computer
+### Deployment
+
+#### Mainnet deployment
+
+To deploy the Solana wallet smart contract to the ICP Mainnet, navigate to `examples/basic_solana/mainnet` and execute
+the following command:
 
 ```bash
-dfx deploy --ic basic_solana --argument (opt record { solana_network = opt variant {Devnet}; ed25519_key_name = opt variant {TestKey1}; sol_rpc_canister_id = null })
+dfx deploy --ic
 ```
 
-#### What this does
+This deploys a wallet canister to the ICP Mainnet which is configured to interact with the Solana Devnet via the SOL RPC
+canister at [`tghme-zyaaa-aaaar-qarca-cai`](https://dashboard.internetcomputer.org/canister/tghme-zyaaa-aaaar-qarca-cai).
+Note that you will need to pay for your requests with cycles. If you do not have cycles available for testing, consider
+running this example locally as described in the next section.
 
-- `dfx deploy` tells the command line interface to `deploy` the smart contract
-- `--ic` tells the command line to deploy the smart contract to the mainnet ICP blockchain
-- `--argument (opt record { solana_network = opt variant {Devnet}; ed25519_key_name = opt variant {TestKey1}; sol_rpc_canister_id = null })`
-  initializes the smart contract with the provided arguments:
-    - `solana_network = opt variant {Devnet}`: the canister uses
-      the [Solana Devnet](https://solana.com/docs/core/clusters)
-      network.
-    - `ed25519_key_name = opt variant {TestKey1}`: the canister uses a test key for signing via threshold EdDSA that is
-      available on the ICP mainnet.
-      See [signing messages](https://internetcomputer.org/docs/current/developer-docs/smart-contracts/encryption/signing-messages#signing-messages-1)
-      for more details.
-    - `sol_rpc_canister_id = null`: the canister makes RPC requests to the Solana network via the standard SOL-RPC canister on the ICP (
-      canister ID: `tghme-zyaaa-aaaar-qarca-cai`). This can be replaced by the canister ID of another SOL-RPC canister, e.g. a
-      locally deployed one.
+#### Local deployment
 
-If successful, you should see an output that looks like this:
+To deploy the Solana wallet smart contract locally, navigate to `examples/basic_solana/local` and execute the 
+following commands:
+
+```bash
+dfx start --clean --background 
+dfx deploy
+./provision.sh
+```
+
+What this does:
+- `dfx start --clean --background` starts a local instance of the ICP blockchain. 
+- `dfx deploy` deploys a wallet canister as well as a SOL RPC canister, both locally. The wallet canister interacts with
+  the Solana Devnet via the local SOL RPC canister.
+
+**NOTE:** If running this example locally, you will need to skip the `--ic` flag in all subsequent `dfx` commands.
+
+### Getting the canister ID
+
+If the canister deployment is successful (whether on Mainnet of locally), you should see an output that looks like this:
 
 ```bash
 Deploying: basic_solana
@@ -84,16 +102,16 @@ Candid:
 Your canister is live and ready to use! You can interact with it using either the command line or using the Candid UI,
 which is the link you see in the output above.
 
-In the output above, to see the Candid Web UI for your Solana canister, you would use the
-URL `https://bd3sg-teaaa-aaaaa-qaaba-cai.raw.icp0.io/?id=<YOUR-CANISTER-ID>`. You should see the methods specified in
-the Candid file `basic_solana.did`.
+In the output above, to see the Candid Web UI for your Solana canister, you would use the URL
+`https://bd3sg-teaaa-aaaaa-qaaba-cai.raw.icp0.io/?id=<YOUR-CANISTER-ID>`. You should see the methods specified in the
+Candid file `basic_solana.did`.
 
 ## Step 2: Generating a Solana account
 
-A Solana account can be derived from an EdDSA public key. To derive a user's specific account, identified on the IC
-by a principal, the canister uses its own threshold EdDSA public key to derive a new public key deterministically for
-each requested principal. To retrieve your Solana account, you can call the `solana_account` method on the
-previously deployed canister:
+A Solana account can be derived from an EdDSA public key. To derive a user's specific account, identified on the IC by a
+principal, the canister uses its own threshold EdDSA public key to derive a new public key deterministically for each
+requested principal. To retrieve your Solana account, you can call the `solana_account` method on the previously
+deployed canister:
 
 ```shell
 dfx canister --ic call basic_solana solana_account
@@ -110,8 +128,8 @@ given their IC principal:
 dfx canister --ic call basic_solana solana_account '(opt principal "hkroy-sm7vs-yyjs7-ekppe-qqnwx-hm4zf-n7ybs-titsi-k6e3k-ucuiu-uqe")'
 ```
 
-This will return a different Solana address as the one above, such
-as `("8HNiduWaBanrBv8c2pgGXZWnpKBdEYuQNHnspqto4yyq")`.
+This will return a different Solana address as the one above, such as
+`("8HNiduWaBanrBv8c2pgGXZWnpKBdEYuQNHnspqto4yyq")`.
 
 ## Step 3: Receiving SOL
 
@@ -120,9 +138,8 @@ Now that you have your Solana account, let us send some (Devnet) SOL to it:
 1. Get some Devnet SOL if you don't have any. You can for example use [this faucet](https://faucet.solana.com/).
 2. Send some Devnet SOL to the address you obtained in the previous step. You can use any Solana wallet to do so.
 
-Once the transaction is confirmed, you'll be able to see it in your Solana account's balance, which should be visible
-in a Solana explorer,
-e.g. https://explorer.solana.com/address/2kqg1tEj59FNe3hSiLH88SySB9D7fUSArum6TP6iHFQY?cluster=devnet.
+Once the transaction is confirmed, you'll be able to see it in your Solana account's balance, which should be visible in
+a Solana explorer, e.g. https://explorer.solana.com/address/2kqg1tEj59FNe3hSiLH88SySB9D7fUSArum6TP6iHFQY?cluster=devnet.
 
 ## Step 4: Sending SOL
 
@@ -137,15 +154,15 @@ dfx canister --ic call basic_solana send_sol '(null, "8HNiduWaBanrBv8c2pgGXZWnpK
 The `send_sol` endpoint sends SOL by executing the following steps:
 
 1. Retrieving a [recent blockhash](https://solana.com/docs/core/transactions#recent-blockhash). This is necessary
-   because all Solana transactions must include a blockhash within the
-   151 most recent stored hashes (which corresponds to about 60 to 90 seconds).
+   because all Solana transactions must include a blockhash within the 151 most recent stored hashes (which corresponds
+   to about 60 to 90 seconds).
 2. Building a Solana [transaction](https://solana.com/docs/core/transactions) that includes a single instruction to
    transfer the specified amount from the sender's address to the given receiver's address, as well as the recent
    blockhash.
 3. Signing the Solana transaction using
    the [threshold Ed25519 API](https://internetcomputer.org/docs/current/developer-docs/smart-contracts/signatures/signing-messages-t-schnorr).
 4. Sending the signed transaction to the Solana network using the `sendTransaction` method in
-   the [SOL-RPC canister](https://github.com/dfinity/sol-rpc-canister).
+   the [SOL RPC canister](https://github.com/dfinity/sol-rpc-canister).
 
 The `send_sol` endpoint returns the transaction ID of the transaction sent to the Solana network, which can for example
 be used to track the transaction on a Solana blockchain explorer.
@@ -191,7 +208,7 @@ in the transaction are different and the durable nonce is included in the transa
 3. Signing the Solana transaction using
    the [threshold Ed25519 API](https://internetcomputer.org/docs/current/developer-docs/smart-contracts/signatures/signing-messages-t-schnorr).
 4. Sending the signed transaction to the Solana network using the `sendTransaction` method in
-   the [SOL-RPC canister](https://github.com/dfinity/sol-rpc-canister).
+   the [SOL RPC canister](https://github.com/dfinity/sol-rpc-canister).
 
 The `send_sol_with_durable_nonce` endpoint returns the transaction ID of the transaction sent to the Solana network. You
 can also verify (either in a Solana explorer or using the `get_nonce` endpoint) that the nonce value stored in the
@@ -245,8 +262,8 @@ dfx canister call basic_solana send_spl_token '(null, "<TOKEN MINT ADDRESS>", "<
 
 The `send_spl_token` endpoint works similarly to the `send_sol` endpoint, but creates a transaction with the sender and
 recipient ATAs instead of their account addresses. You can also inspect the resulting transaction on a Solana explorer,
-and verify that the associated token balances were updated accordingly. You can also check the updated token balances
-by running the following commands:
+and verify that the associated token balances were updated accordingly. You can also check the updated token balances by
+running the following commands:
 
 ```bash
 dfx canister call basic_solana get_spl_token_balance '(opt principal "<SENDER PRINCIPAL>", "<TOKEN MINT ADDRESS`>")'
@@ -258,14 +275,14 @@ dfx canister call basic_solana get_spl_token_balance '(opt principal "<RECIPIENT
 In this tutorial, you were able to:
 
 * Deploy a canister smart contract on the ICP blockchain that can receive and send SOL.
-* Acquire cycles to deploy the canister to the ICP mainnet.
+* Acquire cycles to deploy the canister to the ICP Mainnet.
 * Connect the canister to the Solana Devnet.
 * Send the canister some Devnet SOL.
 * Use the canister to send SOL to another Solana account.
 * Create a Solana nonce account and use the canister to send some SOL to another Solana account using durable nonces.
 * Create an associated token account for an SPL token use the canister to send some tokens to another Solana account.
 
-Additional examples regarding the ICP < > SOL integration can be
+Additional examples regarding the ICP <> SOL integration can be
 found [here](https://github.com/dfinity/sol-rpc-canister/tree/main/examples).
 
 ## Security considerations and best practices
