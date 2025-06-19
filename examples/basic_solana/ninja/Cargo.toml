@@ -1,0 +1,40 @@
+[package]
+name = "basic_solana"
+version = "1.0.0"
+edition = "2021"
+
+[[bin]]
+name = "basic_solana"
+path = "src/main.rs"
+
+[dependencies]
+bs58 = "0.5.0"
+candid = "0.10.13"
+# Transitive dependency
+# See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
+getrandom = { version = "*", default-features = false, features = ["custom"] }
+ic-cdk = "0.17.2"
+ic-ed25519 = "0.2.0"
+num = "0.4.3"
+serde = { version = "1.0.219", features = ["derive"] }
+sol_rpc_client = { version = "1.0.0", features = ["ed25519"] }
+sol_rpc_types = "1.0.0"
+solana-hash = "2.2.0"
+solana-instruction = "2.2.0"
+solana-message = "2.2.0"
+solana-program = "2.2.0"
+solana-pubkey = "2.2.0"
+solana-signature = "2.2.0"
+solana-transaction = { version = "2.2.0", features = ["bincode"] }
+
+[dev-dependencies]
+candid = "0.10.13"
+candid_parser = "0.1.4"
+ic-management-canister-types = "0.3"
+ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", tag = "release-2025-01-23_03-04-base" }
+pocket-ic = "9.0.0"
+solana-client = "2.2.0"
+solana-commitment-config = "2.2.0"
+solana-keypair = "2.2.0"
+solana-rpc-client-nonce-utils = "2.2.0"
+solana-signer = "2.2.0"

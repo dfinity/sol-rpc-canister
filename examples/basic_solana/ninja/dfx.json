@@ -14,7 +14,8 @@
         {
           "name": "candid:service"
         }
-      ]
+      ],
+      "init_arg": "( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { LocalDevelopment }; sol_rpc_canister_id = opt principal \"tghme-zyaaa-aaaar-qarca-cai\" } )"
     },
     "sol_rpc": {
       "candid": "https://github.com/dfinity/sol-rpc-canister/releases/download/v1.0.0/sol_rpc_canister.did",
