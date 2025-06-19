@@ -7,7 +7,7 @@
       "gzip": true,
       "wasm": "target/wasm32-unknown-unknown/release/basic_solana.wasm",
       "build": [
-        "cargo build --target wasm32-unknown-unknown --release -p backend",
+        "cargo build --target wasm32-unknown-unknown --release -p basic_solana",
         "candid-extractor target/wasm32-unknown-unknown/release/basic_solana.wasm > basic_solana.did"
       ],
       "metadata": [
