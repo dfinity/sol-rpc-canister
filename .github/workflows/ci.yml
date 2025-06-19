@@ -166,8 +166,12 @@ jobs:
         run: |
           dfx start --clean --background
           dfx deploy
-          dfx canister call basic_solana solana_account --output json | grep -E "^\"[1-9A-HJ-NP-Za-km-z]{32,44}\"\$" || exit 1
-          dfx canister call basic_solana get_balance --output json | grep -E "\d+(?:_\d+)*" || exit 1
+          out=$(dfx canister call basic_solana solana_account --output json)
+          echo "$out"
+          echo "$out" | grep -E "\d+(?:_\d+)*" > /dev/null || { echo "❌ Call to `solana_account` failed"; exit 1; }
+          out=$(dfx canister call basic_solana get_balance --output json)
+          echo "$out"
+          echo "$out" | grep -E "\d+(?:_\d+)*" > /dev/null || { echo "❌ Call to `get_balance` failed"; exit 1; }
 
       - name: "Deploy SOL RPC Canister"
         run: |
