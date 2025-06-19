@@ -1,0 +1,138 @@
+type InitArg = record {
+    // The canister will interact with this Solana network.
+    // If not specified, the value is set to `Devnet`.
+    solana_network : opt SolanaNetwork;
+    // Commitment level to use when interacting with the Solana blockchain.
+    // If not specified, the value is set to `finalized`.
+    solana_commitment_level : opt CommitmentLevel;
+    // EdDSA keys will be derived from this key.
+    // If not specified, the value is set to `TestKeyLocalDevelopment`.
+    ed25519_key_name : opt Ed25519KeyName;
+    // The canister will interact with this SOL RPC canister.
+    // If not specified, the value is set to `tghme-zyaaa-aaaar-qarca-cai`.
+    sol_rpc_canister_id : opt principal;
+};
+
+type SolanaNetwork = variant {
+    // Live production environment.
+    Mainnet;
+    // Public testing and development.
+    Devnet;
+    // Validator and stress testing.
+    Testnet;
+};
+
+// Commitment levels in Solana, representing finality guarantees of transactions and state queries.
+// See https://solana.com/de/docs/rpc#configuring-state-commitment.
+type CommitmentLevel = variant {
+  processed;
+  confirmed;
+  finalized;
+};
+
+type Ed25519KeyName = variant {
+    // For local development with `dfx`.
+    LocalDevelopment;
+    // For testing with the Internet Computer's test key.
+    MainnetTestKey1;
+    // For running the canister in a production environment using the Internet Computer's production key.
+    MainnetProdKey1;
+};
+
+// Atomic unit of SOL, i.e., 1 SOL = 10^9 Lamports
+type Lamport = nat;
+
+// Address on Solana i.e. a base58-encoded Ed25519 public key or Program Derived Address (PDA).
+type Address = text;
+
+// A transaction ID on Solana, i.e. the first signature in a transaction.
+type Txid = text;
+
+// Hash value used as recent_blockhash field in Transactions.
+type Blockhash = text;
+
+// A human-readable representation of a token amount, as returned by the Solana `getTokenAccountBalance` RPC method.
+type TokenAmount = record {
+  // The raw balance without decimals, a string representation of a nat64.
+  amount : text;
+  // Number of base 10 digits to the right of the decimal place.
+  decimals : nat8;
+  // DEPRECATED: The balance, using mint-prescribed decimals.
+  uiAmount : opt float64;
+  // The balance as a string, using mint-prescribed decimals.
+  uiAmountString : text;
+};
+
+service : (InitArg) -> {
+    // Returns the Solana account derived from the owner principal.
+    //
+    // If the owner is not set, it defaults to the caller's principal.
+    solana_account : (owner: opt principal) -> (Address);
+
+    // Returns the Solana nonce account derived from the owner principal.
+    //
+    // If the owner is not set, it defaults to the caller's principal.
+    nonce_account : (owner: opt principal) -> (Address);
+
+    // Returns the Solana associated token account (ATA) for the account derived
+    // from the owner principal and the given SPL token mint account.
+    //
+    // If the owner is not set, it defaults to the caller's principal.
+    associated_token_account : (owner: opt principal, mint_account: Address) -> (Address);
+
+    // Returns the lamport balance of the given Solana account.
+    //
+    // If no account is provided, the account derived from the caller's principal is used.
+    get_balance : (account: opt Address) -> (Lamport);
+
+    // Returns the current blockhash for the given Solana nonce account.
+    //
+    // If no account is provided, the nonce account derived from the caller's principal is used.
+    get_nonce : (account: opt Address) -> (Blockhash);
+
+    // Returns the balance of the given Solana account for the SPL token associated with
+    // the given token mint account formatted as a string.
+    //
+    // If no account is provided, the account derived from the caller's principal is used.
+    get_spl_token_balance : (account: opt Address, mint_account: Address) -> (TokenAmount);
+
+    // Creates a nonce account with the given Solana account as nonce authority. Returns the
+    // resulting nonce account address.
+    //
+    // If no account is provided, the account derived from the caller's principal is used.
+    create_nonce_account : (owner: opt principal) -> (Address);
+
+    // Creates an SPL associated token account for the given Solana account and mint account.
+    // Returns the resulting associated token account address.
+    //
+    // If no account is provided, the account derived from the caller's principal is used.
+    create_associated_token_account : (owner: opt principal, mint_account: Address) -> (Address);
+
+    // Sends the given amount of SOL in base unit (Lamport) from the account derived from
+    // the owner principal to the given Solana account.
+    //
+    // Returns the resulting transaction ID.
+    //
+    // If the owner is not set, the funds are sent from the account derived from the
+    // caller's principal.
+    send_sol : (owner: opt principal, to: Address, amount: Lamport) -> (Txid);
+
+    // Sends the given amount of SOL in base unit (Lamport) from the account derived from
+    // the owner principal to the given Solana account, and uses the durable nonce from the
+    // derived nonce account instead of a recent blockhash in the transaction.
+    //
+    // Returns the resulting transaction ID.
+    //
+    // If the owner is not set, the funds are sent from the account derived from the
+    // caller's principal.
+    send_sol_with_durable_nonce : (owner: opt principal, to: Address, amount: Lamport) -> (Txid);
+
+    // Sends the given amount of SPL tokens for the given token mint account in base unit
+    // from the ATA derived from the owner principal to the ATA for the given Solana account.
+    //
+    // Returns the resulting transaction ID.
+    //
+    // If the owner is not set, the funds are sent from the ATA of the account derived from the
+    // caller's principal.
+    send_spl_token : (owner: opt principal, mint_account: Address, to: Address, amount: nat) -> (Txid);
+}

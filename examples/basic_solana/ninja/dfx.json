@@ -1,0 +1,35 @@
+{
+  "canisters": {
+    "basic_solana": {
+      "candid": "basic_solana.did",
+      "type": "custom",
+      "shrink": true,
+      "gzip": true,
+      "wasm": "target/wasm32-unknown-unknown/release/basic_solana.wasm",
+      "build": [
+        "cargo build --target wasm32-unknown-unknown --release -p basic_solana",
+        "candid-extractor target/wasm32-unknown-unknown/release/basic_solana.wasm > basic_solana.did"
+      ],
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ],
+      "init_arg": "( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { LocalDevelopment }; sol_rpc_canister_id = opt principal \"tghme-zyaaa-aaaar-qarca-cai\" } )"
+    },
+    "sol_rpc": {
+      "candid": "https://github.com/dfinity/sol-rpc-canister/releases/download/v1.0.0/sol_rpc_canister.did",
+      "type": "custom",
+      "specified_id": "tghme-zyaaa-aaaar-qarca-cai",
+      "remote": {
+        "id": {
+          "ic": "tghme-zyaaa-aaaar-qarca-cai"
+        }
+      },
+      "wasm": "https://github.com/dfinity/sol-rpc-canister/releases/download/v1.0.0/sol_rpc_canister.wasm.gz",
+      "init_arg": "( record { manageApiKeys = null; overrideProvider = opt record { overrideUrl = opt record { pattern = \".*\"; replacement = \"https://api.devnet.solana.com\" } }; logFilter = opt variant { ShowAll }; numSubnetNodes = null; mode = opt variant { Demo }; } )",
+      "post_install": "./provision.sh"
+    }
+  },
+  "output_env_file": ".env"
+}
