@@ -169,13 +169,6 @@ jobs:
           dfx canister call basic_solana solana_account "(null)"
           dfx canister call basic_solana get_balance "(null)"
 
-      - name: "Deploy basic_solana on IC"
-        working-directory: examples/basic_solana/mainnet
-        run: |
-          dfx deploy --ic
-          dfx canister call --ic basic_solana solana_account "(null)"
-          dfx canister call --ic basic_solana get_balance "(null)"
-
       - name: "Deploy SOL RPC Canister"
         run: |
           wallet="${{ env.wallet_canister_id }}"
