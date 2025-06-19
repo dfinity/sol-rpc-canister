@@ -1,6 +1,6 @@
 {
   "canisters": {
-    "backend": {
+    "basic_solana": {
       "candid": "basic_solana.did",
       "type": "custom",
       "shrink": true,
