@@ -16,11 +16,31 @@ env:
   RUSTFLAGS: "-Dwarnings"
 
 jobs:
-  lint:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
+
+      - name: 'Restore Cargo cache'
+        uses: ./.github/actions/cache-cargo
+
+      - name: 'Compile everything (including tests)'
+        run: cargo test --no-run
+
+      - name: 'Cache build artifacts'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cargo-target
+          path: target/
+
+  lint:
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
       - name: 'Check code'
         run: |
           cargo fmt --all -- --check
@@ -28,21 +48,60 @@ jobs:
           cargo clippy --locked --verbose --target wasm32-unknown-unknown -p sol_rpc_canister -- -D clippy::all
 
   cargo-doc:
+    needs: [ build ]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: 'Checkout'
         uses: actions/checkout@v4
-      - name: Cargo doc
+
+      - name: 'Restore Cargo cache'
+        uses: ./.github/actions/cache-cargo
+
+      - name: 'Cache build artifacts'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cargo-target
+          path: target/
+
+      - name: 'Cargo doc'
         run: |
           cargo doc --workspace --no-deps
         env:
           RUSTDOCFLAGS: "--deny warnings"
+
+  unit-tests:
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Restore Cargo cache'
+        uses: ./.github/actions/cache-cargo
+
+      - name: 'Cache build artifacts'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cargo-target
+          path: target/
+
+      - name: 'Run unit tests'
+        run: cargo test --locked --workspace --exclude basic_solana --exclude sol_rpc_int_tests --exclude sol_rpc_e2e_tests
 
   reproducible-build:
     runs-on: ubuntu-22.04
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
+
+      - name: 'Restore Cargo cache'
+        uses: ./.github/actions/cache-cargo
+
+      - name: 'Cache build artifacts'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cargo-target
+          path: target/
 
       - name: 'Docker build'
         run: |
@@ -61,20 +120,21 @@ jobs:
           hash=`sha256sum ./wasms/sol_rpc_canister.wasm.gz`
           echo "SHA-256 :hash: ${hash}" >> $GITHUB_STEP_SUMMARY
 
-  unit-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Checkout'
-        uses: actions/checkout@v4
-      - name: 'Run unit tests'
-        run: cargo test --locked --workspace --exclude basic_solana --exclude sol_rpc_int_tests --exclude sol_rpc_e2e_tests
-
   integration-tests:
-    needs: [ reproducible-build ]
+    needs: [ build, reproducible-build ]
     runs-on: ubuntu-22.04
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
+
+      - name: 'Restore Cargo cache'
+        uses: ./.github/actions/cache-cargo
+
+      - name: 'Cache build artifacts'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cargo-target
+          path: target/
 
       - name: 'Download artifacts'
         uses: actions/download-artifact@v4
@@ -121,7 +181,7 @@ jobs:
         run: cargo test --locked --package sol_rpc_int_tests -- --test-threads 2 --nocapture
 
   end-to-end-tests:
-    needs: [ reproducible-build ]
+    needs: [ build, reproducible-build ]
     runs-on: ubuntu-22.04
     concurrency:
       group: ci_environment
@@ -134,6 +194,15 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
+
+      - name: 'Restore Cargo cache'
+        uses: ./.github/actions/cache-cargo
+
+      - name: 'Cache build artifacts'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cargo-target
+          path: target/
 
       - name: 'Download artifacts'
         uses: actions/download-artifact@v4
