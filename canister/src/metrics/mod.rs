@@ -328,7 +328,7 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
         );
 
         let mut histogram_vec = w.histogram_vec(
-            "solrpc_json_rpc_call_latencies",
+            "solrpc_latencies",
             "The latency of JSON-RPC calls in milliseconds.",
         )?;
         for (label, histogram) in &m.latencies {

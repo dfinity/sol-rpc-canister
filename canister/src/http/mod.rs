@@ -183,15 +183,22 @@ fn observe_error_with_status(status: impl Into<u16>, req_data: &MetricData) {
 }
 
 fn observe_response(response: MetricRpcCallResponse, req_data: &MetricData) {
+    match response {
+        MetricRpcCallResponse::HttpError(_)
+        | MetricRpcCallResponse::JsonRpcError
+        | MetricRpcCallResponse::Success => add_latency_metric!(
+            latencies,
+            (req_data.method.clone(), req_data.host.clone()),
+            req_data.start_ns
+        ),
+        MetricRpcCallResponse::IcError(_) => {
+            // Don't record latency for IC errors
+        }
+    }
     add_metric_entry!(
         responses,
         (req_data.method.clone(), req_data.host.clone(), response),
         1
-    );
-    add_latency_metric!(
-        latencies,
-        (req_data.method.clone(), req_data.host.clone()),
-        req_data.start_ns
     );
 }
 
