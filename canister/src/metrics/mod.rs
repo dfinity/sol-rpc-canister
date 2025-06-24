@@ -183,8 +183,8 @@ impl MetricLabels for MetricRpcHost {
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, From)]
 pub struct MetricHttpStatusCode(pub String);
 
-impl From<u32> for MetricHttpStatusCode {
-    fn from(value: u32) -> Self {
+impl From<u16> for MetricHttpStatusCode {
+    fn from(value: u16) -> Self {
         MetricHttpStatusCode(value.to_string())
     }
 }
@@ -225,14 +225,36 @@ impl MetricLabels for MetricRpcErrorCode {
     }
 }
 
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub enum MetricRpcCallResponse {
+    Success,
+    IcError(RejectionCode),
+    HttpError(MetricHttpStatusCode),
+    JsonRpcError,
+}
+
+impl MetricLabels for MetricRpcCallResponse {
+    fn metric_labels(&self) -> Vec<(&str, &str)> {
+        match self {
+            MetricRpcCallResponse::Success => vec![],
+            MetricRpcCallResponse::IcError(rejection_code) => [("error", "ic")]
+                .into_iter()
+                .chain(rejection_code.metric_labels())
+                .collect(),
+            MetricRpcCallResponse::HttpError(status) => [("error", "http")]
+                .into_iter()
+                .chain(status.metric_labels())
+                .collect(),
+            MetricRpcCallResponse::JsonRpcError => vec![("error", "json-rpc")],
+        }
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Metrics {
     pub requests: BTreeMap<(MetricRpcMethod, MetricRpcHost), u64>,
-    pub responses: BTreeMap<(MetricRpcMethod, MetricRpcHost, MetricHttpStatusCode), u64>,
-    pub json_rpc_successes: BTreeMap<(MetricRpcMethod, MetricRpcHost), u64>,
-    pub json_rpc_errors: BTreeMap<(MetricRpcMethod, MetricRpcHost, MetricRpcErrorCode), u64>,
+    pub responses: BTreeMap<(MetricRpcMethod, MetricRpcHost, MetricRpcCallResponse), u64>,
     pub inconsistent_responses: BTreeMap<(MetricRpcMethod, MetricRpcHost), u64>,
-    pub err_http_outcall: BTreeMap<(MetricRpcMethod, MetricRpcHost, RejectionCode), u64>,
     pub latencies: BTreeMap<(MetricRpcMethod, MetricRpcHost), LatencyHistogram>,
 }
 
@@ -284,13 +306,11 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
             ic_cdk::api::stable::stable_size() as f64 * WASM_PAGE_SIZE_IN_BYTES,
             "Size of the stable memory allocated by this canister.",
         )?;
-
         w.encode_gauge(
             "heap_memory_bytes",
             heap_memory_size_bytes() as f64,
             "Size of the heap memory allocated by this canister.",
         )?;
-
         w.counter_entries(
             "solrpc_requests",
             &m.requests,
@@ -302,31 +322,15 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
             "Number of JSON-RPC responses",
         );
         w.counter_entries(
-            "solrpc_json_rpc_successes",
-            &m.json_rpc_successes,
-            "Number of JSON-RPC successes",
-        );
-        w.counter_entries(
-            "solrpc_json_rpc_errors",
-            &m.json_rpc_errors,
-            "Number of JSON-RPC errors",
-        );
-        w.counter_entries(
             "solrpc_inconsistent_responses",
             &m.inconsistent_responses,
-            "Number of inconsistent RPC responses",
-        );
-        w.counter_entries(
-            "solrpc_err_http_outcall",
-            &m.err_http_outcall,
-            "Number of unsuccessful HTTP outcalls",
+            "Number of inconsistent JSON-RPC responses",
         );
 
         let mut histogram_vec = w.histogram_vec(
             "solrpc_json_rpc_call_latencies",
             "The latency of JSON-RPC calls in milliseconds.",
         )?;
-
         for (label, histogram) in &m.latencies {
             histogram_vec = histogram_vec.histogram(
                 label.metric_labels().as_slice(),
