@@ -1,6 +1,6 @@
 pub mod errors;
 
-use crate::metrics::{MetricHttpStatusCode, MetricRpcCallResponse};
+use crate::metrics::MetricRpcCallResponse;
 use crate::{
     add_latency_metric, add_metric_entry,
     constants::{COLLATERAL_CYCLES_PER_NODE, CONTENT_TYPE_VALUE},
