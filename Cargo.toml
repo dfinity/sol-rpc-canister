@@ -1,12 +1,12 @@
 [workspace]
 resolver = "2"
 members = [
-  "canister",
-  "end_to_end_tests",
-  "examples/basic_solana",
-  "integration_tests",
-  "libs/client",
-  "libs/types",
+    "canister",
+    "end_to_end_tests",
+    "examples/basic_solana",
+    "integration_tests",
+    "libs/client",
+    "libs/types",
 ]
 
 [workspace.package]

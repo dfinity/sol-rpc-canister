@@ -12,10 +12,10 @@ include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
 
 [features]
 ed25519 = [
-  "ic-ed25519",
-  "solana-keypair",
-  "solana-message",
-  "solana-transaction",
+    "ic-ed25519",
+    "solana-keypair",
+    "solana-message",
+    "solana-transaction",
 ]
 
 [dependencies]
