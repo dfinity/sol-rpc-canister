@@ -1,12 +1,12 @@
 [workspace]
 resolver = "2"
 members = [
-    "canister",
-    "end_to_end_tests",
-    "examples/basic_solana",
-    "integration_tests",
-    "libs/client",
-    "libs/types",
+  "canister",
+  "end_to_end_tests",
+  "examples/basic_solana",
+  "integration_tests",
+  "libs/client",
+  "libs/types",
 ]
 
 [workspace.package]
@@ -16,16 +16,6 @@ repository = "https://github.com/dfinity/sol-rpc-canister"
 homepage = "https://github.com/dfinity/sol-rpc-canister#readme"
 license = "Apache-2.0"
 readme = "README.md"
-
-[profile.release]
-debug = false
-lto = true
-strip = true
-opt-level = 's'
-
-# Required by `ic-test-utilities-load-wasm`
-[profile.canister-release]
-inherits = "release"
 
 [workspace.dependencies]
 assert_matches = "1.5.0"
@@ -49,10 +39,10 @@ http = "1.2.0"
 ic-agent = "0.40.0"
 ic-canister-log = "0.2.0"
 ic-cdk = "0.17.2"
-ic-http-types = "0.1.0"
-ic-metrics-assert = "0.1.0"
 ic-ed25519 = "0.2.0"
+ic-http-types = "0.1.0"
 ic-management-canister-types = "0.3"
+ic-metrics-assert = "0.1.0"
 ic-metrics-encoder = "1.1"
 ic-stable-structures = "0.6.7"
 ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", tag = "release-2025-01-23_03-04-base" }
@@ -97,6 +87,16 @@ tower = "0.5.2"
 tower-http = "0.6.2"
 url = "2.5"
 zeroize = { version = "1.8", features = ["zeroize_derive"] }
+
+[profile.release]
+debug = false
+lto = true
+strip = true
+opt-level = 's'
+
+# Required by `ic-test-utilities-load-wasm`
+[profile.canister-release]
+inherits = "release"
 
 # TODO XC-297: Currently, the solana-* crates have a dependency on wasm-bindgen
 #   when they are built for wasm32-unknown-unknown target. For this reason, we

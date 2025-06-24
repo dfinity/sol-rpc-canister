@@ -28,9 +28,6 @@ jobs:
           cargo clippy --locked --verbose --tests --benches --workspace -- -D clippy::all
           cargo clippy --locked --verbose --target wasm32-unknown-unknown -p sol_rpc_canister -- -D clippy::all
 
-      - name: 'Install Rust'
-        uses: dtolnay/rust-toolchain@stable
-
       - name: 'Install cargo-sort'
         run: cargo install cargo-sort
 
