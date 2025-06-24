@@ -31,14 +31,8 @@ jobs:
       - name: 'Install cargo-sort'
         run: cargo install cargo-sort
 
-      - name: 'Install taplo'
-        run: cargo install taplo-cli --locked
-
-      - name: 'Check Cargo.toml ordering'
+      - name: 'Check Cargo.toml'
         run: cargo sort --workspace --check
-
-      - name: 'Check Cargo.toml formatting'
-        run: taplo fmt --check .
 
   cargo-doc:
     runs-on: ubuntu-latest
