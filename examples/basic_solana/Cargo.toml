@@ -12,9 +12,7 @@ bs58 = { workspace = true }
 candid = { workspace = true }
 # Transitive dependency
 # See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
-getrandom = { workspace = true, default-features = false, features = [
-  "custom",
-] }
+getrandom = { workspace = true, default-features = false, features = ["custom"] }
 ic-cdk = { workspace = true }
 ic-ed25519 = { workspace = true }
 num = { workspace = true }
