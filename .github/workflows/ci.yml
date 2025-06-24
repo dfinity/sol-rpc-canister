@@ -21,11 +21,27 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
+
       - name: 'Check code'
         run: |
           cargo fmt --all -- --check
           cargo clippy --locked --verbose --tests --benches --workspace -- -D clippy::all
           cargo clippy --locked --verbose --target wasm32-unknown-unknown -p sol_rpc_canister -- -D clippy::all
+
+      - name: 'Install Rust'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 'Install cargo-sort'
+        run: cargo install cargo-sort
+
+      - name: 'Install taplo'
+        run: cargo install taplo-cli --locked
+
+      - name: 'Check Cargo.toml ordering'
+        run: cargo sort --workspace --check
+
+      - name: 'Check Cargo.toml formatting'
+        run: taplo fmt --check .
 
   cargo-doc:
     runs-on: ubuntu-latest
