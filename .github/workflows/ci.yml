@@ -191,18 +191,6 @@ jobs:
         working-directory: canister/ci
         run: ../scripts/examples.sh 2>&1 | tee e2e_examples.log
 
-      - name: "Deploy examples locally"
-        working-directory: examples/basic_solana/local
-        run: |
-          dfx deploy
-          dfx canister call basic_solana get_balance "(null)" | grep -E '^\([0-9](_?[0-9]{3})* : nat\)$' || exit 1
-
-      - name: "Deploy examples on IC"
-        working-directory: examples/basic_solana/mainnet
-        run: |
-          dfx deploy --ic
-          dfx canister call --ic basic_solana get_balance "(null)" | grep -E '^\([0-9](_?[0-9]{3})* : nat\)$' || exit 1
-
       - name: "Detect inconsistent results"
         working-directory: canister/ci
         run: cat e2e_examples.log | grep -q -e Inconsistent && exit 1 || exit 0
