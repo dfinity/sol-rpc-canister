@@ -15,15 +15,15 @@ ic-cdk = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 sol_rpc_client = { path = "../libs/client", features = ["ed25519"] }
-sol_rpc_types = { path = "../libs/types" }
 sol_rpc_int_tests = { path = "../integration_tests" }
+sol_rpc_types = { path = "../libs/types" }
+solana-client = { workspace = true }
 solana-commitment-config = { workspace = true }
 solana-message = { workspace = true }
 solana-pubkey = { workspace = true }
 solana-signature = { workspace = true }
 solana-transaction = { workspace = true }
 solana-transaction-status-client-types = { workspace = true }
-solana-client = { workspace = true }
 tokio = { workspace = true }
 
 [dev-dependencies]

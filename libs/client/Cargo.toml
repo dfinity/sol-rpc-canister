@@ -10,6 +10,14 @@ license.workspace = true
 readme = "README.md"
 include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
 
+[features]
+ed25519 = [
+    "ic-ed25519",
+    "solana-keypair",
+    "solana-message",
+    "solana-transaction",
+]
+
 [dependencies]
 async-trait = { workspace = true }
 bincode = { workspace = true }
@@ -19,6 +27,7 @@ ic-cdk = { workspace = true }
 ic-ed25519 = { workspace = true, optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+sol_rpc_types = { version = "1.0.0", path = "../types" }
 solana-account-decoder-client-types = { workspace = true, features = ["zstd"] }
 solana-hash = { workspace = true }
 solana-instruction = { workspace = true }
@@ -27,22 +36,13 @@ solana-message = { workspace = true, optional = true }
 solana-nonce = { workspace = true, features = ["serde"] }
 solana-program = { workspace = true }
 solana-pubkey = { workspace = true }
-solana-signature = { workspace = true }
 solana-reward-info = { workspace = true }
+solana-signature = { workspace = true }
 solana-transaction = { workspace = true, optional = true }
 solana-transaction-error = { workspace = true }
 solana-transaction-status-client-types = { workspace = true }
-sol_rpc_types = { version = "1.0.0", path = "../types" }
 strum = { workspace = true }
 thiserror = { workspace = true }
-
-[features]
-ed25519 = [
-    "ic-ed25519",
-    "solana-keypair",
-    "solana-message",
-    "solana-transaction",
-]
 
 [dev-dependencies]
 assert_matches = { workspace = true }

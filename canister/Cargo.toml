@@ -12,6 +12,13 @@ license.workspace = true
 name = "sol_rpc_canister"
 path = "src/main.rs"
 
+[features]
+# WARNING: Disabling this feature will lead to some functionality not working anymore
+#   such as decoding of Solana account data in base64+zstd format which in turn might
+#   lead to some runtime errors.
+zstd = ["solana-account-decoder-client-types/zstd"]
+default = ["zstd"]
+
 [dependencies]
 assert_matches = { workspace = true }
 candid = { workspace = true }
@@ -28,23 +35,21 @@ ic-metrics-encoder = { workspace = true }
 ic-stable-structures = { workspace = true }
 maplit = { workspace = true }
 minicbor = { workspace = true }
-num-traits = { workspace = true }
-solana-clock = { workspace = true }
-sol_rpc_types = { path = "../libs/types" }
 regex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-serde_bytes = { workspace = true }
+serde_with = { workspace = true }
+sol_rpc_types = { path = "../libs/types" }
 solana-account = { workspace = true, features = ["serde"] }
 solana-account-decoder-client-types = { workspace = true }
+solana-clock = { workspace = true }
 solana-transaction-status-client-types = { workspace = true }
-strum = {workspace = true}
+strum = { workspace = true }
+thiserror = { workspace = true }
 tower = { workspace = true }
 tower-http = { workspace = true, features = ["set-header", "util"] }
 url = { workspace = true }
 zeroize = { workspace = true }
-thiserror = { workspace = true }
-serde_with = { workspace = true }
 
 [dev-dependencies]
 candid_parser = { workspace = true }
@@ -53,10 +58,3 @@ rand = { workspace = true }
 rand_chacha = { workspace = true }
 solana-pubkey = { workspace = true }
 solana-signature = { workspace = true }
-
-[features]
-# WARNING: Disabling this feature will lead to some functionality not working anymore
-#   such as decoding of Solana account data in base64+zstd format which in turn might
-#   lead to some runtime errors.
-zstd = ["solana-account-decoder-client-types/zstd"]
-default = ["zstd"]

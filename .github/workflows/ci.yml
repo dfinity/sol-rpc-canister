@@ -21,11 +21,18 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
+
       - name: 'Check code'
         run: |
           cargo fmt --all -- --check
           cargo clippy --locked --verbose --tests --benches --workspace -- -D clippy::all
           cargo clippy --locked --verbose --target wasm32-unknown-unknown -p sol_rpc_canister -- -D clippy::all
+
+      - name: 'Install cargo-sort'
+        run: cargo install cargo-sort
+
+      - name: 'Check Cargo.toml'
+        run: cargo sort --workspace --check
 
   cargo-doc:
     runs-on: ubuntu-latest
@@ -43,7 +50,8 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
-      - name: Docker build
+
+      - name: 'Docker build'
         run: |
           ./scripts/docker-build
 
@@ -142,7 +150,7 @@ jobs:
       - name: 'Install dfx'
         uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365
         with:
-          dfx-version: "0.25.0"
+          dfx-version: "0.27.0"
 
       - name: 'Confirm dfx successful installation'
         run: dfx --version
@@ -159,6 +167,18 @@ jobs:
           dfx identity get-principal
           dfx identity set-wallet --ic --force "${{ env.wallet_canister_id }}"
           dfx wallet balance --ic
+
+      - name: "Deploy basic_solana locally"
+        working-directory: examples/basic_solana/local
+        run: |
+          dfx start --clean --background
+          dfx deploy
+          out=$(dfx canister call basic_solana solana_account --output json)
+          echo "$out"
+          echo "$out" | grep -E "[1-9A-HJ-NP-Za-km-z]{32,44}" > /dev/null || { echo "❌ Call to 'solana_account' failed"; exit 1; }
+          out=$(dfx canister call basic_solana get_balance --output json)
+          echo "$out"
+          echo "$out" | grep -E "[0-9]+(?:_[0-9]+)*" > /dev/null || { echo "❌ Call to 'get_balance' failed"; exit 1; }
 
       - name: "Deploy SOL RPC Canister"
         run: |
