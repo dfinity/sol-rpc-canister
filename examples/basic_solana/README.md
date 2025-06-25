@@ -41,7 +41,6 @@ To clone and build the smart contract in **Rust**:
 ```bash
 git clone https://github.com/dfinity/sol-rpc-canister
 cd examples/basic_solana
-git submodule update --init --recursive
 ```
 
 **If you are using macOS, you'll need to install Homebrew and run `brew install llvm` to be able to
