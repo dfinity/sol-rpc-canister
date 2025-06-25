@@ -74,7 +74,6 @@ following commands:
 ```bash
 dfx start --clean --background 
 dfx deploy
-./provision.sh
 ```
 
 What this does:
@@ -86,7 +85,7 @@ What this does:
 
 ### Getting the canister ID
 
-If the canister deployment is successful (whether on Mainnet of locally), you should see an output that looks like this:
+If the canister deployment is successful (whether on Mainnet or locally), you should see an output that looks like this:
 
 ```bash
 Deploying: basic_solana
