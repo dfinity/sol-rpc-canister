@@ -6,7 +6,7 @@
       "package": "sol_rpc_canister",
       "type": "custom",
       "build": [
-        "cargo build --no-default-features --target wasm32-unknown-unknown --release --manifest-path ../../../canister/Cargo.toml"
+        "cargo build --target wasm32-unknown-unknown --release --manifest-path ../../../canister/Cargo.toml"
       ],
       "wasm": "../../../target/wasm32-unknown-unknown/release/sol_rpc_canister.wasm",
       "metadata": [
@@ -22,7 +22,7 @@
       "package": "basic_solana",
       "type": "custom",
       "build": [
-        "cargo build --no-default-features --target wasm32-unknown-unknown --release"
+        "cargo build --target wasm32-unknown-unknown --release"
       ],
       "wasm": "../../../target/wasm32-unknown-unknown/release/basic_solana.wasm",
       "metadata": [
