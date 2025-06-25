@@ -381,3 +381,6 @@ fn check_candid_interface_compatibility() {
     )
     .unwrap();
 }
+
+// Export the interface for the smart contract.
+ic_cdk::export_candid!();
