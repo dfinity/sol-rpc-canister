@@ -76,12 +76,12 @@ More examples are available [here](canister/scripts/examples.sh).
 
 #### Prerequisites:
 
-* Add the `sol_rpc_client` library as a dependency in your `Cargo.toml`.
+* Add the `sol_rpc_client` & `sol_rpc_types` libraries as dependencies in your `Cargo.toml`.
 * Follow the steps outlined [here](libs/client/README.md#build-requirements) to ensure your code compiles.
 * If you are running the example locally, follow the instructions [here](README.md#deployment) to deploy a local instance of the SOL RPC canister.
 
 > [!IMPORTANT] 
-> If you are using the `sol_rpc_client` library locally, make sure you include the SOL RPC canister in your `dfx.json` file under the `canisters` section to deploy it locally. An example can be found in the [examples/basic_solana/local/dfx.json](examples/basic_solana/local/dfx.json) file.
+> If you are using the `sol_rpc_client` library locally, make sure you include the SOL RPC canister in your `dfx.json` file under the `canisters` section to deploy it locally.
 
 #### Example with [`getSlot`](https://solana.com/de/docs/rpc/http/getslot)
 
