@@ -63,7 +63,7 @@ the following command:
 dfx deploy --ic
 ```
 
-This deploys a wallet canister to the ICP Mainnet which is configured to interact with the Solana Devnet via the SOL RPC
+This deploys a SOL wallet canister to the ICP Mainnet which is configured to interact with the Solana Devnet via the SOL RPC
 canister at [`tghme-zyaaa-aaaar-qarca-cai`](https://dashboard.internetcomputer.org/canister/tghme-zyaaa-aaaar-qarca-cai).
 Note that you will need to pay for your requests with cycles. If you do not have cycles available for testing, consider
 running this example locally as described in the next section.
