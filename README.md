@@ -72,6 +72,7 @@ More examples are available [here](canister/scripts/examples.sh).
 #### Prerequisites:
 
 * Add the `sol_rpc_client` library as a dependency in your `Cargo.toml`.
+* On macOS, an `llvm` version that supports the `wasm32-unknown-unknown` target is required. This is because the Rust [`ztsd`](https://docs.rs/zstd/latest/zstd/) library (used for example to parse the result of the Solana [`getAccountInfo`](https://solana.com/de/docs/rpc/http/getaccountinfo) JSON-RPC method with `base64+zstd` encoding) requires `llvm` to build. The default `llvm` version provided by XCode does not meet this requirement. Instead, install the [Homebrew version](https://formulae.brew.sh/formula/llvm), using `brew install llvm`.
 
 #### Example with [`getSlot`](https://solana.com/de/docs/rpc/http/getslot)
 
