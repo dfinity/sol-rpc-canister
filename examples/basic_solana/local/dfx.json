@@ -1,7 +1,7 @@
 {
   "canisters": {
     "sol_rpc": {
-      "specified_id": "lxzze-o7777-77777-aaaaa-cai",
+      "specified_id": "tghme-zyaaa-aaaar-qarca-cai",
       "candid": "../../../canister/sol_rpc_canister.did",
       "package": "sol_rpc_canister",
       "type": "custom",
@@ -12,7 +12,12 @@
           "name": "candid:service"
         }
       ],
-      "init_arg": "( record { manageApiKeys = null; overrideProvider = null; logFilter = opt variant { ShowAll }; numSubnetNodes = null; mode = opt variant { Demo }; } )"
+      "init_arg": "( record { manageApiKeys = null; overrideProvider = opt record { overrideUrl = opt record { pattern = \".*\"; replacement = \"https://api.devnet.solana.com\" } }; logFilter = opt variant { ShowAll }; numSubnetNodes = null; mode = opt variant { Demo }; } )",
+      "remote": {
+        "id": {
+          "ic": "tghme-zyaaa-aaaar-qarca-cai"
+        }
+      }
     },
     "basic_solana": {
       "candid": "../basic_solana.did",
@@ -25,7 +30,7 @@
           "name": "candid:service"
         }
       ],
-      "init_arg": "( record { solana_network = opt variant { Custom = record { url = \"https://api.devnet.solana.com\"; headers = null } }; ed25519_key_name = opt variant { LocalDevelopment }; sol_rpc_canister_id = opt principal \"lxzze-o7777-77777-aaaaa-cai\" } )"
+      "init_arg": "( record { solana_network = opt variant { Custom = record { url = \"https://api.devnet.solana.com\"; headers = null } }; ed25519_key_name = opt variant { LocalDevelopment }; sol_rpc_canister_id = opt principal \"tghme-zyaaa-aaaar-qarca-cai\" } )"
     }
   },
   "version": 1

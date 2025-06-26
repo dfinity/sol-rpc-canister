@@ -80,7 +80,7 @@ dfx deploy
 
 What this does:
 - `dfx start --clean --background` starts a local instance of the ICP blockchain. 
-- `dfx deploy` deploys a wallet canister as well as a SOL RPC canister, both locally. The wallet canister interacts with
+- `dfx deploy` deploys a SOL wallet canister as well as a SOL RPC canister, both locally. The SOL wallet canister interacts with
   the Solana Devnet via the local SOL RPC canister.
 
 **NOTE:** If running this example locally, you will need to skip the `--ic` flag in all subsequent `dfx` commands.
