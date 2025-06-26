@@ -73,6 +73,9 @@ More examples are available [here](canister/scripts/examples.sh).
 
 * Add the `sol_rpc_client` library as a dependency in your `Cargo.toml`.
 
+> [!IMPORTANT] 
+> If you are using the `sol_rpc_client` library locally, make sure you include the SOL RPC canister in your `dfx.json` file under the `canisters` section. An example can be found in the [examples/basic_solana/local/dfx.json](examples/basic_solana/local/dfx.json) file.
+
 #### Example with [`getSlot`](https://solana.com/de/docs/rpc/http/getslot)
 
 To get the last `finalized` slot on Solana Mainnet:
