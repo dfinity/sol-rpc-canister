@@ -63,7 +63,7 @@ the following command:
 dfx deploy --ic
 ```
 
-This deploys a SOL wallet canister to the ICP Mainnet which is configured to interact with the Solana Devnet via the SOL RPC
+This deploys a SOL wallet canister to the ICP Mainnet which is configured to interact with the **Solana Devnet** via the SOL RPC
 canister at [`tghme-zyaaa-aaaar-qarca-cai`](https://dashboard.internetcomputer.org/canister/tghme-zyaaa-aaaar-qarca-cai).
 Note that you will need to pay for your requests with cycles. If you do not have cycles available for testing, consider
 running this example locally as described in the next section.
@@ -83,7 +83,8 @@ What this does:
 - `dfx deploy` deploys a SOL wallet canister as well as a SOL RPC canister, both locally. The SOL wallet canister interacts with
   the Solana Devnet via the local SOL RPC canister.
 
-**NOTE:** If running this example locally, you will need to skip the `--ic` flag in all subsequent `dfx` commands.
+> [IMPORTANT]
+> To target e.g. Solana Mainnet, you will need to change the `init_arg` for the `basic_solana` canister in the `dfx.json` file. To learn more about the initialization arguments, see the `InitArg` type in [basic_solana.did](basic_solana.did).
 
 ### Getting the canister ID
 
@@ -105,6 +106,9 @@ which is the link you see in the output above.
 In the output above, to see the Candid Web UI for your Solana canister, you would use the URL
 `https://bd3sg-teaaa-aaaaa-qaaba-cai.raw.icp0.io/?id=<YOUR-CANISTER-ID>`. You should see the methods specified in the
 Candid file `basic_solana.did`.
+
+> [IMPORTANT]
+> If running this example locally, you will need to skip the `--ic` flag in all subsequent `dfx` commands.
 
 ## Step 2: Generating a Solana account
 
@@ -133,7 +137,7 @@ This will return a different Solana address as the one above, such as
 
 ## Step 3: Receiving SOL
 
-Now that you have your Solana account, let us send some (Devnet) SOL to it:
+Now that you have your Solana account, let us send some Devnet SOL to it:
 
 1. Get some Devnet SOL if you don't have any. You can for example use [this faucet](https://faucet.solana.com/).
 2. Send some Devnet SOL to the address you obtained in the previous step. You can use any Solana wallet to do so.
@@ -146,6 +150,9 @@ a Solana explorer, e.g. https://explorer.solana.com/address/2kqg1tEj59FNe3hSiLH8
 You can send SOL using the `send_sol` endpoint on your canister, specifying a Solana destination account and an amount
 in the smallest unit (Lamport). For example, to send 1 Lamport to `8HNiduWaBanrBv8c2pgGXZWnpKBdEYuQNHnspqto4yyq`, run
 the following command:
+
+> [!NOTE]
+> If no principal is provided, the caller's principal is used. In this `basic_solana` example, you could replace `null` with another principal to send SOL on their behalf. This is behaviour you would typically not want in production, as it allows anyone to send SOL from any account to any other account. In production, you would typically want to restrict the `send_sol` endpoint to only allow sending SOL from the caller's account.
 
 ```shell
 dfx canister --ic call basic_solana send_sol '(null, "8HNiduWaBanrBv8c2pgGXZWnpKBdEYuQNHnspqto4yyq", 1)'
@@ -190,6 +197,9 @@ dfx canister --ic call basic_solana get_nonce
 
 To send some SOL using a durable nonce, you can run the following command:
 
+> [!NOTE]
+> If no principal is provided, the caller's principal is used. In this `basic_solana` example, you could replace `null` with another principal to send SOL on their behalf. This is behaviour you would typically not want in production, as it allows anyone to send SOL from any account to any other account. In production, you would typically want to restrict the `send_sol_with_durable_nonce` endpoint to only allow sending SOL from the caller's account.
+
 ```shell
 dfx canister --ic call basic_solana send_sol_with_durable_nonce '(null, "8HNiduWaBanrBv8c2pgGXZWnpKBdEYuQNHnspqto4yyq", 1)'
 ```
@@ -222,21 +232,35 @@ example use the USDC token whose mint account on Devnet is `4zMMC9srt5Ri5X14GAgX
 You first need to create [Associated Token Accounts (ATA)](https://spl.solana.com/associated-token-account) for the
 sender and recipient accounts if they do not exist yet. An ATA is
 a [Program Derived Address (PDA)](https://solana.com/docs/core/pda) derived from a Solana account using the token mint
-account. An ATA is needed for each type of SPL token held by a Solana account. To create the ATAs for the sender and
+account. An ATA is needed for each type of SPL token held by a Solana account. 
+
+We create two new identities, one for the sender and one for the recipient. You can do this by running the following commands:
+
+```bash
+dfx identity new sender
+dfx identity new recipient
+```
+
+We have to make sure the Solana accounts belonging to the new identities created above actually hold SOL to pay for transaction fees. For this, follow the instructions outlined in [Step 2](#step-2-generating-a-solana-account) and [Step 3](#step-3-receiving-sol) for each identity. You can switch between identities using the `dfx identity use <IDENTITY_NAME>` command. 
+
+To create the ATAs for the sender and
 recipient, you can run the following commands:
+
+> [!NOTE]
+> If no principal is provided as the first argument, the caller's principal is used.
 
 ```bash
 dfx identity use sender
-dfx canister call basic_solana create_associated_token_account '(null, "<TOKEN MINT ADDRESS`>")'
+dfx canister --ic call basic_solana create_associated_token_account '(null, "<TOKEN MINT ADDRESS>")'
 dfx identity use recipient
-dfx canister call basic_solana create_associated_token_account '(null, "<TOKEN MINT ADDRESS`>")'
+dfx canister --ic call basic_solana create_associated_token_account '(null, "<TOKEN MINT ADDRESS>")'
 ```
 
 or
 
 ```bash
-dfx canister call basic_solana create_associated_token_account '(opt principal "<SENDER PRINCIPAL>", "<TOKEN MINT ADDRESS`>")'
-dfx canister call basic_solana create_associated_token_account '(opt principal "<RECIPIENT PRINCIPAL>", "<TOKEN MINT ADDRESS`>")'
+dfx canister --ic call basic_solana create_associated_token_account '(opt principal "<SENDER PRINCIPAL>", "<TOKEN MINT ADDRESS>")'
+dfx canister --ic call basic_solana create_associated_token_account '(opt principal "<RECIPIENT PRINCIPAL>", "<TOKEN MINT ADDRESS>")'
 ```
 
 This works by sending transactions that instruct the
@@ -248,16 +272,23 @@ To send some tokens from the sender to the receiver, you will need to obtain som
 e.g. [this faucet](https://faucet.circle.com/) for USDC). To do this, you will need the ATA address of the sender. You
 can for example get it by running the following command:
 
+> [!NOTE]
+> If no principal is provided as the first argument, the caller's principal is used.
+
 ```bash
 dfx identity use sender
-dfx canister call basic_solana associated_token_account '(null, "<TOKEN MINT ADDRESS`>")'
+dfx canister --ic call basic_solana associated_token_account '(null, "<TOKEN MINT ADDRESS>")'
 ```
 
 To transfer some tokens from the sender to the recipient, you can run the following command:
 
+> [!NOTE]
+> If no principal is provided as the first argument, the caller's principal is used.
+> Make sure to use the `RECIPIENT SOLANA ADDRESS`, not their ATA.
+
 ```bash
 dfx identity use sender
-dfx canister call basic_solana send_spl_token '(null, "<TOKEN MINT ADDRESS>", "<RECIPIENT SOLANA ADDRESS>", <AMOUNT>)'
+dfx canister --ic call basic_solana send_spl_token '(null, "<TOKEN MINT ADDRESS>", "<RECIPIENT SOLANA ADDRESS>", <AMOUNT>)'
 ```
 
 The `send_spl_token` endpoint works similarly to the `send_sol` endpoint, but creates a transaction with the sender and
@@ -265,9 +296,12 @@ recipient ATAs instead of their account addresses. You can also inspect the resu
 and verify that the associated token balances were updated accordingly. You can also check the updated token balances by
 running the following commands:
 
+> [!NOTE]
+> If no ATA is provided, it is derived from the caller's principal.
+
 ```bash
-dfx canister call basic_solana get_spl_token_balance '(opt principal "<SENDER PRINCIPAL>", "<TOKEN MINT ADDRESS`>")'
-dfx canister call basic_solana get_spl_token_balance '(opt principal "<RECIPIENT PRINCIPAL>", "<TOKEN MINT ADDRESS`>")'
+dfx canister --ic call basic_solana get_spl_token_balance '(opt "<SENDER ATA>", "<TOKEN MINT ADDRESS>")'
+dfx canister --ic call basic_solana get_spl_token_balance '(opt "<RECIPIENT ATA>", "<TOKEN MINT ADDRESS>")'
 ```
 
 ## Conclusion
