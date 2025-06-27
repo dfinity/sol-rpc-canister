@@ -41,16 +41,13 @@ solana-keypair = "2.2.0"
 solana-rpc-client-nonce-utils = "2.2.0"
 solana-signer = "2.2.0"
 
-# TODO XC-297: Currently, the solana-* crates have a dependency on wasm-bindgen
-#   when they are built for wasm32-unknown-unknown target. For this reason, we
-#   are using forked version of the relevant repositories.
-#   see [solana-sdk#117](https://github.com/anza-xyz/solana-sdk/issues/117)
 [patch.crates-io]
 solana-account = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-account-decoder-client-types = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-client = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-clock = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-commitment-config = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
+solana-compute-budget-interface = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-hash = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-instruction = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
 solana-keypair = { git = "https://github.com/dfinity/agave", tag = "323039e-js-feature-flag" }
