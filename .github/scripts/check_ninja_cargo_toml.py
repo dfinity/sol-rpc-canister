@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Validate that ninja/Cargo.toml is properly standalone.
+Validate that 'examples/basic_solana/ninja/Cargo.toml' is standalone (i.e. no workspace and path dependencies) and has
+correctly resolved dependency versions matching those of 'examples/basic_solana/Cargo.toml'.
 """
 
 import sys
@@ -56,7 +57,7 @@ def main():
 
     # Check no workspace/path deps in ninja
     for name, spec in ninja_deps.items():
-        if isinstance(spec, dict) and (spec.get('workspace') or 'path' in spec):
+        if isinstance(spec, dict) and ('workspace' in spec or 'path' in spec):
             print(f"ERROR: {name} not resolved in ninja")
             sys.exit(1)
 
