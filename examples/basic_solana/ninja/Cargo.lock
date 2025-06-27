@@ -6712,3 +6712,8 @@ dependencies = [
  "cc",
  "pkg-config",
 ]
+
+[[patch.unused]]
+name = "solana-compute-budget-interface"
+version = "2.2.0"
+source = "git+https://github.com/dfinity/agave?tag=323039e-js-feature-flag#552a076307b8e68cde986d4b2d7740a88f15fb8b"
