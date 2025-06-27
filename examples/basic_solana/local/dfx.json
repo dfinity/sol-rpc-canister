@@ -5,9 +5,7 @@
       "candid": "../../../canister/sol_rpc_canister.did",
       "package": "sol_rpc_canister",
       "type": "custom",
-      "build": [
-        "cargo build --target wasm32-unknown-unknown --release --manifest-path ../../../canister/Cargo.toml"
-      ],
+      "build": "../build.sh \"../../../canister/Cargo.toml\"",
       "wasm": "../../../target/wasm32-unknown-unknown/release/sol_rpc_canister.wasm",
       "metadata": [
         {
@@ -21,9 +19,7 @@
       "candid": "../basic_solana.did",
       "package": "basic_solana",
       "type": "custom",
-      "build": [
-        "cargo build --target wasm32-unknown-unknown --release"
-      ],
+      "build": "../build.sh",
       "wasm": "../../../target/wasm32-unknown-unknown/release/basic_solana.wasm",
       "metadata": [
         {
