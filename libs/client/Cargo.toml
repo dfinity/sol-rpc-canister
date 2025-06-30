@@ -1,6 +1,6 @@
 [package]
 name = "sol_rpc_client"
-version = "1.0.0"
+version = "1.0.1"
 description = "Client to interact with the SOL RPC canister"
 authors.workspace = true
 edition.workspace = true
