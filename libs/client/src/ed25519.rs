@@ -181,10 +181,12 @@ pub async fn sign_message<R: Runtime>(
             "sign_with_schnorr",
             (arg,),
             match key_id {
-                Ed25519KeyId::LocalDevelopment | Ed25519KeyId::MainnetTestKey1 => {
-                    SIGN_WITH_SCHNORR_TEST_FEE
+                Ed25519KeyId::MainnetTestKey1 => SIGN_WITH_SCHNORR_TEST_FEE,
+                // Threshold signatures are charged the same in local development environments as in prod, see
+                // https://internetcomputer.org/docs/references/t-sigs-how-it-works#local-development-environment
+                Ed25519KeyId::LocalDevelopment | Ed25519KeyId::MainnetProdKey1 => {
+                    SIGN_WITH_SCHNORR_PRODUCTION_FEE
                 }
-                Ed25519KeyId::MainnetProdKey1 => SIGN_WITH_SCHNORR_PRODUCTION_FEE,
             },
         )
         .await?;
