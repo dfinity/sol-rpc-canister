@@ -256,13 +256,6 @@ dfx identity use recipient
 dfx canister --ic call basic_solana create_associated_token_account '(null, "<TOKEN MINT ADDRESS>")'
 ```
 
-or
-
-```bash
-dfx canister --ic call basic_solana create_associated_token_account '(opt principal "<SENDER PRINCIPAL>", "<TOKEN MINT ADDRESS>")'
-dfx canister --ic call basic_solana create_associated_token_account '(opt principal "<RECIPIENT PRINCIPAL>", "<TOKEN MINT ADDRESS>")'
-```
-
 This works by sending transactions that instruct the
 Solana [Associated Token Account Program](https://spl.solana.com/associated-token-account) to create and initialize
 these accounts. You can now inspect the sender and recipient accounts on a Solana explorer and confirm that you can see
