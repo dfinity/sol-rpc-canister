@@ -8,9 +8,6 @@ homepage.workspace = true
 license.workspace = true
 build = "build.rs"
 
-[build-dependencies]
-build-helpers = { path = "../build-helpers" }
-
 [dependencies]
 async-trait = { workspace = true }
 candid = { workspace = true }
@@ -29,6 +26,9 @@ solana-signature = { workspace = true }
 solana-transaction = { workspace = true }
 solana-transaction-status-client-types = { workspace = true }
 tokio = { workspace = true }
+
+[build-dependencies]
+build-helpers = { path = "../build-helpers" }
 
 [dev-dependencies]
 solana-compute-budget-interface = { workspace = true }

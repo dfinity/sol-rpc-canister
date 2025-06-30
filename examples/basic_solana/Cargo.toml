@@ -4,9 +4,6 @@ version = "1.0.0"
 edition = "2021"
 build = "build.rs"
 
-[build-dependencies]
-build-helpers = { path = "../../build-helpers" }
-
 [[bin]]
 name = "basic_solana"
 path = "src/main.rs"
@@ -30,6 +27,9 @@ solana-program = { workspace = true }
 solana-pubkey = { workspace = true }
 solana-signature = { workspace = true }
 solana-transaction = { workspace = true, features = ["bincode"] }
+
+[build-dependencies]
+build-helpers = { path = "../../build-helpers" }
 
 [dev-dependencies]
 candid = { workspace = true }

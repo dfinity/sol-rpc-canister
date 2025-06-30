@@ -9,9 +9,6 @@ homepage.workspace = true
 license.workspace = true
 build = "build.rs"
 
-[build-dependencies]
-build-helpers = { path = "../build-helpers" }
-
 [[bin]]
 name = "sol_rpc_canister"
 path = "src/main.rs"
@@ -47,6 +44,9 @@ tower = { workspace = true }
 tower-http = { workspace = true, features = ["set-header", "util"] }
 url = { workspace = true }
 zeroize = { workspace = true }
+
+[build-dependencies]
+build-helpers = { path = "../build-helpers" }
 
 [dev-dependencies]
 candid_parser = { workspace = true }
