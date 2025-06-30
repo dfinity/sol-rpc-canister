@@ -2,6 +2,10 @@
 name = "basic_solana"
 version = "1.0.0"
 edition = "2021"
+build = "build.rs"
+
+[build-dependencies]
+build-helpers = { path = "../../build-helpers" }
 
 [[bin]]
 name = "basic_solana"

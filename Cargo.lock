@@ -300,6 +300,7 @@ name = "basic_solana"
 version = "1.0.0"
 dependencies = [
  "bs58",
+ "build-helpers",
  "candid",
  "candid_parser",
  "getrandom 0.2.16",
@@ -538,6 +539,10 @@ checksum = "bf88ba1141d185c399bee5288d850d63b8369520c1eafc32a0430b5b6c287bf4"
 dependencies = [
  "tinyvec",
 ]
+
+[[package]]
+name = "build-helpers"
+version = "0.1.0"
 
 [[package]]
 name = "bumpalo"
@@ -4431,6 +4436,7 @@ name = "sol_rpc_canister"
 version = "1.0.0"
 dependencies = [
  "assert_matches",
+ "build-helpers",
  "candid",
  "candid_parser",
  "canhttp",
@@ -4475,6 +4481,7 @@ dependencies = [
  "assert_matches",
  "async-trait",
  "bincode",
+ "build-helpers",
  "candid",
  "derive_more",
  "ic-cdk",
@@ -4505,6 +4512,7 @@ name = "sol_rpc_e2e_tests"
 version = "1.0.0"
 dependencies = [
  "async-trait",
+ "build-helpers",
  "candid",
  "ic-agent",
  "ic-cdk",
@@ -4531,6 +4539,7 @@ version = "1.0.0"
 dependencies = [
  "assert_matches",
  "async-trait",
+ "build-helpers",
  "candid",
  "canhttp",
  "canlog",
@@ -4576,6 +4585,7 @@ dependencies = [
  "base64 0.22.1",
  "bincode",
  "bs58",
+ "build-helpers",
  "candid",
  "canlog",
  "derive_more",

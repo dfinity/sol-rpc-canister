@@ -7,17 +7,14 @@ edition.workspace = true
 repository.workspace = true
 homepage.workspace = true
 license.workspace = true
+build = "build.rs"
+
+[build-dependencies]
+build-helpers = { path = "../build-helpers" }
 
 [[bin]]
 name = "sol_rpc_canister"
 path = "src/main.rs"
-
-[features]
-# WARNING: Disabling this feature will lead to some functionality not working anymore
-#   such as decoding of Solana account data in base64+zstd format which in turn might
-#   lead to some runtime errors.
-zstd = ["solana-account-decoder-client-types/zstd"]
-default = ["zstd"]
 
 [dependencies]
 assert_matches = { workspace = true }

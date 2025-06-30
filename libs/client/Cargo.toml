@@ -9,6 +9,10 @@ homepage.workspace = true
 license.workspace = true
 readme = "README.md"
 include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
+build = "build.rs"
+
+[build-dependencies]
+build-helpers = { path = "../../build-helpers" }
 
 [package.metadata.docs.rs]
 all-features = true
