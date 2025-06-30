@@ -11,7 +11,7 @@ readme = "README.md"
 include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
 
 [package.metadata.docs.rs]
-features = ["ed25519"]
+all-features = true
 
 [features]
 ed25519 = [
