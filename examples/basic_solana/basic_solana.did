@@ -64,75 +64,124 @@ type TokenAmount = record {
 };
 
 service : (InitArg) -> {
-    // Returns the Solana account derived from the owner principal.
+    // Returns the Solana address derived from a principal.
     //
-    // If the owner is not set, it defaults to the caller's principal.
+    // Parameters:
+    // - `owner` (optional): The principal to derive the address from.
+    //   If omitted, the caller's principal is used.
     solana_account : (owner: opt principal) -> (Address);
 
-    // Returns the Solana nonce account derived from the owner principal.
+    // Returns the address of a Solana nonce account derived from a principal.
     //
-    // If the owner is not set, it defaults to the caller's principal.
+    // Parameters:
+    // - `owner` (optional): The principal to derive the nonce account from.
+    //   If omitted, the caller's principal is used.
     nonce_account : (owner: opt principal) -> (Address);
 
-    // Returns the Solana associated token account (ATA) for the account derived
-    // from the owner principal and the given SPL token mint account.
+    // Returns the address of the SPL associated token account (ATA) derived
+    // from a principal and a token mint.
     //
-    // If the owner is not set, it defaults to the caller's principal.
-    associated_token_account : (owner: opt principal, mint_account: Address) -> (Address);
+    // Parameters:
+    // - `owner` (optional): The principal to derive the ATA for. If omitted,
+    //   the caller's principal is used.
+    // - `mint_account`: The SPL token mint address.
+    associated_token_account : (
+        owner: opt principal,
+        mint_account: Address
+    ) -> (Address);
 
-    // Returns the lamport balance of the given Solana account.
+    // Returns the SOL balance of a given account, in lamports.
     //
-    // If no account is provided, the account derived from the caller's principal is used.
+    // Parameters:
+    // - `account` (optional): The account address to query. If omitted,
+    //   the address is derived from the caller's principal.
     get_balance : (account: opt Address) -> (Lamport);
 
-    // Returns the current blockhash for the given Solana nonce account.
+    // Returns the current blockhash from a nonce account.
     //
-    // If no account is provided, the nonce account derived from the caller's principal is used.
+    // Parameters:
+    // - `account` (optional): The nonce account address to query. If omitted,
+    //   the address is derived from the caller's principal.
     get_nonce : (account: opt Address) -> (Blockhash);
 
-    // Returns the balance of the given Solana account for the SPL token associated with
-    // the given token mint account formatted as a string.
+    // Returns the SPL token balance of an associated token account (ATA).
     //
-    // If no account is provided, the account derived from the caller's principal is used.
-    get_spl_token_balance : (account: opt Address, mint_account: Address) -> (TokenAmount);
+    // Parameters:
+    // - `account` (optional): The ATA address to query. If omitted, the
+    //   address is derived from the caller's principal and the mint address.
+    // - `mint_account`: The SPL token mint address.
+    get_spl_token_balance : (
+        account: opt Address,
+        mint_account: Address
+    ) -> (TokenAmount);
 
-    // Creates a nonce account with the given Solana account as nonce authority. Returns the
-    // resulting nonce account address.
+    // Creates a nonce account and returns its address.
     //
-    // If no account is provided, the account derived from the caller's principal is used.
+    // Parameters:
+    // - `owner` (optional): The principal whose derived address will be the
+    //   nonce authority. If omitted, the caller's principal is used.
     create_nonce_account : (owner: opt principal) -> (Address);
 
-    // Creates an SPL associated token account for the given Solana account and mint account.
-    // Returns the resulting associated token account address.
+    // Creates an SPL associated token account (ATA) and returns its address.
     //
-    // If no account is provided, the account derived from the caller's principal is used.
-    create_associated_token_account : (owner: opt principal, mint_account: Address) -> (Address);
+    // Parameters:
+    // - `owner` (optional): The ATA address is derived from this principal and
+    //   the mint address. If omitted, the caller's principal is used.
+    // - `mint_account`: The SPL token mint address.
+    create_associated_token_account : (
+        owner: opt principal,
+        mint_account: Address
+    ) -> (Address);
 
-    // Sends the given amount of SOL in base unit (Lamport) from the account derived from
-    // the owner principal to the given Solana account.
+    // Sends SOL from a principal's derived address to a recipient Solana
+    // address. The transaction is built using a recent blockhash.
     //
-    // Returns the resulting transaction ID.
-    //
-    // If the owner is not set, the funds are sent from the account derived from the
-    // caller's principal.
-    send_sol : (owner: opt principal, to: Address, amount: Lamport) -> (Txid);
+    // Parameters:
+    // - `owner` (optional): The principal to derive the sender address from.
+    //   If omitted, the caller's principal is used.
+    // - `to`: The recipient Solana address.
+    // - `amount`: The amount of SOL to send, in lamports.
+    send_sol : (
+        owner: opt principal,
+        to: Address,
+        amount: Lamport
+    ) -> (Txid);
 
-    // Sends the given amount of SOL in base unit (Lamport) from the account derived from
-    // the owner principal to the given Solana account, and uses the durable nonce from the
-    // derived nonce account instead of a recent blockhash in the transaction.
+    // Sends SOL a principal's derived address to a recipient Solana address
+    // using a durable nonce. The sender principal must already have a nonce
+    // account, see the `create_nonce_account` method.
     //
-    // Returns the resulting transaction ID.
-    //
-    // If the owner is not set, the funds are sent from the account derived from the
-    // caller's principal.
-    send_sol_with_durable_nonce : (owner: opt principal, to: Address, amount: Lamport) -> (Txid);
+    // Parameters:
+    // - `owner` (optional): The principal to derive the sender and nonce
+    //   addresses from. If omitted, the caller's principal is used.
+    // - `to`: The recipient Solana address.
+    // - `amount`: The amount of SOL to send, in lamports.
+    send_sol_with_durable_nonce : (
+        owner: opt principal,
+        to: Address,
+        amount: Lamport
+    ) -> (Txid);
 
-    // Sends the given amount of SPL tokens for the given token mint account in base unit
-    // from the ATA derived from the owner principal to the ATA for the given Solana account.
+    // Sends SPL tokens from the sender's associated token account (ATA)
+    // to the recipient's ATA, derived from the provided recipient Solana
+    // address and token mint.
     //
-    // Returns the resulting transaction ID.
+    // Both the sender and recipient must already have initialized ATAs for
+    // the given SPL token mint. This method does **not** create ATAs or
+    // initialize them.
     //
-    // If the owner is not set, the funds are sent from the ATA of the account derived from the
-    // caller's principal.
-    send_spl_token : (owner: opt principal, mint_account: Address, to: Address, amount: nat) -> (Txid);
+    // Parameters:
+    // - `owner` (optional): The principal used to derive the sender’s ATA.
+    //   If omitted, the caller's principal is used.
+    // - `mint_account`: The SPL token mint address.
+    // - `to`: The recipient's Solana address (i.e., their wallet address,
+    //   not their ATA).
+    // - `amount`: The number of tokens to send, in base units.
+    send_spl_token : (
+        owner: opt principal,
+        mint_account: Address,
+        to: Address,
+        amount: nat
+    ) -> (Txid);
 }
+
