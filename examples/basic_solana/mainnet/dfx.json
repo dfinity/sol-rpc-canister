@@ -4,7 +4,9 @@
       "candid": "../basic_solana.did",
       "package": "basic_solana",
       "type": "custom",
-      "build": "../build.sh",
+      "build": [
+        "cargo build --no-default-features --target wasm32-unknown-unknown --release"
+      ],
       "wasm": "../../../target/wasm32-unknown-unknown/release/basic_solana.wasm",
       "metadata": [
         {
