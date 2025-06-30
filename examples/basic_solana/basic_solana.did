@@ -163,13 +163,19 @@ service : (InitArg) -> {
     ) -> (Txid);
 
     // Sends SPL tokens from the sender's associated token account (ATA)
-    // to a recipient Solana address's ATA.
+    // to the recipient's ATA, derived from the provided recipient Solana
+    // address and token mint.
+    //
+    // Both the sender and recipient must already have initialized ATAs for
+    // the given SPL token mint. This method does **not** create ATAs or
+    // initialize them.
     //
     // Parameters:
-    // - `owner` (optional): The principal to derive the sender’s ATA from.
+    // - `owner` (optional): The principal used to derive the sender’s ATA.
     //   If omitted, the caller's principal is used.
     // - `mint_account`: The SPL token mint address.
-    // - `to`: The recipient's Solana address (not their ATA).
+    // - `to`: The recipient's Solana address (i.e., their wallet address,
+    //   not their ATA).
     // - `amount`: The number of tokens to send, in base units.
     send_spl_token : (
         owner: opt principal,
