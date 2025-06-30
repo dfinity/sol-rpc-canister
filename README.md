@@ -71,7 +71,7 @@ More examples are available [here](canister/scripts/examples.sh).
 
 #### Prerequisites:
 
-* Add the `sol_rpc_client` & `sol_rpc_types` libraries as dependencies in your `Cargo.toml`.
+* Add the `sol_rpc_client` and `sol_rpc_types` crates as dependencies in your `Cargo.toml`.
 
 > [!IMPORTANT] 
 > If you are using the `sol_rpc_client` library locally, make sure you include the SOL RPC canister in your `dfx.json` file under the `canisters` section to deploy it locally.
