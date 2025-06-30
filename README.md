@@ -72,6 +72,7 @@ More examples are available [here](canister/scripts/examples.sh).
 #### Prerequisites:
 
 * Add the `sol_rpc_client` library as a dependency in your `Cargo.toml`.
+* Copy the `[patch.crates-io]` section from the top-level [`Cargo.toml`](https://github.com/dfinity/sol-rpc-canister/blob/main/Cargo.toml) file in your `Cargo.toml` file. This is currently required because the Solana SDK `wasm32-unknown-unknown` target implicitly assumes a browser environment, and relies on `wasm-bindgen` which is incompatible with use inside a canister. See [this issue](https://github.com/anza-xyz/solana-sdk/issues/117) in the upstream Solana SDK repository for more details.
 
 #### Example with [`getSlot`](https://solana.com/de/docs/rpc/http/getslot)
 
