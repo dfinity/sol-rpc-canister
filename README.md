@@ -22,6 +22,7 @@ Interact with the [Solana](https://solana.com/) blockchain from the [Internet Co
 * [Supported Methods](#supported-methods)
 * [Supported Solana JSON-RPC Providers](#supported-solana-json-rpc-providers)
 * [Reproducible build](#reproducible-build)
+* [Learn More](#learn-more)
 * [Related projects](#related-projects)
 * [Contributing](#contributing)
 * [License](#license)
@@ -162,6 +163,11 @@ The SOL RPC canister supports [reproducible builds](https://internetcomputer.org
 3. Run `sha256sum sol_rpc_canister.wasm.gz` on the generated file to view the SHA-256 hash.
 
 In order to verify the latest SOL RPC Wasm file, please make sure to download the corresponding version of the source code from the latest GitHub release.
+
+## Learn More
+
+* :movie_camera: [Demo](https://youtu.be/CpxQqp6CxoY?feature=shared) that runs through most parts of the [basic_solana](examples/basic_solana) example.
+* :newspaper: Blog post [ICP Reaches the Shores of Solana](https://medium.com/dfinity/icp-reaches-the-shores-of-solana-0f373a886dce).
 
 ## Related Projects
 
