@@ -22,7 +22,7 @@ Interact with the [Solana](https://solana.com/) blockchain from the [Internet Co
 * [Supported Methods](#supported-methods)
 * [Supported Solana JSON-RPC Providers](#supported-solana-json-rpc-providers)
 * [Reproducible build](#reproducible-build)
-* [Lear More](#learn-more)
+* [Learn More](#learn-more)
 * [Related projects](#related-projects)
 * [Contributing](#contributing)
 * [License](#license)
@@ -168,7 +168,7 @@ In order to verify the latest SOL RPC Wasm file, please make sure to download th
 
 * :movie_camera: [Demo](https://youtu.be/CpxQqp6CxoY?feature=shared) that runs through most parts of the [basic_solana](examples/basic_solana) example.
 * :newspaper: Blog post [ICP Reaches the Shores of Solana](https://medium.com/dfinity/icp-reaches-the-shores-of-solana-0f373a886dce).
-* 
+
 ## Related Projects
 
 * [`ic-solana`](https://github.com/mfactory-lab/ic-solana)
