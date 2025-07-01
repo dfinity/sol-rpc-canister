@@ -144,7 +144,7 @@
 //!
 //! 3. **macOS-specific setup for `zstd` dependency**
 //!
-//!    On **macOS**, an `llvm` version that supports the `wasm32-unknown-unknown` target is required. 
+//!    On **macOS**, an `llvm` version that supports the `wasm32-unknown-unknown` target is required.
 //!    This is because the  [`zstd`](https://docs.rs/zstd/latest/zstd/) crate (used, for example, to decode
 //!    `base64+zstd`-encoded responses from Solana’s [`getAccountInfo`](https://solana.com/de/docs/rpc/http/getaccountinfo))
 //!    relies on LLVM during compilation.

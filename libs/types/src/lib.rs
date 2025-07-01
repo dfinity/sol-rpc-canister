@@ -10,7 +10,7 @@
 //!    file in the [`dfinity/sol-rpc`](https://github.com/dfinity/sol-rpc-canister/) repository into your own `Cargo.toml`.
 //!
 //!    This is necessary because the Solana SDK’s `wasm32-unknown-unknown` target assumes a browser environment and depends on
-//!    `wasm-bindgen`, which is incompatible with use inside a canister.  
+//!    `wasm-bindgen`, which is incompatible with use inside a canister.
 //!    See [this issue](https://github.com/anza-xyz/solana-sdk/issues/117) for more information.
 //!
 //! 2. **Configure the `getrandom` crate**
@@ -21,7 +21,7 @@
 //!    getrandom = { version = "*", default-features = false, features = ["custom"] }
 //!    ```
 //!
-//!    This prevents the `js` feature of `getrandom` (a transitive dependency of the Solana SDK) from being enabled.  
+//!    This prevents the `js` feature of `getrandom` (a transitive dependency of the Solana SDK) from being enabled.
 //!    The `js` feature assumes a browser environment and depends on `wasm-bindgen`, which is incompatible with canisters.
 //!
 //!    💡 You can also specify a particular version for `getrandom`, as long as the `default-features = false` and `features = ["custom"]` flags are set.
@@ -30,7 +30,7 @@
 //!
 //! 3. **macOS-specific setup for `zstd` dependency**
 //!
-//!    On **macOS**, an `llvm` version that supports the `wasm32-unknown-unknown` target is required. 
+//!    On **macOS**, an `llvm` version that supports the `wasm32-unknown-unknown` target is required.
 //!    This is because the  [`zstd`](https://docs.rs/zstd/latest/zstd/) crate (used, for example, to decode
 //!    `base64+zstd`-encoded responses from Solana’s [`getAccountInfo`](https://solana.com/de/docs/rpc/http/getaccountinfo))
 //!    relies on LLVM during compilation.
