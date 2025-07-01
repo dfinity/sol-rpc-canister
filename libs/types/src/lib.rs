@@ -2,7 +2,7 @@
 //!
 //! ⚠️ **Build Requirements**
 //!
-//! If you are using the `sol_rpc_client` crate inside a canister, make sure to follow these steps to ensure your code compiles:
+//! If you are using the `sol_rpc_types` crate inside a canister, make sure to follow these steps to ensure your code compiles:
 //!
 //! 1. **Patch Solana SDK dependencies**
 //!

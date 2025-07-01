@@ -9,7 +9,7 @@ See the Rust [documentation](https://docs.rs/sol_rpc_types) for more details.
 
 > ⚠️ **Build Requirements:**
 > 
-> If you are using the `sol_rpc_client` crate inside a canister, make sure to follow these steps to ensure your code compiles:
+> If you are using the `sol_rpc_types` crate inside a canister, make sure to follow these steps to ensure your code compiles:
 >
 > 1. Copy the `[patch.crates-io]` section from the top-level [`Cargo.toml`](https://github.com/dfinity/sol-rpc-canister/blob/main/Cargo.toml) file in the [`dfinity/sol-rpc`](https://github.com/dfinity/sol-rpc-canister/) repository into your own `Cargo.toml`. This is necessary because the Solana SDK’s `wasm32-unknown-unknown` target assumes a browser environment and depends on `wasm-bindgen`, which is incompatible with canister environments. See [this issue](https://github.com/anza-xyz/solana-sdk/issues/117) for details.
 > 2. Add the following to your `Cargo.toml` file:
