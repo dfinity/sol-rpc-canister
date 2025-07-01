@@ -12,6 +12,8 @@ assets** on the Solana blockchain:
 1. SOL, the native currency on Solana;
 2. any other token (known as [SPL tokens](https://solana.com/docs/tokens)).
 
+:movie_camera: Check out also this [demo](https://youtu.be/CpxQqp6CxoY?feature=shared)that runs through most parts of this example.
+
 ## Architecture
 
 This example internally leverages
