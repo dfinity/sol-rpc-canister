@@ -1,5 +1,14 @@
 ---
-keywords: [ advanced, chain fusion, integration, rust, sol, solana, solana integration, spl ]
+keywords:
+  - advanced
+  - chain fusion
+  - integration
+  - rust
+  - sol
+  - solana
+  - solana integration
+  - spl
+shell: bash
 ---
 
 # Basic Solana
@@ -9,6 +18,7 @@ keywords: [ advanced, chain fusion, integration, rust, sol, solana, solana integ
 This tutorial will walk you through how to deploy a simple smart contract on the Internet Computer
 (known as [canisters](https://internetcomputer.org/docs/building-apps/essentials/canisters)) **that can control digital
 assets** on the Solana blockchain:
+
 1. SOL, the native currency on Solana;
 2. any other token (known as [SPL tokens](https://solana.com/docs/tokens)).
 
@@ -60,8 +70,12 @@ equivalent of "gas" on other blockchains).
 To deploy the Solana wallet smart contract to the ICP Mainnet, navigate to `examples/basic_solana/mainnet` and execute
 the following command:
 
-```bash
-dfx deploy --ic
+```bash {"tag":"mainnet"}
+export NETWORK="ic"
+```
+
+```bash {"cwd":"mainnet","tag":"mainnet"}
+dfx deploy --network=$NETWORK
 ```
 
 This deploys a wallet canister to the ICP Mainnet which is configured to interact with the Solana Devnet via the SOL RPC
@@ -71,19 +85,25 @@ running this example locally as described in the next section.
 
 #### Local deployment
 
-To deploy the Solana wallet smart contract locally, navigate to `examples/basic_solana/local` and execute the 
+We first configure all subsequent `dfx` commands to run locally with
+```bash {"name":"local"}
+export NETWORK="local"
+```
+
+To deploy the Solana wallet smart contract locally, navigate to `examples/basic_solana/local` and execute the
 following commands:
 
-```bash
+```bash {"cwd":"$NETWORK","name":"local"}
 dfx start --clean --background 
 dfx deploy
 ./provision.sh
 ```
 
 What this does:
-- `dfx start --clean --background` starts a local instance of the ICP blockchain. 
+
+- `dfx start --clean --background` starts a local instance of the ICP blockchain.
 - `dfx deploy` deploys a wallet canister as well as a SOL RPC canister, both locally. The wallet canister interacts with
-  the Solana Devnet via the local SOL RPC canister.
+   the Solana Devnet via the local SOL RPC canister.
 
 **NOTE:** If running this example locally, you will need to skip the `--ic` flag in all subsequent `dfx` commands.
 
@@ -115,7 +135,7 @@ principal, the canister uses its own threshold EdDSA public key to derive a new 
 requested principal. To retrieve your Solana account, you can call the `solana_account` method on the previously
 deployed canister:
 
-```shell
+```sh
 dfx canister --ic call basic_solana solana_account
 ```
 
@@ -126,7 +146,7 @@ as [Solana Explorer](https://explorer.solana.com/?cluster=devnet).
 If you want to send some SOL to someone else, you can also use the above method to enquire about their Solana account
 given their IC principal:
 
-```shell
+```sh
 dfx canister --ic call basic_solana solana_account '(opt principal "hkroy-sm7vs-yyjs7-ekppe-qqnwx-hm4zf-n7ybs-titsi-k6e3k-ucuiu-uqe")'
 ```
 
@@ -149,7 +169,7 @@ You can send SOL using the `send_sol` endpoint on your canister, specifying a So
 in the smallest unit (Lamport). For example, to send 1 Lamport to `8HNiduWaBanrBv8c2pgGXZWnpKBdEYuQNHnspqto4yyq`, run
 the following command:
 
-```shell
+```sh
 dfx canister --ic call basic_solana send_sol '(null, "8HNiduWaBanrBv8c2pgGXZWnpKBdEYuQNHnspqto4yyq", 1)'
 ```
 
@@ -179,20 +199,20 @@ In order to use durable nonces, you must first create a nonce account controlled
 account contains the current value of the durable nonce. To create a nonce account controlled by your Solana account,
 run the following command:
 
-```shell
+```sh
 dfx canister --ic call basic_solana create_nonce_account
 ```
 
 You can inspect the created nonce account and get the current durable nonce value in a Solana explorer. You can also
 fetch the current value of the durable nonce by running the following command:
 
-```shell
+```sh
 dfx canister --ic call basic_solana get_nonce
 ```
 
 To send some SOL using a durable nonce, you can run the following command:
 
-```shell
+```sh
 dfx canister --ic call basic_solana send_sol_with_durable_nonce '(null, "8HNiduWaBanrBv8c2pgGXZWnpKBdEYuQNHnspqto4yyq", 1)'
 ```
 
@@ -202,11 +222,13 @@ in the transaction are different and the durable nonce is included in the transa
 
 1. Retrieving the current durable nonce value from the nonce account.
 2. Building a Solana [transaction](https://solana.com/docs/core/transactions) that includes instructions to
-    1. [advance the nonce account](https://solana.com/developers/guides/advanced/introduction-to-durable-nonces#advancing-nonce)
-       (which is required so that the nonce value is used only once), and
-    2. transfer the specified amount from the sender's address to the given receiver's address,
+
+   1. [advance the nonce account](https://solana.com/developers/guides/advanced/introduction-to-durable-nonces#advancing-nonce)
+      (which is required so that the nonce value is used only once), and
+   2. transfer the specified amount from the sender's address to the given receiver's address,
 
    as well as the durable nonce value instead of a recent blockhash.
+
 3. Signing the Solana transaction using
    the [threshold Ed25519 API](https://internetcomputer.org/docs/current/developer-docs/smart-contracts/signatures/signing-messages-t-schnorr).
 4. Sending the signed transaction to the Solana network using the `sendTransaction` method in
@@ -296,6 +318,6 @@ Internet Computer. This example may not implement all the best practices.
 For example, the following aspects are particularly relevant for this app:
 
 * [Certify query responses if they are relevant for security](https://internetcomputer.org/docs/current/references/security/general-security-best-practices#certify-query-responses-if-they-are-relevant-for-security),
-  since the app offers a method to read balances, for example.
+   since the app offers a method to read balances, for example.
 * [Use a decentralized governance system like SNS to make a canister have a decentralized controller](https://internetcomputer.org/docs/current/references/security/rust-canister-development-security-best-practices#use-a-decentralized-governance-system-like-sns-to-make-a-canister-have-a-decentralized-controller),
-  since decentralized control may be essential for canisters holding SOL on behalf of users.
+   since decentralized control may be essential for canisters holding SOL on behalf of users.
