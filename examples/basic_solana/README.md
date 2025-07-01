@@ -25,10 +25,8 @@ the [chain fusion overview](https://internetcomputer.org/docs/building-apps/chai
 ## Prerequisites
 
 * [ ] Install the [IC SDK](https://internetcomputer.org/docs/current/developer-docs/setup/install/index.mdx) v0.27.0. If the IC SDK is already installed with an old version, install 0.27.0 with [`dfxvm`](https://internetcomputer.org/docs/building-apps/developer-tools/dev-tools-overview#dfxvm).
-* [ ] Confirm the IC SDK has been installed with the correct version:
-```shell
-dfx --version
-```
+* [ ] Confirm the IC SDK has been installed with the correct version with `dfx --version`.
+* [ ] On **macOS**, an `llvm` version that supports the `wasm32-unknown-unknown` target is required. This is because the Rust [`ztsd`](https://docs.rs/zstd/latest/zstd/) library (used for example to parse the result of the Solana [`getAccountInfo`](https://solana.com/de/docs/rpc/http/getaccountinfo) JSON-RPC method with `base64+zstd` encoding) requires `llvm` to build. The default `llvm` version provided by XCode does not meet this requirement. Instead, install the [Homebrew version](https://formulae.brew.sh/formula/llvm), using `brew install llvm`.
 
 ## Step 1: Building and deploying sample code
 

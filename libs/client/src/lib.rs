@@ -113,6 +113,16 @@
 //! # Ok(())
 //! # }
 //! ```
+//!
+//! # Build Notice
+//!
+//! To successfully build this crate, you must copy the `[patch.crates-io]` section from the top-level
+//! [`Cargo.toml`](https://github.com/dfinity/sol-rpc-canister/blob/main/Cargo.toml) file in the
+//! [dfinity/sol-rpc](https://github.com/dfinity/sol-rpc-canister) repository into your own `Cargo.toml`. 
+//! This step is necessary because the Solana SDK’s `wasm32-unknown-unknown` target assumes a browser 
+//! environment and depends on `wasm-bindgen`, which is incompatible with use inside a canister.
+//!
+//! For more information, see [this upstream issue](https://github.com/anza-xyz/solana-sdk/issues/117).
 
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]

@@ -1,4 +1,34 @@
 //! Candid types used by the candid interface of the SOL RPC canister.
+//!
+//! # Build Requirements
+//!
+//! 1. To build this crate, you must copy the `[patch.crates-io]` section from the top-level
+//! [`Cargo.toml`](https://github.com/dfinity/sol-rpc-canister/blob/main/Cargo.toml) file in the
+//! [`dfinity/sol-rpc`](https://github.com/dfinity/sol-rpc-canister/) repository into your own `Cargo.toml`.  
+//! This is required because the Solana SDK's `wasm32-unknown-unknown` target assumes a browser environment
+//! and depends on `wasm-bindgen`, which is incompatible with use inside a canister.
+//!
+//!     See [this upstream issue](https://github.com/anza-xyz/solana-sdk/issues/117) for more info.
+//!
+//! 2. On **macOS**, an LLVM version supporting the `wasm32-unknown-unknown` target is needed because the Rust
+//! [`zstd`](https://docs.rs/zstd/latest/zstd/) crate (used to decode base64+zstd responses from Solana’s
+//! [`getAccountInfo`](https://solana.com/de/docs/rpc/http/getaccountinfo) JSON-RPC) relies on LLVM during compilation.
+//! The default LLVM from Xcode is incompatible.
+//!
+//!     To fix this:
+//!     - Install LLVM via Homebrew:
+//!     ```sh
+//!     brew install llvm
+//!     ```
+//!     - Add the following to your `.cargo/config.toml`:
+//!     ```toml
+//!     [target.'cfg(target_os = "macos")'.env]
+//!     LLVM_SYS_130_PREFIX = "/opt/homebrew/opt/llvm"
+//!     ```
+//!     *Tip:* Find the correct path using:
+//!     ```sh
+//!     brew --prefix llvm
+//!     ```
 
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
