@@ -1,34 +1,61 @@
 //! Candid types used by the candid interface of the SOL RPC canister.
 //!
-//! # Build Requirements
+//! ⚠️ **Build Requirements**
 //!
-//! 1. To build this crate, you must copy the `[patch.crates-io]` section from the top-level
-//! [`Cargo.toml`](https://github.com/dfinity/sol-rpc-canister/blob/main/Cargo.toml) file in the
-//! [`dfinity/sol-rpc`](https://github.com/dfinity/sol-rpc-canister/) repository into your own `Cargo.toml`.  
-//! This is required because the Solana SDK's `wasm32-unknown-unknown` target assumes a browser environment
-//! and depends on `wasm-bindgen`, which is incompatible with use inside a canister.
+//! If you are using the `sol_rpc_client` crate inside a canister, make sure to follow these steps to ensure your code compiles:
 //!
-//!     See [this upstream issue](https://github.com/anza-xyz/solana-sdk/issues/117) for more info.
+//! 1. **Patch Solana SDK dependencies**
 //!
-//! 2. On **macOS**, an LLVM version supporting the `wasm32-unknown-unknown` target is needed because the Rust
-//! [`zstd`](https://docs.rs/zstd/latest/zstd/) crate (used to decode base64+zstd responses from Solana’s
-//! [`getAccountInfo`](https://solana.com/de/docs/rpc/http/getaccountinfo) JSON-RPC) relies on LLVM during compilation.
-//! The default LLVM from Xcode is incompatible.
+//!    Copy the `[patch.crates-io]` section from the top-level [`Cargo.toml`](https://github.com/dfinity/sol-rpc-canister/blob/main/Cargo.toml)
+//!    file in the [`dfinity/sol-rpc`](https://github.com/dfinity/sol-rpc-canister/) repository into your own `Cargo.toml`.
 //!
-//!     To fix this:
-//!     - Install LLVM via Homebrew:
-//!     ```sh
-//!     brew install llvm
-//!     ```
-//!     - Add the following to your `.cargo/config.toml`:
-//!     ```toml
-//!     [target.'cfg(target_os = "macos")'.env]
-//!     LLVM_SYS_130_PREFIX = "/opt/homebrew/opt/llvm"
-//!     ```
-//!     *Tip:* Find the correct path using:
-//!     ```sh
-//!     brew --prefix llvm
-//!     ```
+//!    This is necessary because the Solana SDK’s `wasm32-unknown-unknown` target assumes a browser environment and depends on
+//!    `wasm-bindgen`, which is incompatible with use inside a canister.  
+//!    See [this issue](https://github.com/anza-xyz/solana-sdk/issues/117) for more information.
+//!
+//! 2. **Configure the `getrandom` crate**
+//!
+//!    Add the following entry to your `Cargo.toml` file:
+//!
+//!    ```toml
+//!    getrandom = { version = "*", default-features = false, features = ["custom"] }
+//!    ```
+//!
+//!    This prevents the `js` feature of `getrandom` (a transitive dependency of the Solana SDK) from being enabled.  
+//!    The `js` feature assumes a browser environment and depends on `wasm-bindgen`, which is incompatible with canisters.
+//!
+//!    💡 You can also specify a particular version for `getrandom`, as long as the `default-features = false` and `features = ["custom"]` flags are set.
+//!
+//!    See [this forum post](https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/6) for more details.
+//!
+//! 3. **macOS-specific setup for `zstd` dependency**
+//!
+//!    On **macOS**, an `llvm` version that supports the `wasm32-unknown-unknown` target is required. 
+//!    This is because the  [`zstd`](https://docs.rs/zstd/latest/zstd/) crate (used, for example, to decode
+//!    `base64+zstd`-encoded responses from Solana’s [`getAccountInfo`](https://solana.com/de/docs/rpc/http/getaccountinfo))
+//!    relies on LLVM during compilation.
+//!
+//!    The default LLVM bundled with Xcode does not support `wasm32-unknown-unknown`. To fix this:
+//!
+//!    - Install the [Homebrew version](https://formulae.brew.sh/formula/llvm) of LLVM:
+//!
+//!      ```sh
+//!      brew install llvm
+//!      ```
+//!
+//!    - Create (or modify) your top-level `.cargo/config.toml` and add:
+//!
+//!      ```toml
+//!      [env]
+//!      AR = "<LLVM_PATH>/bin/llvm-ar"
+//!      CC = "<LLVM_PATH>/bin/clang"
+//!      ```
+//!
+//!      Replace `<LLVM_PATH>` with the output of:
+//!
+//!      ```sh
+//!      brew --prefix llvm
+//!      ```
 
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]

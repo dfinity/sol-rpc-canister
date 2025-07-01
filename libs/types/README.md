@@ -8,22 +8,30 @@ Library defining the types for interacting with the [SOL RPC canister](https://g
 See the Rust [documentation](https://docs.rs/sol_rpc_types) for more details.
 
 > ⚠️ **Build Requirements:**
+> 
+> If you are using the `sol_rpc_client` crate inside a canister, make sure to follow these steps to ensure your code compiles:
 >
-> 1. To build this crate, you must copy the `[patch.crates-io]` section from the top-level [`Cargo.toml`](https://github.com/dfinity/sol-rpc-canister/blob/main/Cargo.toml) file in the [`dfinity/sol-rpc`](https://github.com/dfinity/sol-rpc-canister/) repository into your own `Cargo.toml`.  
-> This is necessary because the Solana SDK’s `wasm32-unknown-unknown` target assumes a browser environment and depends on `wasm-bindgen`, which is incompatible with use inside a canister.  
-> See [this issue](https://github.com/anza-xyz/solana-sdk/issues/117) for details.
->
-> 2. On **macOS**, you need an LLVM version that supports the `wasm32-unknown-unknown` target because the Rust [`zstd`](https://docs.rs/zstd/latest/zstd/) crate (used, e.g., to decode `base64+zstd` responses from Solana’s [`getAccountInfo`](https://solana.com/de/docs/rpc/http/getaccountinfo) JSON-RPC method) relies on LLVM during compilation. The default LLVM from Xcode is incompatible. To fix this:
->   * Install LLVM via Homebrew:
+> 1. Copy the `[patch.crates-io]` section from the top-level [`Cargo.toml`](https://github.com/dfinity/sol-rpc-canister/blob/main/Cargo.toml) file in the [`dfinity/sol-rpc`](https://github.com/dfinity/sol-rpc-canister/) repository into your own `Cargo.toml`. This is necessary because the Solana SDK’s `wasm32-unknown-unknown` target assumes a browser environment and depends on `wasm-bindgen`, which is incompatible with canister environments. See [this issue](https://github.com/anza-xyz/solana-sdk/issues/117) for details.
+> 2. Add the following to your `Cargo.toml` file:
+>   ```toml
+>   getrandom = { version = "*", default-features = false, features = ["custom"] }
+>   ```
+>   This ensures that the `getrandom` crate (a transitive dependency of the Solana SDK) does not enable the `js` feature, which also assumes a browser environment and pulls in `wasm-bindgen`. 
+>      > 💡 You can also use a specific version of `getrandom`, as long as the `default-features = false` and `features = ["custom"]` flags are set.
+> 
+>   For more information, see [this blog post](https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/6).
+> 3. On **macOS**, an `llvm` version that supports the `wasm32-unknown-unknown` target is required. This is because the `zstd` crate (used, for example, to decode `base64+zstd`-encoded responses from Solana's [`getAccountInfo`](https://solana.com/de/docs/rpc/http/getaccountinfo)) depends on LLVM during compilation. The default LLVM bundled with Xcode does not support `wasm32-unknown-unknown`. To fix this:
+>   * Install the [Homebrew version](https://formulae.brew.sh/formula/llvm) of LLVM:
 >     ```sh
 >     brew install llvm
 >     ```
->   * Add this to your `.cargo/config.toml`:
+>   * Create a top-level `.cargo/config.toml` file in your project (or modify the existing one) and add the following entries:
 >     ```toml
->     [target.'cfg(target_os = "macos")'.env]
->     LLVM_SYS_130_PREFIX = "/opt/homebrew/opt/llvm"
+>     [env]
+>     AR="<LLVM_PATH>/bin/llvm-ar"
+>     CC="<LLVM_PATH>/bin/clang"
 >     ```
->     > 💡 You can find the correct path with:
->     >    ```sh
->     >    brew --prefix llvm
->     >    ```
+>     Where you need to replace `<LLVM_PATH>` with the output of the following command:
+>     ```sh
+>     brew --prefix llvm
+>     ```
