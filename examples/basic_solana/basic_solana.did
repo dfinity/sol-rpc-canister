@@ -13,14 +13,6 @@ type InitArg = record {
     sol_rpc_canister_id : opt principal;
 };
 
-// A JSON-RPC endpoint
-type RpcEndpoint = record {
-    // The JSON-RPC endpoint URL, e.g. https://api.devnet.solana.com
-    url : text;
-    // Headers to include in requests to this endpoint, e.g. a bearer token header.
-    headers : opt vec HttpHeader;
-};
-
 type SolanaNetwork = variant {
     // Live production environment using the SOL RPC canister's default RPC providers for Mainnet.
     // Only select this when using the production or staging SOL RPC canisters.
@@ -34,6 +26,22 @@ type SolanaNetwork = variant {
     // or a [Solana test validator](https://solana.com/developers/guides/getstarted/solana-test-validator)
     // running locally.
     Custom : RpcEndpoint;
+};
+
+// A JSON-RPC endpoint
+type RpcEndpoint = record {
+    // The JSON-RPC endpoint URL, e.g. https://api.devnet.solana.com
+    url : text;
+    // Headers to include in requests to this endpoint, e.g. a bearer token header.
+    headers : opt vec HttpHeader;
+};
+
+// An HTTP header.
+type HttpHeader = record {
+  // The header value
+  value : text;
+  // The header name
+  name : text
 };
 
 // Commitment levels in Solana, representing finality guarantees of transactions and state queries.
