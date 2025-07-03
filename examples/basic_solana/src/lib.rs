@@ -11,14 +11,19 @@ use sol_rpc_types::{
 };
 
 pub fn client() -> SolRpcClient<IcRuntime> {
+    let rpc_sources = read_state(|state| state.solana_network().clone()).into();
+    let consensus_strategy = match rpc_sources {
+        RpcSources::Custom(_) => ConsensusStrategy::Equality,
+        RpcSources::Default(_) => ConsensusStrategy::Threshold {
+            min: 2,
+            total: Some(3),
+        },
+    };
     read_state(|state| state.sol_rpc_canister_id())
         .map(|canister_id| SolRpcClient::builder(IcRuntime, canister_id))
         .unwrap_or(SolRpcClient::builder_for_ic())
-        .with_rpc_sources(read_state(|state| state.solana_network().clone()).into())
-        .with_consensus_strategy(ConsensusStrategy::Threshold {
-            min: 2,
-            total: Some(3),
-        })
+        .with_rpc_sources(rpc_sources)
+        .with_consensus_strategy(consensus_strategy)
         .with_default_commitment_level(read_state(State::solana_commitment_level))
         .build()
 }
