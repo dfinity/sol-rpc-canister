@@ -73,6 +73,7 @@ More examples are available [here](canister/scripts/examples.sh).
 #### Prerequisites:
 
 * Add the `sol_rpc_client` library as a dependency in your `Cargo.toml`.
+* Follow the steps outlined [here](https://github.com/dfinity/sol-rpc-canister/blob/main/libs/client/README.md#build-requirements) to ensure your code compiles.
 
 #### Example with [`getSlot`](https://solana.com/de/docs/rpc/http/getslot)
 

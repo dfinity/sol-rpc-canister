@@ -27,10 +27,10 @@ the [chain fusion overview](https://internetcomputer.org/docs/building-apps/chai
 ## Prerequisites
 
 * [ ] Install the [IC SDK](https://internetcomputer.org/docs/current/developer-docs/setup/install/index.mdx) v0.27.0. If the IC SDK is already installed with an old version, install 0.27.0 with [`dfxvm`](https://internetcomputer.org/docs/building-apps/developer-tools/dev-tools-overview#dfxvm).
-* [ ] Confirm the IC SDK has been installed with the correct version:
-```shell
-dfx --version
-```
+* [ ] Confirm the IC SDK has been installed with the correct version with `dfx --version`.
+* [ ] On **macOS**, an `llvm` version that supports the `wasm32-unknown-unknown` target is required. This is because the `zstd` crate (used, for example, to decode `base64+zstd`-encoded responses from Solana's [`getAccountInfo`](https://solana.com/de/docs/rpc/http/getaccountinfo)) depends on LLVM during compilation. The default LLVM bundled with Xcode does not support `wasm32-unknown-unknown`. To fix this, install the [Homebrew version](https://formulae.brew.sh/formula/llvm), using `brew install llvm`.
+
+> ⚠️ **NOTE:** If you wish to use this example as a starting point for your own project, make sure your follow the instructions in the [build requirements](https://github.com/dfinity/sol-rpc-canister/blob/main/libs/client/README.md#build-requirements) for the `sol_rpc_client` crate to ensure that your code compiles.
 
 ## Step 1: Building and deploying sample code
 
