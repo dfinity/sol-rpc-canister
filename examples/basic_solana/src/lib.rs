@@ -6,15 +6,15 @@ pub mod state;
 use crate::state::{read_state, State};
 use candid::{CandidType, Deserialize, Principal};
 use sol_rpc_client::{ed25519::Ed25519KeyId, IcRuntime, SolRpcClient};
-use sol_rpc_types::{CommitmentLevel, ConsensusStrategy, RpcSources, SolanaCluster};
+use sol_rpc_types::{
+    CommitmentLevel, ConsensusStrategy, RpcEndpoint, RpcSource, RpcSources, SolanaCluster,
+};
 
 pub fn client() -> SolRpcClient<IcRuntime> {
     read_state(|state| state.sol_rpc_canister_id())
         .map(|canister_id| SolRpcClient::builder(IcRuntime, canister_id))
         .unwrap_or(SolRpcClient::builder_for_ic())
-        .with_rpc_sources(RpcSources::Default(
-            read_state(|state| state.solana_network()).into(),
-        ))
+        .with_rpc_sources(read_state(|state| state.solana_network().clone()).into())
         .with_consensus_strategy(ConsensusStrategy::Threshold {
             min: 2,
             total: Some(3),
@@ -31,20 +31,20 @@ pub struct InitArg {
     pub solana_commitment_level: Option<CommitmentLevel>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq, Clone, Copy)]
+#[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq, Clone)]
 pub enum SolanaNetwork {
     Mainnet,
     #[default]
     Devnet,
-    Testnet,
+    Custom(RpcEndpoint),
 }
 
-impl From<SolanaNetwork> for SolanaCluster {
+impl From<SolanaNetwork> for RpcSources {
     fn from(network: SolanaNetwork) -> Self {
         match network {
-            SolanaNetwork::Mainnet => Self::Mainnet,
-            SolanaNetwork::Devnet => Self::Devnet,
-            SolanaNetwork::Testnet => Self::Testnet,
+            SolanaNetwork::Mainnet => Self::Default(SolanaCluster::Mainnet),
+            SolanaNetwork::Devnet => Self::Default(SolanaCluster::Devnet),
+            SolanaNetwork::Custom(endpoint) => Self::Custom(vec![RpcSource::Custom(endpoint)]),
         }
     }
 }
