@@ -614,6 +614,7 @@ type TransactionStatusMeta = record {
   loadedAddresses : opt LoadedAddresses;
   preTokenBalances : opt vec TransactionTokenBalance;
   computeUnitsConsumed : opt nat64;
+  costUnits : opt nat64;
 };
 
 // Balance of a specific SPL token account.
