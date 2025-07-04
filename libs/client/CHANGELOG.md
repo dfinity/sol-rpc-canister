@@ -5,12 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2025-07-04
-
-### Changed
-
-- Bumped `sol_rpc_types` to `v1.0.1` and all [Solana SDK](https://github.com/anza-xyz/solana-sdk) crates to the latest versions at the time of the [`sdk@v2.3.1` release](https://github.com/anza-xyz/solana-sdk/releases/tag/sdk%40v2.3.1).
-
 ## [1.0.1] - 2025-06-30
 
 ### Changed
