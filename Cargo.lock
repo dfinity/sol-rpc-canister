@@ -4394,7 +4394,7 @@ dependencies = [
 
 [[package]]
 name = "sol_rpc_client"
-version = "2.0.0"
+version = "1.0.2"
 dependencies = [
  "assert_matches",
  "async-trait",
@@ -4499,7 +4499,7 @@ dependencies = [
 
 [[package]]
 name = "sol_rpc_types"
-version = "2.0.0"
+version = "1.0.1"
 dependencies = [
  "base64 0.22.1",
  "bincode",
@@ -5322,7 +5322,6 @@ dependencies = [
  "solana-sysvar-id",
  "solana-vote-interface 2.2.5 (git+https://github.com/dfinity/solana-sdk?rev=f0825280bb920332a58e16c798dabe190959c828)",
  "thiserror 2.0.12",
- "wasm-bindgen",
 ]
 
 [[package]]

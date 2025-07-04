@@ -65,13 +65,13 @@ solana-client = "=2.3.3"
 solana-clock = "=2.2.2"
 solana-commitment-config = "=2.2.1"
 solana-compute-budget-interface = "=2.2.2"
-solana-hash = "=2.3.0"
+solana-hash = { version = "=2.3.0", default-features = false, features = ["std"] }
 solana-instruction = "=2.3.0"
-solana-keypair = "=2.2.3"
-solana-message = "=2.4.0"
+solana-keypair = { version = "=2.2.3", default-features = false }
+solana-message = { version = "=2.4.0", default-features = false }
 solana-nonce = "=2.2.1"
-solana-program = "=2.3.0"
-solana-pubkey = "=2.4.0"
+solana-program = { version = "=2.3.0", default-features = false, features = ["borsh"] }
+solana-pubkey = { version = "=2.4.0", default-features = false, features = ["std"] }
 solana-reward-info = "=2.2.1"
 solana-rpc-client-api = "=2.3.3"
 solana-rpc-client-nonce-utils = "=2.3.3"
@@ -79,7 +79,7 @@ solana-sdk-ids = "=2.2.1"
 solana-signature = "=2.3.0"
 solana-signer = "=2.2.1"
 solana-system-interface = "1.0.0"
-solana-transaction = "=2.2.3"
+solana-transaction = { version = "=2.2.3", default-features = false }
 solana-transaction-error = "=2.2.1"
 solana-transaction-status-client-types = "=2.3.3"
 strum = { version = "0.27.0", features = ["derive"] }
