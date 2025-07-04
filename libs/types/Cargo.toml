@@ -1,6 +1,6 @@
 [package]
 name = "sol_rpc_types"
-version = "1.0.0"
+version = "1.0.1"
 description = "Candid types used by the SOL RPC canister"
 authors.workspace = true
 edition.workspace = true
