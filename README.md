@@ -73,7 +73,8 @@ More examples are available [here](canister/scripts/examples.sh).
 #### Prerequisites:
 
 * Add the `sol_rpc_client` library as a dependency in your `Cargo.toml`.
-* Follow the steps outlined [here](https://github.com/dfinity/sol-rpc-canister/blob/main/libs/client/README.md#build-requirements) to ensure your code compiles.
+* Follow the steps outlined [here](libs/client/README.md#build-requirements) to ensure your code compiles.
+* If you are running the example locally, follow the instructions [here](README.md#deployment) to deploy a local instance of the SOL RPC canister.
 
 #### Example with [`getSlot`](https://solana.com/de/docs/rpc/http/getslot)
 
@@ -104,6 +105,40 @@ let slot = client
 ```
 
 Full examples are available in the [examples](examples) folder and additional code snippets are also available in the [`sol_rpc_client`](libs/client/README.md) crate.
+
+## Deployment
+
+To deploy a local instance of the SOL RPC canister, first add the following to your `dfx.json` config file:
+
+```json
+{
+  "canisters": {
+    "sol_rpc": {
+      "type": "custom",      
+      "candid": "https://github.com/dfinity/sol-rpc-canister/releases/download/v1.0.0/sol_rpc_canister.did",
+      "wasm": "https://github.com/dfinity/sol-rpc-canister/releases/download/v1.0.0/sol_rpc_canister.wasm.gz",
+      "remote": {
+        "id": {
+          "ic": "tghme-zyaaa-aaaar-qarca-cai"
+        }
+      },
+      "init_arg": "( record {} )"
+    }
+  }
+}
+```
+
+You can also specify your own `init_args` to configure the SOL RPC canister's behaviour. For this, refer to the [Candid interface](canister/sol_rpc_canister.did) specification. 
+
+Finally, run the following commands to deploy the canister in your local environment:
+
+```sh
+# Start the local replica
+dfx start --background
+
+# Locally deploy the `sol_rpc` canister
+dfx deploy sol_rpc
+```
 
 ## Limitations
 
