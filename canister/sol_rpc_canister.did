@@ -848,10 +848,23 @@ type Mode = variant {
 
 // The installation args for the Solana RPC canister.
 type InstallArgs = record {
+  // Principals allowed to manage API keys.
+  // If not specified, only controllers may manage API keys.
   manageApiKeys: opt vec principal;
+  // Overrides the RPC providers' default URL and HTTP headers.
+  // Useful for testing purposes when developing locally with a Solana test validator.
+  // If not specified, default URL and HTTP headers are not modified.
   overrideProvider: opt OverrideProvider;
+  // Only log entries matching this filter will be recorded.
+  // Useful when developing locally to omit some log messages.
+  // If not specified, all log entries are recorded.
   logFilter: opt LogFilter;
+  // Number of subnet nodes of the subnet on which the canister is deployed. Useful to compute cycles cost of HTTPs outcalls.
+  // If not specified, default is 34 (i.e. the number of nodes in the fiduciary subnet).
   numSubnetNodes : opt NumSubnetNodes;
+  // Mode of operation.
+  // Useful for testing purposes to avoid having to pay calls with cycles.
+  // If not specified, default is 'Normal'.
   mode : opt Mode;
 };
 
