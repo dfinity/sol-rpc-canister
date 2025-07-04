@@ -77,6 +77,7 @@ solana-rpc-client-api = "=2.3.3"
 solana-rpc-client-nonce-utils = "=2.3.3"
 solana-signature = "=2.3.0"
 solana-signer = "=2.2.1"
+solana-sdk-ids = "=2.2.1"
 solana-transaction = "=2.2.3"
 solana-transaction-error = "=2.2.1"
 solana-transaction-status-client-types = "=2.3.3"
@@ -119,6 +120,7 @@ solana-signer = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280
 solana-signature = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
 solana-transaction = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
 solana-transaction-error = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
+solana-sdk-ids = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
 solana-system-interface = { git = "https://github.com/dfinity/solana-system-program", tag = "6185b40-js-feature-flag" }
 solana-sysvar = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
 solana-sysvar-id = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
