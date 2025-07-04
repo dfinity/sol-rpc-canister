@@ -105,23 +105,23 @@ inherits = "release"
 #   are using forked version of the relevant repositories.
 #   see [solana-sdk#117](https://github.com/anza-xyz/solana-sdk/issues/117)
 [patch.crates-io]
-solana-account = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
-solana-clock = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
-solana-commitment-config = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
-solana-compute-budget-interface = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
-solana-hash = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
-solana-instruction = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
-solana-keypair = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
-solana-message = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
-solana-nonce = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
-solana-program = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
-solana-pubkey = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
-solana-reward-info = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
-solana-signer = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
-solana-signature = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
-solana-transaction = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
-solana-transaction-error = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
-solana-sdk-ids = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
+solana-account = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
+solana-clock = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
+solana-commitment-config = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
+solana-compute-budget-interface = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
+solana-hash = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
+solana-instruction = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
+solana-keypair = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
+solana-message = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
+solana-nonce = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
+solana-program = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
+solana-pubkey = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
+solana-reward-info = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
+solana-signer = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
+solana-signature = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
+solana-transaction = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
+solana-transaction-error = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
+solana-sdk-ids = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
 solana-system-interface = { git = "https://github.com/dfinity/solana-system-program", tag = "6185b40-js-feature-flag" }
-solana-sysvar = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
-solana-sysvar-id = { git = "https://github.com/dfinity/solana-sdk", rev = "f0825280bb920332a58e16c798dabe190959c828" }
+solana-sysvar = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
+solana-sysvar-id = { git = "https://github.com/dfinity/solana-sdk", rev = "46ca4e22a312a418cbbf14296305f750ec122d9d" }
