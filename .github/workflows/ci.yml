@@ -78,7 +78,7 @@ jobs:
 
   integration-tests:
     needs: [ reproducible-build ]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
@@ -129,7 +129,7 @@ jobs:
 
   end-to-end-tests:
     needs: [ reproducible-build ]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     concurrency:
       group: ci_environment
       cancel-in-progress: true
