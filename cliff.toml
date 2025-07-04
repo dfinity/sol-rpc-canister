@@ -31,11 +31,11 @@ footer = """
     {% if release.version -%}
         {% if release.previous.version -%}
             [{{ release.version | trim_start_matches(pat="v") }}]: \
-                https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}\
+                https://github.com/dfinity/sol-rpc-canister\
                     /compare/{{ release.previous.version }}..{{ release.version }}
         {% endif -%}
     {% else -%}
-        [unreleased]: https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}\
+        [unreleased]: https://github.com/dfinity/sol-rpc-canister\
             /compare/{{ release.previous.version }}..HEAD
     {% endif -%}
 {% endfor %}
@@ -68,7 +68,3 @@ filter_commits = false
 topo_order = false
 # sort the commits inside sections by oldest/newest order
 sort_commits = "newest"
-
-[remote.github]
-owner = "dfinity"
-repo = "sol-rpc-canister"
