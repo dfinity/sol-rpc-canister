@@ -42,8 +42,8 @@ impl State {
         self.ed25519_key_name
     }
 
-    pub fn solana_network(&self) -> SolanaNetwork {
-        self.solana_network
+    pub fn solana_network(&self) -> &SolanaNetwork {
+        &self.solana_network
     }
 
     pub fn solana_commitment_level(&self) -> CommitmentLevel {

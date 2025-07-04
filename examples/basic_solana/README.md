@@ -77,7 +77,6 @@ following commands:
 ```bash
 dfx start --clean --background 
 dfx deploy
-./provision.sh
 ```
 
 What this does:
