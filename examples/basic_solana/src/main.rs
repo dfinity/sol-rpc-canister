@@ -9,8 +9,8 @@ use sol_rpc_client::nonce::nonce_from_account;
 use sol_rpc_types::{GetAccountInfoEncoding, GetAccountInfoParams, TokenAmount};
 use solana_hash::Hash;
 use solana_message::Message;
-use solana_program::system_instruction;
 use solana_pubkey::Pubkey;
+use solana_system_interface::instruction;
 use solana_transaction::Transaction;
 use std::str::FromStr;
 
@@ -129,7 +129,7 @@ pub async fn create_nonce_account(owner: Option<Principal>) -> String {
         return nonce_account.as_ref().to_string();
     }
 
-    let instructions = system_instruction::create_nonce_account(
+    let instructions = instruction::create_nonce_account(
         payer.as_ref(),
         nonce_account.as_ref(),
         payer.as_ref(),
@@ -237,7 +237,7 @@ pub async fn send_sol(owner: Option<Principal>, to: String, amount: Nat) -> Stri
         "Instruction to transfer {amount} lamports from {} to {recipient}",
         payer.as_ref()
     );
-    let instruction = system_instruction::transfer(payer.as_ref(), &recipient, amount);
+    let instruction = instruction::transfer(payer.as_ref(), &recipient, amount);
 
     let message = Message::new_with_blockhash(
         &[instruction],
@@ -276,8 +276,8 @@ pub async fn send_sol_with_durable_nonce(
     let nonce_account = wallet.derived_nonce_account();
 
     let instructions = &[
-        system_instruction::advance_nonce_account(nonce_account.as_ref(), payer.as_ref()),
-        system_instruction::transfer(payer.as_ref(), &recipient, amount),
+        instruction::advance_nonce_account(nonce_account.as_ref(), payer.as_ref()),
+        instruction::transfer(payer.as_ref(), &recipient, amount),
     ];
 
     let blockhash = Hash::from(get_nonce(Some(nonce_account.as_ref().into())).await);

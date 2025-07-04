@@ -2,7 +2,7 @@
 
 use solana_account_decoder_client_types::UiAccount;
 use solana_nonce::{state::State, versions::Versions};
-use solana_program::system_program;
+use solana_sdk_ids::system_program;
 use thiserror::Error;
 
 #[cfg(test)]

@@ -21,15 +21,17 @@ use solana_compute_budget_interface::ComputeBudgetInstruction;
 use solana_keypair::Keypair;
 use solana_program::{
     instruction::{AccountMeta, Instruction},
-    system_instruction, system_program, sysvar,
+    sysvar,
 };
 use solana_pubkey::{pubkey, Pubkey};
 use solana_rpc_client_api::{
     config::{RpcBlockConfig, RpcTransactionConfig},
     response::{RpcConfirmedTransactionStatusWithSignature, RpcPrioritizationFee},
 };
+use solana_sdk_ids::system_program;
 use solana_signature::Signature;
 use solana_signer::Signer;
+use solana_system_interface::instruction;
 use solana_transaction::Transaction;
 use solana_transaction_status_client_types::UiTransactionEncoding;
 use std::{
@@ -86,7 +88,7 @@ async fn should_get_recent_prioritization_fees() {
         let modify_cu_ix = ComputeBudgetInstruction::set_compute_unit_limit(1_000_000);
         let add_priority_fee_ix = ComputeBudgetInstruction::set_compute_unit_price(micro_lamports);
         let transfer_ix =
-            system_instruction::transfer(&sender.pubkey(), &recipient.pubkey(), transaction_amount);
+            instruction::transfer(&sender.pubkey(), &recipient.pubkey(), transaction_amount);
         let blockhash = setup.solana_client.get_latest_blockhash().unwrap();
         let transaction = Transaction::new_signed_with_payer(
             &[modify_cu_ix, add_priority_fee_ix, transfer_ix],
@@ -321,7 +323,7 @@ async fn should_send_transaction() {
 
     let transaction_amount = 1_000;
     let instruction =
-        system_instruction::transfer(&sender.pubkey(), &recipient.pubkey(), transaction_amount);
+        instruction::transfer(&sender.pubkey(), &recipient.pubkey(), transaction_amount);
     let transaction = Transaction::new_signed_with_payer(
         &[instruction],
         Some(&sender.pubkey()),
