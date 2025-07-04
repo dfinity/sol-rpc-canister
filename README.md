@@ -25,6 +25,7 @@ Interact with the [Solana](https://solana.com/) blockchain from the [Internet Co
 * [Learn More](#learn-more)
 * [Related projects](#related-projects)
 * [Contributing](#contributing)
+* [Releasing](#releasing)
 * [License](#license)
 
 ## Features
@@ -177,6 +178,17 @@ In order to verify the latest SOL RPC Wasm file, please make sure to download th
 ## Contributing
 
 At this point we do not accept external contributions yet. External contributions will be accepted after the initial release.
+
+## Releasing
+
+1. Run the [`Release`](https://github.com/dfinity/sol-rpc-canister/actions/workflows/release.yml) workflow by clicking on `Run workflow`. The branch to use to run the workflow is typically `main`.
+2. This will open a `Draft PR` with the label `release`. 
+   1. Adapt the changelogs as needed.
+   2. Go through the usual review process and merge when satisfied.
+3. Run the [`Publish`](https://github.com/dfinity/sol-rpc-canister/actions/workflows/publish.yml) workflow by clicking on `Run workflow`. The branch to use to run the workflow is typically `main`. The job will dop the following:
+   1. Create Git tags.
+   2. Publish crates on crates.io.
+   3. Create a Github pre-release.
 
 ## License
 
