@@ -280,9 +280,7 @@ pub struct TransactionStatusMeta {
     /// Number of compute units consumed by the transaction
     #[serde(rename = "computeUnitsConsumed")]
     pub compute_units_consumed: Option<u64>,
-    /// TODO XC-297
-    #[serde(rename = "costUnits")]
-    pub cost_units: Option<u64>,
+    // TODO XC-297: add the `cost_units` field at the next breaking release of `sol_rpc_types`
 }
 
 impl From<TransactionStatusMeta> for UiTransactionStatusMeta {
@@ -319,7 +317,7 @@ impl From<TransactionStatusMeta> for UiTransactionStatusMeta {
             loaded_addresses: OptionSerializer::or_skip(meta.loaded_addresses.map(Into::into)),
             return_data: OptionSerializer::or_skip(meta.return_data.map(Into::into)),
             compute_units_consumed: OptionSerializer::or_skip(meta.compute_units_consumed),
-            cost_units: OptionSerializer::or_skip(meta.cost_units),
+            cost_units: OptionSerializer::skip(),
         }
     }
 }
@@ -347,7 +345,6 @@ impl TryFrom<UiTransactionStatusMeta> for TransactionStatusMeta {
                 .map(TransactionReturnData::try_from)
                 .transpose()?,
             compute_units_consumed: meta.compute_units_consumed.into(),
-            cost_units: meta.cost_units.into(),
         })
     }
 }

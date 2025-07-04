@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Bumped `sol_rpc_types` to v2.0.0 which includes some breaking changes, namely the addition of the `cost_units` field to `TransactionStatusMeta`.
+- Bumped `sol_rpc_types` to `v1.0.1` and all [Solana SDK](https://github.com/anza-xyz/solana-sdk) crates to the latest versions at the time of the [`sdk@v2.3.1` release](https://github.com/anza-xyz/solana-sdk/releases/tag/sdk%40v2.3.1).
 
 ## [1.0.1] - 2025-06-30
 
