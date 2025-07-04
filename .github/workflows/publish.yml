@@ -69,7 +69,7 @@ jobs:
 
       - name: "Run release-plz"
         id: release-plz
-        uses: release-plz/action@bbd1afc9813d25602e002b29e96e0aacebab1160 # v0.5.105
+        uses: release-plz/action@8724d33cd97b8295051102e2e19ca592962238f5 # v0.5.108
         with:
           command: release
         env:
