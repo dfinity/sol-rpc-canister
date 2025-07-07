@@ -2106,40 +2106,93 @@ mod get_signatures_for_address_tests {
 
 mod metrics_tests {
     use super::*;
+    use ic_cdk::api::call::RejectionCode;
+    use sol_rpc_types::{ConsensusStrategy, MultiRpcResult};
 
     #[tokio::test]
     async fn should_retrieve_metrics() {
         let setup = Setup::new().await.with_mock_api_keys().await;
-        let client = setup.client().with_rpc_sources(RpcSources::Custom(vec![
-            RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
-            RpcSource::Supported(SupportedRpcProviderId::HeliusMainnet),
-            RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
-        ]));
+        let client = setup
+            .client()
+            .with_consensus_strategy(ConsensusStrategy::Threshold {
+                total: Some(6),
+                min: 2,
+            })
+            .with_rpc_sources(RpcSources::Custom(vec![
+                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::AnkrMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::ChainstackMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::HeliusMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
+            ]));
 
         let client = client
-            .mock_sequential_json_rpc_responses::<3>(
-                200,
-                json!({
-                    "id": Id::from(ConstantSizeId::ZERO),
-                    "jsonrpc": "2.0",
-                    "result": 1_450_315,
-                }),
-            )
+            .mock_http_sequence(vec![
+                MockOutcallBuilder::new(
+                    200,
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(0_u8)),
+                        "jsonrpc": "2.0",
+                        "result": 1_450_305,
+                    }),
+                ),
+                MockOutcallBuilder::new(
+                    200,
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(1_u8)),
+                        "jsonrpc": "2.0",
+                        "result": 1_450_305,
+                    }),
+                ),
+                MockOutcallBuilder::new(
+                    200,
+                    json!({
+                      "jsonrpc": "2.0",
+                      "error": {
+                          "code": -32603,
+                          "message": "Internal error: failed to get slot: Node is behind",
+                          "data": null
+                      },
+                      "id": Id::from(ConstantSizeId::from(2_u8)),
+                    }),
+                ),
+                MockOutcallBuilder::new(429, json!({})),
+                MockOutcallBuilder::new(500, json!({})),
+                MockOutcallBuilder::new_error(RejectionCode::SysFatal, "Fatal error!"),
+            ])
             .build();
 
-        let result = client.get_slot().send().await.expect_consistent();
-
-        assert!(result.is_ok());
+        let result = client.get_slot().send().await;
+        assert_eq!(result, MultiRpcResult::Consistent(Ok(1_450_300)));
 
         setup
             .check_metrics()
             .await
+            // `solrpc_requests` counters
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-mainnet.g.alchemy.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="rpc.ankr.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-mainnet.core.chainstack.com"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="lb.drpc.org"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="mainnet.helius-rpc.com"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-rpc.publicnode.com"\} 1 \d+"#)
-            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="lb.drpc.org",status="200"\} 1 \d+"#)
-            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="mainnet.helius-rpc.com",status="200"\} 1 \d+"#)
-            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-rpc.publicnode.com",status="200"\} 1 \d+"#);
+            // `solrpc_responses` counters: success
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-mainnet.g.alchemy.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="rpc.ankr.com"\} 1 \d+"#)
+            // `solrpc_responses` counters: JSON-RPC error
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-mainnet.core.chainstack.com",error="json-rpc"\} 1 \d+"#)
+            // `solrpc_responses` counters: HTTP error
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="lb.drpc.org",error="http",status="429"\} .*"#)
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="mainnet.helius-rpc.com",error="http",status="500"\} .*"#)
+            // `solrpc_responses` counters: IC error
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-rpc.publicnode.com",error="ic",code="SYS_FATAL"\} .*"#)
+            // `solrpc_latencies` latency histograms
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="solana-mainnet.g.alchemy.com",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="rpc.ankr.com",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="solana-mainnet.core.chainstack.com",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="lb.drpc.org",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="mainnet.helius-rpc.com",le="\d+"\} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_latencies\{method="getSlot",host="solana-rpc.publicnode.com",le="\d+"\} 1 \d+"#);
     }
 }
 
