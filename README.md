@@ -122,8 +122,8 @@ To deploy your own instance of the SOL RPC canister to the IC Mainnet, first add
   "canisters": {
     "sol_rpc": {
       "type": "custom",
-      "candid": "https://github.com/dfinity/sol-rpc-canister/releases/download/v1.0.0/sol_rpc_canister.did",
-      "wasm": "https://github.com/dfinity/sol-rpc-canister/releases/download/v1.0.0/sol_rpc_canister.wasm.gz",
+      "candid": "https://github.com/dfinity/sol-rpc-canister/releases/latest/download/sol_rpc_canister.did",
+      "wasm": "https://github.com/dfinity/sol-rpc-canister/releases/latest/download/sol_rpc_canister.wasm.gz",
       "init_arg": "( record {} )"
     }
   }
@@ -150,9 +150,9 @@ To deploy a local instance of the SOL RPC canister, first add the following to y
 {
   "canisters": {
     "sol_rpc": {
-      "type": "custom",      
-      "candid": "https://github.com/dfinity/sol-rpc-canister/releases/download/v1.0.0/sol_rpc_canister.did",
-      "wasm": "https://github.com/dfinity/sol-rpc-canister/releases/download/v1.0.0/sol_rpc_canister.wasm.gz",
+      "type": "custom",
+      "candid": "https://github.com/dfinity/sol-rpc-canister/releases/latest/download/sol_rpc_canister.did",
+      "wasm": "https://github.com/dfinity/sol-rpc-canister/releases/latest/download/sol_rpc_canister.wasm.gz",
       "remote": {
         "id": {
           "ic": "tghme-zyaaa-aaaar-qarca-cai"
