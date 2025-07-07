@@ -1,8 +1,10 @@
-use candid::CandidType;
 use derive_more::From;
 use ic_cdk::api::call::RejectionCode;
-use serde::Deserialize;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
+use std::time::Duration;
+
+pub const BUCKETS_DEFAULT_MS: [u64; 8] =
+    [1_000, 2_000, 4_000, 6_000, 8_000, 12_000, 20_000, u64::MAX];
 
 #[macro_export]
 macro_rules! add_metric {
@@ -24,6 +26,91 @@ macro_rules! add_metric_entry {
             }
         });
     }};
+}
+
+#[macro_export]
+macro_rules! add_latency_metric {
+    ($metric:ident, $key:expr, $start_ns:expr) => {{
+        $crate::memory::UNSTABLE_METRICS.with_borrow_mut(|m| {
+            let end_ns = ::ic_cdk::api::time();
+            m.$metric
+                .entry($key)
+                .or_default()
+                .observe_latency($start_ns, end_ns);
+        });
+    }};
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct LatencyHistogram(pub Histogram<8>);
+
+impl Default for LatencyHistogram {
+    fn default() -> Self {
+        Self(Histogram::new(&BUCKETS_DEFAULT_MS))
+    }
+}
+
+impl LatencyHistogram {
+    pub fn observe_latency(&mut self, start_ns: u64, end_ns: u64) {
+        let duration = Duration::from_nanos(end_ns.saturating_sub(start_ns));
+        self.0.observe_value(duration.as_millis() as u64)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Histogram<const NUM_BUCKETS: usize> {
+    bucket_upper_bounds: &'static [u64; NUM_BUCKETS],
+    bucket_counts: [u64; NUM_BUCKETS],
+    value_sum: u64,
+}
+
+impl<const NUM_BUCKETS: usize> Histogram<NUM_BUCKETS> {
+    pub fn new(bucket_upper_bounds: &'static [u64; NUM_BUCKETS]) -> Self {
+        Histogram {
+            bucket_upper_bounds,
+            bucket_counts: [0; NUM_BUCKETS],
+            value_sum: 0,
+        }
+    }
+
+    pub fn observe_value(&mut self, value: u64) {
+        let bucket_index = self
+            .bucket_upper_bounds
+            .iter()
+            .enumerate()
+            .find_map(|(bucket_index, bucket_upper_bound)| {
+                if value <= *bucket_upper_bound {
+                    Some(bucket_index)
+                } else {
+                    None
+                }
+            })
+            .expect("BUG: all values should be less than or equal to the last bucket upper bound");
+        self.bucket_counts[bucket_index] += 1;
+        self.value_sum += value;
+    }
+
+    /// Returns an iterator over the histogram buckets as tuples containing the bucket upper bound
+    /// (inclusive), and the count of observed values within the bucket.
+    pub fn iter(&self) -> impl Iterator<Item = (f64, f64)> + '_ {
+        self.bucket_upper_bounds
+            .iter()
+            .enumerate()
+            .map(|(bucket_index, bucket_upper_bound)| {
+                if bucket_index == (NUM_BUCKETS - 1) {
+                    f64::INFINITY
+                } else {
+                    *bucket_upper_bound as f64
+                }
+            })
+            .zip(self.bucket_counts.iter().cloned())
+            .map(|(k, v)| (k, v as f64))
+    }
+
+    /// Returns the sum of all observed latencies in milliseconds.
+    pub fn sum(&self) -> u64 {
+        self.value_sum
+    }
 }
 
 pub trait MetricValue {
@@ -69,7 +156,7 @@ impl<A: MetricLabels, B: MetricLabels, C: MetricLabels> MetricLabels for (A, B, 
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize, From)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, From)]
 pub struct MetricRpcMethod(pub String);
 
 impl MetricLabels for MetricRpcMethod {
@@ -78,7 +165,7 @@ impl MetricLabels for MetricRpcMethod {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize, From)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, From)]
 pub struct MetricRpcHost(pub String);
 
 impl From<&str> for MetricRpcHost {
@@ -93,11 +180,11 @@ impl MetricLabels for MetricRpcHost {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, From)]
 pub struct MetricHttpStatusCode(pub String);
 
-impl From<u32> for MetricHttpStatusCode {
-    fn from(value: u32) -> Self {
+impl From<u16> for MetricHttpStatusCode {
+    fn from(value: u16) -> Self {
         MetricHttpStatusCode(value.to_string())
     }
 }
@@ -123,21 +210,59 @@ impl MetricLabels for RejectionCode {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, CandidType, Deserialize)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, From)]
+pub struct MetricRpcErrorCode(pub String);
+
+impl From<i64> for MetricRpcErrorCode {
+    fn from(value: i64) -> Self {
+        MetricRpcErrorCode(value.to_string())
+    }
+}
+
+impl MetricLabels for MetricRpcErrorCode {
+    fn metric_labels(&self) -> Vec<(&str, &str)> {
+        vec![("code", &self.0)]
+    }
+}
+
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub enum MetricRpcCallResponse {
+    Success,
+    IcError(RejectionCode),
+    HttpError(MetricHttpStatusCode),
+    JsonRpcError,
+}
+
+impl MetricLabels for MetricRpcCallResponse {
+    fn metric_labels(&self) -> Vec<(&str, &str)> {
+        match self {
+            MetricRpcCallResponse::Success => vec![],
+            MetricRpcCallResponse::IcError(rejection_code) => [("error", "ic")]
+                .into_iter()
+                .chain(rejection_code.metric_labels())
+                .collect(),
+            MetricRpcCallResponse::HttpError(status) => [("error", "http")]
+                .into_iter()
+                .chain(status.metric_labels())
+                .collect(),
+            MetricRpcCallResponse::JsonRpcError => vec![("error", "json-rpc")],
+        }
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Metrics {
-    pub requests: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
-    pub responses: HashMap<(MetricRpcMethod, MetricRpcHost, MetricHttpStatusCode), u64>,
-    #[serde(rename = "inconsistentResponses")]
-    pub inconsistent_responses: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
-    #[serde(rename = "errHttpOutcall")]
-    pub err_http_outcall: HashMap<(MetricRpcMethod, MetricRpcHost, RejectionCode), u64>,
+    pub requests: BTreeMap<(MetricRpcMethod, MetricRpcHost), u64>,
+    pub responses: BTreeMap<(MetricRpcMethod, MetricRpcHost, MetricRpcCallResponse), u64>,
+    pub inconsistent_responses: BTreeMap<(MetricRpcMethod, MetricRpcHost), u64>,
+    pub latencies: BTreeMap<(MetricRpcMethod, MetricRpcHost), LatencyHistogram>,
 }
 
 trait EncoderExtensions {
     fn counter_entries<K: MetricLabels, V: MetricValue>(
         &mut self,
         name: &str,
-        map: &HashMap<K, V>,
+        map: &BTreeMap<K, V>,
         help: &str,
     );
 }
@@ -146,7 +271,7 @@ impl EncoderExtensions for ic_metrics_encoder::MetricsEncoder<Vec<u8>> {
     fn counter_entries<K: MetricLabels, V: MetricValue>(
         &mut self,
         name: &str,
-        map: &HashMap<K, V>,
+        map: &BTreeMap<K, V>,
         help: &str,
     ) {
         map.iter().for_each(|(k, v)| {
@@ -181,13 +306,11 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
             ic_cdk::api::stable::stable_size() as f64 * WASM_PAGE_SIZE_IN_BYTES,
             "Size of the stable memory allocated by this canister.",
         )?;
-
         w.encode_gauge(
             "heap_memory_bytes",
             heap_memory_size_bytes() as f64,
             "Size of the heap memory allocated by this canister.",
         )?;
-
         w.counter_entries(
             "solrpc_requests",
             &m.requests,
@@ -201,13 +324,20 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
         w.counter_entries(
             "solrpc_inconsistent_responses",
             &m.inconsistent_responses,
-            "Number of inconsistent RPC responses",
+            "Number of inconsistent JSON-RPC responses",
         );
-        w.counter_entries(
-            "solrpc_err_http_outcall",
-            &m.err_http_outcall,
-            "Number of unsuccessful HTTP outcalls",
-        );
+
+        let mut histogram_vec = w.histogram_vec(
+            "solrpc_latencies",
+            "The latency of JSON-RPC calls in milliseconds.",
+        )?;
+        for (label, histogram) in &m.latencies {
+            histogram_vec = histogram_vec.histogram(
+                label.metric_labels().as_slice(),
+                histogram.0.iter(),
+                histogram.0.sum() as f64,
+            )?;
+        }
 
         Ok(())
     })
