@@ -113,7 +113,30 @@ Full examples are available in the [examples](examples) folder and additional co
 
 ### Deployment to the IC
 
-TODO
+> ⚠️ **Warning:** When deploying your own instance of the SOL RPC canister, you will need to provide and manage your own API keys for the Solana RPC providers. You can provision these keys with the `updateApiKeys` canister endpoint.
+
+To deploy your own instance of the SOL RPC canister to the IC Mainnet, first add the following to your `dfx.json`:
+
+```json
+{
+  "canisters": {
+    "sol_rpc": {
+      "type": "custom",
+      "candid": "https://github.com/dfinity/sol-rpc-canister/releases/download/v1.0.0/sol_rpc_canister.did",
+      "wasm": "https://github.com/dfinity/sol-rpc-canister/releases/download/v1.0.0/sol_rpc_canister.wasm.gz",
+      "init_arg": "( record {} )"
+    }
+  }
+}
+```
+
+You can also specify your own `init_args` to configure the SOL RPC canister's behaviour. For this, refer to the [Candid interface](canister/sol_rpc_canister.did) specification.
+
+Finally, run the following command (from the directory containing your `dfx.json`) to deploy the canister on the IC:
+
+```sh
+dfx deploy --ic sol_rpc
+```
 
 ### Local deployment
 
@@ -143,7 +166,7 @@ To deploy a local instance of the SOL RPC canister, first add the following to y
 
 You can also specify your own `init_args` to configure the SOL RPC canister's behaviour. For this, refer to the [Candid interface](canister/sol_rpc_canister.did) specification. 
 
-Finally, run the following commands to deploy the canister in your local environment:
+Finally, run the following commands (from the directory containing your `dfx.json`) to deploy the canister in your local environment:
 
 ```sh
 # Start the local replica
