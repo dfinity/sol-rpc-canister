@@ -31,6 +31,7 @@ publish_allow_dirty = false
 
 [[package]] # the double square brackets define a TOML table array
 name = "sol_rpc_canister"
+semver_check = false # disable API breaking changes checks
 publish = false # disable `cargo publish`
 
 [[package]] # the double square brackets define a TOML table array
