@@ -2197,9 +2197,7 @@ mod metrics_tests {
     #[tokio::test]
     async fn should_not_record_metrics_when_not_enough_cycles() {
         let setup = Setup::new().await.with_mock_api_keys().await;
-        let client = setup
-            .client()
-            .build();
+        let client = setup.client().build();
 
         let result = client.get_slot().with_cycles(1_000).send().await;
         assert_matches!(result, MultiRpcResult::Inconsistent(_));
