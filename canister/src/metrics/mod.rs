@@ -228,7 +228,7 @@ impl MetricLabels for MetricRpcErrorCode {
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum MetricRpcCallResponse {
     Success,
-    IcError(RejectionCode),
+    IcError(String),
     HttpError(MetricHttpStatusCode),
     JsonRpcError,
 }
@@ -239,7 +239,7 @@ impl MetricLabels for MetricRpcCallResponse {
             MetricRpcCallResponse::Success => vec![],
             MetricRpcCallResponse::IcError(rejection_code) => [("error", "ic")]
                 .into_iter()
-                .chain(rejection_code.metric_labels())
+                .chain(vec![("code", rejection_code.as_str())])
                 .collect(),
             MetricRpcCallResponse::HttpError(status) => [("error", "http")]
                 .into_iter()
