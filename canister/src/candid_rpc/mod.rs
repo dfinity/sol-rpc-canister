@@ -5,7 +5,7 @@ use crate::{
     rpc_client::{MultiRpcRequest, ReducedResult},
     util::hostname_from_url,
 };
-use canhttp::multi::{MultiResults, ReductionError};
+use canhttp::multi::ReductionError;
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
     MultiRpcResult, ProviderError, RpcAccess, RpcAuth, RpcError, RpcResult, RpcSource,
@@ -52,7 +52,7 @@ fn process_error<T, E: Into<RpcError>>(error: E) -> MultiRpcResult<T> {
     MultiRpcResult::Consistent(Err(error.into()))
 }
 
-fn observe_inconsistent<T>(method: MetricRpcMethod, results: &Vec<(RpcSource, RpcResult<T>)>) {
+fn observe_inconsistent<T>(method: MetricRpcMethod, results: &[(RpcSource, RpcResult<T>)]) {
     // Generally, `ProviderError::TooFewCycles` errors are expected to result in an inconsistent
     // response since the required number of cycles is different for each provider (due e.g. to
     // different request URL lengths). Therefore, do not increment inconsistent responses metrics
