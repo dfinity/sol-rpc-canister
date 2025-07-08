@@ -13,10 +13,10 @@ use sol_rpc_int_tests::{
     mock::MockOutcallBuilder, PocketIcRuntime, Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID,
 };
 use sol_rpc_types::{
-    CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetSignaturesForAddressLimit,
-    GetSlotParams, InstallArgs, InstructionError, Mode, ProviderError, RpcAccess, RpcAuth,
-    RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster,
-    SupportedRpcProvider, SupportedRpcProviderId, TransactionError,
+    CommitmentLevel, ConfirmedTransactionStatusWithSignature, ConsensusStrategy,
+    GetSignaturesForAddressLimit, GetSlotParams, InstallArgs, InstructionError, Mode,
+    ProviderError, RpcAccess, RpcAuth, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources,
+    Slot, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TransactionError,
 };
 use solana_account_decoder_client_types::{
     token::UiTokenAmount, UiAccount, UiAccountData, UiAccountEncoding,
@@ -2228,6 +2228,86 @@ async fn should_log_request_and_response() {
 
     assert_eq!(logs[0].message, "JSON-RPC request with id `00000000000000000000` to solana-mainnet.g.alchemy.com: JsonRpcRequest { jsonrpc: V2, method: \"getSlot\", id: String(\"00000000000000000000\"), params: Some(GetSlotParams(None)) }");
     assert_eq!(logs[1].message, "Got response for request with id `00000000000000000000`. Response with status 200 OK: JsonRpcResponse { jsonrpc: V2, id: String(\"00000000000000000000\"), result: Ok(1234) }");
+
+    setup.drop().await;
+}
+
+#[tokio::test]
+async fn should_change_default_provider_when_one_keep_failing() {
+    fn request_body(id: u8) -> serde_json::Value {
+        let id = ConstantSizeId::from(id).to_string();
+        json!({ "jsonrpc": "2.0", "id": id, "method": "getSlot", "params": [null] })
+    }
+
+    fn response_body(id: u8) -> serde_json::Value {
+        let id = ConstantSizeId::from(id).to_string();
+        json!({ "id": id, "jsonrpc": "2.0", "result": 1200, })
+    }
+    let setup = Setup::new().await.with_mock_api_keys().await;
+
+    let client = setup.client();
+    let slot = client
+        .with_consensus_strategy(ConsensusStrategy::Threshold {
+            min: 2,
+            total: Some(3),
+        })
+        .mock_http_sequence(vec![
+            MockOutcallBuilder::new(200, response_body(0))
+                .with_request_body(request_body(0))
+                .with_host("solana-mainnet.g.alchemy.com"),
+            MockOutcallBuilder::new(500, "error")
+                .with_request_body(request_body(1))
+                .with_host("lb.drpc.org"),
+            MockOutcallBuilder::new(200, response_body(2))
+                .with_request_body(request_body(2))
+                .with_host("mainnet.helius-rpc.com"),
+        ])
+        .build()
+        .get_slot()
+        .send()
+        .await
+        .expect_consistent();
+    assert_eq!(slot, Ok(1200));
+
+    let client = setup.client();
+    let slot = client
+        .with_consensus_strategy(ConsensusStrategy::Equality)
+        .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Supported(
+            SupportedRpcProviderId::AnkrMainnet,
+        )]))
+        .mock_http_sequence(vec![MockOutcallBuilder::new(200, response_body(3))
+            .with_request_body(request_body(3))
+            .with_host("rpc.ankr.com")])
+        .build()
+        .get_slot()
+        .send()
+        .await
+        .expect_consistent();
+    assert_eq!(slot, Ok(1200));
+
+    let client = setup.client();
+    let slot = client
+        .with_consensus_strategy(ConsensusStrategy::Threshold {
+            min: 3,
+            total: Some(3),
+        })
+        .mock_http_sequence(vec![
+            MockOutcallBuilder::new(200, response_body(4))
+                .with_request_body(request_body(4))
+                .with_host("solana-mainnet.g.alchemy.com"),
+            MockOutcallBuilder::new(200, response_body(5))
+                .with_request_body(request_body(5))
+                .with_host("rpc.ankr.com"),
+            MockOutcallBuilder::new(200, response_body(6))
+                .with_request_body(request_body(6))
+                .with_host("mainnet.helius-rpc.com"),
+        ])
+        .build()
+        .get_slot()
+        .send()
+        .await
+        .expect_consistent();
+    assert_eq!(slot, Ok(1200));
 
     setup.drop().await;
 }
