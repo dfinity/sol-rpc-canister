@@ -40,6 +40,7 @@ solana-signer = { workspace = true }
 solana-transaction = { workspace = true }
 solana-transaction-status-client-types = { workspace = true }
 tokio = { workspace = true }
+url = {workspace = true}
 
 [dev-dependencies]
 assert_matches = { workspace = true }
