@@ -53,7 +53,7 @@ fn process_error<T, E: Into<RpcError>>(error: E) -> MultiRpcResult<T> {
 }
 
 fn observe_inconsistent<T>(method: MetricRpcMethod, results: &Vec<(RpcSource, RpcResult<T>)>) {
-    // Generally, `ProviderError::TooFewCycles` errors are expected to result in an inconsistent 
+    // Generally, `ProviderError::TooFewCycles` errors are expected to result in an inconsistent
     // response since the required number of cycles is different for each provider (due e.g. to
     // different request URL lengths). Therefore, do not increment inconsistent responses metrics
     // in the case of `ProviderError::TooFewCycles` results.
