@@ -3,7 +3,7 @@ use assert_matches::*;
 use candid::CandidType;
 use canhttp::http::json::{ConstantSizeId, Id};
 use const_format::formatcp;
-use ic_cdk::api::management_canister::http_request::HttpHeader;
+use ic_cdk::api::{call::RejectionCode, management_canister::http_request::HttpHeader};
 use pocket_ic::common::rest::CanisterHttpMethod;
 use serde::de::DeserializeOwned;
 use serde_json::json;
@@ -13,10 +13,11 @@ use sol_rpc_int_tests::{
     mock::MockOutcallBuilder, PocketIcRuntime, Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID,
 };
 use sol_rpc_types::{
-    CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetSignaturesForAddressLimit,
-    GetSlotParams, InstallArgs, InstructionError, Mode, ProviderError, RpcAccess, RpcAuth,
-    RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster,
-    SupportedRpcProvider, SupportedRpcProviderId, TransactionError,
+    CommitmentLevel, ConfirmedTransactionStatusWithSignature, ConsensusStrategy,
+    GetSignaturesForAddressLimit, GetSlotParams, InstallArgs, InstructionError, Mode,
+    MultiRpcResult, ProviderError, RpcAccess, RpcAuth, RpcEndpoint, RpcError, RpcResult, RpcSource,
+    RpcSources, Slot, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    TransactionError,
 };
 use solana_account_decoder_client_types::{
     token::UiTokenAmount, UiAccount, UiAccountData, UiAccountEncoding,
@@ -2106,8 +2107,6 @@ mod get_signatures_for_address_tests {
 
 mod metrics_tests {
     use super::*;
-    use ic_cdk::api::call::RejectionCode;
-    use sol_rpc_types::{ConsensusStrategy, MultiRpcResult};
 
     #[tokio::test]
     async fn should_retrieve_metrics() {
@@ -2193,6 +2192,25 @@ mod metrics_tests {
             .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="lb.drpc.org",le="\d+"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="mainnet.helius-rpc.com",le="\d+"\} 1 \d+"#)
             .assert_does_not_contain_metric_matching(r#"solrpc_latencies\{method="getSlot",host="solana-rpc.publicnode.com",le="\d+"\} 1 \d+"#);
+    }
+
+    #[tokio::test]
+    async fn should_not_record_metrics_when_not_enough_cycles() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+        let client = setup
+            .client()
+            .build();
+
+        let result = client.get_slot().with_cycles(1_000).send().await;
+        assert_matches!(result, MultiRpcResult::Inconsistent(_));
+
+        setup
+            .check_metrics()
+            .await
+            .assert_does_not_contain_metric_matching(r#"solrpc_requests.*"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_responses.*"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_latencies_bucket.*"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses.*"#);
     }
 }
 
