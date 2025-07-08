@@ -129,3 +129,79 @@ mod providers_new {
         );
     }
 }
+
+mod supported_rpc_provider_usage {
+    use crate::providers::{Providers, SupportedRpcProviderUsage};
+    use canhttp::multi::Timestamp;
+    use sol_rpc_types::SupportedRpcProviderId;
+    use std::time::Duration;
+
+    const MINUTE: Duration = Duration::from_secs(60);
+
+    #[test]
+    fn should_have_default_ordering_when_no_data() {
+        let mut usage = SupportedRpcProviderUsage::default();
+
+        for providers in all_supported_providers() {
+            let ordered = usage.rank_ascending_evict(providers, Timestamp::UNIX_EPOCH);
+            assert_eq!(ordered, providers);
+        }
+    }
+
+    #[test]
+    fn should_have_default_ordering_when_data_expired() {
+        let mut usage = SupportedRpcProviderUsage::default();
+        let now = Timestamp::UNIX_EPOCH;
+        for supported_providers in all_supported_providers() {
+            let last_provider = *supported_providers.last().unwrap();
+            usage.record_evict(last_provider, now);
+        }
+
+        let expired = Timestamp::from_unix_epoch(21 * MINUTE);
+        for supported_providers in all_supported_providers() {
+            let ordered = usage.rank_ascending_evict(supported_providers, expired);
+            assert_eq!(ordered, supported_providers);
+        }
+    }
+
+    #[test]
+    fn should_rank_based_on_non_expired_data() {
+        let mut usage = SupportedRpcProviderUsage::default();
+        for supported_providers in all_supported_providers() {
+            assert!(supported_providers.len() >= 2);
+
+            // 3 entries, 2 expire after > 20 minutes
+            usage.record_evict(supported_providers[0], Timestamp::UNIX_EPOCH);
+            usage.record_evict(supported_providers[0], Timestamp::UNIX_EPOCH);
+            usage.record_evict(supported_providers[0], Timestamp::from_unix_epoch(MINUTE));
+
+            // 3 entries, 1 expire after > 20 minutes
+            usage.record_evict(supported_providers[1], Timestamp::UNIX_EPOCH);
+            usage.record_evict(supported_providers[1], Timestamp::from_unix_epoch(MINUTE));
+            usage.record_evict(supported_providers[1], Timestamp::from_unix_epoch(MINUTE));
+        }
+
+        for supported_providers in all_supported_providers() {
+            let non_expired = Timestamp::from_unix_epoch(20 * MINUTE);
+            let usage_before = usage.clone();
+            let ordered = usage.rank_ascending_evict(supported_providers, non_expired);
+            assert_eq!(ordered, supported_providers);
+            assert_eq!(usage, usage_before);
+
+            let expired = Timestamp::from_unix_epoch(21 * MINUTE);
+            let usage_before = usage.clone();
+            let ordered = usage.rank_ascending_evict(supported_providers, expired);
+            let expected_order = {
+                let mut expected = vec![supported_providers[1], supported_providers[0]];
+                expected.extend(&supported_providers[2..]);
+                expected
+            };
+            assert_eq!(ordered, expected_order);
+            assert_ne!(usage, usage_before);
+        }
+    }
+
+    fn all_supported_providers() -> [&'static [SupportedRpcProviderId]; 2] {
+        [Providers::MAINNET_PROVIDERS, Providers::DEVNET_PROVIDERS]
+    }
+}

@@ -3,7 +3,7 @@ mod tests;
 
 use crate::memory::rank_providers;
 use crate::{constants::API_KEY_REPLACE_STRING, memory::read_state, types::OverrideProvider};
-use canhttp::multi::Timestamp;
+use canhttp::multi::{TimedSizedMap, TimedSizedVec, Timestamp};
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use maplit::btreemap;
 use sol_rpc_types::{
@@ -11,6 +11,8 @@ use sol_rpc_types::{
     RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use std::collections::{BTreeMap, BTreeSet};
+use std::num::NonZeroUsize;
+use std::time::Duration;
 
 thread_local! {
     pub static PROVIDERS: BTreeMap<SupportedRpcProviderId, SupportedRpcProvider> = btreemap! {
@@ -311,4 +313,43 @@ pub fn request_builder(
         request_builder = request_builder.header(name, value);
     }
     Ok(request_builder)
+}
+
+/// Record when a supported RPC service was used.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SupportedRpcProviderUsage(TimedSizedMap<SupportedRpcProviderId, ()>);
+
+impl Default for SupportedRpcProviderUsage {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SupportedRpcProviderUsage {
+    pub fn new() -> SupportedRpcProviderUsage {
+        Self(TimedSizedMap::new(
+            Duration::from_secs(20 * 60),
+            NonZeroUsize::new(500).unwrap(),
+        ))
+    }
+
+    pub fn record_evict(&mut self, service: SupportedRpcProviderId, now: Timestamp) {
+        self.0.insert_evict(now, service, ());
+    }
+
+    pub fn rank_ascending_evict(
+        &mut self,
+        providers: &[SupportedRpcProviderId],
+        now: Timestamp,
+    ) -> Vec<SupportedRpcProviderId> {
+        fn ascending_num_elements<V>(values: Option<&TimedSizedVec<V>>) -> impl Ord {
+            std::cmp::Reverse(values.map(|v| v.len()).unwrap_or_default())
+        }
+
+        self.0.evict_expired(providers, now);
+        self.0
+            .sort_keys_by(providers, ascending_num_elements)
+            .copied()
+            .collect()
+    }
 }

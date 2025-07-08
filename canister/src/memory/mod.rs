@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests;
 
+use crate::providers::SupportedRpcProviderUsage;
 use crate::{
     metrics::Metrics,
     types::{ApiKey, OverrideProvider},
@@ -26,6 +27,7 @@ thread_local! {
     // Unstable static data: these are reset when the canister is upgraded.
     pub static UNSTABLE_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
     static UNSTABLE_HTTP_REQUEST_COUNTER: RefCell<ConstantSizeId> = const {RefCell::new(ConstantSizeId::ZERO)};
+    static UNSTABLE_RPC_SERVICE_OK_RESULTS_TIMESTAMPS: RefCell<SupportedRpcProviderUsage> = RefCell::new(SupportedRpcProviderUsage::default());
 
     // Stable static data: these are preserved when the canister is upgraded.
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
@@ -228,13 +230,15 @@ pub fn next_request_id() -> Id {
     })
 }
 
-pub fn record_ok_result(provider_id: SupportedRpcProviderId, now: Timestamp) {
-    todo!()
+pub fn record_ok_result(provider: SupportedRpcProviderId, now: Timestamp) {
+    UNSTABLE_RPC_SERVICE_OK_RESULTS_TIMESTAMPS
+        .with_borrow_mut(|access| access.record_evict(provider, now));
 }
 
 pub fn rank_providers(
     providers: &[SupportedRpcProviderId],
     now: Timestamp,
 ) -> Vec<SupportedRpcProviderId> {
-    todo!()
+    UNSTABLE_RPC_SERVICE_OK_RESULTS_TIMESTAMPS
+        .with_borrow_mut(|access| access.rank_ascending_evict(providers, now))
 }
