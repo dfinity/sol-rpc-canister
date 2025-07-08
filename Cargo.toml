@@ -25,7 +25,8 @@ bincode = "1.3.3"
 bs58 = "0.5.0"
 candid = "0.10.13"
 candid_parser = "0.1.4"
-canhttp = { version = "0.1.1" }
+# TODO XC-372: publish new version of canhttp
+canhttp = { git = "https://github.com/dfinity/evm-rpc-canister", rev = "21be03b2e309b1ea1620d41e722810f508758808" }
 canlog = { version = "0.1.0", features = ["derive"] }
 ciborium = "0.2.2"
 const_format = "0.2.34"
