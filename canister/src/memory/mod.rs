@@ -7,6 +7,7 @@ use crate::{
 };
 use candid::{Deserialize, Principal};
 use canhttp::http::json::{ConstantSizeId, Id};
+use canhttp::multi::Timestamp;
 use canlog::LogFilter;
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
@@ -225,4 +226,15 @@ pub fn next_request_id() -> Id {
         let current_request_id = counter.get_and_increment();
         Id::from(current_request_id)
     })
+}
+
+pub fn record_ok_result(provider_id: SupportedRpcProviderId, now: Timestamp) {
+    todo!()
+}
+
+pub fn rank_providers(
+    providers: &[SupportedRpcProviderId],
+    now: Timestamp,
+) -> Vec<SupportedRpcProviderId> {
+    todo!()
 }

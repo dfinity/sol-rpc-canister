@@ -73,6 +73,7 @@ fn should_partition_providers_between_solana_cluster() {
 mod providers_new {
     use crate::providers::Providers;
     use assert_matches::assert_matches;
+    use canhttp::multi::Timestamp;
     use maplit::btreeset;
     use sol_rpc_types::{
         ConsensusStrategy, ProviderError, RpcSource, RpcSources, SolanaCluster,
@@ -82,7 +83,11 @@ mod providers_new {
     #[test]
     fn should_fail_when_providers_explicitly_set_to_empty() {
         assert_matches!(
-            Providers::new(RpcSources::Custom(vec![]), ConsensusStrategy::default()),
+            Providers::new(
+                RpcSources::Custom(vec![]),
+                ConsensusStrategy::default(),
+                Timestamp::UNIX_EPOCH
+            ),
             Err(ProviderError::InvalidRpcConfig(_))
         );
     }
@@ -90,8 +95,12 @@ mod providers_new {
     #[test]
     fn should_use_default_providers() {
         for cluster in [SolanaCluster::Mainnet, SolanaCluster::Devnet] {
-            let providers =
-                Providers::new(RpcSources::Default(cluster), ConsensusStrategy::default()).unwrap();
+            let providers = Providers::new(
+                RpcSources::Default(cluster),
+                ConsensusStrategy::default(),
+                Timestamp::UNIX_EPOCH,
+            )
+            .unwrap();
             assert!(!providers.sources.is_empty());
         }
     }
@@ -107,6 +116,7 @@ mod providers_new {
                 RpcSource::Supported(provider2),
             ]),
             ConsensusStrategy::default(),
+            Timestamp::UNIX_EPOCH,
         )
         .unwrap();
 

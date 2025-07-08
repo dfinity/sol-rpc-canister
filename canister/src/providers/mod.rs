@@ -1,7 +1,9 @@
 #[cfg(test)]
 mod tests;
 
+use crate::memory::rank_providers;
 use crate::{constants::API_KEY_REPLACE_STRING, memory::read_state, types::OverrideProvider};
+use canhttp::multi::Timestamp;
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use maplit::btreemap;
 use sol_rpc_types::{
@@ -144,7 +146,11 @@ impl Providers {
 
     const DEFAULT_NUM_PROVIDERS_FOR_EQUALITY: usize = 3;
 
-    pub fn new(source: RpcSources, strategy: ConsensusStrategy) -> Result<Self, ProviderError> {
+    pub fn new(
+        source: RpcSources,
+        strategy: ConsensusStrategy,
+        now: Timestamp,
+    ) -> Result<Self, ProviderError> {
         fn supported_providers(
             cluster: &SolanaCluster,
         ) -> Result<&[SupportedRpcProviderId], ProviderError> {
@@ -157,8 +163,8 @@ impl Providers {
             }
         }
 
-        fn supported_rpc_source(supported_provider: &SupportedRpcProviderId) -> RpcSource {
-            RpcSource::Supported(*supported_provider)
+        fn supported_rpc_source(supported_provider: SupportedRpcProviderId) -> RpcSource {
+            RpcSource::Supported(supported_provider)
         }
 
         let providers: BTreeSet<_> = match strategy {
@@ -170,8 +176,8 @@ impl Providers {
                         supported_providers.len() >= Self::DEFAULT_NUM_PROVIDERS_FOR_EQUALITY,
                         "BUG: need at least 3 providers, but got {supported_providers:?}"
                     );
-                    Ok(supported_providers
-                        .iter()
+                    Ok(rank_providers(supported_providers, now)
+                        .into_iter()
                         .take(Self::DEFAULT_NUM_PROVIDERS_FOR_EQUALITY)
                         .map(supported_rpc_source)
                         .collect())
@@ -227,8 +233,8 @@ impl Providers {
                                 total, all_providers_len
                             )));
                         }
-                        let providers: BTreeSet<_> = supported_providers
-                            .iter()
+                        let providers: BTreeSet<_> = rank_providers(supported_providers, now)
+                            .into_iter()
                             .take(total as usize)
                             .map(supported_rpc_source)
                             .collect();
