@@ -32,6 +32,22 @@ pub fn require_api_key_principal_or_controller() -> Result<(), String> {
     }
 }
 
+pub fn require_base_http_outcall_fee() -> Result<(), String> {
+    // See: https://internetcomputer.org/docs/references/cycles-cost-formulas#https-outcalls
+    fn base_fee() -> u128 {
+        let num_nodes = read_state(|state| state.get_num_subnet_nodes());
+        3_000_000_u128
+            .saturating_add(60_000_u128.saturating_mul(num_nodes as u128))
+            .saturating_mul(num_nodes as u128)
+    }
+    let cycles_available = ic_cdk::api::call::msg_cycles_available128();
+    if read_state(|state| state.is_demo_mode_active()) || (cycles_available >= base_fee()) {
+        Ok(())
+    } else {
+        Err("Not enough cycles".to_string())
+    }
+}
+
 #[query(name = "getProviders")]
 fn get_providers() -> Vec<(SupportedRpcProviderId, SupportedRpcProvider)> {
     PROVIDERS.with(|providers| providers.clone().into_iter().collect())
@@ -77,7 +93,7 @@ async fn update_api_keys(api_keys: Vec<(SupportedRpcProviderId, Option<String>)>
     }
 }
 
-#[update(name = "getAccountInfo")]
+#[update(name = "getAccountInfo", guard = "require_base_http_outcall_fee")]
 async fn get_account_info(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -102,7 +118,7 @@ async fn get_account_info_cycles_cost(
         .await
 }
 
-#[update(name = "getBalance")]
+#[update(name = "getBalance", guard = "require_base_http_outcall_fee")]
 async fn get_balance(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -126,7 +142,7 @@ async fn get_balance_cycles_cost(
         .await
 }
 
-#[update(name = "getBlock")]
+#[update(name = "getBlock", guard = "require_base_http_outcall_fee")]
 async fn get_block(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -150,7 +166,10 @@ async fn get_block_cycles_cost(
         .await
 }
 
-#[update(name = "getRecentPrioritizationFees")]
+#[update(
+    name = "getRecentPrioritizationFees",
+    guard = "require_base_http_outcall_fee"
+)]
 async fn get_recent_prioritization_fees(
     source: RpcSources,
     config: Option<GetRecentPrioritizationFeesRpcConfig>,
@@ -184,7 +203,10 @@ async fn get_recent_prioritization_fees_cycles_cost(
     .await
 }
 
-#[update(name = "getSignaturesForAddress")]
+#[update(
+    name = "getSignaturesForAddress",
+    guard = "require_base_http_outcall_fee"
+)]
 async fn get_signatures_for_address(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -213,7 +235,7 @@ async fn get_signatures_for_address_cycles_cost(
         .await
 }
 
-#[update(name = "getSignatureStatuses")]
+#[update(name = "getSignatureStatuses", guard = "require_base_http_outcall_fee")]
 async fn get_signature_statuses(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -238,7 +260,7 @@ async fn get_signature_statuses_cycles_cost(
         .await
 }
 
-#[update(name = "getSlot")]
+#[update(name = "getSlot", guard = "require_base_http_outcall_fee")]
 async fn get_slot(
     source: RpcSources,
     config: Option<GetSlotRpcConfig>,
@@ -272,7 +294,10 @@ async fn get_slot_cycles_cost(
     .await
 }
 
-#[update(name = "getTokenAccountBalance")]
+#[update(
+    name = "getTokenAccountBalance",
+    guard = "require_base_http_outcall_fee"
+)]
 async fn get_token_account_balance(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -301,7 +326,7 @@ async fn get_token_account_balance_cycles_cost(
         .await
 }
 
-#[update(name = "getTransaction")]
+#[update(name = "getTransaction", guard = "require_base_http_outcall_fee")]
 async fn get_transaction(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -326,7 +351,7 @@ async fn get_transaction_cycles_cost(
         .await
 }
 
-#[update(name = "sendTransaction")]
+#[update(name = "sendTransaction", guard = "require_base_http_outcall_fee")]
 async fn send_transaction(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -351,7 +376,7 @@ async fn send_transaction_cycles_cost(
         .await
 }
 
-#[update(name = "jsonRequest")]
+#[update(name = "jsonRequest", guard = "require_base_http_outcall_fee")]
 async fn json_request(
     source: RpcSources,
     config: Option<RpcConfig>,
