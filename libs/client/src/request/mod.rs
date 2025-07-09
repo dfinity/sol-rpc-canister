@@ -790,7 +790,8 @@ impl<R: Runtime, Config, Params, CandidOutput, Output>
     ///
     /// # Panics
     ///
-    /// If the request was not successful.
+    /// If the request was not successful. This method either
+    /// returns the request response or panics if an error occurs.
     pub async fn send(self) -> Output
     where
         Config: CandidType + Send,

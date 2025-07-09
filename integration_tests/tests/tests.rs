@@ -1184,28 +1184,16 @@ mod generic_request_tests {
     use super::*;
 
     #[tokio::test]
+    #[should_panic(expected = "Not enough cycles")]
     async fn request_should_require_cycles() {
         let setup = Setup::new().await.with_mock_api_keys().await;
         let client = setup.client().build();
 
-        let results = client
+        client
             .json_request(get_version_request())
             .with_cycles(0)
             .send()
-            .await
-            // The result is expected to be inconsistent because the different provider URLs means
-            // the request and hence expected number of cycles for each provider is different.
-            .expect_inconsistent();
-
-        for (_provider, result) in results {
-            assert_matches!(
-                result,
-                Err(RpcError::ProviderError(ProviderError::TooFewCycles {
-                    expected: _,
-                    received: 0
-                }))
-            );
-        }
+            .await;
 
         setup.drop().await;
     }
@@ -1594,12 +1582,6 @@ mod cycles_cost_tests {
         }
 
         let setup = Setup::new().await.with_mock_api_keys().await;
-        setup
-            .upgrade_canister(InstallArgs {
-                mode: Some(Mode::Demo),
-                ..Default::default()
-            })
-            .await;
         let client = setup.client().build();
 
         for endpoint in SolRpcEndpoint::iter() {
