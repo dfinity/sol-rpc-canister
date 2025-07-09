@@ -133,7 +133,7 @@ mod providers_new {
 mod supported_rpc_provider_usage {
     use crate::providers::{Providers, SupportedRpcProviderUsage};
     use canhttp::multi::Timestamp;
-    use sol_rpc_types::SupportedRpcProviderId;
+    use sol_rpc_types::{SolanaCluster, SupportedRpcProviderId};
     use std::time::Duration;
 
     const MINUTE: Duration = Duration::from_secs(60);
@@ -142,7 +142,7 @@ mod supported_rpc_provider_usage {
     fn should_have_default_ordering_when_no_data() {
         let mut usage = SupportedRpcProviderUsage::default();
 
-        for providers in all_supported_providers() {
+        for (_cluster, providers) in all_supported_providers() {
             let ordered = usage.rank_ascending_evict(providers, Timestamp::UNIX_EPOCH);
             assert_eq!(ordered, providers);
         }
@@ -152,13 +152,13 @@ mod supported_rpc_provider_usage {
     fn should_have_default_ordering_when_data_expired() {
         let mut usage = SupportedRpcProviderUsage::default();
         let now = Timestamp::UNIX_EPOCH;
-        for supported_providers in all_supported_providers() {
+        for (_cluster, supported_providers) in all_supported_providers() {
             let last_provider = *supported_providers.last().unwrap();
             usage.record_evict(last_provider, now);
         }
 
         let expired = Timestamp::from_unix_epoch(21 * MINUTE);
-        for supported_providers in all_supported_providers() {
+        for (_cluster, supported_providers) in all_supported_providers() {
             let ordered = usage.rank_ascending_evict(supported_providers, expired);
             assert_eq!(ordered, supported_providers);
         }
@@ -167,7 +167,7 @@ mod supported_rpc_provider_usage {
     #[test]
     fn should_rank_based_on_non_expired_data() {
         let mut usage = SupportedRpcProviderUsage::default();
-        for supported_providers in all_supported_providers() {
+        for (_cluster, supported_providers) in all_supported_providers() {
             assert!(supported_providers.len() >= 2);
 
             // 3 entries, 2 expire after > 20 minutes
@@ -181,7 +181,7 @@ mod supported_rpc_provider_usage {
             usage.record_evict(supported_providers[1], Timestamp::from_unix_epoch(MINUTE));
         }
 
-        for supported_providers in all_supported_providers() {
+        for (_cluster, supported_providers) in all_supported_providers() {
             let non_expired = Timestamp::from_unix_epoch(20 * MINUTE);
             let usage_before = usage.clone();
             let ordered = usage.rank_ascending_evict(supported_providers, non_expired);
@@ -201,7 +201,10 @@ mod supported_rpc_provider_usage {
         }
     }
 
-    fn all_supported_providers() -> [&'static [SupportedRpcProviderId]; 2] {
-        [Providers::MAINNET_PROVIDERS, Providers::DEVNET_PROVIDERS]
+    fn all_supported_providers() -> [(SolanaCluster, &'static [SupportedRpcProviderId]); 2] {
+        [
+            (SolanaCluster::Mainnet, Providers::MAINNET_PROVIDERS),
+            (SolanaCluster::Devnet, Providers::DEVNET_PROVIDERS),
+        ]
     }
 }
