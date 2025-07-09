@@ -84,7 +84,7 @@ What this does:
   the Solana Devnet via the local SOL RPC canister.
 
 > [IMPORTANT]
-> To target e.g. Solana Mainnet, you will need to change the `init_arg` for the `basic_solana` canister in the `dfx.json` file. To learn more about the initialization arguments, see the `InitArg` type in [basic_solana.did](basic_solana.did).
+> To target Solana Mainnet, you will need to change the `init_arg` for the `basic_solana` canister in the `dfx.json` file. To learn more about the initialization arguments, see the `InitArg` type in [`basic_solana.did`](basic_solana.did).
 
 ### Getting the canister ID
 
