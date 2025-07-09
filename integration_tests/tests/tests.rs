@@ -2233,7 +2233,7 @@ async fn should_log_request_and_response() {
 }
 
 #[tokio::test]
-async fn should_change_default_provider_when_one_keep_failing() {
+async fn should_change_default_providers_when_one_keeps_failing() {
     fn request_body(id: u8) -> serde_json::Value {
         let id = ConstantSizeId::from(id).to_string();
         json!({ "jsonrpc": "2.0", "id": id, "method": "getSlot", "params": [null] })
