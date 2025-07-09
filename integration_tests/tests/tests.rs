@@ -2199,8 +2199,16 @@ mod metrics_tests {
         let setup = Setup::new().await.with_mock_api_keys().await;
         let client = setup.client().build();
 
-        let result = client.get_slot().with_cycles(1_000).send().await;
-        assert_matches!(result, MultiRpcResult::Inconsistent(_));
+        let result = client
+            .get_slot()
+            .with_cycles(1_000)
+            .send()
+            .await
+            .expect_inconsistent();
+        assert!(result.iter().all(|(_source, e)| matches!(
+            e,
+            Err(RpcError::ProviderError(ProviderError::TooFewCycles { .. }))
+        )));
 
         setup
             .check_metrics()
