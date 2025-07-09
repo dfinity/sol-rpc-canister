@@ -1,5 +1,4 @@
 use derive_more::From;
-use ic_cdk::api::call::RejectionCode;
 use std::collections::BTreeMap;
 use std::time::Duration;
 
@@ -192,21 +191,6 @@ impl From<u16> for MetricHttpStatusCode {
 impl MetricLabels for MetricHttpStatusCode {
     fn metric_labels(&self) -> Vec<(&str, &str)> {
         vec![("status", &self.0)]
-    }
-}
-
-impl MetricLabels for RejectionCode {
-    fn metric_labels(&self) -> Vec<(&str, &str)> {
-        let code = match self {
-            RejectionCode::NoError => "NO_ERROR",
-            RejectionCode::SysFatal => "SYS_FATAL",
-            RejectionCode::SysTransient => "SYS_TRANSIENT",
-            RejectionCode::DestinationInvalid => "DESTINATION_INVALID",
-            RejectionCode::CanisterReject => "CANISTER_REJECT",
-            RejectionCode::CanisterError => "CANISTER_ERROR",
-            RejectionCode::Unknown => "UNKNOWN",
-        };
-        vec![("code", code)]
     }
 }
 
