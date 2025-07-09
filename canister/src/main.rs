@@ -1,4 +1,5 @@
 use candid::candid_method;
+use canhttp::multi::Timestamp;
 use canlog::{log, Log, Sort};
 use ic_cdk::{api::is_controller, query, update};
 use ic_http_types::{HttpRequest, HttpResponse, HttpResponseBuilder};
@@ -86,7 +87,8 @@ async fn get_account_info(
     config: Option<RpcConfig>,
     params: GetAccountInfoParams,
 ) -> MultiRpcResult<Option<AccountInfo>> {
-    let request = MultiRpcRequest::get_account_info(source, config.unwrap_or_default(), params);
+    let request =
+        MultiRpcRequest::get_account_info(source, config.unwrap_or_default(), params, now());
     send_multi(request).await.into()
 }
 
@@ -100,7 +102,7 @@ async fn get_account_info_cycles_cost(
     if read_state(State::is_demo_mode_active) {
         return Ok(0);
     }
-    MultiRpcRequest::get_account_info(source, config.unwrap_or_default(), params)?
+    MultiRpcRequest::get_account_info(source, config.unwrap_or_default(), params, now())?
         .cycles_cost()
         .await
 }
@@ -112,7 +114,7 @@ async fn get_balance(
     config: Option<RpcConfig>,
     params: GetBalanceParams,
 ) -> MultiRpcResult<Lamport> {
-    let request = MultiRpcRequest::get_balance(source, config.unwrap_or_default(), params);
+    let request = MultiRpcRequest::get_balance(source, config.unwrap_or_default(), params, now());
     send_multi(request).await
 }
 
@@ -126,7 +128,7 @@ async fn get_balance_cycles_cost(
     if read_state(State::is_demo_mode_active) {
         return Ok(0);
     }
-    MultiRpcRequest::get_balance(source, config.unwrap_or_default(), params)?
+    MultiRpcRequest::get_balance(source, config.unwrap_or_default(), params, now())?
         .cycles_cost()
         .await
 }
@@ -138,7 +140,7 @@ async fn get_block(
     config: Option<RpcConfig>,
     params: GetBlockParams,
 ) -> MultiRpcResult<Option<ConfirmedBlock>> {
-    let request = MultiRpcRequest::get_block(source, config.unwrap_or_default(), params);
+    let request = MultiRpcRequest::get_block(source, config.unwrap_or_default(), params, now());
     send_multi(request).await.into()
 }
 
@@ -152,7 +154,7 @@ async fn get_block_cycles_cost(
     if read_state(State::is_demo_mode_active) {
         return Ok(0);
     }
-    MultiRpcRequest::get_block(source, config.unwrap_or_default(), params)?
+    MultiRpcRequest::get_block(source, config.unwrap_or_default(), params, now())?
         .cycles_cost()
         .await
 }
@@ -168,6 +170,7 @@ async fn get_recent_prioritization_fees(
         source,
         config.unwrap_or_default(),
         params.unwrap_or_default(),
+        now(),
     );
     send_multi(request).await
 }
@@ -186,6 +189,7 @@ async fn get_recent_prioritization_fees_cycles_cost(
         source,
         config.unwrap_or_default(),
         params.unwrap_or_default(),
+        now(),
     )?
     .cycles_cost()
     .await
@@ -198,8 +202,12 @@ async fn get_signatures_for_address(
     config: Option<RpcConfig>,
     params: GetSignaturesForAddressParams,
 ) -> MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>> {
-    let request =
-        MultiRpcRequest::get_signatures_for_address(source, config.unwrap_or_default(), params);
+    let request = MultiRpcRequest::get_signatures_for_address(
+        source,
+        config.unwrap_or_default(),
+        params,
+        now(),
+    );
     send_multi(request).await
 }
 
@@ -213,7 +221,7 @@ async fn get_signatures_for_address_cycles_cost(
     if read_state(State::is_demo_mode_active) {
         return Ok(0);
     }
-    MultiRpcRequest::get_signatures_for_address(source, config.unwrap_or_default(), params)?
+    MultiRpcRequest::get_signatures_for_address(source, config.unwrap_or_default(), params, now())?
         .cycles_cost()
         .await
 }
@@ -226,7 +234,7 @@ async fn get_signature_statuses(
     params: GetSignatureStatusesParams,
 ) -> MultiRpcResult<Vec<Option<TransactionStatus>>> {
     let request =
-        MultiRpcRequest::get_signature_statuses(source, config.unwrap_or_default(), params);
+        MultiRpcRequest::get_signature_statuses(source, config.unwrap_or_default(), params, now());
     send_multi(request).await.into()
 }
 
@@ -240,7 +248,7 @@ async fn get_signature_statuses_cycles_cost(
     if read_state(State::is_demo_mode_active) {
         return Ok(0);
     }
-    MultiRpcRequest::get_signature_statuses(source, config.unwrap_or_default(), params)?
+    MultiRpcRequest::get_signature_statuses(source, config.unwrap_or_default(), params, now())?
         .cycles_cost()
         .await
 }
@@ -256,6 +264,7 @@ async fn get_slot(
         source,
         config.unwrap_or_default(),
         params.unwrap_or_default(),
+        now(),
     );
     send_multi(request).await
 }
@@ -274,6 +283,7 @@ async fn get_slot_cycles_cost(
         source,
         config.unwrap_or_default(),
         params.unwrap_or_default(),
+        now(),
     )?
     .cycles_cost()
     .await
@@ -286,8 +296,12 @@ async fn get_token_account_balance(
     config: Option<RpcConfig>,
     params: GetTokenAccountBalanceParams,
 ) -> MultiRpcResult<TokenAmount> {
-    let request =
-        MultiRpcRequest::get_token_account_balance(source, config.unwrap_or_default(), params);
+    let request = MultiRpcRequest::get_token_account_balance(
+        source,
+        config.unwrap_or_default(),
+        params,
+        now(),
+    );
     send_multi(request).await.into()
 }
 
@@ -301,7 +315,7 @@ async fn get_token_account_balance_cycles_cost(
     if read_state(State::is_demo_mode_active) {
         return Ok(0);
     }
-    MultiRpcRequest::get_token_account_balance(source, config.unwrap_or_default(), params)?
+    MultiRpcRequest::get_token_account_balance(source, config.unwrap_or_default(), params, now())?
         .cycles_cost()
         .await
 }
@@ -313,7 +327,8 @@ async fn get_transaction(
     config: Option<RpcConfig>,
     params: GetTransactionParams,
 ) -> MultiRpcResult<Option<EncodedConfirmedTransactionWithStatusMeta>> {
-    let request = MultiRpcRequest::get_transaction(source, config.unwrap_or_default(), params);
+    let request =
+        MultiRpcRequest::get_transaction(source, config.unwrap_or_default(), params, now());
     send_multi(request).await.into()
 }
 
@@ -327,7 +342,7 @@ async fn get_transaction_cycles_cost(
     if read_state(State::is_demo_mode_active) {
         return Ok(0);
     }
-    MultiRpcRequest::get_transaction(source, config.unwrap_or_default(), params)?
+    MultiRpcRequest::get_transaction(source, config.unwrap_or_default(), params, now())?
         .cycles_cost()
         .await
 }
@@ -339,7 +354,8 @@ async fn send_transaction(
     config: Option<RpcConfig>,
     params: SendTransactionParams,
 ) -> MultiRpcResult<Signature> {
-    let request = MultiRpcRequest::send_transaction(source, config.unwrap_or_default(), params);
+    let request =
+        MultiRpcRequest::send_transaction(source, config.unwrap_or_default(), params, now());
     send_multi(request).await
 }
 
@@ -353,7 +369,7 @@ async fn send_transaction_cycles_cost(
     if read_state(State::is_demo_mode_active) {
         return Ok(0);
     }
-    MultiRpcRequest::send_transaction(source, config.unwrap_or_default(), params)?
+    MultiRpcRequest::send_transaction(source, config.unwrap_or_default(), params, now())?
         .cycles_cost()
         .await
 }
@@ -366,7 +382,7 @@ async fn json_request(
     json_rpc_payload: String,
 ) -> MultiRpcResult<String> {
     let request =
-        MultiRpcRequest::json_request(source, config.unwrap_or_default(), json_rpc_payload);
+        MultiRpcRequest::json_request(source, config.unwrap_or_default(), json_rpc_payload, now());
     send_multi(request).await.map(|value| value.to_string())
 }
 
@@ -380,7 +396,7 @@ async fn json_request_cycles_cost(
     if read_state(State::is_demo_mode_active) {
         return Ok(0);
     }
-    MultiRpcRequest::json_request(source, config.unwrap_or_default(), json_rpc_payload)?
+    MultiRpcRequest::json_request(source, config.unwrap_or_default(), json_rpc_payload, now())?
         .cycles_cost()
         .await
 }
@@ -481,6 +497,10 @@ fn init(args: sol_rpc_types::InstallArgs) {
 #[ic_cdk::post_upgrade]
 fn post_upgrade(args: Option<sol_rpc_types::InstallArgs>) {
     lifecycle::post_upgrade(args);
+}
+
+fn now() -> Timestamp {
+    Timestamp::from_nanos_since_unix_epoch(ic_cdk::api::time())
 }
 
 fn main() {}

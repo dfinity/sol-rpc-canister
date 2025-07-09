@@ -668,9 +668,9 @@ dependencies = [
 
 [[package]]
 name = "canhttp"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ad55f2e8629527f1cd12f9261215a6734363f5859009489ef8647e2124269d9"
+checksum = "5b9cf652e717488c8a3ded473a04e577f9446f1d80adc81fbbce0642de786939"
 dependencies = [
  "assert_matches",
  "ciborium",
@@ -678,6 +678,7 @@ dependencies = [
  "futures-util",
  "http 1.3.1",
  "ic-cdk",
+ "ic-error-types",
  "num-traits",
  "pin-project",
  "serde",
@@ -2106,6 +2107,17 @@ dependencies = [
  "rand 0.8.5",
  "thiserror 2.0.12",
  "zeroize",
+]
+
+[[package]]
+name = "ic-error-types"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbeeb3d91aa179d6496d7293becdacedfc413c825cac79fd54ea1906f003ee55"
+dependencies = [
+ "serde",
+ "strum 0.26.3",
+ "strum_macros 0.26.4",
 ]
 
 [[package]]
@@ -4365,6 +4377,7 @@ dependencies = [
  "hex",
  "http 1.3.1",
  "ic-cdk",
+ "ic-error-types",
  "ic-http-types",
  "ic-metrics-encoder",
  "ic-stable-structures",
@@ -4495,6 +4508,7 @@ dependencies = [
  "solana-transaction-status-client-types",
  "strum 0.27.1",
  "tokio",
+ "url",
 ]
 
 [[package]]

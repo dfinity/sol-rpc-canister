@@ -10,6 +10,7 @@ use canhttp::{
     CyclesAccountingError, HttpsOutcallError, IcError,
 };
 use derive_more::From;
+use ic_error_types::RejectCode;
 use sol_rpc_types::{HttpOutcallError, ProviderError, RpcError};
 use thiserror::Error;
 
@@ -52,6 +53,15 @@ impl From<HttpClientError> for RpcError {
     fn from(error: HttpClientError) -> Self {
         match error {
             HttpClientError::IcError(IcError { code, message }) => {
+                use ic_cdk::api::call::RejectionCode as IcCdkRejectionCode;
+                let code = match code {
+                    RejectCode::SysFatal => IcCdkRejectionCode::SysFatal,
+                    RejectCode::SysTransient => IcCdkRejectionCode::SysTransient,
+                    RejectCode::DestinationInvalid => IcCdkRejectionCode::DestinationInvalid,
+                    RejectCode::CanisterReject => IcCdkRejectionCode::CanisterReject,
+                    RejectCode::CanisterError => IcCdkRejectionCode::CanisterError,
+                    RejectCode::SysUnknown => IcCdkRejectionCode::Unknown,
+                };
                 RpcError::HttpOutcallError(HttpOutcallError::IcError { code, message })
             }
             HttpClientError::NotHandledError(e) => RpcError::ValidationError(e),

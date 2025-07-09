@@ -24,6 +24,7 @@ const ANOTHER_SIGNATURE: &str =
 
 mod request_serialization_tests {
     use super::*;
+    use canhttp::multi::Timestamp;
 
     #[test]
     fn should_serialize_get_account_info_request() {
@@ -32,6 +33,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 GetAccountInfoParams::from(solana_pubkey::Pubkey::default()),
+                Timestamp::default(),
             )
             .unwrap(),
             json!(["11111111111111111111111111111111", null]),
@@ -50,6 +52,7 @@ mod request_serialization_tests {
                     }),
                     min_context_slot: Some(456),
                 },
+                Timestamp::default(),
             )
             .unwrap(),
             json!([
@@ -70,6 +73,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 GetSlotRpcConfig::default(),
                 GetSlotParams::default(),
+                Timestamp::default(),
             )
             .unwrap(),
             json!([null]),
@@ -82,6 +86,7 @@ mod request_serialization_tests {
                     commitment: Some(CommitmentLevel::Finalized),
                     min_context_slot: Some(123),
                 },
+                Timestamp::default(),
             )
             .unwrap(),
             json!([
@@ -107,6 +112,7 @@ mod request_serialization_tests {
                     before: None,
                     until: None,
                 },
+                Timestamp::default(),
             )
             .unwrap(),
             json!(["11111111111111111111111111111111", null]),
@@ -123,6 +129,7 @@ mod request_serialization_tests {
                     before: Some(Signature::from_str(SOME_SIGNATURE).unwrap()),
                     until: Some(Signature::from_str(ANOTHER_SIGNATURE).unwrap()),
                 },
+                Timestamp::default(),
             )
             .unwrap(),
             json!([
@@ -148,6 +155,7 @@ mod request_serialization_tests {
                     signatures: VecWithMaxLen::new(),
                     search_transaction_history: None,
                 },
+                Timestamp::default(),
             )
             .unwrap(),
             json!([[], null]),
@@ -165,6 +173,7 @@ mod request_serialization_tests {
                     .unwrap(),
                     search_transaction_history: Some(true),
                 },
+                Timestamp::default(),
             )
             .unwrap(),
             json!([
@@ -184,6 +193,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 GetTransactionParams::from(solana_signature::Signature::default()),
+                Timestamp::default(),
             )
             .unwrap(),
             json!([signature, null]),
@@ -198,6 +208,7 @@ mod request_serialization_tests {
                     max_supported_transaction_version: Some(2),
                     encoding: Some(GetTransactionEncoding::Base64),
                 },
+                Timestamp::default(),
             )
             .unwrap(),
             json!([
@@ -219,6 +230,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 GetBalanceParams::from(pubkey),
+                Timestamp::default(),
             )
             .unwrap(),
             json!([pubkey.to_string(), null]),
@@ -233,6 +245,7 @@ mod request_serialization_tests {
                     commitment: Some(CommitmentLevel::Confirmed),
                     min_context_slot: Some(42),
                 },
+                Timestamp::default(),
             )
             .unwrap(),
             json!(
@@ -255,6 +268,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 GetTokenAccountBalanceParams::from(pubkey),
+                Timestamp::default(),
             )
             .unwrap(),
             json!([pubkey.to_string(), null]),
@@ -268,6 +282,7 @@ mod request_serialization_tests {
                     pubkey: pubkey.into(),
                     commitment: Some(CommitmentLevel::Confirmed),
                 },
+                Timestamp::default(),
             )
             .unwrap(),
             json!([
@@ -284,6 +299,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 GetBlockParams::from(123),
+                Timestamp::default(),
             )
             .unwrap(),
             json!([123, {"transactionDetails": "none"}]),
@@ -299,6 +315,7 @@ mod request_serialization_tests {
                     transaction_details: Some(TransactionDetails::Signatures),
                     rewards: Some(true),
                 },
+                Timestamp::default(),
             )
             .unwrap(),
             json!([
@@ -320,6 +337,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 GetRecentPrioritizationFeesRpcConfig::default(),
                 GetRecentPrioritizationFeesParams::default(),
+                Timestamp::default(),
             )
             .unwrap(),
             json!([[]]),
@@ -334,6 +352,7 @@ mod request_serialization_tests {
                     pubkey!("3emsAVdmGKERbHjmGfQ6oZ1e35dkf5iYcS6U4CPKFVaa"),
                 ])
                 .unwrap(),
+                Timestamp::default(),
             )
             .unwrap(),
             json!([[
@@ -354,6 +373,7 @@ mod request_serialization_tests {
                     transaction.to_string(),
                     SendTransactionEncoding::Base64,
                 ),
+                Timestamp::default(),
             )
             .unwrap(),
             json!([transaction, { "encoding": "base64" }]),
@@ -371,6 +391,7 @@ mod request_serialization_tests {
                 RpcSources::Default(SolanaCluster::Mainnet),
                 RpcConfig::default(),
                 params,
+                Timestamp::default(),
             )
             .unwrap(),
             json!([

@@ -85,7 +85,8 @@ pub enum HttpOutcallError {
     /// Response is not a valid JSON-RPC response,
     /// which means that the response was not successful (status other than 2xx)
     /// or that the response body could not be deserialized into a JSON-RPC response.
-    #[error("Invalid HTTP JSON-RPC response: status {status}, body: {body}, parsing error: {parsing_error:?}")]
+    #[error("Invalid HTTP JSON-RPC response: status {status}, body: {body}, parsing error: {parsing_error:?}"
+    )]
     InvalidHttpJsonRpcResponse {
         /// The HTTP status code returned.
         status: u16,
@@ -371,6 +372,17 @@ pub enum RpcSource {
     Supported(SupportedRpcProviderId),
     /// A custom RPC service defined by an explicit [`RpcEndpoint`].
     Custom(RpcEndpoint),
+}
+
+impl RpcSource {
+    /// Return the supported RPC provider ID if the source corresponds to a supported provider,
+    /// `None` otherwise.
+    pub fn rpc_provider_id(&self) -> Option<SupportedRpcProviderId> {
+        match &self {
+            RpcSource::Supported(id) => Some(*id),
+            RpcSource::Custom(_) => None,
+        }
+    }
 }
 
 /// Defines a collection of Solana RPC sources.
