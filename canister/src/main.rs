@@ -1,4 +1,3 @@
-use candid::candid_method;
 use canhttp::multi::Timestamp;
 use canlog::{log, Log, Sort};
 use ic_cdk::{api::is_controller, query, update};
@@ -34,7 +33,6 @@ pub fn require_api_key_principal_or_controller() -> Result<(), String> {
 }
 
 #[query(name = "getProviders")]
-#[candid_method(query, rename = "getProviders")]
 fn get_providers() -> Vec<(SupportedRpcProviderId, SupportedRpcProvider)> {
     PROVIDERS.with(|providers| providers.clone().into_iter().collect())
 }
@@ -43,7 +41,6 @@ fn get_providers() -> Vec<(SupportedRpcProviderId, SupportedRpcProvider)> {
     name = "updateApiKeys",
     guard = "require_api_key_principal_or_controller"
 )]
-#[candid_method(rename = "updateApiKeys")]
 /// Inserts or removes RPC provider API keys.
 ///
 /// For each element of `api_keys`, passing `(id, Some(key))` corresponds to inserting or updating
