@@ -817,7 +817,7 @@ impl<R: Runtime, Config, Params, CandidOutput, Output>
             .await
             .map_err(|(code, message)| {
                 let code = match code {
-                    RejectionCode::NoError => panic!("No error"),
+                    RejectionCode::NoError => panic!("BUG: call failed without error"),
                     RejectionCode::SysFatal => RejectCode::SysFatal,
                     RejectionCode::SysTransient => RejectCode::SysTransient,
                     RejectionCode::DestinationInvalid => RejectCode::DestinationInvalid,
