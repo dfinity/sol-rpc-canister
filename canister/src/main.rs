@@ -40,11 +40,15 @@ pub fn require_base_http_outcall_fee() -> Result<(), String> {
             .saturating_add(60_000_u128.saturating_mul(num_nodes as u128))
             .saturating_mul(num_nodes as u128)
     }
-    let cycles_available = ic_cdk::api::call::msg_cycles_available128();
-    if read_state(|state| state.is_demo_mode_active()) || (cycles_available >= base_fee()) {
+    if read_state(|state| state.is_demo_mode_active()) {
         Ok(())
     } else {
-        Err("Not enough cycles".to_string())
+        let cycles_available = ic_cdk::api::call::msg_cycles_available128();
+        if cycles_available >= base_fee() {
+            Ok(())
+        } else {
+            Err("Not enough cycles".to_string())
+        }
     }
 }
 
