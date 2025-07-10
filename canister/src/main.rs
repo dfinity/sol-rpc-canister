@@ -81,7 +81,6 @@ async fn update_api_keys(api_keys: Vec<(SupportedRpcProviderId, Option<String>)>
 }
 
 #[update(name = "getAccountInfo")]
-#[candid_method(rename = "getAccountInfo")]
 async fn get_account_info(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -93,7 +92,6 @@ async fn get_account_info(
 }
 
 #[query(name = "getAccountInfoCyclesCost")]
-#[candid_method(query, rename = "getAccountInfoCyclesCost")]
 async fn get_account_info_cycles_cost(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -108,7 +106,6 @@ async fn get_account_info_cycles_cost(
 }
 
 #[update(name = "getBalance")]
-#[candid_method(rename = "getBalance")]
 async fn get_balance(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -119,7 +116,6 @@ async fn get_balance(
 }
 
 #[query(name = "getBalanceCyclesCost")]
-#[candid_method(query, rename = "getBalanceCyclesCost")]
 async fn get_balance_cycles_cost(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -134,7 +130,6 @@ async fn get_balance_cycles_cost(
 }
 
 #[update(name = "getBlock")]
-#[candid_method(rename = "getBlock")]
 async fn get_block(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -145,7 +140,6 @@ async fn get_block(
 }
 
 #[query(name = "getBlockCyclesCost")]
-#[candid_method(query, rename = "getBlockCyclesCost")]
 async fn get_block_cycles_cost(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -160,7 +154,6 @@ async fn get_block_cycles_cost(
 }
 
 #[update(name = "getRecentPrioritizationFees")]
-#[candid_method(rename = "getRecentPrioritizationFees")]
 async fn get_recent_prioritization_fees(
     source: RpcSources,
     config: Option<GetRecentPrioritizationFeesRpcConfig>,
@@ -176,7 +169,6 @@ async fn get_recent_prioritization_fees(
 }
 
 #[query(name = "getRecentPrioritizationFeesCyclesCost")]
-#[candid_method(query, rename = "getRecentPrioritizationFeesCyclesCost")]
 async fn get_recent_prioritization_fees_cycles_cost(
     source: RpcSources,
     config: Option<GetRecentPrioritizationFeesRpcConfig>,
@@ -196,7 +188,6 @@ async fn get_recent_prioritization_fees_cycles_cost(
 }
 
 #[update(name = "getSignaturesForAddress")]
-#[candid_method(rename = "getSignaturesForAddress")]
 async fn get_signatures_for_address(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -212,7 +203,6 @@ async fn get_signatures_for_address(
 }
 
 #[query(name = "getSignaturesForAddressCyclesCost")]
-#[candid_method(query, rename = "getSignaturesForAddressCyclesCost")]
 async fn get_signatures_for_address_cycles_cost(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -227,7 +217,6 @@ async fn get_signatures_for_address_cycles_cost(
 }
 
 #[update(name = "getSignatureStatuses")]
-#[candid_method(rename = "getSignatureStatuses")]
 async fn get_signature_statuses(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -239,7 +228,6 @@ async fn get_signature_statuses(
 }
 
 #[query(name = "getSignatureStatusesCyclesCost")]
-#[candid_method(query, rename = "getSignatureStatusesCyclesCost")]
 async fn get_signature_statuses_cycles_cost(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -254,7 +242,6 @@ async fn get_signature_statuses_cycles_cost(
 }
 
 #[update(name = "getSlot")]
-#[candid_method(rename = "getSlot")]
 async fn get_slot(
     source: RpcSources,
     config: Option<GetSlotRpcConfig>,
@@ -270,7 +257,6 @@ async fn get_slot(
 }
 
 #[query(name = "getSlotCyclesCost")]
-#[candid_method(query, rename = "getSlotCyclesCost")]
 async fn get_slot_cycles_cost(
     source: RpcSources,
     config: Option<GetSlotRpcConfig>,
@@ -290,7 +276,6 @@ async fn get_slot_cycles_cost(
 }
 
 #[update(name = "getTokenAccountBalance")]
-#[candid_method(rename = "getTokenAccountBalance")]
 async fn get_token_account_balance(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -306,7 +291,6 @@ async fn get_token_account_balance(
 }
 
 #[query(name = "getTokenAccountBalanceCyclesCost")]
-#[candid_method(query, rename = "getTokenAccountBalanceCyclesCost")]
 async fn get_token_account_balance_cycles_cost(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -321,7 +305,6 @@ async fn get_token_account_balance_cycles_cost(
 }
 
 #[update(name = "getTransaction")]
-#[candid_method(rename = "getTransaction")]
 async fn get_transaction(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -333,7 +316,6 @@ async fn get_transaction(
 }
 
 #[query(name = "getTransactionCyclesCost")]
-#[candid_method(query, rename = "getTransactionCyclesCost")]
 async fn get_transaction_cycles_cost(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -348,7 +330,6 @@ async fn get_transaction_cycles_cost(
 }
 
 #[update(name = "sendTransaction")]
-#[candid_method(rename = "sendTransaction")]
 async fn send_transaction(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -360,7 +341,6 @@ async fn send_transaction(
 }
 
 #[query(name = "sendTransactionCyclesCost")]
-#[candid_method(query, rename = "sendTransactionCyclesCost")]
 async fn send_transaction_cycles_cost(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -375,7 +355,6 @@ async fn send_transaction_cycles_cost(
 }
 
 #[update(name = "jsonRequest")]
-#[candid_method(rename = "jsonRequest")]
 async fn json_request(
     source: RpcSources,
     config: Option<RpcConfig>,
@@ -387,7 +366,6 @@ async fn json_request(
 }
 
 #[query(name = "jsonRequestCyclesCost")]
-#[candid_method(query, rename = "jsonRequestCyclesCost")]
 async fn json_request_cycles_cost(
     source: RpcSources,
     config: Option<RpcConfig>,
