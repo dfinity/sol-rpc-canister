@@ -12,7 +12,7 @@
           "name": "candid:service"
         }
       ],
-      "init_arg": "( record { manageApiKeys = null; overrideProvider = opt record { overrideUrl = opt record { pattern = \".*\"; replacement = \"https://api.devnet.solana.com\" } }; logFilter = opt variant { ShowAll }; numSubnetNodes = null; mode = opt variant { Demo }; } )",
+      "init_arg": "( record { manageApiKeys = null; overrideProvider = null; logFilter = opt variant { ShowAll }; numSubnetNodes = null; mode = opt variant { Demo }; } )",
       "remote": {
         "id": {
           "ic": "tghme-zyaaa-aaaar-qarca-cai"
