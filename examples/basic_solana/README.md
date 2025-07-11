@@ -83,7 +83,7 @@ What this does:
 - `dfx deploy` deploys a SOL wallet canister as well as a SOL RPC canister, both locally. The SOL wallet canister interacts with
   the Solana Devnet via the local SOL RPC canister.
 
-> [IMPORTANT]
+> [!IMPORTANT]
 > To target Solana Mainnet, you will need to change the `init_arg` for the `basic_solana` canister in the `dfx.json` file. To learn more about the initialization arguments, see the `InitArg` type in [`basic_solana.did`](basic_solana.did).
 
 ### Getting the canister ID
@@ -107,7 +107,7 @@ In the output above, to see the Candid Web UI for your Solana canister, you woul
 `https://bd3sg-teaaa-aaaaa-qaaba-cai.raw.icp0.io/?id=<YOUR-CANISTER-ID>`. You should see the methods specified in the
 Candid file `basic_solana.did`.
 
-> [IMPORTANT]
+> [!IMPORTANT]
 > If running this example locally, you will need to skip the `--ic` flag in all subsequent `dfx` commands.
 
 ## Step 2: Generating a Solana account
