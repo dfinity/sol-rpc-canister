@@ -5,7 +5,7 @@
 use crate::{ClientBuilder, Runtime};
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Decode, Encode, Principal};
-use ic_cdk::api::call::RejectionCode;
+use ic_error_types::RejectCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo};
 use std::collections::BTreeMap;
@@ -83,7 +83,7 @@ impl MockRuntime {
         self
     }
 
-    fn call<Out>(&self, method: &str) -> Result<Out, (RejectionCode, String)>
+    fn call<Out>(&self, method: &str) -> Result<Out, (RejectCode, String)>
     where
         Out: CandidType + DeserializeOwned,
     {
@@ -110,7 +110,7 @@ impl Runtime for MockRuntime {
         method: &str,
         _args: In,
         _cycles: u128,
-    ) -> Result<Out, (RejectionCode, String)>
+    ) -> Result<Out, (RejectCode, String)>
     where
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
@@ -123,7 +123,7 @@ impl Runtime for MockRuntime {
         _id: Principal,
         method: &str,
         _args: In,
-    ) -> Result<Out, (RejectionCode, String)>
+    ) -> Result<Out, (RejectCode, String)>
     where
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,

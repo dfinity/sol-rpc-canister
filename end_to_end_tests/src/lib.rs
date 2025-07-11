@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Encode, Principal};
 use ic_agent::{identity::Secp256k1Identity, Agent};
-use ic_cdk::api::call::RejectionCode;
+use ic_error_types::RejectCode;
 use serde::de::DeserializeOwned;
 use serde_json::json;
 use sol_rpc_client::{ClientBuilder, Runtime, SolRpcClient};
@@ -216,7 +216,7 @@ impl Runtime for IcAgentRuntime<'_> {
         method: &str,
         args: In,
         cycles: u128,
-    ) -> Result<Out, (RejectionCode, String)>
+    ) -> Result<Out, (RejectCode, String)>
     where
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
@@ -228,7 +228,7 @@ impl Runtime for IcAgentRuntime<'_> {
             .with_arg(Encode!(&CallCanisterArgs::new(id, method, args, cycles)).unwrap())
             .call_and_wait()
             .await
-            .map_err(|e| (RejectionCode::Unknown, e.to_string()))?;
+            .map_err(|e| (RejectCode::SysFatal, e.to_string()))?;
         decode_cycles_wallet_response(result)
     }
 
@@ -237,7 +237,7 @@ impl Runtime for IcAgentRuntime<'_> {
         id: Principal,
         method: &str,
         args: In,
-    ) -> Result<Out, (RejectionCode, String)>
+    ) -> Result<Out, (RejectCode, String)>
     where
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
@@ -248,7 +248,7 @@ impl Runtime for IcAgentRuntime<'_> {
             .with_arg(encode_args(args))
             .call()
             .await
-            .map_err(|e| (RejectionCode::Unknown, e.to_string()))?;
+            .map_err(|e| (RejectCode::SysFatal, e.to_string()))?;
         decode_call_response(result)
     }
 }

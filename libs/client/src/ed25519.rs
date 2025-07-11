@@ -6,13 +6,11 @@
 use crate::Runtime;
 use candid::Principal;
 use derive_more::{From, Into};
-use ic_cdk::api::{
-    call::RejectionCode,
-    management_canister::schnorr::{
-        SchnorrAlgorithm, SchnorrKeyId, SchnorrPublicKeyArgument, SchnorrPublicKeyResponse,
-        SignWithSchnorrArgument, SignWithSchnorrResponse,
-    },
+use ic_cdk::api::management_canister::schnorr::{
+    SchnorrAlgorithm, SchnorrKeyId, SchnorrPublicKeyArgument, SchnorrPublicKeyResponse,
+    SignWithSchnorrArgument, SignWithSchnorrResponse,
 };
+use ic_error_types::RejectCode;
 
 // Source: https://internetcomputer.org/docs/current/references/t-sigs-how-it-works/#fees-for-the-t-schnorr-test-key
 const SIGN_WITH_SCHNORR_TEST_FEE: u128 = 10_000_000_000;
@@ -166,7 +164,7 @@ pub async fn sign_message<R: Runtime>(
     message: &solana_message::Message,
     key_id: Ed25519KeyId,
     derivation_path: Option<&DerivationPath>,
-) -> Result<solana_signature::Signature, (RejectionCode, String)> {
+) -> Result<solana_signature::Signature, (RejectCode, String)> {
     let arg = SignWithSchnorrArgument {
         message: message.serialize(),
         derivation_path: derivation_path.cloned().unwrap_or_default().into(),
@@ -255,7 +253,7 @@ pub async fn get_pubkey<R: Runtime>(
     canister_id: Option<Principal>,
     derivation_path: Option<&DerivationPath>,
     key_id: Ed25519KeyId,
-) -> Result<(solana_pubkey::Pubkey, [u8; 32]), (RejectionCode, String)> {
+) -> Result<(solana_pubkey::Pubkey, [u8; 32]), (RejectCode, String)> {
     let arg = SchnorrPublicKeyArgument {
         canister_id,
         derivation_path: derivation_path.cloned().unwrap_or_default().into(),
