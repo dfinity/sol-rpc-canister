@@ -668,9 +668,9 @@ dependencies = [
 
 [[package]]
 name = "canhttp"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b9cf652e717488c8a3ded473a04e577f9446f1d80adc81fbbce0642de786939"
+checksum = "b30b89e93857ec22d9b5f11b1647cdf9bb28c328e1d5ae871ecba2d94e38f8fb"
 dependencies = [
  "assert_matches",
  "ciborium",
@@ -4416,6 +4416,7 @@ dependencies = [
  "derive_more",
  "ic-cdk",
  "ic-ed25519",
+ "ic-error-types",
  "serde",
  "serde_json",
  "sol_rpc_types",
@@ -4446,6 +4447,7 @@ dependencies = [
  "candid",
  "ic-agent",
  "ic-cdk",
+ "ic-error-types",
  "serde",
  "serde_json",
  "sol_rpc_client",
@@ -4476,6 +4478,7 @@ dependencies = [
  "const_format",
  "futures",
  "ic-cdk",
+ "ic-error-types",
  "ic-http-types",
  "ic-management-canister-types",
  "ic-metrics-assert",
