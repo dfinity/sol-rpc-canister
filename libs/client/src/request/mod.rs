@@ -5,7 +5,6 @@ use crate::{Runtime, SolRpcClient};
 use candid::CandidType;
 use derive_more::From;
 use ic_error_types::RejectCode;
-use ic_error_types::RejectCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
@@ -815,18 +814,6 @@ impl<R: Runtime, Config, Params, CandidOutput, Output>
         self.client
             .try_execute_request::<Config, Params, CandidOutput, Output>(self.request)
             .await
-            .map_err(|(code, message)| {
-                let code = match code {
-                    RejectionCode::NoError => panic!("BUG: call failed without error"),
-                    RejectionCode::SysFatal => RejectCode::SysFatal,
-                    RejectionCode::SysTransient => RejectCode::SysTransient,
-                    RejectionCode::DestinationInvalid => RejectCode::DestinationInvalid,
-                    RejectionCode::CanisterReject => RejectCode::CanisterReject,
-                    RejectionCode::CanisterError => RejectCode::CanisterError,
-                    RejectionCode::Unknown => RejectCode::SysUnknown,
-                };
-                (code, message)
-            })
     }
 }
 
