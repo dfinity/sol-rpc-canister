@@ -1118,6 +1118,21 @@ impl<R: Runtime> SolRpcClient<R> {
         EstimateBlockhashRequestBuilder::new(self.clone())
     }
 
+    async fn execute_request<Config, Params, CandidOutput, Output>(
+        &self,
+        request: Request<Config, Params, CandidOutput, Output>,
+    ) -> Output
+    where
+        Config: CandidType + Send,
+        Params: CandidType + Send,
+        CandidOutput: Into<Output> + CandidType + DeserializeOwned,
+    {
+        let rpc_method = request.endpoint.rpc_method();
+        self.try_execute_request(request)
+            .await
+            .unwrap_or_else(|e| panic!("Client error: failed to call `{}`: {e:?}", rpc_method))
+    }
+
     async fn try_execute_request<Config, Params, CandidOutput, Output>(
         &self,
         request: Request<Config, Params, CandidOutput, Output>,
