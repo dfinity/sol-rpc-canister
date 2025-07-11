@@ -95,7 +95,7 @@ where
                 .on_error(
                     |req_data: MetricData, error: &HttpClientError| match error {
                         HttpClientError::IcError(IcError { code, message: _ }) => {
-                            observe_response(MetricRpcCallResponse::IcError(*code), &req_data);
+                            observe_response(MetricRpcCallResponse::IcError(code.to_string()), &req_data);
                         }
                         HttpClientError::UnsuccessfulHttpResponse(
                             FilterNonSuccessfulHttpResponseError::UnsuccessfulResponse(response),

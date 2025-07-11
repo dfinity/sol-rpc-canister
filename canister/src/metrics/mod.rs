@@ -1,5 +1,4 @@
 use derive_more::From;
-use ic_cdk::api::call::RejectionCode;
 use std::collections::BTreeMap;
 use std::time::Duration;
 
@@ -195,21 +194,6 @@ impl MetricLabels for MetricHttpStatusCode {
     }
 }
 
-impl MetricLabels for RejectionCode {
-    fn metric_labels(&self) -> Vec<(&str, &str)> {
-        let code = match self {
-            RejectionCode::NoError => "NO_ERROR",
-            RejectionCode::SysFatal => "SYS_FATAL",
-            RejectionCode::SysTransient => "SYS_TRANSIENT",
-            RejectionCode::DestinationInvalid => "DESTINATION_INVALID",
-            RejectionCode::CanisterReject => "CANISTER_REJECT",
-            RejectionCode::CanisterError => "CANISTER_ERROR",
-            RejectionCode::Unknown => "UNKNOWN",
-        };
-        vec![("code", code)]
-    }
-}
-
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, From)]
 pub struct MetricRpcErrorCode(pub String);
 
@@ -228,7 +212,7 @@ impl MetricLabels for MetricRpcErrorCode {
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum MetricRpcCallResponse {
     Success,
-    IcError(RejectionCode),
+    IcError(String),
     HttpError(MetricHttpStatusCode),
     JsonRpcError,
 }
@@ -239,7 +223,7 @@ impl MetricLabels for MetricRpcCallResponse {
             MetricRpcCallResponse::Success => vec![],
             MetricRpcCallResponse::IcError(rejection_code) => [("error", "ic")]
                 .into_iter()
-                .chain(rejection_code.metric_labels())
+                .chain(vec![("code", rejection_code.as_str())])
                 .collect(),
             MetricRpcCallResponse::HttpError(status) => [("error", "http")]
                 .into_iter()

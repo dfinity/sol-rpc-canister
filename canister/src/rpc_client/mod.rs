@@ -5,6 +5,7 @@ mod sol_rpc;
 mod tests;
 
 use crate::candid_rpc::hostname;
+use crate::memory::record_ok_result;
 use crate::providers::get_provider;
 use crate::{
     add_metric_entry,
@@ -16,6 +17,7 @@ use crate::{
     providers::{request_builder, resolve_rpc_provider, Providers},
     rpc_client::sol_rpc::ResponseTransform,
 };
+use canhttp::multi::Timestamp;
 use canhttp::{
     http::json::JsonRpcRequest,
     multi::{MultiResults, Reduce, ReduceWithEquality, ReduceWithThreshold},
@@ -98,9 +100,10 @@ impl GetAccountInfoRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(512 + HEADER_SIZE_LIMIT);
@@ -122,9 +125,10 @@ impl GetBalanceRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(256 + HEADER_SIZE_LIMIT);
@@ -149,10 +153,11 @@ impl GetBlockRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let params = params.into();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = Self::response_size_estimate(&params);
 
         Ok(MultiRpcRequest::new(
@@ -193,10 +198,11 @@ impl GetSignaturesForAddressRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let params = params.into();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or((params.get_limit() as u64 * 256) + HEADER_SIZE_LIMIT);
@@ -221,10 +227,11 @@ impl GetSignatureStatusesRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let params = params.into();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(128 + (params.num_signatures() as u64 * 256) + HEADER_SIZE_LIMIT);
@@ -246,9 +253,10 @@ impl GetSlotRequest {
         rpc_sources: RpcSources,
         config: GetSlotRpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(64 + HEADER_SIZE_LIMIT);
@@ -272,10 +280,11 @@ impl GetRecentPrioritizationFeesRequest {
         rpc_sources: RpcSources,
         config: GetRecentPrioritizationFeesRpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let max_length = config.max_length();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(8 * 1024 + HEADER_SIZE_LIMIT);
@@ -303,9 +312,10 @@ impl GetTokenAccountBalanceRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(256 + HEADER_SIZE_LIMIT);
@@ -330,9 +340,10 @@ impl GetTransactionRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(8 * 1024 + HEADER_SIZE_LIMIT);
@@ -354,9 +365,10 @@ impl SendTransactionRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(128 + HEADER_SIZE_LIMIT);
@@ -378,6 +390,7 @@ impl JsonRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         json_rpc_payload: String,
+        now: Timestamp,
     ) -> RpcResult<Self> {
         let request: JsonRpcRequest<serde_json::Value> =
             match serde_json::from_str(&json_rpc_payload) {
@@ -389,7 +402,7 @@ impl JsonRequest {
                 }
             };
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(1024 + HEADER_SIZE_LIMIT);
@@ -415,36 +428,9 @@ impl<Params, Output> MultiRpcRequest<Params, Output> {
         let strategy = self.reduction_strategy.clone();
         let multi_results = self.parallel_call().await;
 
-        Self::observe_inconsistent_results(method, &multi_results);
+        observe_inconsistent_results(method, &multi_results);
 
         multi_results.reduce(strategy)
-    }
-
-    fn observe_inconsistent_results(
-        method: MetricRpcMethod,
-        multi_results: &MultiCallResults<Output>,
-    ) where
-        Output: PartialEq,
-    {
-        let mut inconsistent_results = multi_results.iter().filter(|(_, result)| {
-            matches!(result, Ok(_)) || matches!(result, Err(RpcError::JsonRpcError(_)))
-        });
-
-        if let Some((_source, base_result)) = inconsistent_results.next() {
-            if inconsistent_results.all(|(_source, service_result)| service_result == base_result) {
-                return;
-            }
-        };
-
-        inconsistent_results.for_each(|(source, _service_result)| {
-            if let RpcSource::Supported(provider_id) = source {
-                if let Some(provider) = get_provider(provider_id) {
-                    if let Some(host) = hostname(provider.clone()) {
-                        add_metric_entry!(inconsistent_responses, (method.clone(), host.into()), 1)
-                    }
-                }
-            }
-        });
     }
 
     /// Query all providers in parallel and return all results.
@@ -471,6 +457,12 @@ impl<Params, Output> MultiRpcRequest<Params, Output> {
         let (requests, errors) = requests.into_inner();
         let (_client, mut results) = canhttp::multi::parallel_call(client, requests).await;
         results.add_errors(errors);
+        let now = Timestamp::from_nanos_since_unix_epoch(ic_cdk::api::time());
+        results
+            .ok_results()
+            .keys()
+            .filter_map(RpcSource::rpc_provider_id)
+            .for_each(|provider_id| record_ok_result(provider_id, now));
         assert_eq!(
             results.len(),
             num_providers,
@@ -588,3 +580,30 @@ impl<T: PartialEq + Serialize> Reduce<RpcSource, T, RpcError> for ReductionStrat
 
 pub type MultiCallResults<T> = MultiResults<RpcSource, T, RpcError>;
 pub type ReducedResult<T> = canhttp::multi::ReducedResult<RpcSource, T, RpcError>;
+
+fn observe_inconsistent_results<Output>(
+    method: MetricRpcMethod,
+    multi_results: &MultiCallResults<Output>,
+) where
+    Output: PartialEq,
+{
+    let mut inconsistent_results = multi_results
+        .iter()
+        .filter(|(_, result)| result.is_ok() || matches!(result, Err(RpcError::JsonRpcError(_))));
+
+    if let Some((_source, base_result)) = inconsistent_results.next() {
+        if inconsistent_results.all(|(_source, service_result)| service_result == base_result) {
+            return;
+        }
+    };
+
+    inconsistent_results.for_each(|(source, _service_result)| {
+        if let RpcSource::Supported(provider_id) = source {
+            if let Some(provider) = get_provider(provider_id) {
+                if let Some(host) = hostname(provider.clone()) {
+                    add_metric_entry!(inconsistent_responses, (method.clone(), host.into()), 1)
+                }
+            }
+        }
+    });
+}

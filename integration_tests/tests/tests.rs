@@ -2256,6 +2256,86 @@ async fn should_log_request_and_response() {
     setup.drop().await;
 }
 
+#[tokio::test]
+async fn should_change_default_providers_when_one_keeps_failing() {
+    fn request_body(id: u8) -> serde_json::Value {
+        let id = ConstantSizeId::from(id).to_string();
+        json!({ "jsonrpc": "2.0", "id": id, "method": "getSlot", "params": [null] })
+    }
+
+    fn response_body(id: u8) -> serde_json::Value {
+        let id = ConstantSizeId::from(id).to_string();
+        json!({ "id": id, "jsonrpc": "2.0", "result": 1200, })
+    }
+    let setup = Setup::new().await.with_mock_api_keys().await;
+
+    let client = setup.client();
+    let slot = client
+        .with_consensus_strategy(ConsensusStrategy::Threshold {
+            min: 2,
+            total: Some(3),
+        })
+        .mock_http_sequence(vec![
+            MockOutcallBuilder::new(200, response_body(0))
+                .with_request_body(request_body(0))
+                .with_host("solana-mainnet.g.alchemy.com"),
+            MockOutcallBuilder::new(500, "error")
+                .with_request_body(request_body(1))
+                .with_host("lb.drpc.org"),
+            MockOutcallBuilder::new(200, response_body(2))
+                .with_request_body(request_body(2))
+                .with_host("mainnet.helius-rpc.com"),
+        ])
+        .build()
+        .get_slot()
+        .send()
+        .await
+        .expect_consistent();
+    assert_eq!(slot, Ok(1200));
+
+    let client = setup.client();
+    let slot = client
+        .with_consensus_strategy(ConsensusStrategy::Equality)
+        .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Supported(
+            SupportedRpcProviderId::AnkrMainnet,
+        )]))
+        .mock_http_sequence(vec![MockOutcallBuilder::new(200, response_body(3))
+            .with_request_body(request_body(3))
+            .with_host("rpc.ankr.com")])
+        .build()
+        .get_slot()
+        .send()
+        .await
+        .expect_consistent();
+    assert_eq!(slot, Ok(1200));
+
+    let client = setup.client();
+    let slot = client
+        .with_consensus_strategy(ConsensusStrategy::Threshold {
+            min: 3,
+            total: Some(3),
+        })
+        .mock_http_sequence(vec![
+            MockOutcallBuilder::new(200, response_body(4))
+                .with_request_body(request_body(4))
+                .with_host("solana-mainnet.g.alchemy.com"),
+            MockOutcallBuilder::new(200, response_body(5))
+                .with_request_body(request_body(5))
+                .with_host("rpc.ankr.com"),
+            MockOutcallBuilder::new(200, response_body(6))
+                .with_request_body(request_body(6))
+                .with_host("mainnet.helius-rpc.com"),
+        ])
+        .build()
+        .get_slot()
+        .send()
+        .await
+        .expect_consistent();
+    assert_eq!(slot, Ok(1200));
+
+    setup.drop().await;
+}
+
 fn assert_within(actual: u128, expected: u128, percentage_error: u8) {
     assert!(percentage_error <= 100);
     let error_margin = expected.saturating_mul(percentage_error as u128) / 100;
