@@ -4,8 +4,11 @@ mod sol_rpc;
 #[cfg(test)]
 mod tests;
 
+use crate::candid_rpc::hostname;
 use crate::memory::record_ok_result;
+use crate::providers::get_provider;
 use crate::{
+    add_metric_entry,
     http::{
         errors::HttpClientError, http_client, service_request_builder, ChargingPolicyWithCollateral,
     },
@@ -420,8 +423,14 @@ impl<Params, Output> MultiRpcRequest<Params, Output> {
         Params: Serialize + Clone + Debug,
         Output: Debug + DeserializeOwned + PartialEq + Serialize,
     {
+        let method = MetricRpcMethod::from(self.request.method().to_string());
+
         let strategy = self.reduction_strategy.clone();
-        self.parallel_call().await.reduce(strategy)
+        let multi_results = self.parallel_call().await;
+
+        observe_inconsistent_results(method, &multi_results);
+
+        multi_results.reduce(strategy)
     }
 
     /// Query all providers in parallel and return all results.
@@ -571,3 +580,30 @@ impl<T: PartialEq + Serialize> Reduce<RpcSource, T, RpcError> for ReductionStrat
 
 pub type MultiCallResults<T> = MultiResults<RpcSource, T, RpcError>;
 pub type ReducedResult<T> = canhttp::multi::ReducedResult<RpcSource, T, RpcError>;
+
+fn observe_inconsistent_results<Output>(
+    method: MetricRpcMethod,
+    multi_results: &MultiCallResults<Output>,
+) where
+    Output: PartialEq,
+{
+    let mut inconsistent_results = multi_results
+        .iter()
+        .filter(|(_, result)| result.is_ok() || matches!(result, Err(RpcError::JsonRpcError(_))));
+
+    if let Some((_source, base_result)) = inconsistent_results.next() {
+        if inconsistent_results.all(|(_source, service_result)| service_result == base_result) {
+            return;
+        }
+    };
+
+    inconsistent_results.for_each(|(source, _service_result)| {
+        if let RpcSource::Supported(provider_id) = source {
+            if let Some(provider) = get_provider(provider_id) {
+                if let Some(host) = hostname(provider.clone()) {
+                    add_metric_entry!(inconsistent_responses, (method.clone(), host.into()), 1)
+                }
+            }
+        }
+    });
+}

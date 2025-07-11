@@ -70,11 +70,6 @@ where
                         request_id: req.body().id().clone(),
                         start_ns: ic_cdk::api::time()
                     };
-                    add_metric_entry!(
-                        requests,
-                        (req_data.method.clone(), req_data.host.clone()),
-                        1
-                    );
                     log!(Priority::TraceHttp, "JSON-RPC request with id `{}` to {}: {:?}",
                         req_data.request_id,
                         req_data.host.0,
@@ -195,6 +190,11 @@ fn observe_response(response: MetricRpcCallResponse, req_data: &MetricData) {
             // Don't record latency for IC errors
         }
     }
+    add_metric_entry!(
+        requests,
+        (req_data.method.clone(), req_data.host.clone()),
+        1
+    );
     add_metric_entry!(
         responses,
         (req_data.method.clone(), req_data.host.clone(), response),
