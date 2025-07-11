@@ -33,22 +33,13 @@ pub fn require_api_key_principal_or_controller() -> Result<(), String> {
 }
 
 pub fn require_base_http_outcall_fee() -> Result<(), String> {
-    // See: https://internetcomputer.org/docs/references/cycles-cost-formulas#https-outcalls
-    fn base_fee() -> u128 {
-        let num_nodes = read_state(|state| state.get_num_subnet_nodes());
-        3_000_000_u128
-            .saturating_add(60_000_u128.saturating_mul(num_nodes as u128))
-            .saturating_mul(num_nodes as u128)
-    }
-    if read_state(|state| state.is_demo_mode_active()) {
+    if read_state(|state| state.is_demo_mode_active())
+        || (ic_cdk::api::call::msg_cycles_available128()
+            >= read_state(|state| state.get_base_http_outcall_fee()))
+    {
         Ok(())
     } else {
-        let cycles_available = ic_cdk::api::call::msg_cycles_available128();
-        if cycles_available >= base_fee() {
-            Ok(())
-        } else {
-            Err("Not enough cycles".to_string())
-        }
+        Err("Not enough cycles".to_string())
     }
 }
 
