@@ -797,10 +797,9 @@ impl<R: Runtime, Config, Params, CandidOutput, Output>
         Params: CandidType + Send,
         CandidOutput: Into<Output> + CandidType + DeserializeOwned,
     {
-        let rpc_method = self.request.endpoint.rpc_method();
-        self.try_send()
+        self.client
+            .execute_request::<Config, Params, CandidOutput, Output>(self.request)
             .await
-            .unwrap_or_else(|e| panic!("Client error: failed to call `{}`: {e:?}", rpc_method))
     }
 
     /// Constructs the [`Request`] and sends it using the [`SolRpcClient`]. This method returns
