@@ -7,18 +7,23 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
 pub struct InstallArgs {
     /// Principals allowed to manage API keys.
+    /// If not specified, only controllers may manage API keys.
     #[serde(rename = "manageApiKeys")]
     pub manage_api_keys: Option<Vec<Principal>>,
     /// Overrides the RPC providers' default URL and HTTP headers.
+    /// If not specified, default URL and HTTP headers are not modified.
     #[serde(rename = "overrideProvider")]
     pub override_provider: Option<OverrideProvider>,
     /// Only log entries matching this filter will be recorded.
+    /// Default is `LogFilter::ShowAll`.
     #[serde(rename = "logFilter")]
     pub log_filter: Option<LogFilter>,
     /// Number of subnet nodes.
+    /// Default is `34` (i.e. the number of nodes in the fiduciary subnet).
     #[serde(rename = "numSubnetNodes")]
     pub num_subnet_nodes: Option<NumSubnetNodes>,
-    /// Mode of operation. Default is `Mode::Normal`.
+    /// Mode of operation.
+    /// Default is `Mode::Normal`.
     pub mode: Option<Mode>,
 }
 

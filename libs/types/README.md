@@ -6,3 +6,7 @@
 
 Library defining the types for interacting with the [SOL RPC canister](https://github.com/dfinity/sol-rpc-canister/).
 See the Rust [documentation](https://docs.rs/sol_rpc_types) for more details.
+
+## Build Requirements
+
+If you are using the `sol_rpc_types` crate inside a canister, make sure to follow the steps outlined [here](https://github.com/dfinity/sol-rpc-canister/blob/main/libs/client/README.md#build-requirements) to ensure your code compiles.

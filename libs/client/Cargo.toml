@@ -10,6 +10,9 @@ license.workspace = true
 readme = "README.md"
 include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
 
+[package.metadata.docs.rs]
+all-features = true
+
 [features]
 ed25519 = [
     "ic-ed25519",
@@ -37,6 +40,7 @@ solana-nonce = { workspace = true, features = ["serde"] }
 solana-program = { workspace = true }
 solana-pubkey = { workspace = true }
 solana-reward-info = { workspace = true }
+solana-sdk-ids = { workspace = true }
 solana-signature = { workspace = true }
 solana-transaction = { workspace = true, optional = true }
 solana-transaction-error = { workspace = true }

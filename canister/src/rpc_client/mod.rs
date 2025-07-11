@@ -4,6 +4,7 @@ mod sol_rpc;
 #[cfg(test)]
 mod tests;
 
+use crate::memory::record_ok_result;
 use crate::{
     http::{
         errors::HttpClientError, http_client, service_request_builder, ChargingPolicyWithCollateral,
@@ -13,6 +14,7 @@ use crate::{
     providers::{request_builder, resolve_rpc_provider, Providers},
     rpc_client::sol_rpc::ResponseTransform,
 };
+use canhttp::multi::Timestamp;
 use canhttp::{
     http::json::JsonRpcRequest,
     multi::{MultiResults, Reduce, ReduceWithEquality, ReduceWithThreshold},
@@ -95,9 +97,10 @@ impl GetAccountInfoRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(512 + HEADER_SIZE_LIMIT);
@@ -119,9 +122,10 @@ impl GetBalanceRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(256 + HEADER_SIZE_LIMIT);
@@ -146,10 +150,11 @@ impl GetBlockRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let params = params.into();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = Self::response_size_estimate(&params);
 
         Ok(MultiRpcRequest::new(
@@ -190,10 +195,11 @@ impl GetSignaturesForAddressRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let params = params.into();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or((params.get_limit() as u64 * 256) + HEADER_SIZE_LIMIT);
@@ -218,10 +224,11 @@ impl GetSignatureStatusesRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let params = params.into();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(128 + (params.num_signatures() as u64 * 256) + HEADER_SIZE_LIMIT);
@@ -243,9 +250,10 @@ impl GetSlotRequest {
         rpc_sources: RpcSources,
         config: GetSlotRpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(64 + HEADER_SIZE_LIMIT);
@@ -269,10 +277,11 @@ impl GetRecentPrioritizationFeesRequest {
         rpc_sources: RpcSources,
         config: GetRecentPrioritizationFeesRpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let max_length = config.max_length();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(8 * 1024 + HEADER_SIZE_LIMIT);
@@ -300,9 +309,10 @@ impl GetTokenAccountBalanceRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(256 + HEADER_SIZE_LIMIT);
@@ -327,9 +337,10 @@ impl GetTransactionRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(8 * 1024 + HEADER_SIZE_LIMIT);
@@ -351,9 +362,10 @@ impl SendTransactionRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(128 + HEADER_SIZE_LIMIT);
@@ -375,6 +387,7 @@ impl JsonRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         json_rpc_payload: String,
+        now: Timestamp,
     ) -> RpcResult<Self> {
         let request: JsonRpcRequest<serde_json::Value> =
             match serde_json::from_str(&json_rpc_payload) {
@@ -386,7 +399,7 @@ impl JsonRequest {
                 }
             };
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(1024 + HEADER_SIZE_LIMIT);
@@ -435,6 +448,12 @@ impl<Params, Output> MultiRpcRequest<Params, Output> {
         let (requests, errors) = requests.into_inner();
         let (_client, mut results) = canhttp::multi::parallel_call(client, requests).await;
         results.add_errors(errors);
+        let now = Timestamp::from_nanos_since_unix_epoch(ic_cdk::api::time());
+        results
+            .ok_results()
+            .keys()
+            .filter_map(RpcSource::rpc_provider_id)
+            .for_each(|provider_id| record_ok_result(provider_id, now));
         assert_eq!(
             results.len(),
             num_providers,

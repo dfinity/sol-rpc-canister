@@ -1,7 +1,9 @@
 #[cfg(test)]
 mod tests;
 
+use crate::memory::rank_providers;
 use crate::{constants::API_KEY_REPLACE_STRING, memory::read_state, types::OverrideProvider};
+use canhttp::multi::{TimedSizedMap, TimedSizedVec, Timestamp};
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use maplit::btreemap;
 use sol_rpc_types::{
@@ -9,6 +11,8 @@ use sol_rpc_types::{
     RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
 use std::collections::{BTreeMap, BTreeSet};
+use std::num::NonZeroUsize;
+use std::time::Duration;
 
 thread_local! {
     pub static PROVIDERS: BTreeMap<SupportedRpcProviderId, SupportedRpcProvider> = btreemap! {
@@ -144,7 +148,11 @@ impl Providers {
 
     const DEFAULT_NUM_PROVIDERS_FOR_EQUALITY: usize = 3;
 
-    pub fn new(source: RpcSources, strategy: ConsensusStrategy) -> Result<Self, ProviderError> {
+    pub fn new(
+        source: RpcSources,
+        strategy: ConsensusStrategy,
+        now: Timestamp,
+    ) -> Result<Self, ProviderError> {
         fn supported_providers(
             cluster: &SolanaCluster,
         ) -> Result<&[SupportedRpcProviderId], ProviderError> {
@@ -157,8 +165,8 @@ impl Providers {
             }
         }
 
-        fn supported_rpc_source(supported_provider: &SupportedRpcProviderId) -> RpcSource {
-            RpcSource::Supported(*supported_provider)
+        fn supported_rpc_source(supported_provider: SupportedRpcProviderId) -> RpcSource {
+            RpcSource::Supported(supported_provider)
         }
 
         let providers: BTreeSet<_> = match strategy {
@@ -170,8 +178,8 @@ impl Providers {
                         supported_providers.len() >= Self::DEFAULT_NUM_PROVIDERS_FOR_EQUALITY,
                         "BUG: need at least 3 providers, but got {supported_providers:?}"
                     );
-                    Ok(supported_providers
-                        .iter()
+                    Ok(rank_providers(supported_providers, now)
+                        .into_iter()
                         .take(Self::DEFAULT_NUM_PROVIDERS_FOR_EQUALITY)
                         .map(supported_rpc_source)
                         .collect())
@@ -227,8 +235,8 @@ impl Providers {
                                 total, all_providers_len
                             )));
                         }
-                        let providers: BTreeSet<_> = supported_providers
-                            .iter()
+                        let providers: BTreeSet<_> = rank_providers(supported_providers, now)
+                            .into_iter()
                             .take(total as usize)
                             .map(supported_rpc_source)
                             .collect();
@@ -305,4 +313,43 @@ pub fn request_builder(
         request_builder = request_builder.header(name, value);
     }
     Ok(request_builder)
+}
+
+/// Record when a supported RPC service was used.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SupportedRpcProviderUsage(TimedSizedMap<SupportedRpcProviderId, ()>);
+
+impl Default for SupportedRpcProviderUsage {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SupportedRpcProviderUsage {
+    pub fn new() -> SupportedRpcProviderUsage {
+        Self(TimedSizedMap::new(
+            Duration::from_secs(20 * 60),
+            NonZeroUsize::new(500).unwrap(),
+        ))
+    }
+
+    pub fn record_evict(&mut self, service: SupportedRpcProviderId, now: Timestamp) {
+        self.0.insert_evict(now, service, ());
+    }
+
+    pub fn rank_ascending_evict(
+        &mut self,
+        providers: &[SupportedRpcProviderId],
+        now: Timestamp,
+    ) -> Vec<SupportedRpcProviderId> {
+        fn ascending_num_elements<V>(values: Option<&TimedSizedVec<V>>) -> impl Ord {
+            std::cmp::Reverse(values.map(|v| v.len()).unwrap_or_default())
+        }
+
+        self.0.evict_expired(providers, now);
+        self.0
+            .sort_keys_by(providers, ascending_num_elements)
+            .copied()
+            .collect()
+    }
 }

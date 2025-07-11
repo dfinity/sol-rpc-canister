@@ -113,6 +113,12 @@
 //! # Ok(())
 //! # }
 //! ```
+//!
+//! ⚠️ **Build Requirements**
+//!
+//! If you are using the `sol_rpc_client` crate inside a canister, make sure to follow the steps
+//! outlined [here](https://github.com/dfinity/sol-rpc-canister/blob/main/libs/client/README.md#build-requirements)
+//! to ensure your code compiles.
 
 #![forbid(unsafe_code)]
 #![forbid(missing_docs)]
