@@ -83,7 +83,7 @@ solana-system-interface = "1.0.0"
 solana-transaction = "=2.2.3"
 solana-transaction-error = "=2.2.1"
 solana-transaction-status-client-types = "=2.3.3"
-strum = { version = "0.27.0", features = ["derive"] }
+strum = { version = "0.27.2", features = ["derive"] }
 thiserror = "2.0.12"
 tokio = "1.44.1"
 tower = "0.5.2"
