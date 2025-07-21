@@ -242,7 +242,7 @@ dfx identity new sender
 dfx identity new recipient
 ```
 
-We have to make sure the Solana accounts belonging to the new identities created above actually hold SOL to pay for transaction fees. For this, follow the instructions outlined in [Step 2](#step-2-generating-a-solana-account) and [Step 3](#step-3-receiving-sol) for each identity. You can switch between identities using the `dfx identity use <IDENTITY_NAME>` command. 
+We have to make sure the Solana accounts belonging to the new identities created above actually hold SOL to pay for transaction fees. For this, follow the instructions outlined in [Step 2](#step-2-generating-a-solana-account) and [Step 3](#step-3-receiving-sol) for each identity. You can switch between identities using the `dfx identity use <IDENTITY_NAME>` command or specify the identity to use by adding the `--identity <IDENTITY_NAME>` flag to the `dfx` commands.
 
 To create the ATAs for the sender and
 recipient, you can run the following commands:
