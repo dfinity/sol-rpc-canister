@@ -223,7 +223,7 @@ mod upgrade_state_tests {
 
     fn arb_regex_substitution() -> impl Strategy<Value = RegexSubstitution> {
         (".*".prop_map(RegexString), ".*").prop_map(|(pattern, replacement)| RegexSubstitution {
-            pattern: pattern.into(),
+            pattern,
             replacement,
         })
     }
