@@ -96,7 +96,7 @@ pub struct State {
     log_filter: LogFilter,
     mode: Mode,
     num_subnet_nodes: u32,
-    base_http_outcall_fee: u128,
+    base_http_outcall_fee: Option<u128>,
 }
 
 impl State {
@@ -149,7 +149,7 @@ impl State {
 
     pub fn set_num_subnet_nodes(&mut self, num_subnet_nodes: u32) {
         self.num_subnet_nodes = num_subnet_nodes;
-        self.base_http_outcall_fee = base_http_outcall_fee(num_subnet_nodes);
+        self.base_http_outcall_fee = Some(compute_base_http_outcall_fee(num_subnet_nodes));
     }
 
     pub fn get_mode(&self) -> Mode {
@@ -164,8 +164,9 @@ impl State {
         self.mode = mode
     }
 
-    pub fn get_base_http_outcall_fee(&self) -> u128 {
+    pub fn lazy_compute_base_http_outcall_fee(&self) -> u128 {
         self.base_http_outcall_fee
+            .unwrap_or_else(|| compute_base_http_outcall_fee(self.num_subnet_nodes))
     }
 }
 
@@ -179,7 +180,7 @@ impl From<InstallArgs> for State {
             log_filter: value.log_filter.unwrap_or_default(),
             mode: value.mode.unwrap_or_default(),
             num_subnet_nodes,
-            base_http_outcall_fee: base_http_outcall_fee(num_subnet_nodes),
+            base_http_outcall_fee: Some(compute_base_http_outcall_fee(num_subnet_nodes)),
         }
     }
 }
@@ -252,7 +253,7 @@ pub fn rank_providers(
 }
 
 // See: https://internetcomputer.org/docs/references/cycles-cost-formulas#https-outcalls
-fn base_http_outcall_fee(num_subnet_nodes: u32) -> u128 {
+fn compute_base_http_outcall_fee(num_subnet_nodes: u32) -> u128 {
     3_000_000_u128
         .saturating_add(60_000_u128.saturating_mul(num_subnet_nodes as u128))
         .saturating_mul(num_subnet_nodes as u128)
