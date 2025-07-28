@@ -1234,6 +1234,8 @@ fn convert_reject_code(code: IcCdkRejectionCode) -> RejectCode {
             // In particular, note that RejectCode::SysUnknown is only applicable to inter-canister calls that used ic0.call_with_best_effort_response.
             RejectCode::SysFatal
         }
-        IcCdkRejectionCode::NoError => unreachable!("inter-canister calls should never produce a RejectionCode::NoError error")
+        IcCdkRejectionCode::NoError => {
+            unreachable!("inter-canister calls should never produce a RejectionCode::NoError error")
+        }
     }
 }
