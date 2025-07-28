@@ -96,6 +96,7 @@ pub struct State {
     log_filter: LogFilter,
     mode: Mode,
     num_subnet_nodes: u32,
+    #[serde(default)]
     base_http_outcall_fee: Option<u128>,
 }
 

@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod tests;
 
+#[cfg(test)]
+use proptest_derive::Arbitrary;
 use crate::{constants::API_KEY_REPLACE_STRING, validate::validate_api_key};
 use serde::{Deserialize, Serialize};
 use sol_rpc_types::{RegexSubstitution, RpcEndpoint};
@@ -8,6 +10,7 @@ use std::{fmt, fmt::Debug};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 #[derive(Clone, PartialEq, Zeroize, ZeroizeOnDrop, Deserialize, Serialize)]
+#[cfg_attr(test, derive(Arbitrary))]
 pub struct ApiKey(String);
 
 impl ApiKey {

@@ -53,6 +53,7 @@ num = "0.4.3"
 num-traits = "0.2.19"
 pocket-ic = "9.0.0"
 proptest = "1.6.0"
+proptest-derive = "0.5.1"
 rand = { version = "0.9.1", default-features = false }
 rand_chacha = { version = "0.9.0", default-features = false }
 regex = "1.11.1"
