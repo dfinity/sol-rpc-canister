@@ -1,16 +1,17 @@
-use crate::memory::{decode, encode};
-use crate::memory::{init_state, mutate_state, next_request_id, read_state, State};
-use crate::types::{ApiKey, OverrideProvider};
+use crate::{
+    memory::{decode, encode, init_state, mutate_state, next_request_id, read_state, State},
+    types::{ApiKey, OverrideProvider},
+};
 use candid::Principal;
 use canlog::LogFilter;
-use proptest::arbitrary::any;
-use proptest::prelude::{prop, Just, Strategy};
-use proptest::prop_oneof;
-use proptest::proptest;
+use proptest::{
+    arbitrary::any,
+    prelude::{prop, Just, Strategy},
+    prop_oneof, proptest,
+};
 use serde::{Deserialize, Serialize};
 use sol_rpc_types::{Mode, RegexString, RegexSubstitution, SupportedRpcProviderId};
-use std::collections::BTreeMap;
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use strum::IntoEnumIterator;
 
 mod api_key_tests {

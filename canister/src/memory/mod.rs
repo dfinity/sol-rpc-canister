@@ -1,14 +1,16 @@
 #[cfg(test)]
 mod tests;
 
-use crate::providers::SupportedRpcProviderUsage;
 use crate::{
     metrics::Metrics,
+    providers::SupportedRpcProviderUsage,
     types::{ApiKey, OverrideProvider},
 };
 use candid::{Deserialize, Principal};
-use canhttp::http::json::{ConstantSizeId, Id};
-use canhttp::multi::Timestamp;
+use canhttp::{
+    http::json::{ConstantSizeId, Id},
+    multi::Timestamp,
+};
 use canlog::LogFilter;
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},

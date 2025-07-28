@@ -1,13 +1,12 @@
 pub mod errors;
 
-use crate::metrics::MetricRpcCallResponse;
 use crate::{
     add_latency_metric, add_metric_entry,
     constants::{COLLATERAL_CYCLES_PER_NODE, CONTENT_TYPE_VALUE},
     http::errors::HttpClientError,
     logs::Priority,
     memory::{next_request_id, read_state, State},
-    metrics::{MetricRpcHost, MetricRpcMethod},
+    metrics::{MetricRpcCallResponse, MetricRpcHost, MetricRpcMethod},
 };
 use canhttp::{
     convert::ConvertRequestLayer,

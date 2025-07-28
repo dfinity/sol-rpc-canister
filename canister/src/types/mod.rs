@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod tests;
 
+use crate::{constants::API_KEY_REPLACE_STRING, validate::validate_api_key};
 #[cfg(test)]
 use proptest_derive::Arbitrary;
-use crate::{constants::API_KEY_REPLACE_STRING, validate::validate_api_key};
 use serde::{Deserialize, Serialize};
 use sol_rpc_types::{RegexSubstitution, RpcEndpoint};
 use std::{fmt, fmt::Debug};
