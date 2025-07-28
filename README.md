@@ -76,7 +76,7 @@ More examples are available [here](canister/scripts/examples.sh).
 
 #### Prerequisites:
 
-* Add the `sol_rpc_client` library as a dependency in your `Cargo.toml`.
+* Add the `sol_rpc_client` and `sol_rpc_types` libraries as dependencies in your `Cargo.toml`.
 * Follow the steps outlined [here](libs/client/README.md#build-requirements) to ensure your code compiles.
 * If you are running the example locally, follow the instructions [here](README.md#deployment) to deploy a local instance of the SOL RPC canister.
 
