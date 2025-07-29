@@ -35,7 +35,7 @@ pub fn require_api_key_principal_or_controller() -> Result<(), String> {
 pub fn require_base_http_outcall_fee() -> Result<(), String> {
     if read_state(|state| state.is_demo_mode_active())
         || (ic_cdk::api::call::msg_cycles_available128()
-            >= read_state(|state| state.lazy_compute_base_http_outcall_fee()))
+            >= mutate_state(|state| state.lazy_compute_base_http_outcall_fee()))
     {
         Ok(())
     } else {
