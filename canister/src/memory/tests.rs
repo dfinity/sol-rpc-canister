@@ -70,6 +70,7 @@ mod request_counter_tests {
 
 mod upgrade_state_tests {
     use super::*;
+    use crate::constants::VALID_API_KEY_CHARS;
 
     proptest! {
         #[test]
@@ -217,9 +218,13 @@ mod upgrade_state_tests {
     fn arb_api_keys() -> impl Strategy<Value = BTreeMap<SupportedRpcProviderId, ApiKey>> {
         prop::collection::btree_map(
             prop::sample::select(SupportedRpcProviderId::iter().collect::<Vec<_>>()),
-            ".*".prop_map(|value| ApiKey::try_from(value).unwrap()),
+            arb_api_key(),
             0..=SupportedRpcProviderId::iter().count(),
         )
+    }
+
+    pub fn arb_api_key() -> impl Strategy<Value = ApiKey> {
+        VALID_API_KEY_CHARS.prop_map(|value| ApiKey::try_from(value).unwrap())
     }
 
     pub fn arb_principal() -> impl Strategy<Value = Principal> {
