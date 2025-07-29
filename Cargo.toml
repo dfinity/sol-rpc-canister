@@ -106,23 +106,23 @@ inherits = "release"
 #   are using forked version of the relevant repositories.
 #   see [solana-sdk#117](https://github.com/anza-xyz/solana-sdk/issues/117)
 [patch.crates-io]
-solana-account = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-clock = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-commitment-config = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-compute-budget-interface = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-hash = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-instruction = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-keypair = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-message = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-nonce = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-program = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-pubkey = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-reward-info = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-signer = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-signature = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-transaction = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-transaction-error = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-sdk-ids = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
+solana-account = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
+solana-clock = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
+solana-commitment-config = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
+solana-compute-budget-interface = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
+solana-hash = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
+solana-instruction = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
+solana-keypair = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
+solana-message = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
+solana-nonce = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
+solana-program = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
+solana-pubkey = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
+solana-reward-info = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
+solana-signer = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
+solana-signature = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
+solana-transaction = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
+solana-transaction-error = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
+solana-sdk-ids = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
 solana-system-interface = { git = "https://github.com/dfinity/solana-system-program", tag = "6185b40-js-feature-flag" }
-solana-sysvar = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-sysvar-id = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
+solana-sysvar = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
+solana-sysvar-id = { git = "https://github.com/anza-xyz/solana-sdk", rev = "b14d647bebb78ee2f3295ba16729da9607579d06" }
