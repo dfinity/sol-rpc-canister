@@ -1205,7 +1205,7 @@ mod generic_request_tests {
         for endpoint in SolRpcEndpoint::iter() {
             match endpoint {
                 SolRpcEndpoint::GetSlot => {
-                    check(client.get_slot().with_params(GetSlotParams::default())).await;
+                    check(client.get_slot()).await;
                 }
                 SolRpcEndpoint::GetAccountInfo => {
                     check(client.get_account_info(USDC_PUBLIC_KEY)).await;
@@ -1273,7 +1273,7 @@ mod generic_request_tests {
         for endpoint in SolRpcEndpoint::iter() {
             match endpoint {
                 SolRpcEndpoint::GetSlot => {
-                    check(client.get_slot().with_params(GetSlotParams::default())).await;
+                    check(client.get_slot()).await;
                 }
                 SolRpcEndpoint::GetAccountInfo => {
                     check(client.get_account_info(USDC_PUBLIC_KEY)).await;
@@ -1578,7 +1578,7 @@ mod cycles_cost_tests {
         for endpoint in SolRpcEndpoint::iter() {
             match endpoint {
                 SolRpcEndpoint::GetSlot => {
-                    check(client.get_slot().with_params(GetSlotParams::default())).await;
+                    check(client.get_slot()).await;
                 }
                 SolRpcEndpoint::JsonRequest => {
                     check(client.json_request(get_version_request())).await;
@@ -1640,7 +1640,7 @@ mod cycles_cost_tests {
         for endpoint in SolRpcEndpoint::iter() {
             match endpoint {
                 SolRpcEndpoint::GetSlot => {
-                    check(client.get_slot().with_params(GetSlotParams::default())).await;
+                    check(client.get_slot()).await;
                 }
                 SolRpcEndpoint::GetAccountInfo => {
                     check(client.get_account_info(USDC_PUBLIC_KEY)).await;
@@ -1807,12 +1807,7 @@ mod cycles_cost_tests {
                     .await;
                 }
                 SolRpcEndpoint::GetSlot => {
-                    check(
-                        &setup,
-                        client.get_slot().with_params(GetSlotParams::default()),
-                        1_714_103_200,
-                    )
-                    .await;
+                    check(&setup, client.get_slot(), 1_714_103_200).await;
                 }
                 SolRpcEndpoint::GetTokenAccountBalance => {
                     check(
@@ -2301,9 +2296,11 @@ mod metrics_tests {
         let setup = Setup::new().await.with_mock_api_keys().await;
         let client = setup.client().build();
 
+        // Send a small enough amount that all outcalls fail due to insufficient cycles, but enough
+        // so that all requests have at least the base HTTP outcall fee
         let result = client
             .get_slot()
-            .with_cycles(1_000)
+            .with_cycles(550_000_000)
             .send()
             .await
             .expect_inconsistent();
