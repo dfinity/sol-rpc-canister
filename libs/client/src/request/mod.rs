@@ -4,6 +4,7 @@ mod tests;
 use crate::{Runtime, SolRpcClient};
 use candid::CandidType;
 use derive_more::From;
+use ic_error_types::RejectCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
@@ -785,7 +786,11 @@ impl<Runtime, Config, Params, CandidOutput, Output>
 impl<R: Runtime, Config, Params, CandidOutput, Output>
     RequestBuilder<R, Config, Params, CandidOutput, Output>
 {
-    /// Constructs the [`Request`] and send it using the [`SolRpcClient`].
+    /// Constructs the [`Request`] and sends it using the [`SolRpcClient`] returning the response.
+    ///
+    /// # Panics
+    ///
+    /// If the request was not successful.
     pub async fn send(self) -> Output
     where
         Config: CandidType + Send,
@@ -794,6 +799,19 @@ impl<R: Runtime, Config, Params, CandidOutput, Output>
     {
         self.client
             .execute_request::<Config, Params, CandidOutput, Output>(self.request)
+            .await
+    }
+
+    /// Constructs the [`Request`] and sends it using the [`SolRpcClient`]. This method returns
+    /// either the request response or any error that occurs while sending the request.
+    pub async fn try_send(self) -> Result<Output, (RejectCode, String)>
+    where
+        Config: CandidType + Send,
+        Params: CandidType + Send,
+        CandidOutput: Into<Output> + CandidType + DeserializeOwned,
+    {
+        self.client
+            .try_execute_request::<Config, Params, CandidOutput, Output>(self.request)
             .await
     }
 }

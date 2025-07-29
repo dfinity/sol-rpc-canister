@@ -28,6 +28,7 @@ candid = { workspace = true }
 derive_more = { workspace = true }
 ic-cdk = { workspace = true }
 ic-ed25519 = { workspace = true, optional = true }
+ic-error-types = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 sol_rpc_types = { version = "1.0.0", path = "../types" }
