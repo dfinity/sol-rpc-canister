@@ -144,61 +144,66 @@ mod upgrade_state_tests {
     }
 
     fn arb_state() -> impl Strategy<Value = VersionedState> {
-        prop_oneof![
-            (
-                arb_api_keys(),
-                arb_api_key_principals(),
-                arb_override_provider(),
-                arb_log_filter(),
-                arb_mode(),
-                any::<u32>()
+        prop_oneof![arb_state_v0(), arb_state_v1()]
+    }
+
+    fn arb_state_v0() -> impl Strategy<Value = VersionedState> {
+        (
+            arb_api_keys(),
+            arb_api_key_principals(),
+            arb_override_provider(),
+            arb_log_filter(),
+            arb_mode(),
+            any::<u32>(),
+        )
+            .prop_map(
+                |(
+                    api_keys,
+                    api_key_principals,
+                    override_provider,
+                    log_filter,
+                    mode,
+                    num_subnet_nodes,
+                )| VersionedState::V0 {
+                    api_keys,
+                    api_key_principals,
+                    override_provider,
+                    log_filter,
+                    mode,
+                    num_subnet_nodes,
+                },
             )
-                .prop_map(
-                    |(
-                        api_keys,
-                        api_key_principals,
-                        override_provider,
-                        log_filter,
-                        mode,
-                        num_subnet_nodes,
-                    )| VersionedState::V0 {
-                        api_keys,
-                        api_key_principals,
-                        override_provider,
-                        log_filter,
-                        mode,
-                        num_subnet_nodes,
-                    }
-                ),
-            (
-                arb_api_keys(),
-                arb_api_key_principals(),
-                arb_override_provider(),
-                arb_log_filter(),
-                arb_mode(),
-                any::<u32>(),
-                proptest::option::of(any::<u128>()),
+    }
+
+    fn arb_state_v1() -> impl Strategy<Value = VersionedState> {
+        (
+            arb_api_keys(),
+            arb_api_key_principals(),
+            arb_override_provider(),
+            arb_log_filter(),
+            arb_mode(),
+            any::<u32>(),
+            proptest::option::of(any::<u128>()),
+        )
+            .prop_map(
+                |(
+                    api_keys,
+                    api_key_principals,
+                    override_provider,
+                    log_filter,
+                    mode,
+                    num_subnet_nodes,
+                    base_http_outcall_fee,
+                )| VersionedState::V1 {
+                    api_keys,
+                    api_key_principals,
+                    override_provider,
+                    log_filter,
+                    mode,
+                    num_subnet_nodes,
+                    base_http_outcall_fee,
+                },
             )
-                .prop_map(
-                    |(
-                        api_keys,
-                        api_key_principals,
-                        override_provider,
-                        log_filter,
-                        mode,
-                        num_subnet_nodes,
-                        base_http_outcall_fee,
-                    )| VersionedState::V1 {
-                        api_keys,
-                        api_key_principals,
-                        override_provider,
-                        log_filter,
-                        mode,
-                        num_subnet_nodes,
-                        base_http_outcall_fee
-                    }
-                )
-        ]
     }
 
     fn arb_mode() -> impl Strategy<Value = Mode> {
