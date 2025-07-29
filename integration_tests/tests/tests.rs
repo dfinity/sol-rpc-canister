@@ -2288,67 +2288,14 @@ mod metrics_tests {
             .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="solana-mainnet.core.chainstack.com",le="\d+"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="lb.drpc.org",le="\d+"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="mainnet.helius-rpc.com",le="\d+"\} 1 \d+"#)
-            .assert_does_not_contain_metric_matching(r#"solrpc_latencies\{method="getSlot",host="solana-rpc.publicnode.com",le="\d+"\} 1 \d+"#);
-    }
-
-    #[tokio::test]
-    async fn should_record_inconsistent_result_metrics() {
-        let setup = Setup::new().await.with_mock_api_keys().await;
-        let client = setup
-            .client()
-            .with_rpc_sources(RpcSources::Custom(vec![
-                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
-                RpcSource::Supported(SupportedRpcProviderId::AnkrMainnet),
-                RpcSource::Supported(SupportedRpcProviderId::ChainstackMainnet),
-                RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
-                RpcSource::Supported(SupportedRpcProviderId::HeliusMainnet),
-            ]))
-            .mock_http_sequence(vec![
-                MockOutcallBuilder::new(
-                    200,
-                    json!({
-                        "id": Id::from(ConstantSizeId::from(0_u8)),
-                        "jsonrpc": "2.0",
-                        "result": 1_450_305,
-                    }),
-                ),
-                MockOutcallBuilder::new(
-                    200,
-                    json!({
-                        "id": Id::from(ConstantSizeId::from(1_u8)),
-                        "jsonrpc": "2.0",
-                        "result": 1_450_306,
-                    }),
-                ),
-                MockOutcallBuilder::new(
-                    200,
-                    json!({
-                        "jsonrpc": "2.0",
-                        "error": {
-                            "code": -32004,
-                            "message": "Slot not available"
-                        },
-                        "id": Id::from(ConstantSizeId::from(2_u8)),
-                    }),
-                ),
-                MockOutcallBuilder::new(403, json!({})),
-                MockOutcallBuilder::new_error(RejectionCode::SysFatal, "Fatal error!"),
-            ])
-            .build();
-
-        let result = client.get_slot().send().await;
-        assert_matches!(result, MultiRpcResult::Inconsistent(_));
-
-        setup
-            .check_metrics()
-            .await
-            // Only metrics for valid responses and JSON-RPC errors should be recorded, other errors
-            // (e.g., IC and HTTP errors) are ignored.
-            .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="solana-mainnet.g.alchemy.com"\} 1 \d+"#)
-            .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="rpc.ankr.com"\} 1 \d+"#)
-            .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="solana-mainnet.core.chainstack.com"\} 1 \d+"#)
-            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="lb.drpc.org"\} 1 \d+"#)
-            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="mainnet.helius-rpc.com"\} 1 \d+"#);
+            .assert_does_not_contain_metric_matching(r#"solrpc_latencies\{method="getSlot",host="solana-rpc.publicnode.com",le="\d+"\} 1 \d+"#)
+            // `solrpc_inconsistent_responses` counters: inconsistent results
+            .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="solana-mainnet.g.alchemy.com"} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="rpc.ankr.com"} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="solana-mainnet.core.chainstack.com"} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="lb.drpc.org"} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="mainnet.helius-rpc.com"} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="solana-rpc.publicnode.com"} 1 \d+"#);
     }
 
     #[tokio::test]
