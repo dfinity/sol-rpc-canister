@@ -224,7 +224,12 @@ mod upgrade_state_tests {
     }
 
     pub fn arb_api_key() -> impl Strategy<Value = ApiKey> {
-        VALID_API_KEY_CHARS.prop_map(|value| ApiKey::try_from(value).unwrap())
+        proptest::collection::vec(
+            prop::sample::select(VALID_API_KEY_CHARS.chars().collect::<Vec<_>>()),
+            1..=20,
+        )
+        .prop_map(String::from_iter)
+        .prop_map(|value| ApiKey::try_from(value).unwrap())
     }
 
     pub fn arb_principal() -> impl Strategy<Value = Principal> {
