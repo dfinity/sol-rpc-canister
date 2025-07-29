@@ -4,23 +4,20 @@ mod sol_rpc;
 #[cfg(test)]
 mod tests;
 
-use crate::candid_rpc::hostname;
-use crate::memory::record_ok_result;
-use crate::providers::get_provider;
 use crate::{
     add_metric_entry,
+    candid_rpc::hostname,
     http::{
         errors::HttpClientError, http_client, service_request_builder, ChargingPolicyWithCollateral,
     },
-    memory::{read_state, State},
+    memory::{read_state, record_ok_result, State},
     metrics::MetricRpcMethod,
-    providers::{request_builder, resolve_rpc_provider, Providers},
+    providers::{get_provider, request_builder, resolve_rpc_provider, Providers},
     rpc_client::sol_rpc::ResponseTransform,
 };
-use canhttp::multi::Timestamp;
 use canhttp::{
     http::json::JsonRpcRequest,
-    multi::{MultiResults, Reduce, ReduceWithEquality, ReduceWithThreshold},
+    multi::{MultiResults, Reduce, ReduceWithEquality, ReduceWithThreshold, Timestamp},
     CyclesChargingPolicy, CyclesCostEstimator, MaxResponseBytesRequestExtension,
     TransformContextRequestExtension,
 };
