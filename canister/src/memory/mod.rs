@@ -167,9 +167,10 @@ impl State {
         self.mode = mode
     }
 
-    pub fn lazy_compute_base_http_outcall_fee(&self) -> u128 {
+    pub fn lazy_compute_base_http_outcall_fee(&mut self) -> u128 {
         self.base_http_outcall_fee
-            .unwrap_or_else(|| compute_base_http_outcall_fee(self.num_subnet_nodes))
+            .get_or_insert_with(|| compute_base_http_outcall_fee(self.num_subnet_nodes))
+            .clone()
     }
 }
 
