@@ -584,23 +584,29 @@ fn observe_inconsistent_results<Output>(
 ) where
     Output: PartialEq,
 {
-    let mut inconsistent_results = multi_results
+    let relevant_results: Vec<_> = multi_results
         .iter()
-        .filter(|(_, result)| result.is_ok() || matches!(result, Err(RpcError::JsonRpcError(_))));
+        .filter(|(_source, result)| {
+            result.is_ok() || matches!(result, Err(RpcError::JsonRpcError(_)))
+        })
+        .collect();
 
-    if let Some((_source, base_result)) = inconsistent_results.next() {
-        if inconsistent_results.all(|(_source, service_result)| service_result == base_result) {
+    if let Some((_source, first_result)) = relevant_results.first() {
+        if relevant_results
+            .iter()
+            .all(|(_source, other_result)| other_result == first_result)
+        {
             return;
         }
-    };
+    }
 
-    inconsistent_results.for_each(|(source, _service_result)| {
+    for (source, _result) in relevant_results {
         if let RpcSource::Supported(provider_id) = source {
             if let Some(provider) = get_provider(provider_id) {
                 if let Some(host) = hostname(provider.clone()) {
-                    add_metric_entry!(inconsistent_responses, (method.clone(), host.into()), 1)
+                    add_metric_entry!(inconsistent_responses, (method.clone(), host.into()), 1);
                 }
             }
         }
-    });
+    }
 }

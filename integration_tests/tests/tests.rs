@@ -1718,9 +1718,9 @@ mod cycles_cost_tests {
             let cycles_consumed = cycles_before + cycles_cost - cycles_after;
 
             assert!(
-                    cycles_after > cycles_before,
-                    "BUG: not enough cycles requested. Requested {cycles_cost} cycles, but consumed {cycles_consumed} cycles"
-                );
+                cycles_after > cycles_before,
+                "BUG: not enough cycles requested. Requested {cycles_cost} cycles, but consumed {cycles_consumed} cycles"
+            );
 
             // Same request with fewer cycles should fail.
             let results = request
@@ -2153,49 +2153,49 @@ mod get_signatures_for_address_tests {
                 .expect_consistent();
 
             assert_eq!(
-                    results,
-                    Ok(vec![
-                        ConfirmedTransactionStatusWithSignature {
-                            signature: sol_rpc_types::Signature::from_str("3jPA8CnZb9sfs4zVAypa9KB7VAGwrTdXB6mg9H1H9XpATN6Y8iek4Y21Nb9LjbrpYACbF9USV8RBWvXFFhVoQUAs").unwrap(),
-                            confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
-                            memo: None,
-                            slot: 340_372_399,
-                            err: None,
-                            block_time: Some(1_747_389_084)
-                        },
-                        ConfirmedTransactionStatusWithSignature {
-                            signature: sol_rpc_types::Signature::from_str("3WM42nYDQAHgBWFd6SbJ3pj1AGgiTJfxXJ2d5dHu49GgqSUui5qdh64S5yLCN1cMKcLMFVKKo776GrtVhfatLqP6").unwrap(),
-                            confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
-                            memo: None,
-                            slot: 340_372_399,
-                            err: None,
-                            block_time: Some(1_747_389_084)
-                        },
-                        ConfirmedTransactionStatusWithSignature {
-                            signature: sol_rpc_types::Signature::from_str("5iByUT1gTNXDY24hRx25YmQeebvUMD6jsNpGcu2jh1yjKmYwdo5GtRrYozyhdtdcn8SurwHq6EMp4YTpHgdansjc").unwrap(),
-                            confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
-                            memo: None,
-                            slot: 340_372_399,
-                            err: None,
-                            block_time: Some(1_747_389_084)
-                        },
-                        ConfirmedTransactionStatusWithSignature {
-                            signature: sol_rpc_types::Signature::from_str("2Zuhxr6qMGwBrpV611Ema7pZAy1WGSkQyurTcbfyoXwFMNuziUJbM6FCyoL8WxTRG6G3fEik2wSFeN76miUeUnmJ").unwrap(),
-                            confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
-                            memo: None,
-                            slot: 340_372_399,
-                            err: None,
-                            block_time: Some(1_747_389_084)
-                        },
-                        ConfirmedTransactionStatusWithSignature {
-                            signature: sol_rpc_types::Signature::from_str("4V1j8jZvXjcUdRoWQBRzxFVigfr61bJdHGsCFAkTm5h4z28FkrDczuTpcvwTRamiwiGm7E77EB5DKRBwG1mUEC8f").unwrap(),
-                            confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
-                            memo: None,
-                            slot: 340_372_399,
-                            err: Some(TransactionError::InstructionError(3, InstructionError::Custom(6_001))),
-                            block_time: Some(1_747_389_084)
-                        }])
-                );
+                results,
+                Ok(vec![
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("3jPA8CnZb9sfs4zVAypa9KB7VAGwrTdXB6mg9H1H9XpATN6Y8iek4Y21Nb9LjbrpYACbF9USV8RBWvXFFhVoQUAs").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: None,
+                        block_time: Some(1_747_389_084)
+                    },
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("3WM42nYDQAHgBWFd6SbJ3pj1AGgiTJfxXJ2d5dHu49GgqSUui5qdh64S5yLCN1cMKcLMFVKKo776GrtVhfatLqP6").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: None,
+                        block_time: Some(1_747_389_084)
+                    },
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("5iByUT1gTNXDY24hRx25YmQeebvUMD6jsNpGcu2jh1yjKmYwdo5GtRrYozyhdtdcn8SurwHq6EMp4YTpHgdansjc").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: None,
+                        block_time: Some(1_747_389_084)
+                    },
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("2Zuhxr6qMGwBrpV611Ema7pZAy1WGSkQyurTcbfyoXwFMNuziUJbM6FCyoL8WxTRG6G3fEik2wSFeN76miUeUnmJ").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: None,
+                        block_time: Some(1_747_389_084)
+                    },
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("4V1j8jZvXjcUdRoWQBRzxFVigfr61bJdHGsCFAkTm5h4z28FkrDczuTpcvwTRamiwiGm7E77EB5DKRBwG1mUEC8f").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: Some(TransactionError::InstructionError(3, InstructionError::Custom(6_001))),
+                        block_time: Some(1_747_389_084)
+                    }])
+            );
         }
 
         setup.drop().await;
@@ -2263,32 +2263,94 @@ mod metrics_tests {
         assert_eq!(result, MultiRpcResult::Consistent(Ok(1_450_300)));
 
         setup
-                .check_metrics()
-                .await
-                // `solrpc_requests` counters
-                .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-mainnet.g.alchemy.com"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="rpc.ankr.com"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-mainnet.core.chainstack.com"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="lb.drpc.org"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="mainnet.helius-rpc.com"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-rpc.publicnode.com"\} 1 \d+"#)
-                // `solrpc_responses` counters: success
-                .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-mainnet.g.alchemy.com"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="rpc.ankr.com"\} 1 \d+"#)
-                // `solrpc_responses` counters: JSON-RPC error
-                .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-mainnet.core.chainstack.com",error="json-rpc"\} 1 \d+"#)
-                // `solrpc_responses` counters: HTTP error
-                .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="lb.drpc.org",error="http",status="429"\} .*"#)
-                .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="mainnet.helius-rpc.com",error="http",status="500"\} .*"#)
-                // `solrpc_responses` counters: IC error
-                .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-rpc.publicnode.com",error="ic",code="SYS_FATAL"\} .*"#)
-                // `solrpc_latencies` latency histograms
-                .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="solana-mainnet.g.alchemy.com",le="\d+"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="rpc.ankr.com",le="\d+"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="solana-mainnet.core.chainstack.com",le="\d+"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="lb.drpc.org",le="\d+"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="mainnet.helius-rpc.com",le="\d+"\} 1 \d+"#)
-                .assert_does_not_contain_metric_matching(r#"solrpc_latencies\{method="getSlot",host="solana-rpc.publicnode.com",le="\d+"\} 1 \d+"#);
+            .check_metrics()
+            .await
+            // `solrpc_requests` counters
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-mainnet.g.alchemy.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="rpc.ankr.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-mainnet.core.chainstack.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="lb.drpc.org"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="mainnet.helius-rpc.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-rpc.publicnode.com"\} 1 \d+"#)
+            // `solrpc_responses` counters: success
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-mainnet.g.alchemy.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="rpc.ankr.com"\} 1 \d+"#)
+            // `solrpc_responses` counters: JSON-RPC error
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-mainnet.core.chainstack.com",error="json-rpc"\} 1 \d+"#)
+            // `solrpc_responses` counters: HTTP error
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="lb.drpc.org",error="http",status="429"\} .*"#)
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="mainnet.helius-rpc.com",error="http",status="500"\} .*"#)
+            // `solrpc_responses` counters: IC error
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-rpc.publicnode.com",error="ic",code="SYS_FATAL"\} .*"#)
+            // `solrpc_latencies` latency histograms
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="solana-mainnet.g.alchemy.com",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="rpc.ankr.com",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="solana-mainnet.core.chainstack.com",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="lb.drpc.org",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="mainnet.helius-rpc.com",le="\d+"\} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_latencies\{method="getSlot",host="solana-rpc.publicnode.com",le="\d+"\} 1 \d+"#)
+            // `solrpc_inconsistent_responses` counters: inconsistent results
+            .assert_does_not_contain_metric_matching("solrpc_latencies.*");
+    }
+
+    #[tokio::test]
+    async fn should_record_inconsistent_result_metrics() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+        let client = setup
+            .client()
+            .with_rpc_sources(RpcSources::Custom(vec![
+                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::AnkrMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::ChainstackMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::HeliusMainnet),
+            ]))
+            .mock_http_sequence(vec![
+                MockOutcallBuilder::new(
+                    200,
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(0_u8)),
+                        "jsonrpc": "2.0",
+                        "result": 1_450_305,
+                    }),
+                ),
+                MockOutcallBuilder::new(
+                    200,
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(1_u8)),
+                        "jsonrpc": "2.0",
+                        "result": 1_450_306,
+                    }),
+                ),
+                MockOutcallBuilder::new(
+                    200,
+                    json!({
+                        "jsonrpc": "2.0",
+                        "error": {
+                            "code": -32004,
+                            "message": "Slot not available"
+                        },
+                        "id": Id::from(ConstantSizeId::from(2_u8)),
+                    }),
+                ),
+                MockOutcallBuilder::new(403, json!({})),
+                MockOutcallBuilder::new_error(RejectionCode::SysFatal, "Fatal error!"),
+            ])
+            .build();
+
+        let result = client.get_slot().send().await;
+        assert_matches!(result, MultiRpcResult::Inconsistent(_));
+
+        setup
+            .check_metrics()
+            .await
+            // Only metrics for valid responses and JSON-RPC errors should be recorded, other errors
+            // (e.g., IC and HTTP errors) are ignored.
+            .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="solana-mainnet.g.alchemy.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="rpc.ankr.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="solana-mainnet.core.chainstack.com"\} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="lb.drpc.org"\} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="mainnet.helius-rpc.com"\} 1 \d+"#);
     }
 
     #[tokio::test]
