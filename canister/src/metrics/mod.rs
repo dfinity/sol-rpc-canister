@@ -1,6 +1,5 @@
 use derive_more::From;
-use std::collections::BTreeMap;
-use std::time::Duration;
+use std::{collections::BTreeMap, time::Duration};
 
 pub const BUCKETS_DEFAULT_MS: [u64; 8] =
     [1_000, 2_000, 4_000, 6_000, 8_000, 12_000, 20_000, u64::MAX];
