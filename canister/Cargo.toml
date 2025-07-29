@@ -55,7 +55,6 @@ zeroize = { workspace = true }
 [dev-dependencies]
 candid_parser = { workspace = true }
 proptest = { workspace = true }
-proptest-derive = { workspace = true }
 rand = { workspace = true }
 rand_chacha = { workspace = true }
 solana-pubkey = { workspace = true }

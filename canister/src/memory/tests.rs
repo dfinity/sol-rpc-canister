@@ -217,7 +217,7 @@ mod upgrade_state_tests {
     fn arb_api_keys() -> impl Strategy<Value = BTreeMap<SupportedRpcProviderId, ApiKey>> {
         prop::collection::btree_map(
             prop::sample::select(SupportedRpcProviderId::iter().collect::<Vec<_>>()),
-            any::<ApiKey>(),
+            ".*".prop_map(|value| ApiKey::try_from(value).unwrap()),
             0..=SupportedRpcProviderId::iter().count(),
         )
     }
