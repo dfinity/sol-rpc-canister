@@ -1,7 +1,4 @@
-use crate::{
-    rpc_client::{MultiRpcRequest, ReducedResult},
-    util::hostname_from_url,
-};
+use crate::{rpc_client::MultiRpcRequest, util::hostname_from_url};
 use canhttp::multi::ReductionError;
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{MultiRpcResult, RpcAccess, RpcAuth, RpcError, SupportedRpcProvider};
@@ -16,24 +13,17 @@ where
     Error: Into<RpcError>,
 {
     match request {
-        Ok(request) => {
-            let result = request.send_and_reduce().await;
-            process_result(result)
-        }
-        Err(e) => process_error(e),
-    }
-}
-
-fn process_result<T>(result: ReducedResult<T>) -> MultiRpcResult<T> {
-    match result {
-        Ok(value) => MultiRpcResult::Consistent(Ok(value)),
-        Err(err) => match err {
-            ReductionError::ConsistentError(err) => MultiRpcResult::Consistent(Err(err)),
-            ReductionError::InconsistentResults(multi_call_results) => {
-                let results: Vec<_> = multi_call_results.into_iter().collect();
-                MultiRpcResult::Inconsistent(results)
-            }
+        Ok(request) => match request.send_and_reduce().await {
+            Ok(value) => MultiRpcResult::Consistent(Ok(value)),
+            Err(err) => match err {
+                ReductionError::ConsistentError(err) => MultiRpcResult::Consistent(Err(err)),
+                ReductionError::InconsistentResults(multi_call_results) => {
+                    let results: Vec<_> = multi_call_results.into_iter().collect();
+                    MultiRpcResult::Inconsistent(results)
+                }
+            },
         },
+        Err(e) => process_error(e),
     }
 }
 
