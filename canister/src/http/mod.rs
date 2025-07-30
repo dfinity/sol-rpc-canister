@@ -273,12 +273,7 @@ impl CyclesChargingPolicy for ChargingPolicyWithCollateral {
         attached_cycles: u128,
     ) -> u128 {
         if self.charge_user {
-            let charged_cycles = attached_cycles.saturating_add(self.collateral_cycles);
-            log!(
-                Priority::Info,
-                "attached_cycles={attached_cycles}, charged_cycles={charged_cycles}"
-            );
-            return charged_cycles;
+            return attached_cycles.saturating_add(self.collateral_cycles);
         }
         0
     }
