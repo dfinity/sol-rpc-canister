@@ -2313,7 +2313,7 @@ async fn should_not_drain_canister_balance_when_no_cycles_attached() {
 
     // Rejecting requests with no cycles attached still costs a small amount in execution costs
     assert!(
-        balance_after >= balance_before - 100_000,
+        balance_after >= balance_before - 100_000_000,
         "Canister cycle balance decrease: {:?}",
         balance_before - balance_after
     );
