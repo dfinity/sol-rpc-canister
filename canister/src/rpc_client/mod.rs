@@ -5,12 +5,14 @@ mod sol_rpc;
 mod tests;
 
 use crate::{
+    add_metric_entry,
+    candid_rpc::hostname,
     http::{
         errors::HttpClientError, http_client, service_request_builder, ChargingPolicyWithCollateral,
     },
     memory::{read_state, record_ok_result, State},
     metrics::MetricRpcMethod,
-    providers::{request_builder, resolve_rpc_provider, Providers},
+    providers::{get_provider, request_builder, resolve_rpc_provider, Providers},
     rpc_client::sol_rpc::ResponseTransform,
 };
 use canhttp::{
@@ -418,8 +420,14 @@ impl<Params, Output> MultiRpcRequest<Params, Output> {
         Params: Serialize + Clone + Debug,
         Output: Debug + DeserializeOwned + PartialEq + Serialize,
     {
+        let method = MetricRpcMethod::from(self.request.method().to_string());
+
         let strategy = self.reduction_strategy.clone();
-        self.parallel_call().await.reduce(strategy)
+        let multi_results = self.parallel_call().await;
+
+        observe_inconsistent_results(method, &multi_results);
+
+        multi_results.reduce(strategy)
     }
 
     /// Query all providers in parallel and return all results.
@@ -569,3 +577,36 @@ impl<T: PartialEq + Serialize> Reduce<RpcSource, T, RpcError> for ReductionStrat
 
 pub type MultiCallResults<T> = MultiResults<RpcSource, T, RpcError>;
 pub type ReducedResult<T> = canhttp::multi::ReducedResult<RpcSource, T, RpcError>;
+
+fn observe_inconsistent_results<Output>(
+    method: MetricRpcMethod,
+    multi_results: &MultiCallResults<Output>,
+) where
+    Output: PartialEq,
+{
+    let relevant_results: Vec<_> = multi_results
+        .iter()
+        .filter(|(_source, result)| {
+            result.is_ok() || matches!(result, Err(RpcError::JsonRpcError(_)))
+        })
+        .collect();
+
+    if let Some((_source, first_result)) = relevant_results.first() {
+        if relevant_results
+            .iter()
+            .all(|(_source, other_result)| other_result == first_result)
+        {
+            return;
+        }
+    }
+
+    for (source, _result) in relevant_results {
+        if let RpcSource::Supported(provider_id) = source {
+            if let Some(provider) = get_provider(provider_id) {
+                if let Some(host) = hostname(provider.clone()) {
+                    add_metric_entry!(inconsistent_responses, (method.clone(), host.into()), 1);
+                }
+            }
+        }
+    }
+}

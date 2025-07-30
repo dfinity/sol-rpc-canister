@@ -3,7 +3,7 @@ use assert_matches::*;
 use candid::CandidType;
 use canhttp::http::json::{ConstantSizeId, Id};
 use const_format::formatcp;
-use ic_cdk::api::management_canister::http_request::HttpHeader;
+use ic_cdk::api::{call::RejectionCode, management_canister::http_request::HttpHeader};
 use pocket_ic::common::rest::CanisterHttpMethod;
 use serde::de::DeserializeOwned;
 use serde_json::json;
@@ -15,9 +15,9 @@ use sol_rpc_int_tests::{
 use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, ConsensusStrategy,
     GetSignaturesForAddressLimit, GetSlotParams, InstallArgs, InstructionError, Mode,
-    ProviderError, RpcAccess, RpcAuth, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources,
-    Slot, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TransactionDetails,
-    TransactionError,
+    MultiRpcResult, ProviderError, RpcAccess, RpcAuth, RpcEndpoint, RpcError, RpcResult, RpcSource,
+    RpcSources, Slot, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    TransactionDetails, TransactionError,
 };
 use solana_account_decoder_client_types::{
     token::UiTokenAmount, UiAccount, UiAccountData, UiAccountEncoding,
@@ -1205,7 +1205,7 @@ mod generic_request_tests {
         for endpoint in SolRpcEndpoint::iter() {
             match endpoint {
                 SolRpcEndpoint::GetSlot => {
-                    check(client.get_slot().with_params(GetSlotParams::default())).await;
+                    check(client.get_slot()).await;
                 }
                 SolRpcEndpoint::GetAccountInfo => {
                     check(client.get_account_info(USDC_PUBLIC_KEY)).await;
@@ -1273,7 +1273,7 @@ mod generic_request_tests {
         for endpoint in SolRpcEndpoint::iter() {
             match endpoint {
                 SolRpcEndpoint::GetSlot => {
-                    check(client.get_slot().with_params(GetSlotParams::default())).await;
+                    check(client.get_slot()).await;
                 }
                 SolRpcEndpoint::GetAccountInfo => {
                     check(client.get_account_info(USDC_PUBLIC_KEY)).await;
@@ -1578,7 +1578,7 @@ mod cycles_cost_tests {
         for endpoint in SolRpcEndpoint::iter() {
             match endpoint {
                 SolRpcEndpoint::GetSlot => {
-                    check(client.get_slot().with_params(GetSlotParams::default())).await;
+                    check(client.get_slot()).await;
                 }
                 SolRpcEndpoint::JsonRequest => {
                     check(client.json_request(get_version_request())).await;
@@ -1640,7 +1640,7 @@ mod cycles_cost_tests {
         for endpoint in SolRpcEndpoint::iter() {
             match endpoint {
                 SolRpcEndpoint::GetSlot => {
-                    check(client.get_slot().with_params(GetSlotParams::default())).await;
+                    check(client.get_slot()).await;
                 }
                 SolRpcEndpoint::GetAccountInfo => {
                     check(client.get_account_info(USDC_PUBLIC_KEY)).await;
@@ -1718,9 +1718,9 @@ mod cycles_cost_tests {
             let cycles_consumed = cycles_before + cycles_cost - cycles_after;
 
             assert!(
-                    cycles_after > cycles_before,
-                    "BUG: not enough cycles requested. Requested {cycles_cost} cycles, but consumed {cycles_consumed} cycles"
-                );
+                cycles_after > cycles_before,
+                "BUG: not enough cycles requested. Requested {cycles_cost} cycles, but consumed {cycles_consumed} cycles"
+            );
 
             // Same request with fewer cycles should fail.
             let results = request
@@ -1807,12 +1807,7 @@ mod cycles_cost_tests {
                     .await;
                 }
                 SolRpcEndpoint::GetSlot => {
-                    check(
-                        &setup,
-                        client.get_slot().with_params(GetSlotParams::default()),
-                        1_714_103_200,
-                    )
-                    .await;
+                    check(&setup, client.get_slot(), 1_714_103_200).await;
                 }
                 SolRpcEndpoint::GetTokenAccountBalance => {
                     check(
@@ -2158,49 +2153,49 @@ mod get_signatures_for_address_tests {
                 .expect_consistent();
 
             assert_eq!(
-                    results,
-                    Ok(vec![
-                        ConfirmedTransactionStatusWithSignature {
-                            signature: sol_rpc_types::Signature::from_str("3jPA8CnZb9sfs4zVAypa9KB7VAGwrTdXB6mg9H1H9XpATN6Y8iek4Y21Nb9LjbrpYACbF9USV8RBWvXFFhVoQUAs").unwrap(),
-                            confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
-                            memo: None,
-                            slot: 340_372_399,
-                            err: None,
-                            block_time: Some(1_747_389_084)
-                        },
-                        ConfirmedTransactionStatusWithSignature {
-                            signature: sol_rpc_types::Signature::from_str("3WM42nYDQAHgBWFd6SbJ3pj1AGgiTJfxXJ2d5dHu49GgqSUui5qdh64S5yLCN1cMKcLMFVKKo776GrtVhfatLqP6").unwrap(),
-                            confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
-                            memo: None,
-                            slot: 340_372_399,
-                            err: None,
-                            block_time: Some(1_747_389_084)
-                        },
-                        ConfirmedTransactionStatusWithSignature {
-                            signature: sol_rpc_types::Signature::from_str("5iByUT1gTNXDY24hRx25YmQeebvUMD6jsNpGcu2jh1yjKmYwdo5GtRrYozyhdtdcn8SurwHq6EMp4YTpHgdansjc").unwrap(),
-                            confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
-                            memo: None,
-                            slot: 340_372_399,
-                            err: None,
-                            block_time: Some(1_747_389_084)
-                        },
-                        ConfirmedTransactionStatusWithSignature {
-                            signature: sol_rpc_types::Signature::from_str("2Zuhxr6qMGwBrpV611Ema7pZAy1WGSkQyurTcbfyoXwFMNuziUJbM6FCyoL8WxTRG6G3fEik2wSFeN76miUeUnmJ").unwrap(),
-                            confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
-                            memo: None,
-                            slot: 340_372_399,
-                            err: None,
-                            block_time: Some(1_747_389_084)
-                        },
-                        ConfirmedTransactionStatusWithSignature {
-                            signature: sol_rpc_types::Signature::from_str("4V1j8jZvXjcUdRoWQBRzxFVigfr61bJdHGsCFAkTm5h4z28FkrDczuTpcvwTRamiwiGm7E77EB5DKRBwG1mUEC8f").unwrap(),
-                            confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
-                            memo: None,
-                            slot: 340_372_399,
-                            err: Some(TransactionError::InstructionError(3, InstructionError::Custom(6_001))),
-                            block_time: Some(1_747_389_084)
-                        }])
-                );
+                results,
+                Ok(vec![
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("3jPA8CnZb9sfs4zVAypa9KB7VAGwrTdXB6mg9H1H9XpATN6Y8iek4Y21Nb9LjbrpYACbF9USV8RBWvXFFhVoQUAs").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: None,
+                        block_time: Some(1_747_389_084)
+                    },
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("3WM42nYDQAHgBWFd6SbJ3pj1AGgiTJfxXJ2d5dHu49GgqSUui5qdh64S5yLCN1cMKcLMFVKKo776GrtVhfatLqP6").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: None,
+                        block_time: Some(1_747_389_084)
+                    },
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("5iByUT1gTNXDY24hRx25YmQeebvUMD6jsNpGcu2jh1yjKmYwdo5GtRrYozyhdtdcn8SurwHq6EMp4YTpHgdansjc").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: None,
+                        block_time: Some(1_747_389_084)
+                    },
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("2Zuhxr6qMGwBrpV611Ema7pZAy1WGSkQyurTcbfyoXwFMNuziUJbM6FCyoL8WxTRG6G3fEik2wSFeN76miUeUnmJ").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: None,
+                        block_time: Some(1_747_389_084)
+                    },
+                    ConfirmedTransactionStatusWithSignature {
+                        signature: sol_rpc_types::Signature::from_str("4V1j8jZvXjcUdRoWQBRzxFVigfr61bJdHGsCFAkTm5h4z28FkrDczuTpcvwTRamiwiGm7E77EB5DKRBwG1mUEC8f").unwrap(),
+                        confirmation_status: Some(TransactionConfirmationStatus::Finalized.into()),
+                        memo: None,
+                        slot: 340_372_399,
+                        err: Some(TransactionError::InstructionError(3, InstructionError::Custom(6_001))),
+                        block_time: Some(1_747_389_084)
+                    }])
+            );
         }
 
         setup.drop().await;
@@ -2209,8 +2204,6 @@ mod get_signatures_for_address_tests {
 
 mod metrics_tests {
     use super::*;
-    use ic_cdk::api::call::RejectionCode;
-    use sol_rpc_types::{ConsensusStrategy, MultiRpcResult};
 
     #[tokio::test]
     async fn should_retrieve_metrics() {
@@ -2270,32 +2263,66 @@ mod metrics_tests {
         assert_eq!(result, MultiRpcResult::Consistent(Ok(1_450_300)));
 
         setup
-                .check_metrics()
-                .await
-                // `solrpc_requests` counters
-                .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-mainnet.g.alchemy.com"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="rpc.ankr.com"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-mainnet.core.chainstack.com"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="lb.drpc.org"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="mainnet.helius-rpc.com"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-rpc.publicnode.com"\} 1 \d+"#)
-                // `solrpc_responses` counters: success
-                .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-mainnet.g.alchemy.com"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="rpc.ankr.com"\} 1 \d+"#)
-                // `solrpc_responses` counters: JSON-RPC error
-                .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-mainnet.core.chainstack.com",error="json-rpc"\} 1 \d+"#)
-                // `solrpc_responses` counters: HTTP error
-                .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="lb.drpc.org",error="http",status="429"\} .*"#)
-                .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="mainnet.helius-rpc.com",error="http",status="500"\} .*"#)
-                // `solrpc_responses` counters: IC error
-                .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-rpc.publicnode.com",error="ic",code="SYS_FATAL"\} .*"#)
-                // `solrpc_latencies` latency histograms
-                .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="solana-mainnet.g.alchemy.com",le="\d+"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="rpc.ankr.com",le="\d+"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="solana-mainnet.core.chainstack.com",le="\d+"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="lb.drpc.org",le="\d+"\} 1 \d+"#)
-                .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="mainnet.helius-rpc.com",le="\d+"\} 1 \d+"#)
-                .assert_does_not_contain_metric_matching(r#"solrpc_latencies\{method="getSlot",host="solana-rpc.publicnode.com",le="\d+"\} 1 \d+"#);
+            .check_metrics()
+            .await
+            // `solrpc_requests` counters
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-mainnet.g.alchemy.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="rpc.ankr.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-mainnet.core.chainstack.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="lb.drpc.org"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="mainnet.helius-rpc.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-rpc.publicnode.com"\} 1 \d+"#)
+            // `solrpc_responses` counters: success
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-mainnet.g.alchemy.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="rpc.ankr.com"\} 1 \d+"#)
+            // `solrpc_responses` counters: JSON-RPC error
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-mainnet.core.chainstack.com",error="json-rpc"\} 1 \d+"#)
+            // `solrpc_responses` counters: HTTP error
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="lb.drpc.org",error="http",status="429"\} .*"#)
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="mainnet.helius-rpc.com",error="http",status="500"\} .*"#)
+            // `solrpc_responses` counters: IC error
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-rpc.publicnode.com",error="ic",code="SYS_FATAL"\} .*"#)
+            // `solrpc_latencies` latency histograms
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="solana-mainnet.g.alchemy.com",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="rpc.ankr.com",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="solana-mainnet.core.chainstack.com",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="lb.drpc.org",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="mainnet.helius-rpc.com",le="\d+"\} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_latencies\{method="getSlot",host="solana-rpc.publicnode.com",le="\d+"\} 1 \d+"#)
+            // `solrpc_inconsistent_responses` counters: inconsistent results
+            .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="solana-mainnet.g.alchemy.com"} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="rpc.ankr.com"} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="solana-mainnet.core.chainstack.com"} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="lb.drpc.org"} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="mainnet.helius-rpc.com"} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="solana-rpc.publicnode.com"} 1 \d+"#);
+    }
+
+    #[tokio::test]
+    async fn should_not_record_metrics_when_not_enough_cycles() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+        let client = setup.client().build();
+
+        // Send a small enough amount that all outcalls fail due to insufficient cycles, but enough
+        // so that all requests have at least the base HTTP outcall fee
+        let result = client
+            .get_slot()
+            .with_cycles(550_000_000)
+            .send()
+            .await
+            .expect_inconsistent();
+        assert!(result.iter().all(|(_source, e)| matches!(
+            e,
+            Err(RpcError::ProviderError(ProviderError::TooFewCycles { .. }))
+        )));
+
+        setup
+            .check_metrics()
+            .await
+            .assert_does_not_contain_metric_matching(r#"solrpc_requests.*"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_responses.*"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_latencies_bucket.*"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses.*"#);
     }
 }
 
