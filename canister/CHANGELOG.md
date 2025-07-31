@@ -9,18 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add optional `cost_units` to `TransactionStatusMeta` (#180)
-- Add more metrics (#144)
+- Add optional `cost_units` to `TransactionStatusMeta` ([#180](https://github.com/dfinity/sol-rpc-canister/pull/180))
+- Add more metrics ([#144](https://github.com/dfinity/sol-rpc-canister/pull/144))
 
 ### Changed
 
-- Do not record metrics for requests with insufficient cycles (#184)
-- Require HTTP outcall base fee (#185)
-- Select supported providers based on successful responses (#183)
-
-### Fixed
-
-- Change `nat16` to `nat32` in examples (#151)
+- Do not record metrics for requests with insufficient cycles ([#184](https://github.com/dfinity/sol-rpc-canister/pull/184))
+- Require HTTP outcall base fee ([#185](https://github.com/dfinity/sol-rpc-canister/pull/185))
+- Select supported providers based on successful responses ([#183](https://github.com/dfinity/sol-rpc-canister/pull/183))
 
 ## [1.0.0] - 2025-06-13
 
