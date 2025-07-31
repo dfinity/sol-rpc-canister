@@ -34,7 +34,6 @@ name = "sol_rpc_canister"
 semver_check = false # disable API breaking changes checks
 release = true
 publish = false # disable `cargo publish`
-initial_version = "1.0.0"
 
 [[package]] # the double square brackets define a TOML table array
 name = "sol_rpc_client"
