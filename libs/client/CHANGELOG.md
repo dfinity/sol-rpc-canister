@@ -20,8 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Use correct fee for t-sig with local development key ([#160](https://github.com/dfinity/sol-rpc-canister/pull/160))
 
-[2.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/1.0.0..2.0.0
-
 ## [1.0.0] - 2025-06-13
 
 ### Added
