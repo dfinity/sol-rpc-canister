@@ -13,8 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Require HTTP outcall base fee ([#185](https://github.com/dfinity/sol-rpc-canister/pull/185))
-- Select supported providers based on successful responses ([#183](https://github.com/dfinity/sol-rpc-canister/pull/183))
 - Migrate dependencies to `solana-sdk` repository ([#55](https://github.com/dfinity/sol-rpc-canister/pull/55))
 
 [2.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/1.0.0..2.0.0
