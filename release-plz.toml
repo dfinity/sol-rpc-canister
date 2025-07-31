@@ -32,16 +32,18 @@ publish_allow_dirty = false
 [[package]] # the double square brackets define a TOML table array
 name = "sol_rpc_canister"
 semver_check = false # disable API breaking changes checks
-publish = true # enable `cargo publish`
+release = true
+publish = false # disable `cargo publish`
+initial_version = "1.0.0"
 
 [[package]] # the double square brackets define a TOML table array
 name = "sol_rpc_client"
-#git_release_enable = false # enable GitHub releases
+#git_release_enable = false # disable GitHub releaseschangelog = true
 publish = true # enable `cargo publish`
 
 [[package]] # the double square brackets define a TOML table array
 name = "sol_rpc_types"
-#git_release_enable = false # enable GitHub releases
+#git_release_enable = false # disable GitHub releases
 publish = true # enable `cargo publish`
 
 [[package]]
