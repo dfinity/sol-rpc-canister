@@ -18,16 +18,18 @@ ic-cdk = "0.17.2"
 ic-ed25519 = "0.2.0"
 num = "0.4.3"
 serde = { version = "1.0.219", features = ["derive"] }
-sol_rpc_client = { version = "1.0.0", features = ["ed25519"] }
-sol_rpc_types = "1.0.0"
+sol_rpc_client = { version = "2.0.0", features = ["ed25519"] }
+sol_rpc_types = "2.0.0"
 solana-hash = "=2.3.0"
 solana-instruction = "=2.3.0"
 solana-message = "=2.4.0"
-solana-program = "=2.3.0"
 solana-pubkey = "=2.4.0"
 solana-signature = "=2.3.0"
 solana-system-interface = "1.0.0"
 solana-transaction = { version = "=2.2.3", features = ["bincode"] }
+
+[dev-dependencies]
+candid_parser = "0.1.4"
 
 # TODO XC-297: Currently, the solana-* crates have a dependency on wasm-bindgen
 #   when they are built for wasm32-unknown-unknown target. For this reason, we

@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-07-31
+
+### Added
+
+- Add optional `cost_units` to `TransactionStatusMeta` ([#180](https://github.com/dfinity/sol-rpc-canister/pull/180))
+- Add more metrics ([#144](https://github.com/dfinity/sol-rpc-canister/pull/144))
+
+### Changed
+
+- Do not record metrics for requests with insufficient cycles ([#184](https://github.com/dfinity/sol-rpc-canister/pull/184))
+- Require HTTP outcall base fee ([#185](https://github.com/dfinity/sol-rpc-canister/pull/185))
+- Select supported providers based on successful responses ([#183](https://github.com/dfinity/sol-rpc-canister/pull/183))
+
 ## [1.0.0] - 2025-06-13
 
 ### Added

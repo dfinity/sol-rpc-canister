@@ -2,6 +2,7 @@ use crate::OverrideProvider;
 use candid::{CandidType, Principal};
 use canlog::LogFilter;
 use serde::{Deserialize, Serialize};
+use strum::EnumIter;
 
 /// The installation args for the Solana RPC canister.
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
@@ -28,7 +29,9 @@ pub struct InstallArgs {
 }
 
 /// Mode of operation
-#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, CandidType, Deserialize, Serialize)]
+#[derive(
+    Debug, Copy, Clone, Default, PartialEq, Eq, CandidType, Deserialize, EnumIter, Serialize,
+)]
 pub enum Mode {
     #[default]
     /// Normal mode, where cycle payment is required for certain operations.

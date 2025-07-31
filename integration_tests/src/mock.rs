@@ -5,8 +5,7 @@ use pocket_ic::common::rest::{
     CanisterHttpRequest, CanisterHttpResponse,
 };
 use serde_json::Value;
-use std::collections::BTreeSet;
-use std::str::FromStr;
+use std::{collections::BTreeSet, str::FromStr};
 use url::{Host, Url};
 
 pub struct MockOutcallBody(pub Vec<u8>);

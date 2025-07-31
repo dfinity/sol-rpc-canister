@@ -1,8 +1,11 @@
 #[cfg(test)]
 mod tests;
 
-use crate::memory::rank_providers;
-use crate::{constants::API_KEY_REPLACE_STRING, memory::read_state, types::OverrideProvider};
+use crate::{
+    constants::API_KEY_REPLACE_STRING,
+    memory::{rank_providers, read_state},
+    types::OverrideProvider,
+};
 use canhttp::multi::{TimedSizedMap, TimedSizedVec, Timestamp};
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use maplit::btreemap;
@@ -10,9 +13,11 @@ use sol_rpc_types::{
     ConsensusStrategy, ProviderError, RpcAccess, RpcAuth, RpcEndpoint, RpcError, RpcResult,
     RpcSource, RpcSources, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
 };
-use std::collections::{BTreeMap, BTreeSet};
-use std::num::NonZeroUsize;
-use std::time::Duration;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    num::NonZeroUsize,
+    time::Duration,
+};
 
 thread_local! {
     pub static PROVIDERS: BTreeMap<SupportedRpcProviderId, SupportedRpcProvider> = btreemap! {
