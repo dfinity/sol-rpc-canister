@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-07-31
+
+### Added
+
+- Add optional `cost_units` to `TransactionStatusMeta` (#180)
+- Add more metrics (#144)
+
+### Changed
+
+- Do not record metrics for requests with insufficient cycles (#184)
+- Require HTTP outcall base fee (#185)
+- Select supported providers based on successful responses (#183)
+
+### Fixed
+
+- Change `nat16` to `nat32` in examples (#151)
+
 ## [1.0.0] - 2025-06-13
 
 ### Added
