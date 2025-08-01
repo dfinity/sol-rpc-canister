@@ -423,7 +423,6 @@ dependencies = [
  "cc",
  "cfg-if",
  "constant_time_eq",
- "digest 0.10.7",
 ]
 
 [[package]]
@@ -446,35 +445,12 @@ dependencies = [
 
 [[package]]
 name = "borsh"
-version = "0.10.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "115e54d64eb62cdebad391c19efc9dce4981c690c85a33a12199d99bb9546fee"
-dependencies = [
- "borsh-derive 0.10.4",
- "hashbrown 0.13.2",
-]
-
-[[package]]
-name = "borsh"
 version = "1.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ad8646f98db542e39fc66e68a20b2144f6a732636df7c2354e74645faaa433ce"
 dependencies = [
- "borsh-derive 1.5.7",
+ "borsh-derive",
  "cfg_aliases",
-]
-
-[[package]]
-name = "borsh-derive"
-version = "0.10.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "831213f80d9423998dd696e2c5345aba6be7a0bd8cd19e31c5243e13df1cef89"
-dependencies = [
- "borsh-derive-internal",
- "borsh-schema-derive-internal",
- "proc-macro-crate 0.1.5",
- "proc-macro2",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -484,32 +460,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fdd1d3c0c2f5833f22386f252fe8ed005c7f59fdcddeef025c01b4c3b9fd9ac3"
 dependencies = [
  "once_cell",
- "proc-macro-crate 3.3.0",
+ "proc-macro-crate",
  "proc-macro2",
  "quote",
  "syn 2.0.104",
-]
-
-[[package]]
-name = "borsh-derive-internal"
-version = "0.10.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65d6ba50644c98714aa2a70d13d7df3cd75cd2b523a2b452bf010443800976b3"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "borsh-schema-derive-internal"
-version = "0.10.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "276691d96f063427be83e6692b86148e488ebba9f48f77788724ca027ba3b6d4"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -871,26 +825,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "console_error_panic_hook"
-version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a06aeb73f470f66dcdbf7223caeebb85984942f22f1adb2a088cf9668146bbbc"
-dependencies = [
- "cfg-if",
- "wasm-bindgen",
-]
-
-[[package]]
-name = "console_log"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e89f72f65e8501878b8a004d5a1afb780987e2ce2b4532c562e367a72c57499f"
-dependencies = [
- "log",
- "web-sys",
-]
-
-[[package]]
 name = "const-oid"
 version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1025,19 +959,6 @@ checksum = "1bfb12502f3fc46cca1bb51ac28df9d618d813cdc3d2f25b9fe775a34af26bb3"
 dependencies = [
  "generic-array",
  "typenum",
-]
-
-[[package]]
-name = "curve25519-dalek"
-version = "3.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b9fdf9972b2bd6af2d913799d9ebc165ea4d2e65878e329d9c6b372c4491b61"
-dependencies = [
- "byteorder",
- "digest 0.9.0",
- "rand_core 0.5.1",
- "subtle",
- "zeroize",
 ]
 
 [[package]]
@@ -1283,17 +1204,8 @@ dependencies = [
  "digest 0.10.7",
  "elliptic-curve",
  "rfc6979",
- "signature 2.2.0",
+ "signature",
  "spki",
-]
-
-[[package]]
-name = "ed25519"
-version = "1.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91cff35c70bba8a626e3185d8cd48cc11b5437e1a5bcd15b9b5fa3c64b6dfee7"
-dependencies = [
- "signature 1.6.4",
 ]
 
 [[package]]
@@ -1303,7 +1215,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "115531babc129696a58c64a4fef0a8bf9e9698629fb97e9e40767d235cfbcd53"
 dependencies = [
  "pkcs8",
- "signature 2.2.0",
+ "signature",
 ]
 
 [[package]]
@@ -1323,31 +1235,17 @@ dependencies = [
 
 [[package]]
 name = "ed25519-dalek"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c762bae6dcaf24c4c84667b8579785430908723d5c889f469d76a41d59cc7a9d"
-dependencies = [
- "curve25519-dalek 3.2.0",
- "ed25519 1.5.3",
- "rand 0.7.3",
- "serde",
- "sha2 0.9.9",
- "zeroize",
-]
-
-[[package]]
-name = "ed25519-dalek"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "70e796c081cee67dc755e1a36a0a172b897fab85fc3f6bc48307991f64e4eca9"
 dependencies = [
- "curve25519-dalek 4.1.3",
- "ed25519 2.2.3",
+ "curve25519-dalek",
+ "ed25519",
  "merlin",
  "rand_core 0.6.4",
  "serde",
  "sha2 0.10.9",
- "signature 2.2.0",
+ "signature",
  "subtle",
  "zeroize",
 ]
@@ -1786,15 +1684,6 @@ checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
 
 [[package]]
 name = "hashbrown"
-version = "0.13.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43a3c133739dddd0d2990f9a4bdf8eb4b21ef50e4851ca85ab661199821d510e"
-dependencies = [
- "ahash",
-]
-
-[[package]]
-name = "hashbrown"
 version = "0.14.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
@@ -2100,8 +1989,8 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0a381e86a9d559c816a7ff4419e56f5d37f96357258fb63b0cb7026db0f729b"
 dependencies = [
- "curve25519-dalek 4.1.3",
- "ed25519-dalek 2.2.0",
+ "curve25519-dalek",
+ "ed25519-dalek",
  "hkdf",
  "pem 1.1.1",
  "rand 0.8.5",
@@ -2524,7 +2413,7 @@ dependencies = [
  "elliptic-curve",
  "once_cell",
  "sha2 0.10.9",
- "signature 2.2.0",
+ "signature",
 ]
 
 [[package]]
@@ -3326,15 +3215,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "353e1ca18966c16d9deb1c69278edbc5f194139612772bd9537af60ac231e1e6"
 dependencies = [
  "elliptic-curve",
-]
-
-[[package]]
-name = "proc-macro-crate"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d6ea3c4595b96363c13943497db34af4460fb474a95c43f4446ad341b8c9785"
-dependencies = [
- "toml",
 ]
 
 [[package]]
@@ -4299,12 +4179,6 @@ dependencies = [
 
 [[package]]
 name = "signature"
-version = "1.6.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74233d3b3b2f6d4b006dc19dee745e73e2a6bfb6f93607cd3b02bd5b00797d7c"
-
-[[package]]
-name = "signature"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77549399552de45a898a580c1b41d445bf730df867cc44e6c0233bbc4b8329de"
@@ -4557,15 +4431,15 @@ dependencies = [
 [[package]]
 name = "solana-account"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "bincode",
  "serde",
  "serde_bytes",
  "serde_derive",
- "solana-account-info 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-account-info 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-clock",
- "solana-instruction",
+ "solana-instruction-error",
  "solana-pubkey",
  "solana-sdk-ids",
  "solana-sysvar",
@@ -4601,26 +4475,21 @@ dependencies = [
 [[package]]
 name = "solana-account-info"
 version = "2.3.0"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "bincode",
  "serde",
- "solana-program-error 2.2.2 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-program-memory 2.3.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-program-error 2.2.2 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
+ "solana-program-memory 2.3.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-pubkey",
 ]
 
 [[package]]
 name = "solana-address-lookup-table-interface"
 version = "2.2.2"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
- "bincode",
- "bytemuck",
- "serde",
- "serde_derive",
  "solana-clock",
- "solana-instruction",
  "solana-pubkey",
  "solana-sdk-ids",
  "solana-slot-hashes",
@@ -4629,7 +4498,7 @@ dependencies = [
 [[package]]
 name = "solana-atomic-u64"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "parking_lot",
 ]
@@ -4637,41 +4506,29 @@ dependencies = [
 [[package]]
 name = "solana-big-mod-exp"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "num-bigint 0.4.6",
  "num-traits",
- "solana-define-syscall 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
-]
-
-[[package]]
-name = "solana-bincode"
-version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
-dependencies = [
- "bincode",
- "serde",
- "solana-instruction",
+ "solana-define-syscall 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
 ]
 
 [[package]]
 name = "solana-blake3-hasher"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "blake3",
- "solana-define-syscall 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-define-syscall 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-hash",
- "solana-sanitize 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-borsh"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
- "borsh 0.10.4",
- "borsh 1.5.7",
+ "borsh",
 ]
 
 [[package]]
@@ -4744,12 +4601,12 @@ dependencies = [
 [[package]]
 name = "solana-clock"
 version = "2.2.2"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "serde",
  "serde_derive",
  "solana-sdk-ids",
- "solana-sdk-macro 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-sdk-macro 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-sysvar-id",
 ]
 
@@ -4765,7 +4622,7 @@ dependencies = [
 [[package]]
 name = "solana-commitment-config"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4774,7 +4631,7 @@ dependencies = [
 [[package]]
 name = "solana-compute-budget-interface"
 version = "2.2.2"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "solana-instruction",
  "solana-sdk-ids",
@@ -4820,14 +4677,14 @@ dependencies = [
 [[package]]
 name = "solana-cpi"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
- "solana-account-info 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-define-syscall 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-account-info 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
+ "solana-define-syscall 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-instruction",
- "solana-program-error 2.2.2 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-program-error 2.2.2 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-pubkey",
- "solana-stable-layout 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-stable-layout 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
 ]
 
 [[package]]
@@ -4835,14 +4692,6 @@ name = "solana-decode-error"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c781686a18db2f942e70913f7ca15dc120ec38dcab42ff7557db2c70c625a35"
-dependencies = [
- "num-traits",
-]
-
-[[package]]
-name = "solana-decode-error"
-version = "2.3.0"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
 dependencies = [
  "num-traits",
 ]
@@ -4856,7 +4705,7 @@ checksum = "2ae3e2abcf541c8122eafe9a625d4d194b4023c20adde1e251f94e056bb1aee2"
 [[package]]
 name = "solana-define-syscall"
 version = "2.3.0"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 
 [[package]]
 name = "solana-epoch-info"
@@ -4871,13 +4720,13 @@ dependencies = [
 [[package]]
 name = "solana-epoch-rewards"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "serde",
  "serde_derive",
  "solana-hash",
  "solana-sdk-ids",
- "solana-sdk-macro 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-sdk-macro 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-sysvar-id",
 ]
 
@@ -4895,19 +4744,28 @@ dependencies = [
 [[package]]
 name = "solana-epoch-schedule"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "serde",
  "serde_derive",
  "solana-sdk-ids",
- "solana-sdk-macro 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-sdk-macro 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-sysvar-id",
+]
+
+[[package]]
+name = "solana-epoch-stake"
+version = "2.2.1"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
+dependencies = [
+ "solana-define-syscall 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
+ "solana-pubkey",
 ]
 
 [[package]]
 name = "solana-example-mocks"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4937,24 +4795,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "solana-feature-gate-interface"
-version = "2.2.2"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
-dependencies = [
- "bincode",
- "serde",
- "serde_derive",
- "solana-account",
- "solana-account-info 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-instruction",
- "solana-program-error 2.2.2 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-pubkey",
- "solana-rent 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-sdk-ids",
- "solana-system-interface",
-]
-
-[[package]]
 name = "solana-fee-calculator"
 version = "2.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4968,7 +4808,7 @@ dependencies = [
 [[package]]
 name = "solana-fee-calculator"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "log",
  "serde",
@@ -4978,16 +4818,16 @@ dependencies = [
 [[package]]
 name = "solana-hash"
 version = "2.3.0"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
- "borsh 1.5.7",
+ "borsh",
  "bytemuck",
  "bytemuck_derive",
  "five8",
  "serde",
  "serde_derive",
  "solana-atomic-u64",
- "solana-sanitize 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-sanitize 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
 ]
 
 [[package]]
@@ -4999,15 +4839,26 @@ checksum = "23eef6a09eb8e568ce6839573e4966850e85e9ce71e6ae1a6c930c1c43947de3"
 [[package]]
 name = "solana-instruction"
 version = "2.3.0"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "bincode",
- "borsh 1.5.7",
+ "borsh",
+ "serde",
+ "serde_derive",
+ "solana-define-syscall 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
+ "solana-instruction-error",
+ "solana-pubkey",
+]
+
+[[package]]
+name = "solana-instruction-error"
+version = "1.0.0"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
+dependencies = [
  "num-traits",
  "serde",
  "serde_derive",
- "solana-define-syscall 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-pubkey",
+ "solana-program-error 2.2.2 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
 ]
 
 [[package]]
@@ -5030,38 +4881,38 @@ dependencies = [
 [[package]]
 name = "solana-instructions-sysvar"
 version = "2.2.2"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "bitflags",
- "solana-account-info 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-account-info 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-instruction",
- "solana-program-error 2.2.2 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-instruction-error",
+ "solana-program-error 2.2.2 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-pubkey",
- "solana-sanitize 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-sanitize 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-sdk-ids",
- "solana-serialize-utils 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-serialize-utils 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-sysvar-id",
 ]
 
 [[package]]
 name = "solana-keccak-hasher"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "sha3",
- "solana-define-syscall 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-define-syscall 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-hash",
- "solana-sanitize 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
 ]
 
 [[package]]
 name = "solana-keypair"
 version = "2.2.3"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
- "ed25519-dalek 1.0.1",
+ "ed25519-dalek",
  "five8",
- "rand 0.7.3",
+ "rand 0.8.5",
  "solana-pubkey",
  "solana-seed-phrase",
  "solana-signature",
@@ -5071,54 +4922,13 @@ dependencies = [
 [[package]]
 name = "solana-last-restart-slot"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "serde",
  "serde_derive",
  "solana-sdk-ids",
- "solana-sdk-macro 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-sdk-macro 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-sysvar-id",
-]
-
-[[package]]
-name = "solana-loader-v2-interface"
-version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
-dependencies = [
- "serde",
- "serde_bytes",
- "serde_derive",
- "solana-instruction",
- "solana-pubkey",
- "solana-sdk-ids",
-]
-
-[[package]]
-name = "solana-loader-v3-interface"
-version = "5.0.0"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
-dependencies = [
- "serde",
- "serde_bytes",
- "serde_derive",
- "solana-instruction",
- "solana-pubkey",
- "solana-sdk-ids",
- "solana-system-interface",
-]
-
-[[package]]
-name = "solana-loader-v4-interface"
-version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
-dependencies = [
- "serde",
- "serde_bytes",
- "serde_derive",
- "solana-instruction",
- "solana-pubkey",
- "solana-sdk-ids",
- "solana-system-interface",
 ]
 
 [[package]]
@@ -5130,21 +4940,18 @@ checksum = "75127c085407aed1e813ca2015e5bb7d02ea138a21aa1984d1acb25badf8c29a"
 [[package]]
 name = "solana-message"
 version = "2.4.0"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "bincode",
- "blake3",
  "lazy_static",
  "serde",
  "serde_derive",
- "solana-bincode",
  "solana-hash",
  "solana-instruction",
  "solana-pubkey",
- "solana-sanitize 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-sanitize 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-sdk-ids",
- "solana-short-vec 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-system-interface",
+ "solana-short-vec 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-transaction-error",
 ]
 
@@ -5176,15 +4983,15 @@ dependencies = [
 [[package]]
 name = "solana-msg"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
- "solana-define-syscall 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-define-syscall 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
 ]
 
 [[package]]
 name = "solana-native-token"
 version = "2.3.0"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 
 [[package]]
 name = "solana-net-utils"
@@ -5210,11 +5017,11 @@ dependencies = [
 [[package]]
 name = "solana-nonce"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "serde",
  "serde_derive",
- "solana-fee-calculator 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-fee-calculator 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-hash",
  "solana-pubkey",
  "solana-sha256-hasher 2.2.1",
@@ -5245,7 +5052,7 @@ dependencies = [
  "bv",
  "bytes",
  "caps",
- "curve25519-dalek 4.1.3",
+ "curve25519-dalek",
  "dlopen2",
  "fnv",
  "libc",
@@ -5269,89 +5076,58 @@ dependencies = [
 [[package]]
 name = "solana-program"
 version = "2.3.0"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
- "bincode",
- "blake3",
- "borsh 0.10.4",
- "borsh 1.5.7",
- "bs58",
- "bytemuck",
- "console_error_panic_hook",
- "console_log",
- "getrandom 0.2.16",
- "lazy_static",
- "log",
  "memoffset",
- "num-bigint 0.4.6",
- "num-derive",
- "num-traits",
- "rand 0.8.5",
- "serde",
- "serde_bytes",
- "serde_derive",
- "solana-account-info 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-address-lookup-table-interface",
- "solana-atomic-u64",
+ "solana-account-info 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-big-mod-exp",
- "solana-bincode",
  "solana-blake3-hasher",
  "solana-borsh",
  "solana-clock",
- "solana-cpi 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-decode-error 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-define-syscall 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-cpi 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
+ "solana-define-syscall 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-epoch-rewards",
- "solana-epoch-schedule 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-epoch-schedule 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
+ "solana-epoch-stake",
  "solana-example-mocks",
- "solana-feature-gate-interface 2.2.2 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-fee-calculator 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-fee-calculator 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-hash",
  "solana-instruction",
- "solana-instructions-sysvar 2.2.2 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-instruction-error",
+ "solana-instructions-sysvar 2.2.2 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-keccak-hasher",
  "solana-last-restart-slot",
- "solana-loader-v2-interface",
- "solana-loader-v3-interface",
- "solana-loader-v4-interface",
- "solana-message",
- "solana-msg 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-msg 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-native-token",
- "solana-nonce",
  "solana-program-entrypoint",
- "solana-program-error 2.2.2 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-program-memory 2.3.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-program-error 2.2.2 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
+ "solana-program-memory 2.3.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-program-option",
  "solana-program-pack",
  "solana-pubkey",
- "solana-rent 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-sanitize 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-rent 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-sdk-ids",
- "solana-sdk-macro 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
  "solana-secp256k1-recover",
- "solana-serde-varint 2.2.2 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-serialize-utils 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-serde-varint 2.2.2 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
+ "solana-serialize-utils 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-sha256-hasher 2.2.1",
- "solana-short-vec 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-short-vec 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-slot-hashes",
  "solana-slot-history",
- "solana-stable-layout 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-stake-interface",
- "solana-system-interface",
+ "solana-stable-layout 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-sysvar",
  "solana-sysvar-id",
- "solana-vote-interface 2.2.5",
- "thiserror 2.0.12",
 ]
 
 [[package]]
 name = "solana-program-entrypoint"
 version = "2.3.0"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
- "solana-account-info 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-msg 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-program-error 2.2.2 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-account-info 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
+ "solana-define-syscall 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
+ "solana-msg 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
+ "solana-program-error 2.2.2 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-pubkey",
 ]
 
@@ -5361,9 +5137,8 @@ version = "2.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ee2e0217d642e2ea4bee237f37bd61bb02aec60da3647c48ff88f6556ade775"
 dependencies = [
- "borsh 1.5.7",
  "num-traits",
- "solana-decode-error 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-decode-error",
  "solana-instruction",
  "solana-msg 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-pubkey",
@@ -5372,16 +5147,11 @@ dependencies = [
 [[package]]
 name = "solana-program-error"
 version = "2.2.2"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
- "borsh 1.5.7",
- "num-traits",
+ "borsh",
  "serde",
  "serde_derive",
- "solana-decode-error 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-instruction",
- "solana-msg 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-pubkey",
 ]
 
 [[package]]
@@ -5396,43 +5166,42 @@ dependencies = [
 [[package]]
 name = "solana-program-memory"
 version = "2.3.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
- "solana-define-syscall 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-define-syscall 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
 ]
 
 [[package]]
 name = "solana-program-option"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 
 [[package]]
 name = "solana-program-pack"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
- "solana-program-error 2.2.2 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-program-error 2.2.2 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
 ]
 
 [[package]]
 name = "solana-pubkey"
 version = "2.4.0"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
- "borsh 0.10.4",
- "borsh 1.5.7",
+ "borsh",
  "bytemuck",
  "bytemuck_derive",
- "curve25519-dalek 4.1.3",
+ "curve25519-dalek",
  "five8",
  "five8_const",
  "num-traits",
  "serde",
  "serde_derive",
  "solana-atomic-u64",
- "solana-decode-error 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-define-syscall 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-sanitize 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-define-syscall 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
+ "solana-program-error 2.2.2 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
+ "solana-sanitize 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-sha256-hasher 2.2.1",
 ]
 
@@ -5523,19 +5292,19 @@ dependencies = [
 [[package]]
 name = "solana-rent"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "serde",
  "serde_derive",
  "solana-sdk-ids",
- "solana-sdk-macro 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-sdk-macro 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-sysvar-id",
 ]
 
 [[package]]
 name = "solana-reward-info"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "serde",
  "serde_derive",
@@ -5566,7 +5335,7 @@ dependencies = [
  "solana-commitment-config",
  "solana-epoch-info",
  "solana-epoch-schedule 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-feature-gate-interface 2.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-feature-gate-interface",
  "solana-hash",
  "solana-instruction",
  "solana-message",
@@ -5577,7 +5346,7 @@ dependencies = [
  "solana-transaction-error",
  "solana-transaction-status-client-types",
  "solana-version",
- "solana-vote-interface 2.2.6",
+ "solana-vote-interface",
  "tokio",
 ]
 
@@ -5655,12 +5424,12 @@ checksum = "61f1bc1357b8188d9c4a3af3fc55276e56987265eb7ad073ae6f8180ee54cecf"
 [[package]]
 name = "solana-sanitize"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 
 [[package]]
 name = "solana-sdk-ids"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "solana-pubkey",
 ]
@@ -5680,7 +5449,7 @@ dependencies = [
 [[package]]
 name = "solana-sdk-macro"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "bs58",
  "proc-macro2",
@@ -5691,17 +5460,17 @@ dependencies = [
 [[package]]
 name = "solana-secp256k1-recover"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "libsecp256k1",
- "solana-define-syscall 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-define-syscall 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "thiserror 2.0.12",
 ]
 
 [[package]]
 name = "solana-seed-phrase"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "hmac",
  "pbkdf2",
@@ -5729,7 +5498,7 @@ dependencies = [
 [[package]]
 name = "solana-serde-varint"
 version = "2.2.2"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "serde",
 ]
@@ -5748,20 +5517,20 @@ dependencies = [
 [[package]]
 name = "solana-serialize-utils"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
- "solana-instruction",
+ "solana-instruction-error",
  "solana-pubkey",
- "solana-sanitize 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-sanitize 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
 ]
 
 [[package]]
 name = "solana-sha256-hasher"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "sha2 0.10.9",
- "solana-define-syscall 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-define-syscall 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-hash",
 ]
 
@@ -5788,7 +5557,7 @@ dependencies = [
 [[package]]
 name = "solana-short-vec"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "serde",
 ]
@@ -5796,20 +5565,20 @@ dependencies = [
 [[package]]
 name = "solana-signature"
 version = "2.3.0"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
- "ed25519-dalek 1.0.1",
+ "ed25519-dalek",
  "five8",
  "serde",
  "serde-big-array",
  "serde_derive",
- "solana-sanitize 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-sanitize 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
 ]
 
 [[package]]
 name = "solana-signer"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "solana-pubkey",
  "solana-signature",
@@ -5819,7 +5588,7 @@ dependencies = [
 [[package]]
 name = "solana-slot-hashes"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "serde",
  "serde_derive",
@@ -5831,7 +5600,7 @@ dependencies = [
 [[package]]
 name = "solana-slot-history"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "bv",
  "serde",
@@ -5853,7 +5622,7 @@ dependencies = [
 [[package]]
 name = "solana-stable-layout"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "solana-instruction",
  "solana-pubkey",
@@ -5865,14 +5634,12 @@ version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5269e89fde216b4d7e1d1739cf5303f8398a1ff372a81232abbee80e554a838c"
 dependencies = [
- "borsh 0.10.4",
- "borsh 1.5.7",
  "num-traits",
  "serde",
  "serde_derive",
  "solana-clock",
  "solana-cpi 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-decode-error 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-decode-error",
  "solana-instruction",
  "solana-program-error 2.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-pubkey",
@@ -5941,7 +5708,7 @@ dependencies = [
  "num-traits",
  "serde",
  "serde_derive",
- "solana-decode-error 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-decode-error",
  "solana-instruction",
  "solana-pubkey",
 ]
@@ -5949,7 +5716,7 @@ dependencies = [
 [[package]]
 name = "solana-sysvar"
 version = "2.2.2"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "base64 0.22.1",
  "bincode",
@@ -5958,24 +5725,22 @@ dependencies = [
  "lazy_static",
  "serde",
  "serde_derive",
- "solana-account-info 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-account-info 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-clock",
- "solana-define-syscall 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-define-syscall 2.3.0 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-epoch-rewards",
- "solana-epoch-schedule 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-fee-calculator 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-epoch-schedule 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
+ "solana-fee-calculator 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-hash",
  "solana-instruction",
- "solana-instructions-sysvar 2.2.2 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
  "solana-last-restart-slot",
  "solana-program-entrypoint",
- "solana-program-error 2.2.2 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-program-memory 2.3.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-program-error 2.2.2 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
+ "solana-program-memory 2.3.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-pubkey",
- "solana-rent 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-sanitize 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-rent 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-sdk-ids",
- "solana-sdk-macro 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-sdk-macro 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-slot-hashes",
  "solana-slot-history",
  "solana-stake-interface",
@@ -5985,7 +5750,7 @@ dependencies = [
 [[package]]
 name = "solana-sysvar-id"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "solana-pubkey",
  "solana-sdk-ids",
@@ -6076,22 +5841,20 @@ dependencies = [
 [[package]]
 name = "solana-transaction"
 version = "2.2.3"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "bincode",
  "serde",
  "serde_derive",
- "solana-bincode",
  "solana-hash",
  "solana-instruction",
  "solana-message",
  "solana-pubkey",
- "solana-sanitize 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-sanitize 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-sdk-ids",
- "solana-short-vec 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-short-vec 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
  "solana-signature",
  "solana-signer",
- "solana-system-interface",
  "solana-transaction-error",
 ]
 
@@ -6115,12 +5878,12 @@ dependencies = [
 [[package]]
 name = "solana-transaction-error"
 version = "2.2.1"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
+source = "git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06#b14d647bebb78ee2f3295ba16729da9607579d06"
 dependencies = [
  "serde",
  "serde_derive",
- "solana-instruction",
- "solana-sanitize 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
+ "solana-instruction-error",
+ "solana-sanitize 2.2.1 (git+https://github.com/anza-xyz/solana-sdk?rev=b14d647bebb78ee2f3295ba16729da9607579d06)",
 ]
 
 [[package]]
@@ -6195,29 +5958,6 @@ dependencies = [
 
 [[package]]
 name = "solana-vote-interface"
-version = "2.2.5"
-source = "git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag#46ca4e22a312a418cbbf14296305f750ec122d9d"
-dependencies = [
- "bincode",
- "num-derive",
- "num-traits",
- "serde",
- "serde_derive",
- "solana-clock",
- "solana-decode-error 2.3.0 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-hash",
- "solana-instruction",
- "solana-pubkey",
- "solana-rent 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-sdk-ids",
- "solana-serde-varint 2.2.2 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-serialize-utils 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-short-vec 2.2.1 (git+https://github.com/dfinity/solana-sdk?tag=46ca4e2-js-feature-flag)",
- "solana-system-interface",
-]
-
-[[package]]
-name = "solana-vote-interface"
 version = "2.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b80d57478d6599d30acc31cc5ae7f93ec2361a06aefe8ea79bc81739a08af4c3"
@@ -6225,7 +5965,7 @@ dependencies = [
  "num-derive",
  "num-traits",
  "solana-clock",
- "solana-decode-error 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-decode-error",
  "solana-hash",
  "solana-instruction",
  "solana-pubkey",
@@ -6656,15 +6396,6 @@ dependencies = [
  "futures-sink",
  "pin-project-lite",
  "tokio",
-]
-
-[[package]]
-name = "toml"
-version = "0.5.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4f7f0dd8d50a853a531c426359045b1998f04219d88799810762cd4ad314234"
-dependencies = [
- "serde",
 ]
 
 [[package]]
