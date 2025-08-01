@@ -125,6 +125,10 @@ impl Setup {
             .unwrap_or_else(|err| panic!("Upgrade canister failed: {:?}", err));
     }
 
+    pub async fn get_canister_cycle_balance(&self) -> u128 {
+        self.env.cycle_balance(self.sol_rpc_canister_id).await
+    }
+
     pub async fn with_mock_api_keys(self) -> Self {
         let client = self.client().build();
         let providers = client.get_providers().await;
