@@ -3,10 +3,14 @@ mod tests;
 
 use crate::{
     metrics::Metrics,
+    providers::SupportedRpcProviderUsage,
     types::{ApiKey, OverrideProvider},
 };
 use candid::{Deserialize, Principal};
-use canhttp::http::json::{ConstantSizeId, Id};
+use canhttp::{
+    http::json::{ConstantSizeId, Id},
+    multi::Timestamp,
+};
 use canlog::LogFilter;
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
@@ -25,6 +29,7 @@ thread_local! {
     // Unstable static data: these are reset when the canister is upgraded.
     pub static UNSTABLE_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
     static UNSTABLE_HTTP_REQUEST_COUNTER: RefCell<ConstantSizeId> = const {RefCell::new(ConstantSizeId::ZERO)};
+    static UNSTABLE_RPC_SERVICE_OK_RESULTS_TIMESTAMPS: RefCell<SupportedRpcProviderUsage> = RefCell::new(SupportedRpcProviderUsage::default());
 
     // Stable static data: these are preserved when the canister is upgraded.
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
@@ -93,6 +98,8 @@ pub struct State {
     log_filter: LogFilter,
     mode: Mode,
     num_subnet_nodes: u32,
+    #[serde(default)]
+    base_http_outcall_fee: Option<u128>,
 }
 
 impl State {
@@ -144,7 +151,8 @@ impl State {
     }
 
     pub fn set_num_subnet_nodes(&mut self, num_subnet_nodes: u32) {
-        self.num_subnet_nodes = num_subnet_nodes
+        self.num_subnet_nodes = num_subnet_nodes;
+        self.base_http_outcall_fee = Some(compute_base_http_outcall_fee(num_subnet_nodes));
     }
 
     pub fn get_mode(&self) -> Mode {
@@ -158,17 +166,25 @@ impl State {
     pub fn set_mode(&mut self, mode: Mode) {
         self.mode = mode
     }
+
+    pub fn lazy_compute_base_http_outcall_fee(&mut self) -> u128 {
+        *self
+            .base_http_outcall_fee
+            .get_or_insert_with(|| compute_base_http_outcall_fee(self.num_subnet_nodes))
+    }
 }
 
 impl From<InstallArgs> for State {
     fn from(value: InstallArgs) -> Self {
+        let num_subnet_nodes = value.num_subnet_nodes.unwrap_or_default().into();
         Self {
             api_keys: Default::default(),
             api_key_principals: value.manage_api_keys.unwrap_or_default(),
             override_provider: value.override_provider.unwrap_or_default().into(),
             log_filter: value.log_filter.unwrap_or_default(),
             mode: value.mode.unwrap_or_default(),
-            num_subnet_nodes: value.num_subnet_nodes.unwrap_or_default().into(),
+            num_subnet_nodes,
+            base_http_outcall_fee: Some(compute_base_http_outcall_fee(num_subnet_nodes)),
         }
     }
 }
@@ -225,4 +241,24 @@ pub fn next_request_id() -> Id {
         let current_request_id = counter.get_and_increment();
         Id::from(current_request_id)
     })
+}
+
+pub fn record_ok_result(provider: SupportedRpcProviderId, now: Timestamp) {
+    UNSTABLE_RPC_SERVICE_OK_RESULTS_TIMESTAMPS
+        .with_borrow_mut(|access| access.record_evict(provider, now));
+}
+
+pub fn rank_providers(
+    providers: &[SupportedRpcProviderId],
+    now: Timestamp,
+) -> Vec<SupportedRpcProviderId> {
+    UNSTABLE_RPC_SERVICE_OK_RESULTS_TIMESTAMPS
+        .with_borrow_mut(|access| access.rank_ascending_evict(providers, now))
+}
+
+// See: https://internetcomputer.org/docs/references/cycles-cost-formulas#https-outcalls
+fn compute_base_http_outcall_fee(num_subnet_nodes: u32) -> u128 {
+    3_000_000_u128
+        .saturating_add(60_000_u128.saturating_mul(num_subnet_nodes as u128))
+        .saturating_mul(num_subnet_nodes as u128)
 }

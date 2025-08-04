@@ -1,15 +1,7 @@
-use crate::{
-    add_metric_entry,
-    metrics::MetricRpcMethod,
-    providers::get_provider,
-    rpc_client::{MultiRpcRequest, ReducedResult},
-    util::hostname_from_url,
-};
+use crate::{rpc_client::MultiRpcRequest, util::hostname_from_url};
 use canhttp::multi::ReductionError;
 use serde::{de::DeserializeOwned, Serialize};
-use sol_rpc_types::{
-    MultiRpcResult, RpcAccess, RpcAuth, RpcError, RpcSource, SupportedRpcProvider,
-};
+use sol_rpc_types::{MultiRpcResult, RpcAccess, RpcAuth, RpcError, SupportedRpcProvider};
 use std::fmt::Debug;
 
 pub async fn send_multi<Params, Output, Error>(
@@ -21,42 +13,17 @@ where
     Error: Into<RpcError>,
 {
     match request {
-        Ok(request) => {
-            let method = request.method().to_string();
-            let result = request.send_and_reduce().await;
-            process_result(method, result)
-        }
-        Err(e) => process_error(e),
-    }
-}
-
-fn process_result<T>(
-    method: impl Into<MetricRpcMethod>,
-    result: ReducedResult<T>,
-) -> MultiRpcResult<T> {
-    match result {
-        Ok(value) => MultiRpcResult::Consistent(Ok(value)),
-        Err(err) => match err {
-            ReductionError::ConsistentError(err) => MultiRpcResult::Consistent(Err(err)),
-            ReductionError::InconsistentResults(multi_call_results) => {
-                let results: Vec<_> = multi_call_results.into_iter().collect();
-                let method = method.into();
-                results.iter().for_each(|(source, _service_result)| {
-                    if let RpcSource::Supported(provider_id) = source {
-                        if let Some(provider) = get_provider(provider_id) {
-                            if let Some(host) = hostname(provider.clone()) {
-                                add_metric_entry!(
-                                    inconsistent_responses,
-                                    (method.clone(), host.into()),
-                                    1
-                                )
-                            }
-                        }
-                    }
-                });
-                MultiRpcResult::Inconsistent(results)
-            }
+        Ok(request) => match request.send_and_reduce().await {
+            Ok(value) => MultiRpcResult::Consistent(Ok(value)),
+            Err(err) => match err {
+                ReductionError::ConsistentError(err) => MultiRpcResult::Consistent(Err(err)),
+                ReductionError::InconsistentResults(multi_call_results) => {
+                    let results: Vec<_> = multi_call_results.into_iter().collect();
+                    MultiRpcResult::Inconsistent(results)
+                }
+            },
         },
+        Err(e) => process_error(e),
     }
 }
 

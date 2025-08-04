@@ -7,8 +7,8 @@ use sol_rpc_e2e_tests::Setup;
 use sol_rpc_types::Lamport;
 use solana_compute_budget_interface::ComputeBudgetInstruction;
 use solana_message::Message;
-use solana_program::system_instruction;
 use solana_pubkey::{pubkey, Pubkey};
+use solana_system_interface::instruction;
 use solana_transaction::Transaction;
 
 const FUNDING_AMOUNT: Lamport = 1_000_000_000;
@@ -188,7 +188,7 @@ impl CreateSolanaMessage for CreateMessageWithRecentBlockhash<'_> {
 
         // Send some SOL from sender to recipient
         let transfer_ix =
-            system_instruction::transfer(&sender_pubkey, &recipient_pubkey, TRANSACTION_AMOUNT);
+            instruction::transfer(&sender_pubkey, &recipient_pubkey, TRANSACTION_AMOUNT);
 
         // Fetch a recent blockhash
         let blockhash = client
@@ -218,7 +218,7 @@ impl CreateSolanaMessage for CreateMessageWithDurableNonce<'_> {
 
         // Instruction to advance nonce account; this instruction must be first.
         let advance_nonce_ix =
-            system_instruction::advance_nonce_account(&self.nonce_account, &sender_pubkey);
+            instruction::advance_nonce_account(&self.nonce_account, &sender_pubkey);
 
         // Set a CU limit for instructions to: perform a SOL transfer, advance the nonce account,
         // and set the CU price, and set the CU limit (150 CU x 4 = 600 CU)
@@ -233,7 +233,7 @@ impl CreateSolanaMessage for CreateMessageWithDurableNonce<'_> {
 
         // Send some SOL from sender to recipient
         let transfer_ix =
-            system_instruction::transfer(&sender_pubkey, &recipient_pubkey, TRANSACTION_AMOUNT);
+            instruction::transfer(&sender_pubkey, &recipient_pubkey, TRANSACTION_AMOUNT);
 
         // Fetch the current durable nonce value
         let account = client

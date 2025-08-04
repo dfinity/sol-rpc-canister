@@ -2,7 +2,7 @@
 
 use crate::{decode_call_response, encode_args};
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
-use ic_cdk::api::call::RejectionCode;
+use ic_error_types::RejectCode;
 use ic_management_canister_types::CanisterId;
 use regex::Regex;
 use serde::{de::DeserializeOwned, Deserialize};
@@ -42,7 +42,7 @@ pub struct CallResult {
 
 /// The cycles wallet canister formats the rejection code and error message from the target
 /// canister into a single string. Extract them back from the formatted string.
-pub fn decode_cycles_wallet_response<Out>(response: Vec<u8>) -> Result<Out, (RejectionCode, String)>
+pub fn decode_cycles_wallet_response<Out>(response: Vec<u8>) -> Result<Out, (RejectCode, String)>
 where
     Out: CandidType + DeserializeOwned,
 {
@@ -55,9 +55,12 @@ where
             {
                 Some(captures) => {
                     let (_, [code, message]) = captures.extract();
-                    Err((code.parse::<u32>().unwrap().into(), message.to_string()))
+                    Err((
+                        code.parse::<u64>().unwrap().try_into().unwrap(),
+                        message.to_string(),
+                    ))
                 }
-                None => Err((RejectionCode::Unknown, message)),
+                None => Err((RejectCode::SysFatal, message)),
             }
         }
     }

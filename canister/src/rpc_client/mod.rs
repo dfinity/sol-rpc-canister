@@ -5,17 +5,19 @@ mod sol_rpc;
 mod tests;
 
 use crate::{
+    add_metric_entry,
+    candid_rpc::hostname,
     http::{
         errors::HttpClientError, http_client, service_request_builder, ChargingPolicyWithCollateral,
     },
-    memory::{read_state, State},
+    memory::{read_state, record_ok_result, State},
     metrics::MetricRpcMethod,
-    providers::{request_builder, resolve_rpc_provider, Providers},
+    providers::{get_provider, request_builder, resolve_rpc_provider, Providers},
     rpc_client::sol_rpc::ResponseTransform,
 };
 use canhttp::{
     http::json::JsonRpcRequest,
-    multi::{MultiResults, Reduce, ReduceWithEquality, ReduceWithThreshold},
+    multi::{MultiResults, Reduce, ReduceWithEquality, ReduceWithThreshold, Timestamp},
     CyclesChargingPolicy, CyclesCostEstimator, MaxResponseBytesRequestExtension,
     TransformContextRequestExtension,
 };
@@ -95,9 +97,10 @@ impl GetAccountInfoRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(512 + HEADER_SIZE_LIMIT);
@@ -119,9 +122,10 @@ impl GetBalanceRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(256 + HEADER_SIZE_LIMIT);
@@ -146,10 +150,11 @@ impl GetBlockRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let params = params.into();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = Self::response_size_estimate(&params);
 
         Ok(MultiRpcRequest::new(
@@ -190,10 +195,11 @@ impl GetSignaturesForAddressRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let params = params.into();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or((params.get_limit() as u64 * 256) + HEADER_SIZE_LIMIT);
@@ -218,10 +224,11 @@ impl GetSignatureStatusesRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let params = params.into();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(128 + (params.num_signatures() as u64 * 256) + HEADER_SIZE_LIMIT);
@@ -243,9 +250,10 @@ impl GetSlotRequest {
         rpc_sources: RpcSources,
         config: GetSlotRpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(64 + HEADER_SIZE_LIMIT);
@@ -269,10 +277,11 @@ impl GetRecentPrioritizationFeesRequest {
         rpc_sources: RpcSources,
         config: GetRecentPrioritizationFeesRpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let max_length = config.max_length();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(8 * 1024 + HEADER_SIZE_LIMIT);
@@ -300,9 +309,10 @@ impl GetTokenAccountBalanceRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(256 + HEADER_SIZE_LIMIT);
@@ -327,9 +337,10 @@ impl GetTransactionRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(8 * 1024 + HEADER_SIZE_LIMIT);
@@ -351,9 +362,10 @@ impl SendTransactionRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         params: Params,
+        now: Timestamp,
     ) -> Result<Self, ProviderError> {
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(128 + HEADER_SIZE_LIMIT);
@@ -375,6 +387,7 @@ impl JsonRequest {
         rpc_sources: RpcSources,
         config: RpcConfig,
         json_rpc_payload: String,
+        now: Timestamp,
     ) -> RpcResult<Self> {
         let request: JsonRpcRequest<serde_json::Value> =
             match serde_json::from_str(&json_rpc_payload) {
@@ -386,7 +399,7 @@ impl JsonRequest {
                 }
             };
         let consensus_strategy = config.response_consensus.unwrap_or_default();
-        let providers = Providers::new(rpc_sources, consensus_strategy.clone())?;
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
         let max_response_bytes = config
             .response_size_estimate
             .unwrap_or(1024 + HEADER_SIZE_LIMIT);
@@ -407,8 +420,14 @@ impl<Params, Output> MultiRpcRequest<Params, Output> {
         Params: Serialize + Clone + Debug,
         Output: Debug + DeserializeOwned + PartialEq + Serialize,
     {
+        let method = MetricRpcMethod::from(self.request.method().to_string());
+
         let strategy = self.reduction_strategy.clone();
-        self.parallel_call().await.reduce(strategy)
+        let multi_results = self.parallel_call().await;
+
+        observe_inconsistent_results(method, &multi_results);
+
+        multi_results.reduce(strategy)
     }
 
     /// Query all providers in parallel and return all results.
@@ -435,6 +454,12 @@ impl<Params, Output> MultiRpcRequest<Params, Output> {
         let (requests, errors) = requests.into_inner();
         let (_client, mut results) = canhttp::multi::parallel_call(client, requests).await;
         results.add_errors(errors);
+        let now = Timestamp::from_nanos_since_unix_epoch(ic_cdk::api::time());
+        results
+            .ok_results()
+            .keys()
+            .filter_map(RpcSource::rpc_provider_id)
+            .for_each(|provider_id| record_ok_result(provider_id, now));
         assert_eq!(
             results.len(),
             num_providers,
@@ -552,3 +577,36 @@ impl<T: PartialEq + Serialize> Reduce<RpcSource, T, RpcError> for ReductionStrat
 
 pub type MultiCallResults<T> = MultiResults<RpcSource, T, RpcError>;
 pub type ReducedResult<T> = canhttp::multi::ReducedResult<RpcSource, T, RpcError>;
+
+fn observe_inconsistent_results<Output>(
+    method: MetricRpcMethod,
+    multi_results: &MultiCallResults<Output>,
+) where
+    Output: PartialEq,
+{
+    let relevant_results: Vec<_> = multi_results
+        .iter()
+        .filter(|(_source, result)| {
+            result.is_ok() || matches!(result, Err(RpcError::JsonRpcError(_)))
+        })
+        .collect();
+
+    if let Some((_source, first_result)) = relevant_results.first() {
+        if relevant_results
+            .iter()
+            .all(|(_source, other_result)| other_result == first_result)
+        {
+            return;
+        }
+    }
+
+    for (source, _result) in relevant_results {
+        if let RpcSource::Supported(provider_id) = source {
+            if let Some(provider) = get_provider(provider_id) {
+                if let Some(host) = hostname(provider.clone()) {
+                    add_metric_entry!(inconsistent_responses, (method.clone(), host.into()), 1);
+                }
+            }
+        }
+    }
+}

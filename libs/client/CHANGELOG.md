@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-07-31
+
+### Added
+
+- Add `try_send` method to SOL RPC client ([#187](https://github.com/dfinity/sol-rpc-canister/pull/187))
+
+### Changed
+
+- Migrate dependencies to `solana-sdk` repository ([#55](https://github.com/dfinity/sol-rpc-canister/pull/55))
+- Enable `ed25519` feature in docs ([#162](https://github.com/dfinity/sol-rpc-canister/pull/162))
+
+### Fixed
+
+- Use correct fee for t-sig with local development key ([#160](https://github.com/dfinity/sol-rpc-canister/pull/160))
+
 ## [1.0.0] - 2025-06-13
 
 ### Added

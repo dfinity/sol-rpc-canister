@@ -14,7 +14,7 @@
           "name": "candid:service"
         }
       ],
-      "init_arg": "( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { LocalDevelopment }; sol_rpc_canister_id = opt principal \"tghme-zyaaa-aaaar-qarca-cai\" } )"
+      "init_arg": "( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { MainnetTestKey1 }; sol_rpc_canister_id = opt principal \"tghme-zyaaa-aaaar-qarca-cai\" } )"
     },
     "sol_rpc": {
       "candid": "https://github.com/dfinity/sol-rpc-canister/releases/download/v1.0.0/sol_rpc_canister.did",
@@ -26,8 +26,7 @@
         }
       },
       "wasm": "https://github.com/dfinity/sol-rpc-canister/releases/download/v1.0.0/sol_rpc_canister.wasm.gz",
-      "init_arg": "( record { manageApiKeys = null; overrideProvider = opt record { overrideUrl = opt record { pattern = \".*\"; replacement = \"https://api.devnet.solana.com\" } }; logFilter = opt variant { ShowAll }; numSubnetNodes = null; mode = opt variant { Demo }; } )",
-      "post_install": "./provision.sh"
+      "init_arg": "( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { MainnetTestKey1 }; sol_rpc_canister_id = opt principal \"tghme-zyaaa-aaaar-qarca-cai\" } )"
     }
   },
   "output_env_file": ".env"

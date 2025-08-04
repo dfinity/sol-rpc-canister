@@ -3,7 +3,7 @@ use assert_matches::*;
 use candid::CandidType;
 use canhttp::http::json::{ConstantSizeId, Id};
 use const_format::formatcp;
-use ic_cdk::api::management_canister::http_request::HttpHeader;
+use ic_cdk::api::{call::RejectionCode, management_canister::http_request::HttpHeader};
 use pocket_ic::common::rest::CanisterHttpMethod;
 use serde::de::DeserializeOwned;
 use serde_json::json;
@@ -13,10 +13,11 @@ use sol_rpc_int_tests::{
     mock::MockOutcallBuilder, PocketIcRuntime, Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID,
 };
 use sol_rpc_types::{
-    CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetSignaturesForAddressLimit,
-    GetSlotParams, InstallArgs, InstructionError, Mode, ProviderError, RpcAccess, RpcAuth,
-    RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot, SolanaCluster,
-    SupportedRpcProvider, SupportedRpcProviderId, TransactionError,
+    CommitmentLevel, ConfirmedTransactionStatusWithSignature, ConsensusStrategy,
+    GetSignaturesForAddressLimit, GetSlotParams, InstallArgs, InstructionError, Mode,
+    MultiRpcResult, ProviderError, RpcAccess, RpcAuth, RpcEndpoint, RpcError, RpcResult, RpcSource,
+    RpcSources, Slot, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    TransactionDetails, TransactionError,
 };
 use solana_account_decoder_client_types::{
     token::UiTokenAmount, UiAccount, UiAccountData, UiAccountEncoding,
@@ -36,6 +37,8 @@ const MOCK_RESPONSE: &str = formatcp!(
 const MOCK_REQUEST_MAX_RESPONSE_BYTES: u64 = 1000;
 const USDC_PUBLIC_KEY: solana_pubkey::Pubkey =
     pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+// See: https://internetcomputer.org/docs/references/cycles-cost-formulas#https-outcalls
+const HTTP_OUTCALL_BASE_FEE: u128 = (3_000_000 + 60_000 * 34) * 34;
 
 mod mock_request_tests {
     use super::*;
@@ -1181,27 +1184,128 @@ mod generic_request_tests {
     use super::*;
 
     #[tokio::test]
-    async fn request_should_require_cycles() {
+    async fn should_require_base_http_outcall_fee() {
+        async fn check<Config, Params, CandidOutput, Output>(
+            request: RequestBuilder<PocketIcRuntime<'_>, Config, Params, CandidOutput, Output>,
+        ) where
+            Config: CandidType + Clone + Send,
+            Params: CandidType + Clone + Send,
+            CandidOutput: Into<Output> + CandidType + DeserializeOwned,
+        {
+            let result = request
+                .with_cycles(HTTP_OUTCALL_BASE_FEE - 1)
+                .try_send()
+                .await;
+            assert!(result.is_err_and(|(_code, message)| message.contains("Not enough cycles")));
+        }
+
         let setup = Setup::new().await.with_mock_api_keys().await;
         let client = setup.client().build();
 
-        let results = client
-            .json_request(get_version_request())
-            .with_cycles(0)
-            .send()
-            .await
-            // The result is expected to be inconsistent because the different provider URLs means
-            // the request and hence expected number of cycles for each provider is different.
-            .expect_inconsistent();
+        for endpoint in SolRpcEndpoint::iter() {
+            match endpoint {
+                SolRpcEndpoint::GetSlot => {
+                    check(client.get_slot()).await;
+                }
+                SolRpcEndpoint::GetAccountInfo => {
+                    check(client.get_account_info(USDC_PUBLIC_KEY)).await;
+                }
+                SolRpcEndpoint::GetBalance => {
+                    check(client.get_balance(USDC_PUBLIC_KEY)).await;
+                }
+                SolRpcEndpoint::GetBlock => {
+                    check(client.get_block(577996)).await;
+                }
+                SolRpcEndpoint::GetRecentPrioritizationFees => {
+                    check(client.get_recent_prioritization_fees(&[]).unwrap()).await;
+                }
+                SolRpcEndpoint::GetSignaturesForAddress => {
+                    check(client.get_signatures_for_address(USDC_PUBLIC_KEY)).await;
+                }
+                SolRpcEndpoint::GetSignatureStatuses => {
+                    check(client.get_signature_statuses(&[some_signature()]).unwrap()).await;
+                }
+                SolRpcEndpoint::GetTokenAccountBalance => {
+                    check(client.get_token_account_balance(USDC_PUBLIC_KEY)).await;
+                }
+                SolRpcEndpoint::GetTransaction => {
+                    check(client.get_transaction(some_signature())).await;
+                }
+                SolRpcEndpoint::JsonRequest => {
+                    check(client.json_request(get_version_request())).await;
+                }
+                SolRpcEndpoint::SendTransaction => {
+                    check(client.send_transaction(some_transaction())).await;
+                }
+            }
+        }
 
-        for (_provider, result) in results {
-            assert_matches!(
-                result,
-                Err(RpcError::ProviderError(ProviderError::TooFewCycles {
-                    expected: _,
-                    received: 0
-                }))
-            );
+        setup.drop().await;
+    }
+
+    #[tokio::test]
+    async fn should_not_require_cycles_in_demo_mode() {
+        async fn check<Config, Params, CandidOutput, Output>(
+            request: RequestBuilder<PocketIcRuntime<'_>, Config, Params, CandidOutput, Output>,
+        ) where
+            Config: CandidType + Clone + Send,
+            Params: CandidType + Clone + Send,
+            CandidOutput: Into<Output> + CandidType + DeserializeOwned,
+        {
+            let result = request.with_cycles(0).try_send().await;
+            assert!(result.is_ok());
+        }
+
+        let setup = Setup::new().await.with_mock_api_keys().await;
+        setup
+            .upgrade_canister(InstallArgs {
+                mode: Some(Mode::Demo),
+                ..Default::default()
+            })
+            .await;
+        let client = setup
+            .client()
+            // We always return a dummy response so that individual responses
+            // do not need to be mocked.
+            .mock_http(MockOutcallBuilder::new(403, json!({})))
+            .build();
+
+        for endpoint in SolRpcEndpoint::iter() {
+            match endpoint {
+                SolRpcEndpoint::GetSlot => {
+                    check(client.get_slot()).await;
+                }
+                SolRpcEndpoint::GetAccountInfo => {
+                    check(client.get_account_info(USDC_PUBLIC_KEY)).await;
+                }
+                SolRpcEndpoint::GetBalance => {
+                    check(client.get_balance(USDC_PUBLIC_KEY)).await;
+                }
+                SolRpcEndpoint::GetBlock => {
+                    check(client.get_block(577996)).await;
+                }
+                SolRpcEndpoint::GetRecentPrioritizationFees => {
+                    check(client.get_recent_prioritization_fees(&[]).unwrap()).await;
+                }
+                SolRpcEndpoint::GetSignaturesForAddress => {
+                    check(client.get_signatures_for_address(USDC_PUBLIC_KEY)).await;
+                }
+                SolRpcEndpoint::GetSignatureStatuses => {
+                    check(client.get_signature_statuses(&[some_signature()]).unwrap()).await;
+                }
+                SolRpcEndpoint::GetTokenAccountBalance => {
+                    check(client.get_token_account_balance(USDC_PUBLIC_KEY)).await;
+                }
+                SolRpcEndpoint::GetTransaction => {
+                    check(client.get_transaction(some_signature())).await;
+                }
+                SolRpcEndpoint::JsonRequest => {
+                    check(client.json_request(get_version_request())).await;
+                }
+                SolRpcEndpoint::SendTransaction => {
+                    check(client.send_transaction(some_transaction())).await;
+                }
+            }
         }
 
         setup.drop().await;
@@ -1453,7 +1557,6 @@ fn rpc_sources() -> Vec<RpcSources> {
 
 mod cycles_cost_tests {
     use super::*;
-    use sol_rpc_types::TransactionDetails;
 
     #[tokio::test]
     async fn should_be_idempotent() {
@@ -1475,7 +1578,7 @@ mod cycles_cost_tests {
         for endpoint in SolRpcEndpoint::iter() {
             match endpoint {
                 SolRpcEndpoint::GetSlot => {
-                    check(client.get_slot().with_params(GetSlotParams::default())).await;
+                    check(client.get_slot()).await;
                 }
                 SolRpcEndpoint::JsonRequest => {
                     check(client.json_request(get_version_request())).await;
@@ -1537,7 +1640,7 @@ mod cycles_cost_tests {
         for endpoint in SolRpcEndpoint::iter() {
             match endpoint {
                 SolRpcEndpoint::GetSlot => {
-                    check(client.get_slot().with_params(GetSlotParams::default())).await;
+                    check(client.get_slot()).await;
                 }
                 SolRpcEndpoint::GetAccountInfo => {
                     check(client.get_account_info(USDC_PUBLIC_KEY)).await;
@@ -1704,12 +1807,7 @@ mod cycles_cost_tests {
                     .await;
                 }
                 SolRpcEndpoint::GetSlot => {
-                    check(
-                        &setup,
-                        client.get_slot().with_params(GetSlotParams::default()),
-                        1_714_103_200,
-                    )
-                    .await;
+                    check(&setup, client.get_slot(), 1_714_103_200).await;
                 }
                 SolRpcEndpoint::GetTokenAccountBalance => {
                     check(
@@ -2110,36 +2208,121 @@ mod metrics_tests {
     #[tokio::test]
     async fn should_retrieve_metrics() {
         let setup = Setup::new().await.with_mock_api_keys().await;
-        let client = setup.client().with_rpc_sources(RpcSources::Custom(vec![
-            RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
-            RpcSource::Supported(SupportedRpcProviderId::HeliusMainnet),
-            RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
-        ]));
+        let client = setup
+            .client()
+            .with_consensus_strategy(ConsensusStrategy::Threshold {
+                total: Some(6),
+                min: 2,
+            })
+            .with_rpc_sources(RpcSources::Custom(vec![
+                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::AnkrMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::ChainstackMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::HeliusMainnet),
+                RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
+            ]));
 
         let client = client
-            .mock_sequential_json_rpc_responses::<3>(
-                200,
-                json!({
-                    "id": Id::from(ConstantSizeId::ZERO),
-                    "jsonrpc": "2.0",
-                    "result": 1_450_315,
-                }),
-            )
+            .mock_http_sequence(vec![
+                MockOutcallBuilder::new(
+                    200,
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(0_u8)),
+                        "jsonrpc": "2.0",
+                        "result": 1_450_305,
+                    }),
+                ),
+                MockOutcallBuilder::new(
+                    200,
+                    json!({
+                        "id": Id::from(ConstantSizeId::from(1_u8)),
+                        "jsonrpc": "2.0",
+                        "result": 1_450_305,
+                    }),
+                ),
+                MockOutcallBuilder::new(
+                    200,
+                    json!({
+                      "jsonrpc": "2.0",
+                      "error": {
+                          "code": -32603,
+                          "message": "Internal error: failed to get slot: Node is behind",
+                          "data": null
+                      },
+                      "id": Id::from(ConstantSizeId::from(2_u8)),
+                    }),
+                ),
+                MockOutcallBuilder::new(429, json!({})),
+                MockOutcallBuilder::new(500, json!({})),
+                MockOutcallBuilder::new_error(RejectionCode::SysFatal, "Fatal error!"),
+            ])
             .build();
 
-        let result = client.get_slot().send().await.expect_consistent();
-
-        assert!(result.is_ok());
+        let result = client.get_slot().send().await;
+        assert_eq!(result, MultiRpcResult::Consistent(Ok(1_450_300)));
 
         setup
             .check_metrics()
             .await
+            // `solrpc_requests` counters
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-mainnet.g.alchemy.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="rpc.ankr.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-mainnet.core.chainstack.com"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="lb.drpc.org"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="mainnet.helius-rpc.com"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-rpc.publicnode.com"\} 1 \d+"#)
-            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="lb.drpc.org",status="200"\} 1 \d+"#)
-            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="mainnet.helius-rpc.com",status="200"\} 1 \d+"#)
-            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-rpc.publicnode.com",status="200"\} 1 \d+"#);
+            // `solrpc_responses` counters: success
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-mainnet.g.alchemy.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="rpc.ankr.com"\} 1 \d+"#)
+            // `solrpc_responses` counters: JSON-RPC error
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-mainnet.core.chainstack.com",error="json-rpc"\} 1 \d+"#)
+            // `solrpc_responses` counters: HTTP error
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="lb.drpc.org",error="http",status="429"\} .*"#)
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="mainnet.helius-rpc.com",error="http",status="500"\} .*"#)
+            // `solrpc_responses` counters: IC error
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-rpc.publicnode.com",error="ic",code="SYS_FATAL"\} .*"#)
+            // `solrpc_latencies` latency histograms
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="solana-mainnet.g.alchemy.com",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="rpc.ankr.com",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="solana-mainnet.core.chainstack.com",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="lb.drpc.org",le="\d+"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="mainnet.helius-rpc.com",le="\d+"\} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_latencies\{method="getSlot",host="solana-rpc.publicnode.com",le="\d+"\} 1 \d+"#)
+            // `solrpc_inconsistent_responses` counters: inconsistent results
+            .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="solana-mainnet.g.alchemy.com"} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="rpc.ankr.com"} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="solana-mainnet.core.chainstack.com"} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="lb.drpc.org"} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="mainnet.helius-rpc.com"} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="solana-rpc.publicnode.com"} 1 \d+"#);
+    }
+
+    #[tokio::test]
+    async fn should_not_record_metrics_when_not_enough_cycles() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+        let client = setup.client().build();
+
+        // Send a small enough amount that all outcalls fail due to insufficient cycles, but enough
+        // so that all requests have at least the base HTTP outcall fee
+        let result = client
+            .get_slot()
+            .with_cycles(550_000_000)
+            .send()
+            .await
+            .expect_inconsistent();
+        assert!(result.iter().all(|(_source, e)| matches!(
+            e,
+            Err(RpcError::ProviderError(ProviderError::TooFewCycles { .. }))
+        )));
+
+        setup
+            .check_metrics()
+            .await
+            .assert_does_not_contain_metric_matching(r#"solrpc_requests.*"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_responses.*"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_latencies_bucket.*"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses.*"#);
     }
 }
 
@@ -2175,6 +2358,86 @@ async fn should_log_request_and_response() {
 
     assert_eq!(logs[0].message, "JSON-RPC request with id `00000000000000000000` to solana-mainnet.g.alchemy.com: JsonRpcRequest { jsonrpc: V2, method: \"getSlot\", id: String(\"00000000000000000000\"), params: Some(GetSlotParams(None)) }");
     assert_eq!(logs[1].message, "Got response for request with id `00000000000000000000`. Response with status 200 OK: JsonRpcResponse { jsonrpc: V2, id: String(\"00000000000000000000\"), result: Ok(1234) }");
+
+    setup.drop().await;
+}
+
+#[tokio::test]
+async fn should_change_default_providers_when_one_keeps_failing() {
+    fn request_body(id: u8) -> serde_json::Value {
+        let id = ConstantSizeId::from(id).to_string();
+        json!({ "jsonrpc": "2.0", "id": id, "method": "getSlot", "params": [null] })
+    }
+
+    fn response_body(id: u8) -> serde_json::Value {
+        let id = ConstantSizeId::from(id).to_string();
+        json!({ "id": id, "jsonrpc": "2.0", "result": 1200, })
+    }
+    let setup = Setup::new().await.with_mock_api_keys().await;
+
+    let client = setup.client();
+    let slot = client
+        .with_consensus_strategy(ConsensusStrategy::Threshold {
+            min: 2,
+            total: Some(3),
+        })
+        .mock_http_sequence(vec![
+            MockOutcallBuilder::new(200, response_body(0))
+                .with_request_body(request_body(0))
+                .with_host("solana-mainnet.g.alchemy.com"),
+            MockOutcallBuilder::new(500, "error")
+                .with_request_body(request_body(1))
+                .with_host("lb.drpc.org"),
+            MockOutcallBuilder::new(200, response_body(2))
+                .with_request_body(request_body(2))
+                .with_host("mainnet.helius-rpc.com"),
+        ])
+        .build()
+        .get_slot()
+        .send()
+        .await
+        .expect_consistent();
+    assert_eq!(slot, Ok(1200));
+
+    let client = setup.client();
+    let slot = client
+        .with_consensus_strategy(ConsensusStrategy::Equality)
+        .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Supported(
+            SupportedRpcProviderId::AnkrMainnet,
+        )]))
+        .mock_http_sequence(vec![MockOutcallBuilder::new(200, response_body(3))
+            .with_request_body(request_body(3))
+            .with_host("rpc.ankr.com")])
+        .build()
+        .get_slot()
+        .send()
+        .await
+        .expect_consistent();
+    assert_eq!(slot, Ok(1200));
+
+    let client = setup.client();
+    let slot = client
+        .with_consensus_strategy(ConsensusStrategy::Threshold {
+            min: 3,
+            total: Some(3),
+        })
+        .mock_http_sequence(vec![
+            MockOutcallBuilder::new(200, response_body(4))
+                .with_request_body(request_body(4))
+                .with_host("solana-mainnet.g.alchemy.com"),
+            MockOutcallBuilder::new(200, response_body(5))
+                .with_request_body(request_body(5))
+                .with_host("rpc.ankr.com"),
+            MockOutcallBuilder::new(200, response_body(6))
+                .with_request_body(request_body(6))
+                .with_host("mainnet.helius-rpc.com"),
+        ])
+        .build()
+        .get_slot()
+        .send()
+        .await
+        .expect_consistent();
+    assert_eq!(slot, Ok(1200));
 
     setup.drop().await;
 }

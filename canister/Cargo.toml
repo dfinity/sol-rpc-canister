@@ -1,6 +1,6 @@
 [package]
 name = "sol_rpc_canister"
-version = "1.0.0"
+version = "1.1.0"
 description = "Interact with the Solana blockchain from the Internet Computer."
 authors.workspace = true
 edition.workspace = true
@@ -30,6 +30,7 @@ derive_more = { workspace = true }
 hex = { workspace = true }
 http = { workspace = true }
 ic-cdk = { workspace = true }
+ic-error-types = { workspace = true }
 ic-http-types = { workspace = true }
 ic-metrics-encoder = { workspace = true }
 ic-stable-structures = { workspace = true }
