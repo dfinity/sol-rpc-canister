@@ -62,7 +62,7 @@ def main():
         expected = resolve_spec(basic_solana_spec, workspace_deps, name)
         actual = ninja_deps[name]
         if expected != actual:
-            error_messages.add(f"'{name}' mismatch - expected: '{expected}', actual: '{actual}'")
+            error_messages.add(f"'{name}' version mismatch - expected: '{expected}', actual: '{actual}'")
 
     # Check patches match
     root_patches = set(workspace.get('patch', {}).get('crates-io', {}).keys())
