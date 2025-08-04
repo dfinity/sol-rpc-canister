@@ -43,37 +43,37 @@ def main():
     ninja_deps = ninja.get('dependencies', {})
     workspace_deps = workspace.get('workspace', {}).get('dependencies', {})
 
+    error_messages = set()
+
     # Check dependency lists match
     if set(basic_solana_deps.keys()) != set(ninja_deps.keys()):
-        missing = set(basic_solana_deps.keys()) - set(ninja_deps.keys())
-        extra = set(ninja_deps.keys()) - set(basic_solana_deps.keys())
-
-        print("ERROR: Dependencies don't match")
-        if missing:
-            print(f"Missing dependencies: {sorted(missing)}")
-        if extra:
-            print(f"Unknown dependencies: {sorted(extra)}")
-        sys.exit(1)
+        if missing := set(basic_solana_deps.keys()) - set(ninja_deps.keys()):
+            error_messages.add(f"Missing dependencies: {sorted(missing)}")
+        if extra := set(ninja_deps.keys()) - set(basic_solana_deps.keys()):
+            error_messages.add(f"Unknown dependencies: {sorted(extra)}")
 
     # Check no workspace/path deps in ninja
     for name, spec in ninja_deps.items():
         if isinstance(spec, dict) and ('workspace' in spec or 'path' in spec):
-            print(f"ERROR: {name} not resolved in ninja")
-            sys.exit(1)
+            error_messages.add(f"'{name}' version is not resolved")
 
     # Check all dependencies are correctly resolved
     for name, basic_solana_spec in basic_solana_deps.items():
         expected = resolve_spec(basic_solana_spec, workspace_deps, name)
         actual = ninja_deps[name]
         if expected != actual:
-            print(f"ERROR: {name} mismatch - expected: {expected}, actual: {actual}")
-            sys.exit(1)
+            error_messages.add(f"'{name}' mismatch - expected: '{expected}', actual: '{actual}'")
 
     # Check patches match
     root_patches = set(workspace.get('patch', {}).get('crates-io', {}).keys())
     ninja_patches = set(ninja.get('patch', {}).get('crates-io', {}).keys())
     if not root_patches.issubset(ninja_patches):
-        print(f"ERROR: Missing patches: {root_patches - ninja_patches}")
+        error_messages.add(f"Missing patches: {root_patches - ninja_patches}")
+
+    if error_messages:
+        print("ERROR: Some errors were found in 'examples/basic_solana/ninja/Cargo.toml':")
+        for error_message in error_messages:
+            print(f"\t* {error_message}")
         sys.exit(1)
 
     print("OK: 'examples/basic_solana/ninja/Cargo.toml' is valid")
