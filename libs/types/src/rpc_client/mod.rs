@@ -256,8 +256,8 @@ pub enum ConsensusStrategy {
     /// A subset of providers must return the same non-error result.
     Threshold {
         /// Total number of providers to be queried:
-        /// * If `None`, will be set to the number of providers manually specified in `RpcServices`.
-        /// * If `Some`, must correspond to the number of manually specified providers in `RpcServices`;
+        /// * If `None`, will be set to the number of providers manually specified in `RpcSources`.
+        /// * If `Some`, must correspond to the number of manually specified providers in `RpcSources`;
         ///   or if they are none indicating that default providers should be used, select the corresponding number of providers.
         total: Option<u8>,
 
