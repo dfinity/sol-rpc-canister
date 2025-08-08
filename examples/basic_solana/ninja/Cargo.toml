@@ -9,8 +9,8 @@ name = "basic_solana"
 path = "src/main.rs"
 
 [dependencies]
-bs58 = "0.5.0"
-candid = "0.10.13"
+bs58 = "0.5.1"
+candid = "0.10.14"
 # Transitive dependency
 # See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
 getrandom = { version = "*", default-features = false, features = ["custom"] }
