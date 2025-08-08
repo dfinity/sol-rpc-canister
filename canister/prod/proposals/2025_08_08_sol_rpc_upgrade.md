@@ -15,8 +15,14 @@ Previous SOL RPC proposal: https://dashboard.internetcomputer.org/proposal/13698
 ---
 
 ## Motivation
-TODO: THIS MUST BE FILLED OUT
 
+Upgrade the SOL RPC canister to the latest version [v1.1.0](https://github.com/dfinity/sol-rpc-canister/releases/tag/sol_rpc_canister-v1.1.0),
+which includes in particular the following changes:
+* Add more metrics.
+* Require HTTP outcall base fee for update calls.
+* Select supported providers based on successful responses.
+
+See the Gihub release [v1.1.0](https://github.com/dfinity/sol-rpc-canister/releases/tag/sol_rpc_canister-v1.1.0) for more details.
 
 ## Release Notes
 
