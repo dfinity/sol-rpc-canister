@@ -1,5 +1,6 @@
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
+use solana_transaction_status_client_types::UiTransactionError;
 
 /// Represents errors that can occur during the processing of a Solana transaction.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
@@ -292,6 +293,18 @@ impl From<TransactionError> for solana_transaction_error::TransactionError {
                 solana_transaction_error::TransactionError::CommitCancelled
             }
         }
+    }
+}
+
+impl From<UiTransactionError> for TransactionError {
+    fn from(error: UiTransactionError) -> Self {
+        TransactionError::from(solana_transaction_error::TransactionError::from(error))
+    }
+}
+
+impl From<TransactionError> for UiTransactionError {
+    fn from(error: TransactionError) -> Self {
+        UiTransactionError::from(solana_transaction_error::TransactionError::from(error))
     }
 }
 

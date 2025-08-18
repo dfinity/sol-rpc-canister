@@ -60,8 +60,8 @@ serde_bytes = "0.11.17"
 serde_json = "1.0.141"
 serde_with = "3.14.0"
 solana-account = "3.0.0"
-solana-account-decoder-client-types = "=2.3.7" # TODO: Patch agave?
-solana-client = "=2.3.7" # TODO: Patch agave?
+solana-account-decoder-client-types = "3.0.0"
+solana-client = "3.0.0"
 solana-clock = "3.0.0"
 solana-commitment-config = "3.0.0"
 solana-compute-budget-interface = "3.0.0"
@@ -73,15 +73,15 @@ solana-nonce = "3.0.0"
 solana-program = "3.0.0"
 solana-pubkey = "3.0.0"
 solana-reward-info = "3.0.0"
-solana-rpc-client-api = "=2.3.7" # TODO: Patch agave?
-solana-rpc-client-nonce-utils = "=2.3.7" # TODO: Patch agave?
+solana-rpc-client-api = "3.0.0"
+solana-rpc-client-nonce-utils = "3.0.0"
 solana-sdk-ids = "3.0.0"
 solana-signature = "3.1.0"
 solana-signer = "3.0.0"
 solana-system-interface = "2.0.0"
 solana-transaction = "3.0.0"
 solana-transaction-error = "3.0.0"
-solana-transaction-status-client-types = "=2.3.7" # TODO: Patch agave?
+solana-transaction-status-client-types = "3.0.0"
 strum = { version = "0.27.2", features = ["derive"] }
 thiserror = "2.0.12"
 tokio = "1.47.0"
@@ -99,3 +99,10 @@ opt-level = 's'
 # Required by `ic-test-utilities-load-wasm`
 [profile.canister-release]
 inherits = "release"
+
+[patch.crates-io]
+solana-account-decoder-client-types = { git = "https://github.com/dfinity/agave", rev = "06464c5d5962af743e357068278f24f30f753598" }
+solana-client = { git = "https://github.com/dfinity/agave", rev = "06464c5d5962af743e357068278f24f30f753598" }
+solana-rpc-client-api = { git = "https://github.com/dfinity/agave", rev = "06464c5d5962af743e357068278f24f30f753598" }
+solana-rpc-client-nonce-utils = { git = "https://github.com/dfinity/agave", rev = "06464c5d5962af743e357068278f24f30f753598" }
+solana-transaction-status-client-types = { git = "https://github.com/dfinity/agave", rev = "06464c5d5962af743e357068278f24f30f753598" }

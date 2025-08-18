@@ -66,7 +66,7 @@ pub enum RewardType {
 }
 
 impl From<solana_reward_info::RewardType> for RewardType {
-    fn from(reward_type: solana_transaction_status_client_types::RewardType) -> Self {
+    fn from(reward_type: solana_reward_info::RewardType) -> Self {
         match reward_type {
             solana_reward_info::RewardType::Fee => Self::Fee,
             solana_reward_info::RewardType::Rent => Self::Rent,

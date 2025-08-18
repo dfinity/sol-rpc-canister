@@ -13,8 +13,8 @@ use reward::Reward;
 use serde::Serialize;
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_transaction_status_client_types::{
-    option_serializer::OptionSerializer, UiReturnDataEncoding, UiTransactionReturnData,
-    UiTransactionStatusMeta,
+    option_serializer::OptionSerializer, UiReturnDataEncoding, UiTransactionError,
+    UiTransactionReturnData, UiTransactionStatusMeta,
 };
 
 /// Solana [transaction](https://solana.com/docs/references/terminology#transaction) information
@@ -288,7 +288,7 @@ pub struct TransactionStatusMeta {
 
 impl From<TransactionStatusMeta> for UiTransactionStatusMeta {
     fn from(meta: TransactionStatusMeta) -> Self {
-        let status = meta.status.map_err(Into::into);
+        let status = meta.status.map_err(UiTransactionError::from);
         Self {
             err: status.clone().err(),
             status,
@@ -330,7 +330,7 @@ impl TryFrom<UiTransactionStatusMeta> for TransactionStatusMeta {
 
     fn try_from(meta: UiTransactionStatusMeta) -> Result<Self, Self::Error> {
         Ok(Self {
-            status: meta.status.map_err(Into::into),
+            status: meta.status.map_err(TransactionError::from),
             fee: meta.fee,
             pre_balances: meta.pre_balances,
             post_balances: meta.post_balances,
