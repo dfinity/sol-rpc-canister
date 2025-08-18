@@ -33,7 +33,7 @@ derive_more = { version = "2.0.1", features = ["from", "into"] }
 futures = "0.3.31"
 # Transitive dependency
 # See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
-getrandom = { version = "*", default-features = false, features = ["custom"] }
+getrandom = { version = "*", features = ["custom"] }
 hex = "0.4.3"
 http = "1.3.1"
 ic-agent = "0.40.1"
@@ -75,6 +75,8 @@ solana-pubkey = "3.0.0"
 solana-reward-info = "3.0.0"
 solana-rpc-client-api = "3.0.0"
 solana-rpc-client-nonce-utils = "3.0.0"
+# Transitive dependency of solana-transaction-status-client-types
+solana-sbpf = { version = "*", default-features = false, features = [] }
 solana-sdk-ids = "3.0.0"
 solana-signature = "3.1.0"
 solana-signer = "3.0.0"
@@ -101,8 +103,8 @@ opt-level = 's'
 inherits = "release"
 
 [patch.crates-io]
-solana-account-decoder-client-types = { git = "https://github.com/dfinity/agave", rev = "06464c5d5962af743e357068278f24f30f753598" }
-solana-client = { git = "https://github.com/dfinity/agave", rev = "06464c5d5962af743e357068278f24f30f753598" }
-solana-rpc-client-api = { git = "https://github.com/dfinity/agave", rev = "06464c5d5962af743e357068278f24f30f753598" }
-solana-rpc-client-nonce-utils = { git = "https://github.com/dfinity/agave", rev = "06464c5d5962af743e357068278f24f30f753598" }
-solana-transaction-status-client-types = { git = "https://github.com/dfinity/agave", rev = "06464c5d5962af743e357068278f24f30f753598" }
+solana-account-decoder-client-types = { git = "https://github.com/dfinity/agave", rev = "a34f5009aff8695c9a9ea402589b2863fa068329" }
+solana-client = { git = "https://github.com/dfinity/agave", rev = "a34f5009aff8695c9a9ea402589b2863fa068329" }
+solana-rpc-client-api = { git = "https://github.com/dfinity/agave", rev = "a34f5009aff8695c9a9ea402589b2863fa068329" }
+solana-rpc-client-nonce-utils = { git = "https://github.com/dfinity/agave", rev = "a34f5009aff8695c9a9ea402589b2863fa068329" }
+solana-transaction-status-client-types = { git = "https://github.com/dfinity/agave", rev = "a34f5009aff8695c9a9ea402589b2863fa068329" }
