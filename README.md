@@ -173,6 +173,15 @@ dfx start --background
 dfx deploy sol_rpc
 ```
 
+### Deploying from ICP Ninja
+
+To deploy the SOL RPC canister together with an example Solana wallet smart contract using ICP Ninja, click on the following link:
+
+[![](https://icp.ninja/assets/open.svg)](https://icp.ninja/editor?g=https://github.com/dfinity/sol-rpc-canister/tree/main/examples/basic_solana/ninja)
+
+> [!TIP]
+> If you download the project from ICP Ninja to deploy it locally, you will need to change the `init_arg` for the `basic_solana` canister in the `dfx.json` file. Specifically, you will need to change `ed25519_key_name = opt variant { MainnetTestKey1 }` to `ed25519_key_name = opt variant { LocalDevelopment }`. To learn more about the initialization arguments, see the `InitArg` type in [`basic_solana.did`](basic_solana.did).
+
 ## Limitations
 
 The SOL RPC canister reaches the Solana JSON-RPC providers using [HTTPS outcalls](https://internetcomputer.org/https-outcalls) and are therefore subject to the following limitations:
