@@ -75,7 +75,7 @@ impl Ed25519KeyId {
 /// use candid::Principal;
 /// use solana_hash::Hash;
 /// use solana_message::legacy::Message;
-/// use solana_program::system_instruction::transfer;
+/// use solana_system_interface::instruction::transfer;
 /// use solana_pubkey::pubkey;
 /// use solana_signature::Signature;
 /// use solana_transaction::Transaction;

@@ -374,7 +374,7 @@ impl Setup {
             .solana_client
             .get_minimum_balance_for_rent_exemption(MIN_ACCOUNT_LEN as usize)
             .unwrap();
-        let create_mint_account_ix = solana_program::system_instruction::create_account(
+        let create_mint_account_ix = solana_system_interface::instruction::create_account(
             &mint_authority.pubkey(),
             &mint_account.pubkey(),
             mint_rent,
