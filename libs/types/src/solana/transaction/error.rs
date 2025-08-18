@@ -416,7 +416,7 @@ pub enum InstructionError {
     /// Borsh versions. Only programs can use this error because they are
     /// consistent across Solana software versions.
     ///
-    BorshIoError,
+    BorshIoError(Option<String>),
     /// An account does not have enough lamports to be rent-exempt
     AccountNotRentExempt,
     /// Invalid account owner
@@ -491,7 +491,7 @@ impl From<solana_instruction::error::InstructionError> for InstructionError {
             InstructionError::ProgramFailedToCompile => Self::ProgramFailedToCompile,
             InstructionError::Immutable => Self::Immutable,
             InstructionError::IncorrectAuthority => Self::IncorrectAuthority,
-            InstructionError::BorshIoError => Self::BorshIoError,
+            InstructionError::BorshIoError => Self::BorshIoError(None),
             InstructionError::AccountNotRentExempt => Self::AccountNotRentExempt,
             InstructionError::InvalidAccountOwner => Self::InvalidAccountOwner,
             InstructionError::ArithmeticOverflow => Self::ArithmeticOverflow,
@@ -642,7 +642,7 @@ impl From<InstructionError> for solana_instruction::error::InstructionError {
             InstructionError::IncorrectAuthority => {
                 solana_instruction::error::InstructionError::IncorrectAuthority
             }
-            InstructionError::BorshIoError => {
+            InstructionError::BorshIoError(_) => {
                 solana_instruction::error::InstructionError::BorshIoError
             }
             InstructionError::AccountNotRentExempt => {
