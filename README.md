@@ -15,6 +15,7 @@ Interact with the [Solana](https://solana.com/) blockchain from the [Internet Co
 * [Deployment](#deployment)
   * [Deployment to the IC](#deployment-to-the-ic)
   * [Local deployment](#local-deployment)
+  * [Deploying from ICP Ninja](#deploying-from-icp-ninja)
 * [Limitations](#limitations)
 * [Supported Methods](#supported-methods)
 * [Supported Solana JSON-RPC Providers](#supported-solana-json-rpc-providers)
