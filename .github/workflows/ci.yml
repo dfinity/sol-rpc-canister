@@ -34,6 +34,43 @@ jobs:
       - name: 'Check Cargo.toml'
         run: cargo sort --workspace --check
 
+  check-ninja-cargo-toml:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Set up Python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 'Check ninja Cargo.toml'
+        run: python3 .github/scripts/check_ninja_cargo_toml.py
+
+  check-cargo-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Check root Cargo.lock is up to date'
+        run: |
+          cargo check --workspace --locked || {
+            echo "❌ Root Cargo.lock is out of date"
+            echo "Run 'cargo check' in the root directory and commit the updated 'Cargo.lock'"
+            exit 1
+          }
+
+      - name: 'Check ninja Cargo.lock is up to date'
+        working-directory: examples/basic_solana/ninja
+        run: |
+          cargo check --locked || {
+            echo "❌ Ninja Cargo.lock is out of date" 
+            echo "Run 'cargo check' in 'examples/basic_solana/ninja/' and commit the updated 'Cargo.lock'"
+            exit 1
+          }
+
   cargo-doc:
     runs-on: ubuntu-latest
     steps:
