@@ -4,7 +4,8 @@ pub mod spl;
 pub mod state;
 
 use crate::state::{read_state, State};
-use candid::{CandidType, Deserialize, Principal};
+use candid::{CandidType, Principal};
+use serde::Deserialize;
 use sol_rpc_client::{ed25519::Ed25519KeyId, IcRuntime, SolRpcClient};
 use sol_rpc_types::{
     CommitmentLevel, ConsensusStrategy, RpcEndpoint, RpcSource, RpcSources, SolanaCluster,
