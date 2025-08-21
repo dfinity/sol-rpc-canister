@@ -15,9 +15,9 @@ use sol_rpc_int_tests::{
 use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, ConsensusStrategy,
     GetSignaturesForAddressLimit, GetSlotParams, InstallArgs, InstructionError, Mode,
-    ProviderError, RpcAccess, RpcAuth, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources,
-    Slot, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TransactionDetails,
-    TransactionError,
+    MultiRpcResult, ProviderError, RpcAccess, RpcAuth, RpcEndpoint, RpcError, RpcResult, RpcSource,
+    RpcSources, Slot, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    TransactionDetails, TransactionError,
 };
 use solana_account_decoder_client_types::{
     token::UiTokenAmount, UiAccount, UiAccountData, UiAccountEncoding,
@@ -2329,11 +2329,11 @@ async fn should_not_drain_canister_balance_when_insufficient_cycles_attached() {
 
         assert!(
             results.is_err()
-                || results.unwrap().expect_inconsistent().iter().all(
-                    |(_provider, result)| matches!(
-                        result,
-                        &Err(RpcError::ProviderError(ProviderError::TooFewCycles { .. }))
-                    )
+                || matches!(
+                    results,
+                    Ok(MultiRpcResult::Consistent(Err(RpcError::ProviderError(
+                        ProviderError::TooFewCycles { .. }
+                    ))))
                 )
         );
 
