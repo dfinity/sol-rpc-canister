@@ -2304,7 +2304,12 @@ async fn should_not_drain_canister_balance_when_insufficient_cycles_attached() {
     let setup = Setup::new().await.with_mock_api_keys().await;
     let balance_before = setup.get_canister_cycle_balance().await;
 
-    let client = setup.client().build();
+    let client = setup
+        .client()
+        .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Supported(
+            SupportedRpcProviderId::AnkrMainnet,
+        )]))
+        .build();
 
     let required_cycles = client
         .get_block(0)
