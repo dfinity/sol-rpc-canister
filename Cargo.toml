@@ -99,10 +99,3 @@ opt-level = 's'
 # Required by `ic-test-utilities-load-wasm`
 [profile.canister-release]
 inherits = "release"
-
-[patch.crates-io]
-solana-account-decoder-client-types = { git = "https://github.com/anza-xyz/agave", rev = "65ee12c6b00e5d8194e9416a5e88d18f865a343d" }
-solana-client = { git = "https://github.com/anza-xyz/agave", rev = "65ee12c6b00e5d8194e9416a5e88d18f865a343d" }
-solana-rpc-client-api = { git = "https://github.com/anza-xyz/agave", rev = "65ee12c6b00e5d8194e9416a5e88d18f865a343d" }
-solana-rpc-client-nonce-utils = { git = "https://github.com/anza-xyz/agave", rev = "65ee12c6b00e5d8194e9416a5e88d18f865a343d" }
-solana-transaction-status-client-types = { git = "https://github.com/anza-xyz/agave", rev = "65ee12c6b00e5d8194e9416a5e88d18f865a343d" }
