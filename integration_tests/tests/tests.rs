@@ -2302,7 +2302,6 @@ mod metrics_tests {
 #[tokio::test]
 async fn should_not_drain_canister_balance_when_insufficient_cycles_attached() {
     let setup = Setup::new().await.with_mock_api_keys().await;
-    let balance_before = setup.get_canister_cycle_balance().await;
 
     let client = setup
         .client()
@@ -2320,6 +2319,7 @@ async fn should_not_drain_canister_balance_when_insufficient_cycles_attached() {
         .unwrap();
 
     for cycles in [0_u128, required_cycles - 1_000] {
+        let balance_before = setup.get_canister_cycle_balance().await;
         let results = client
             .get_block(0)
             .with_transaction_details(TransactionDetails::Signatures)
@@ -2341,7 +2341,7 @@ async fn should_not_drain_canister_balance_when_insufficient_cycles_attached() {
 
         // Rejecting requests with insufficient cycles attached still costs a small amount in execution costs
         assert!(
-            balance_after >= balance_before - 100_000_000,
+            balance_after >= balance_before - 30_000_000,
             "Canister cycle balance decrease: {:?}",
             balance_before - balance_after
         );
