@@ -308,7 +308,7 @@ pub async fn send_spl_token(
     let from = get_associated_token_address_with_program_id(payer.as_ref(), &mint, &token_program);
     let to = get_associated_token_address_with_program_id(&recipient, &mint, &token_program);
 
-    let instruction = spl_token_interface::instruction::transfer(
+    let instruction = spl_token_2022_interface::instruction::transfer(
         &token_program,
         &from,
         &to,
