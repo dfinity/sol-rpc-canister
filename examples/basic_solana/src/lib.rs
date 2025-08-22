@@ -1,5 +1,6 @@
 mod ed25519;
 pub mod solana_wallet;
+pub mod spl;
 pub mod state;
 
 use crate::state::{read_state, State};
