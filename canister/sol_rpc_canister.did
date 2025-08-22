@@ -498,7 +498,7 @@ type InstructionError = variant {
   ReadonlyDataModified;
   UninitializedAccount;
   InvalidArgument;
-  BorshIoError : opt text;
+  BorshIoError : text;
   BuiltinProgramsMustConsumeComputeUnits;
   MissingRequiredSignature;
   DuplicateAccountOutOfSync;

@@ -416,7 +416,7 @@ pub enum InstructionError {
     /// Borsh versions. Only programs can use this error because they are
     /// consistent across Solana software versions.
     ///
-    BorshIoError(Option<String>),
+    BorshIoError(String),
     /// An account does not have enough lamports to be rent-exempt
     AccountNotRentExempt,
     /// Invalid account owner
