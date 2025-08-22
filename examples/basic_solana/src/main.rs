@@ -308,6 +308,8 @@ pub async fn send_spl_token(
     let from = get_associated_token_address_with_program_id(payer.as_ref(), &mint, &token_program);
     let to = get_associated_token_address_with_program_id(&recipient, &mint, &token_program);
 
+    // TODO XC-459: Use `transfer_checked` which requires a new `decimals` parameter.
+    #[allow(deprecated)]
     let instruction = spl_token_2022_interface::instruction::transfer(
         &token_program,
         &from,
