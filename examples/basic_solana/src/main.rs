@@ -1,6 +1,5 @@
 use basic_solana::{
-    client, solana_wallet::SolanaWallet, spl::transfer_instruction_with_program_id,
-    state::init_state, validate_caller_not_anonymous, InitArg,
+    client, solana_wallet::SolanaWallet, state::init_state, validate_caller_not_anonymous, InitArg,
 };
 use candid::{Nat, Principal};
 use ic_cdk::{init, post_upgrade, update};
@@ -309,8 +308,15 @@ pub async fn send_spl_token(
     let from = get_associated_token_address_with_program_id(payer.as_ref(), &mint, &token_program);
     let to = get_associated_token_address_with_program_id(&recipient, &mint, &token_program);
 
-    let instruction =
-        transfer_instruction_with_program_id(&from, &to, payer.as_ref(), amount, &token_program);
+    let instruction = spl_token_interface::instruction::transfer(
+        &token_program,
+        &from,
+        &to,
+        payer.as_ref(),
+        &[payer.as_ref()],
+        amount,
+    )
+    .expect("Failed to created transfer instruction");
 
     let message = Message::new_with_blockhash(
         &[instruction],
