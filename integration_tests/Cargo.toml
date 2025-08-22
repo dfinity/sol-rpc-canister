@@ -40,6 +40,7 @@ solana-signature = { workspace = true }
 solana-signer = { workspace = true }
 solana-transaction = { workspace = true }
 solana-transaction-status-client-types = { workspace = true }
+spl-associated-token-account-interface = { workspace = true }
 tokio = { workspace = true }
 url = { workspace = true }
 

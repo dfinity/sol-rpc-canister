@@ -26,6 +26,7 @@ solana-pubkey = { workspace = true, features = ["curve25519"] }
 solana-signature = { workspace = true }
 solana-system-interface = { workspace = true, features = ["bincode"] }
 solana-transaction = { workspace = true, features = ["bincode"] }
+spl-associated-token-account-interface = { workspace = true }
 
 [dev-dependencies]
 candid = { workspace = true }

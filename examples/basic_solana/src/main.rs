@@ -1,6 +1,6 @@
 use basic_solana::{
-    client, solana_wallet::SolanaWallet, spl, state::init_state, validate_caller_not_anonymous,
-    InitArg,
+    client, solana_wallet::SolanaWallet, spl::transfer_instruction_with_program_id,
+    state::init_state, validate_caller_not_anonymous, InitArg,
 };
 use candid::{Nat, Principal};
 use ic_cdk::{init, post_upgrade, update};
@@ -12,6 +12,10 @@ use solana_message::Message;
 use solana_pubkey::Pubkey;
 use solana_system_interface::instruction;
 use solana_transaction::Transaction;
+use spl_associated_token_account_interface::{
+    address::get_associated_token_address_with_program_id,
+    instruction::create_associated_token_account_idempotent,
+};
 use std::str::FromStr;
 
 #[init]
@@ -45,7 +49,7 @@ pub async fn associated_token_account(owner: Option<Principal>, mint_account: St
     let owner = owner.unwrap_or_else(validate_caller_not_anonymous);
     let wallet = SolanaWallet::new(owner).await;
     let mint = Pubkey::from_str(&mint_account).unwrap();
-    spl::get_associated_token_address(
+    get_associated_token_address_with_program_id(
         wallet.solana_account().as_ref(),
         &mint,
         &get_account_owner(&mint).await,
@@ -175,29 +179,14 @@ pub async fn create_associated_token_account(
     let payer = wallet.solana_account();
     let mint = Pubkey::from_str(&mint_account).unwrap();
 
-    let (associated_token_account, instruction) = spl::create_associated_token_account_instruction(
+    let account_owner = get_account_owner(&mint).await;
+
+    let instruction = create_associated_token_account_idempotent(
         payer.as_ref(),
         payer.as_ref(),
         &mint,
-        &get_account_owner(&mint).await,
+        &account_owner,
     );
-
-    if let Some(_account) = client
-        .get_account_info(associated_token_account)
-        .with_encoding(GetAccountInfoEncoding::Base64)
-        .send()
-        .await
-        .expect_consistent()
-        .unwrap_or_else(|e| {
-            panic!("Call to `getAccountInfo` for {associated_token_account} failed: {e}")
-        })
-    {
-        ic_cdk::println!(
-            "[create_associated_token_account]: Account {} already exists. Skipping creation of associated token account",
-            associated_token_account
-        );
-        return associated_token_account.to_string();
-    }
 
     let message = Message::new_with_blockhash(
         &[instruction],
@@ -219,7 +208,7 @@ pub async fn create_associated_token_account(
         .expect("Call to `sendTransaction` failed")
         .to_string();
 
-    associated_token_account.to_string()
+    get_associated_token_address_with_program_id(payer.as_ref(), &mint, &account_owner).to_string()
 }
 
 #[update]
@@ -317,16 +306,11 @@ pub async fn send_spl_token(
 
     let token_program = get_account_owner(&mint).await;
 
-    let from = spl::get_associated_token_address(payer.as_ref(), &mint, &token_program);
-    let to = spl::get_associated_token_address(&recipient, &mint, &token_program);
+    let from = get_associated_token_address_with_program_id(payer.as_ref(), &mint, &token_program);
+    let to = get_associated_token_address_with_program_id(&recipient, &mint, &token_program);
 
-    let instruction = spl::transfer_instruction_with_program_id(
-        &from,
-        &to,
-        payer.as_ref(),
-        amount,
-        &token_program,
-    );
+    let instruction =
+        transfer_instruction_with_program_id(&from, &to, payer.as_ref(), amount, &token_program);
 
     let message = Message::new_with_blockhash(
         &[instruction],
