@@ -2327,6 +2327,55 @@ mod metrics_tests {
 }
 
 #[tokio::test]
+async fn should_not_drain_canister_balance_when_insufficient_cycles_attached() {
+    let setup = Setup::new().await.with_mock_api_keys().await;
+
+    let client = setup
+        .client()
+        .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Supported(
+            SupportedRpcProviderId::AnkrMainnet,
+        )]))
+        .build();
+
+    let required_cycles = client
+        .get_block(0)
+        .with_transaction_details(TransactionDetails::Signatures)
+        .request_cost()
+        .send()
+        .await
+        .unwrap();
+
+    for cycles in [0_u128, required_cycles - 1_000] {
+        let balance_before = setup.get_canister_cycle_balance().await;
+        let results = client
+            .get_block(0)
+            .with_transaction_details(TransactionDetails::Signatures)
+            .with_cycles(cycles)
+            .try_send()
+            .await;
+
+        assert!(
+            results.is_err()
+                || matches!(
+                    results,
+                    Ok(MultiRpcResult::Consistent(Err(RpcError::ProviderError(
+                        ProviderError::TooFewCycles { .. }
+                    ))))
+                )
+        );
+
+        let balance_after = setup.get_canister_cycle_balance().await;
+
+        // Rejecting requests with insufficient cycles attached still costs a small amount in execution costs
+        assert!(
+            balance_after >= balance_before - 30_000_000,
+            "Canister cycle balance decrease: {:?}",
+            balance_before - balance_after
+        );
+    }
+}
+
+#[tokio::test]
 async fn should_log_request_and_response() {
     let setup = Setup::new().await.with_mock_api_keys().await;
 

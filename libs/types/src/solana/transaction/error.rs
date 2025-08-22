@@ -491,7 +491,11 @@ impl From<solana_instruction::error::InstructionError> for InstructionError {
             InstructionError::ProgramFailedToCompile => Self::ProgramFailedToCompile,
             InstructionError::Immutable => Self::Immutable,
             InstructionError::IncorrectAuthority => Self::IncorrectAuthority,
-            InstructionError::BorshIoError => Self::BorshIoError(None),
+            // Use an empty string for backwards compatibility with the canister's Candid API.
+            // The linked PR (https://github.com/anza-xyz/solana-sdk/pull/12) removed the
+            // string payload from `InstructionError::BorshIoError`, so we serialize it as
+            // `""` to avoid a breaking change.
+            InstructionError::BorshIoError => Self::BorshIoError(String::new()),
             InstructionError::AccountNotRentExempt => Self::AccountNotRentExempt,
             InstructionError::InvalidAccountOwner => Self::InvalidAccountOwner,
             InstructionError::ArithmeticOverflow => Self::ArithmeticOverflow,
