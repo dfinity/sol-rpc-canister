@@ -25,7 +25,6 @@ use std::{
 };
 
 pub mod mock;
-pub mod spl;
 pub mod wallet;
 
 use mock::{MockOutcall, MockOutcallBuilder};

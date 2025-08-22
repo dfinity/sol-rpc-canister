@@ -34,7 +34,7 @@ jobs:
       - name: 'Check Cargo.toml'
         run: cargo sort --workspace --check
 
-# TODO XC-XXX: Re-enable once `sol_rpc_client` v3.0.0 is released and ICP Ninja deployment of `basic_solana` is reverted
+# TODO XC-456: Re-enable once `sol_rpc_client` v3.0.0 is released and ICP Ninja deployment of `basic_solana` is reverted
 #  check-ninja-cargo-toml:
 #    runs-on: ubuntu-latest
 #    steps:

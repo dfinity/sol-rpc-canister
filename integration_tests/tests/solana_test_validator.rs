@@ -6,7 +6,7 @@ use assert_matches::assert_matches;
 use futures::future;
 use pocket_ic::PocketIcBuilder;
 use sol_rpc_client::SolRpcClient;
-use sol_rpc_int_tests::{spl, PocketIcLiveModeRuntime};
+use sol_rpc_int_tests::PocketIcLiveModeRuntime;
 use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetAccountInfoEncoding,
     GetBlockCommitmentLevel, GetTransactionEncoding, InstallArgs, Lamport, OverrideProvider,
@@ -34,6 +34,10 @@ use solana_signer::Signer;
 use solana_system_interface::instruction;
 use solana_transaction::Transaction;
 use solana_transaction_status_client_types::UiTransactionEncoding;
+use spl_associated_token_account_interface::{
+    address::get_associated_token_address_with_program_id,
+    instruction::create_associated_token_account,
+};
 use std::{
     future::Future,
     iter::zip,
@@ -666,12 +670,12 @@ impl Setup {
     }
 
     pub fn create_associated_token_account(&self, user: &Keypair, mint_account: &Pubkey) -> Pubkey {
-        let (associated_token_account, instruction) =
-            spl::create_associated_token_account_instruction(
-                &user.pubkey(),
-                &user.pubkey(),
-                mint_account,
-            );
+        let instruction = create_associated_token_account(
+            &user.pubkey(),
+            &user.pubkey(),
+            mint_account,
+            &SPL_TOKEN_2022_ID,
+        );
 
         let transaction = Transaction::new_signed_with_payer(
             &[instruction],
@@ -685,6 +689,12 @@ impl Setup {
         self.solana_client
             .send_transaction(&transaction)
             .expect("Unable to create associated token account");
+
+        let associated_token_account = get_associated_token_address_with_program_id(
+            &user.pubkey(),
+            mint_account,
+            &SPL_TOKEN_2022_ID,
+        );
 
         self.wait_for_account_to_exist(&associated_token_account);
 

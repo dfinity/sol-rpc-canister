@@ -19,6 +19,7 @@ num = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 sol_rpc_client = { path = "../../libs/client", features = ["ed25519"] }
 sol_rpc_types = { path = "../../libs/types" }
+spl-associated-token-account-interface = { workspace = true }
 solana-hash = { workspace = true }
 solana-instruction = { workspace = true }
 solana-message = { workspace = true }
