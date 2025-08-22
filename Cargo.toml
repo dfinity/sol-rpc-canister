@@ -83,7 +83,7 @@ solana-transaction = "3.0.0"
 solana-transaction-error = "3.0.0"
 solana-transaction-status-client-types = "3.0.0"
 spl-associated-token-account-interface = "2.0.0"
-spl-token-2022-interface = "2.0.0"
+spl-token-interface = "2.0.0"
 strum = { version = "0.27.2", features = ["derive"] }
 thiserror = "2.0.12"
 tokio = "1.47.0"

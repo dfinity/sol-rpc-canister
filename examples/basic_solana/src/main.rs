@@ -310,7 +310,7 @@ pub async fn send_spl_token(
 
     // TODO XC-459: Use `transfer_checked` which requires a new `decimals` parameter.
     #[allow(deprecated)]
-    let instruction = spl_token_2022_interface::instruction::transfer(
+    let instruction = spl_token_interface::instruction::transfer(
         &token_program,
         &from,
         &to,
