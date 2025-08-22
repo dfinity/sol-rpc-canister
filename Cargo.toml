@@ -37,7 +37,6 @@ getrandom = { version = "*", default-features = false, features = ["custom"] }
 hex = "0.4.3"
 http = "1.3.1"
 ic-agent = "0.40.1"
-ic-canister-log = "0.2.0"
 ic-cdk = "0.17.2"
 ic-ed25519 = "0.2.0"
 ic-error-types = "0.2"
@@ -60,29 +59,29 @@ serde = { version = "1.0.219", features = ["derive"] }
 serde_bytes = "0.11.17"
 serde_json = "1.0.141"
 serde_with = "3.14.0"
-solana-account = "=2.2.1"
-solana-account-decoder-client-types = "=2.3.3"
-solana-client = "=2.3.3"
-solana-clock = "=2.2.2"
-solana-commitment-config = "=2.2.1"
-solana-compute-budget-interface = "=2.2.2"
-solana-hash = "=2.3.0"
-solana-instruction = "=2.3.0"
-solana-keypair = "=2.2.3"
-solana-message = "=2.4.0"
-solana-nonce = "=2.2.1"
-solana-program = "=2.3.0"
-solana-pubkey = "=2.4.0"
-solana-reward-info = "=2.2.1"
-solana-rpc-client-api = "=2.3.3"
-solana-rpc-client-nonce-utils = "=2.3.3"
-solana-sdk-ids = "=2.2.1"
-solana-signature = "=2.3.0"
-solana-signer = "=2.2.1"
-solana-system-interface = "1.0.0"
-solana-transaction = "=2.2.3"
-solana-transaction-error = "=2.2.1"
-solana-transaction-status-client-types = "=2.3.3"
+solana-account = "3.0.0"
+solana-account-decoder-client-types = "3.0.0"
+solana-client = "3.0.0"
+solana-clock = "3.0.0"
+solana-commitment-config = "3.0.0"
+solana-compute-budget-interface = "3.0.0"
+solana-hash = "3.0.0"
+solana-instruction = "3.0.0"
+solana-keypair = "3.0.0"
+solana-message = "3.0.0"
+solana-nonce = "3.0.0"
+solana-program = "3.0.0"
+solana-pubkey = "3.0.0"
+solana-reward-info = "3.0.0"
+solana-rpc-client-api = "3.0.0"
+solana-rpc-client-nonce-utils = "3.0.0"
+solana-sdk-ids = "3.0.0"
+solana-signature = "3.1.0"
+solana-signer = "3.0.0"
+solana-system-interface = "2.0.0"
+solana-transaction = "3.0.0"
+solana-transaction-error = "3.0.0"
+solana-transaction-status-client-types = "3.0.0"
 strum = { version = "0.27.2", features = ["derive"] }
 thiserror = "2.0.12"
 tokio = "1.47.0"
@@ -100,29 +99,3 @@ opt-level = 's'
 # Required by `ic-test-utilities-load-wasm`
 [profile.canister-release]
 inherits = "release"
-
-# TODO XC-297: Currently, the solana-* crates have a dependency on wasm-bindgen
-#   when they are built for wasm32-unknown-unknown target. For this reason, we
-#   are using forked version of the relevant repositories.
-#   see [solana-sdk#117](https://github.com/anza-xyz/solana-sdk/issues/117)
-[patch.crates-io]
-solana-account = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-clock = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-commitment-config = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-compute-budget-interface = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-hash = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-instruction = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-keypair = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-message = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-nonce = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-program = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-pubkey = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-reward-info = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-signer = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-signature = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-transaction = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-transaction-error = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-sdk-ids = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-system-interface = { git = "https://github.com/dfinity/solana-system-program", tag = "6185b40-js-feature-flag" }
-solana-sysvar = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }
-solana-sysvar-id = { git = "https://github.com/dfinity/solana-sdk", tag = "46ca4e2-js-feature-flag" }

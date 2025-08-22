@@ -1,5 +1,6 @@
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
+use solana_transaction_status_client_types::UiTransactionError;
 
 /// Represents errors that can occur during the processing of a Solana transaction.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
@@ -295,6 +296,18 @@ impl From<TransactionError> for solana_transaction_error::TransactionError {
     }
 }
 
+impl From<UiTransactionError> for TransactionError {
+    fn from(error: UiTransactionError) -> Self {
+        TransactionError::from(solana_transaction_error::TransactionError::from(error))
+    }
+}
+
+impl From<TransactionError> for UiTransactionError {
+    fn from(error: TransactionError) -> Self {
+        UiTransactionError::from(solana_transaction_error::TransactionError::from(error))
+    }
+}
+
 /// Represents errors that can occur during the execution of a specific instruction within a Solana
 /// transaction.
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, PartialEq)]
@@ -478,7 +491,11 @@ impl From<solana_instruction::error::InstructionError> for InstructionError {
             InstructionError::ProgramFailedToCompile => Self::ProgramFailedToCompile,
             InstructionError::Immutable => Self::Immutable,
             InstructionError::IncorrectAuthority => Self::IncorrectAuthority,
-            InstructionError::BorshIoError(err) => Self::BorshIoError(err),
+            // Use an empty string for backwards compatibility with the canister's Candid API.
+            // The linked PR (https://github.com/anza-xyz/solana-sdk/pull/12) removed the
+            // string payload from `InstructionError::BorshIoError`, so we serialize it as
+            // `""` to avoid a breaking change.
+            InstructionError::BorshIoError => Self::BorshIoError(String::new()),
             InstructionError::AccountNotRentExempt => Self::AccountNotRentExempt,
             InstructionError::InvalidAccountOwner => Self::InvalidAccountOwner,
             InstructionError::ArithmeticOverflow => Self::ArithmeticOverflow,
@@ -629,8 +646,8 @@ impl From<InstructionError> for solana_instruction::error::InstructionError {
             InstructionError::IncorrectAuthority => {
                 solana_instruction::error::InstructionError::IncorrectAuthority
             }
-            InstructionError::BorshIoError(err) => {
-                solana_instruction::error::InstructionError::BorshIoError(err)
+            InstructionError::BorshIoError(_) => {
+                solana_instruction::error::InstructionError::BorshIoError
             }
             InstructionError::AccountNotRentExempt => {
                 solana_instruction::error::InstructionError::AccountNotRentExempt

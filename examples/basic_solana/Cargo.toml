@@ -22,9 +22,9 @@ sol_rpc_types = { path = "../../libs/types" }
 solana-hash = { workspace = true }
 solana-instruction = { workspace = true }
 solana-message = { workspace = true }
-solana-pubkey = { workspace = true }
+solana-pubkey = { workspace = true, features = ["curve25519"] }
 solana-signature = { workspace = true }
-solana-system-interface = { workspace = true }
+solana-system-interface = { workspace = true, features = ["bincode"] }
 solana-transaction = { workspace = true, features = ["bincode"] }
 
 [dev-dependencies]
