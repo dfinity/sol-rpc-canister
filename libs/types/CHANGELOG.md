@@ -9,11 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Replace forked `solana-*` crates by latest releases ([#197](https://github.com/dfinity/sol-rpc-canister/pull/197))
-
-### Fixed
-
-- Typo in Rust documentation of `ConsensusStrategy` ([#205](https://github.com/dfinity/sol-rpc-canister/pull/205))
+- Replace forked `solana-*` dependencies by latest releases ([#197](https://github.com/dfinity/sol-rpc-canister/pull/197))
 
 [3.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/2.0.0..3.0.0
 
