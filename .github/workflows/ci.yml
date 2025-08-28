@@ -131,7 +131,7 @@ jobs:
       - name: 'Use free Solana RPC provider'
         working-directory: examples/basic_solana/ninja
         run: |
-          sed -i 's|solana_network = opt variant { Devnet }|solana_network = opt variant { Custom = record { url = "https://api.devnet.solana.com"; headers = null } }|g' dfx.json
+          sed -i 's|solana_network = opt variant { Devnet }|solana_network = opt variant { Custom = record { url = \\\\"https://api.devnet.solana.com\\\\\"; headers = null } }|g' dfx.json
 
       - name: "Deploy locally"
         working-directory: examples/basic_solana/ninja
