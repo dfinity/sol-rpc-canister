@@ -114,6 +114,32 @@ jobs:
       - name: 'Run unit tests'
         run: cargo test --locked --workspace --exclude basic_solana --exclude sol_rpc_int_tests --exclude sol_rpc_e2e_tests
 
+  icp-ninja-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Install dfx'
+        uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365
+        with:
+          dfx-version: "0.27.0"
+
+      - name: 'Confirm dfx successful installation'
+        run: dfx --version
+
+      - name: "Deploy locally"
+        working-directory: examples/basic_solana/ninja
+        run: |
+          dfx start --clean --background
+          dfx deploy
+          out=$(dfx canister call basic_solana solana_account --output json)
+          echo "$out"
+          echo "$out" | grep -E "[1-9A-HJ-NP-Za-km-z]{32,44}" > /dev/null || { echo "❌ Call to 'solana_account' failed"; exit 1; }
+          out=$(dfx canister call basic_solana get_balance --output json)
+          echo "$out"
+          echo "$out" | grep -E "[0-9]+(?:_[0-9]+)*" > /dev/null || { echo "❌ Call to 'get_balance' failed"; exit 1; }
+
   integration-tests:
     needs: [ reproducible-build ]
     runs-on: ubuntu-22.04
