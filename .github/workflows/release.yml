@@ -19,6 +19,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
       - name: Install release-plz from fork
         run: |
           cargo install --git https://github.com/lpahlavi/release-plz --rev bd11ce7ef1683c1b4dd359b57c867cfdf3e04f4a release-plz
