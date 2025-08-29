@@ -27,7 +27,7 @@ jobs:
         run: |
           git clone https://github.com/lpahlavi/release-plz.git /tmp/release-plz-fork
           cd /tmp/release-plz-fork
-          git checkout bd11ce7ef1683c1b4dd359b57c867cfdf3e04f4a
+          git checkout 9b511999ed04cc5070fe5efcd5481b6b2cc035c1
           cargo +nightly install --path crates/release_plz
       - name: Run release-plz
         run: release-plz release-pr --git-token ${{ secrets.GITHUB_TOKEN }}
