@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.0] - 2025-08-29
+## 3.0.0 - 2025-08-29
 
 ### Changed
 
@@ -15,9 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Typo in Rust documentation of `ConsensusStrategy` ([#205](https://github.com/dfinity/sol-rpc-canister/pull/205))
 
-[3.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/2.0.0..3.0.0
-
-## [2.0.0] - 2025-07-31
+## 2.0.0 - 2025-07-31
 
 ### Added
 
@@ -27,14 +25,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Migrate dependencies to `solana-sdk` repository ([#55](https://github.com/dfinity/sol-rpc-canister/pull/55))
 
-## [1.0.0] - 2025-06-13
+## 1.0.0 - 2025-06-13
 
 ### Added
 
 - Add support for `transactionDetails=accounts` ([#139](https://github.com/dfinity/sol-rpc-canister/pull/139))
 - Add support for `rewards` parameter for `getBlock` ([#135](https://github.com/dfinity/sol-rpc-canister/pull/135))
 
-## [0.2.0] - 2025-05-27
+## 0.2.0 - 2025-05-27
 
 ### Added
 
@@ -49,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Use secure primitive types for `Pubkey`, `Signature` and `Hash` ([#98](https://github.com/dfinity/sol-rpc-canister/pull/98))
 
-## [0.1.0] - 2025-04-29
+## 0.1.0 - 2025-04-29
 
 ### Added
 

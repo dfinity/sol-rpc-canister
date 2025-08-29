@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] - 2025-07-31
+## 1.2.0 - 2025-08-29
+
+### Changed
+
+- Replace forked `solana-*` crates by latest releases ([#197](https://github.com/dfinity/sol-rpc-canister/pull/197))
+
+
+## 1.1.0 - 2025-07-31
 
 ### Added
 
@@ -18,14 +25,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Require HTTP outcall base fee ([#185](https://github.com/dfinity/sol-rpc-canister/pull/185))
 - Select supported providers based on successful responses ([#183](https://github.com/dfinity/sol-rpc-canister/pull/183))
 
-## [1.0.0] - 2025-06-13
+## 1.0.0 - 2025-06-13
 
 ### Added
 
 - Add support for `transactionDetails=accounts` ([#139](https://github.com/dfinity/sol-rpc-canister/pull/139))
 - Add support for `rewards` parameter for `getBlock` ([#135](https://github.com/dfinity/sol-rpc-canister/pull/135))
 
-## [0.2.0] - 2025-05-27
+## 0.2.0 - 2025-05-27
 
 ### Added
 
@@ -45,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Missing `TraceHttp` logs ([#129](https://github.com/dfinity/sol-rpc-canister/pull/129))
 
-## [0.1.0] - 2025-04-29
+## 0.1.0 - 2025-04-29
 
 ### Added
 

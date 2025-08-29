@@ -5,15 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.0] - 2025-08-29
+## 3.0.0 - 2025-08-29
 
 ### Changed
 
 - Replace forked `solana-*` crates by latest releases ([#197](https://github.com/dfinity/sol-rpc-canister/pull/197))
 
-[3.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/2.0.0..3.0.0
-
-## [2.0.0] - 2025-07-31
+## 2.0.0 - 2025-07-31
 
 ### Added
 
@@ -28,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Use correct fee for t-sig with local development key ([#160](https://github.com/dfinity/sol-rpc-canister/pull/160))
 
-## [1.0.0] - 2025-06-13
+## 1.0.0 - 2025-06-13
 
 ### Added
 
@@ -41,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix response estimates for some endpoints ([#147](https://github.com/dfinity/sol-rpc-canister/pull/147))
 
-## [0.2.0] - 2025-05-27
+## 0.2.0 - 2025-05-27
 
 ### Added
 
@@ -57,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use secure primitive types for `Pubkey`, `Signature` and `Hash` ([#98](https://github.com/dfinity/sol-rpc-canister/pull/98))
 - Use `RoundingError` from `sol_rpc_types` ([#105](https://github.com/dfinity/sol-rpc-canister/pull/105))
 
-## [0.1.0] - 2025-04-29
+## 0.1.0 - 2025-04-29
 
 ### Added
 
