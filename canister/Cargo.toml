@@ -7,7 +7,6 @@ edition.workspace = true
 repository.workspace = true
 homepage.workspace = true
 license.workspace = true
-publish = false
 
 [[bin]]
 name = "sol_rpc_canister"
