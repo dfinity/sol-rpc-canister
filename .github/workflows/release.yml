@@ -20,7 +20,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run release-plz
-        uses: release-plz/action@8724d33cd97b8295051102e2e19ca592962238f5 # v0.5.108
+        uses: lpahlavi/release-plz/action@bd11ce7ef1683c1b4dd359b57c867cfdf3e04f4a # https://github.com/release-plz/release-plz/pull/2357
         with:
           command: release-pr
         env:
