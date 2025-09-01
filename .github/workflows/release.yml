@@ -20,10 +20,10 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run release-plz
-        uses: lpahlavi/release-plz-action@749543de3f547a122aad3379c16572430287a43a
+        uses: release-plz/action@bbd1afc9813d25602e002b29e96e0aacebab1160 # v0.5.105
         with:
           command: release-pr
-          version: 422bcbba98ffc5bf5f73e60d28e6f786dd56903d # https://github.com/release-plz/release-plz/pull/2357
+          version: 0.3.142
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
