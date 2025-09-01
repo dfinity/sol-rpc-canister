@@ -68,7 +68,7 @@ jobs:
         uses: taiki-e/install-action@parse-changelog
 
       - name: "Run release-plz"
-        uses: lpahlavi/release-plz-action@35b3991036f9b0356df84a420052f25fe93263ab
+        uses: lpahlavi/release-plz-action@df038994d8035f556f2f09845959cc04f36d9499
         with:
           command: release
           version: 422bcbba98ffc5bf5f73e60d28e6f786dd56903d # https://github.com/release-plz/release-plz/pull/2357
