@@ -76,6 +76,8 @@ jobs:
 
       - name: "Configure git user from GitHub token"
         uses: release-plz/git-config@59144859caf016f8b817a2ac9b051578729173c4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Run release-plz"
         run: release-plz release --git-token ${{ secrets.GITHUB_TOKEN }}
