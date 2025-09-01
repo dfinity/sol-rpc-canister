@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Replace forked `solana-*` crates by latest releases ([#197](https://github.com/dfinity/sol-rpc-canister/pull/197))
+- Replace forked `solana-*` crates by the corresponding ones in `solana_sdk` and `agave` version `3.0.0`. The `patch.crates-io` section in `Cargo.toml` is therefore no longer necessary and can be removed. ([#197](https://github.com/dfinity/sol-rpc-canister/pull/197))
 
 ## 1.1.0 - 2025-07-31
 
