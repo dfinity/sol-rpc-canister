@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2025-08-29
+
+### Changed
+
+- Replace forked `solana-*` crates by the corresponding ones in `solana_sdk` and `agave` version `3.0.0`. The `patch.crates-io` section in `Cargo.toml` is therefore no longer necessary and can be removed. ([#197](https://github.com/dfinity/sol-rpc-canister/pull/197))
+
 ## [2.0.0] - 2025-07-31
 
 ### Added
@@ -65,3 +71,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use the builder pattern for instantiating the client ([#54](https://github.com/dfinity/sol-rpc-canister/pull/54))
 - Use a default commitment level for requests made by the client ([#77](https://github.com/dfinity/sol-rpc-canister/pull/77))
 - Add Rust documentation tests for the client ([#65](https://github.com/dfinity/sol-rpc-canister/pull/65))
+
+[3.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_client-v2.0.0...sol_rpc_client-v3.0.0
+[2.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/v1.0.0...sol_rpc_client-v2.0.0
+[1.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/v0.2.0...v1.0.0
+[0.2.0]: https://github.com/dfinity/sol-rpc-canister/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/dfinity/sol-rpc-canister/releases/tag/v0.1.0
