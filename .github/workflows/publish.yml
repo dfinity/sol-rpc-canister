@@ -74,6 +74,9 @@ jobs:
           git checkout 9b511999ed04cc5070fe5efcd5481b6b2cc035c1
           cargo +1.88.0 install --path crates/release_plz
 
+      - name: "Configure git user from GitHub token"
+        uses: release-plz/git-config@59144859caf016f8b817a2ac9b051578729173c4
+
       - name: "Run release-plz"
         run: release-plz release --git-token ${{ secrets.GITHUB_TOKEN }}
         env:
