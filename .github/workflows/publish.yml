@@ -68,6 +68,7 @@ jobs:
         uses: taiki-e/install-action@parse-changelog
 
       - name: "Run release-plz"
+        id: release-plz
         uses: release-plz/action@bbd1afc9813d25602e002b29e96e0aacebab1160 # v0.5.105
         with:
           command: release
