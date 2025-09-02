@@ -140,10 +140,10 @@ jobs:
           dfx deploy
           out=$(dfx canister call basic_solana solana_account --output json)
           echo "$out"
-          echo "$out" | grep -E "[1-9A-HJ-NP-Za-km-z]{32,44}" > /dev/null || { echo "❌ Call to 'solana_account' failed"; exit 1; }
+          echo "$out" | grep -Eq "[1-9A-HJ-NP-Za-km-z]{32,44}" || { echo "❌ Call to 'solana_account' failed"; exit 1; }
           out=$(dfx canister call basic_solana get_balance --output json)
           echo "$out"
-          echo "$out" | grep -E "[0-9]+(?:_[0-9]+)*" > /dev/null || { echo "❌ Call to 'get_balance' failed"; exit 1; }
+          echo "$out" | grep -Eq "[0-9]+(_[0-9]+)*" || { echo "❌ Call to 'get_balance' failed"; exit 1; }
 
   integration-tests:
     needs: [ reproducible-build ]
@@ -244,10 +244,10 @@ jobs:
           dfx deploy
           out=$(dfx canister call basic_solana solana_account --output json)
           echo "$out"
-          echo "$out" | grep -E "[1-9A-HJ-NP-Za-km-z]{32,44}" > /dev/null || { echo "❌ Call to 'solana_account' failed"; exit 1; }
+          echo "$out" | grep -Eq "[1-9A-HJ-NP-Za-km-z]{32,44}" || { echo "❌ Call to 'solana_account' failed"; exit 1; }
           out=$(dfx canister call basic_solana get_balance --output json)
           echo "$out"
-          echo "$out" | grep -E "[0-9]+(?:_[0-9]+)*" > /dev/null || { echo "❌ Call to 'get_balance' failed"; exit 1; }
+          echo "$out" | grep -Eq "[0-9]+(_[0-9]+)*" || { echo "❌ Call to 'get_balance' failed"; exit 1; }
 
       - name: "Deploy SOL RPC Canister"
         run: |
