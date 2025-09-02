@@ -34,20 +34,19 @@ jobs:
       - name: 'Check Cargo.toml'
         run: cargo sort --workspace --check
 
-# TODO XC-456: Re-enable once `sol_rpc_client` v3.0.0 is released and ICP Ninja deployment of `basic_solana` is reverted
-#  check-ninja-cargo-toml:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: 'Checkout'
-#        uses: actions/checkout@v4
-#
-#      - name: 'Set up Python'
-#        uses: actions/setup-python@v5
-#        with:
-#          python-version: '3.11'
-#
-#      - name: 'Check ninja Cargo.toml'
-#        run: python3 .github/scripts/check_ninja_cargo_toml.py
+  check-ninja-cargo-toml:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Set up Python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 'Check ninja Cargo.toml'
+        run: python3 .github/scripts/check_ninja_cargo_toml.py
 
   check-cargo-lock:
     runs-on: ubuntu-latest
