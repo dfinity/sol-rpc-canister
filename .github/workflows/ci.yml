@@ -34,20 +34,6 @@ jobs:
       - name: 'Check Cargo.toml'
         run: cargo sort --workspace --check
 
-  check-ninja-cargo-toml:
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Checkout'
-        uses: actions/checkout@v4
-
-      - name: 'Set up Python'
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: 'Check ninja Cargo.toml'
-        run: python3 .github/scripts/check_ninja_cargo_toml.py
-
   check-cargo-lock:
     runs-on: ubuntu-latest
     steps:
@@ -118,6 +104,14 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
+
+      - name: 'Set up Python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 'Check ninja Cargo.toml'
+        run: python3 .github/scripts/check_ninja_cargo_toml.py
 
       - name: 'Install dfx'
         uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365
