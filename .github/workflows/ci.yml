@@ -34,7 +34,7 @@ jobs:
           cargo sort --workspace --check
 
       - name: 'Run Cargo Machete'
-        uses: bnjbvr/cargo-machete@0.9.1
+        uses: bnjbvr/cargo-machete@v0.9.1
 
   check-cargo-lock:
     runs-on: ubuntu-latest
