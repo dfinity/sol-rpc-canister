@@ -28,11 +28,13 @@ jobs:
           cargo clippy --locked --verbose --tests --benches --workspace -- -D clippy::all
           cargo clippy --locked --verbose --target wasm32-unknown-unknown -p sol_rpc_canister -- -D clippy::all
 
-      - name: 'Install cargo-sort'
-        run: cargo install cargo-sort
+      - name: 'Run Cargo Sort'
+        run: |
+          cargo install cargo-sort
+          cargo sort --workspace --check
 
-      - name: 'Check Cargo.toml'
-        run: cargo sort --workspace --check
+      - name: 'Run Cargo Machete'
+        uses: bnjbvr/cargo-machete@0.9.1
 
   check-cargo-lock:
     runs-on: ubuntu-latest
