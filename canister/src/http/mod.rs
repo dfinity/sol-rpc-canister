@@ -21,7 +21,7 @@ use canhttp::{
     },
     observability::ObservabilityLayer,
     retry::DoubleMaxResponseBytes,
-    ConvertServiceBuilder, CyclesAccounting, CyclesChargingPolicy, IcError,
+    ConvertServiceBuilder, CyclesAccounting, CyclesChargingPolicy, HttpsOutcallError, IcError,
 };
 use canlog::log;
 use http::{header::CONTENT_TYPE, HeaderValue};
@@ -94,7 +94,11 @@ where
                 .on_error(
                     |req_data: MetricData, error: &HttpClientError| match error {
                         HttpClientError::IcError(IcError { code, message: _ }) => {
-                            observe_response(MetricRpcCallResponse::IcError(code.to_string()), &req_data);
+                            if error.is_response_too_large() {
+                                observe_response(MetricRpcCallResponse::InsufficientCycles, &req_data);
+                            } else {
+                                observe_response(MetricRpcCallResponse::IcError(code.to_string()), &req_data);
+                            }
                         }
                         HttpClientError::UnsuccessfulHttpResponse(
                             FilterNonSuccessfulHttpResponseError::UnsuccessfulResponse(response),
@@ -185,8 +189,8 @@ fn observe_response(response: MetricRpcCallResponse, req_data: &MetricData) {
             (req_data.method.clone(), req_data.host.clone()),
             req_data.start_ns
         ),
-        MetricRpcCallResponse::IcError(_) => {
-            // Don't record latency for IC errors
+        MetricRpcCallResponse::IcError(_) | MetricRpcCallResponse::InsufficientCycles => {
+            // Don't record latency for IC errors and insufficient cycles errors
         }
     }
     add_metric_entry!(

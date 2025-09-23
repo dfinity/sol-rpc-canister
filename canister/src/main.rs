@@ -143,6 +143,7 @@ async fn get_block(
     config: Option<RpcConfig>,
     params: GetBlockParams,
 ) -> MultiRpcResult<Option<ConfirmedBlock>> {
+    log!(Priority::Info, "@@@ config: {:?}", &config);
     let request = MultiRpcRequest::get_block(source, config.unwrap_or_default(), params, now());
     send_multi(request).await.into()
 }
