@@ -67,7 +67,7 @@ where
                         method: rpc_method.clone(),
                         host: MetricRpcHost(req.uri().host().unwrap().to_string()),
                         request_id: req.body().id().clone(),
-                        start_ns: ic_cdk::api::time(),
+                        start_ns: ic_cdk::api::time()
                     };
                     log!(Priority::TraceHttp, "JSON-RPC request with id `{}` to {}: {:?}",
                         req_data.request_id,
@@ -111,36 +111,35 @@ where
                                 response.status(),
                                 String::from_utf8_lossy(response.body())
                             );
-                            }
-                            HttpClientError::InvalidJsonResponse(
-                                JsonResponseConversionError::InvalidJsonResponse {
-                                    status,
-                                    body: _,
-                                    parsing_error: _,
-                                },
-                            ) => {
-                                observe_error_with_status(*status, &req_data);
-                                log!(
-                                Priority::TraceHttp,
-                                "Invalid JSON RPC response for request with id `{}`: {}",
-                                req_data.request_id,
-                                error
-                            );
-                            }
-                            HttpClientError::InvalidJsonResponseId(ConsistentResponseIdFilterError::InconsistentId { status, request_id: _, response_id: _ }) => {
-                                observe_error_with_status(*status, &req_data);
-                                log!(
-                                Priority::TraceHttp,
-                                "Invalid JSON RPC response for request with id `{}`: {}",
-                                req_data.request_id,
-                                error
-                            );
-                            }
-                            HttpClientError::NotHandledError(e) => {
-                                log!(Priority::Info, "BUG: Unexpected error: {}", e);
-                            }
-                            HttpClientError::CyclesAccountingError(_) => {}
                         }
+                        HttpClientError::InvalidJsonResponse(
+                            JsonResponseConversionError::InvalidJsonResponse {
+                                status,
+                                body: _,
+                                parsing_error: _,
+                            },
+                        ) => {
+                            observe_error_with_status(*status, &req_data);
+                            log!(
+                                Priority::TraceHttp,
+                                "Invalid JSON RPC response for request with id `{}`: {}",
+                                req_data.request_id,
+                                error
+                            );
+                        }
+                        HttpClientError::InvalidJsonResponseId(ConsistentResponseIdFilterError::InconsistentId { status, request_id: _, response_id: _ }) => {
+                            observe_error_with_status(*status, &req_data);
+                            log!(
+                                Priority::TraceHttp,
+                                "Invalid JSON RPC response for request with id `{}`: {}",
+                                req_data.request_id,
+                                error
+                            );
+                        }
+                        HttpClientError::NotHandledError(e) => {
+                            log!(Priority::Info, "BUG: Unexpected error: {}", e);
+                        }
+                        HttpClientError::CyclesAccountingError(_) => {}
                     },
                 ),
         )
