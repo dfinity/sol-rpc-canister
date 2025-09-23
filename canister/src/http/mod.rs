@@ -67,7 +67,7 @@ where
                         method: rpc_method.clone(),
                         host: MetricRpcHost(req.uri().host().unwrap().to_string()),
                         request_id: req.body().id().clone(),
-                        start_ns: ic_cdk::api::time()
+                        start_ns: ic_cdk::api::time(),
                     };
                     log!(Priority::TraceHttp, "JSON-RPC request with id `{}` to {}: {:?}",
                         req_data.request_id,
@@ -95,7 +95,7 @@ where
                     |req_data: MetricData, error: &HttpClientError| match error {
                         HttpClientError::IcError(IcError { code, message: _ }) => {
                             if error.is_response_too_large() {
-                                observe_response(MetricRpcCallResponse::InsufficientCycles, &req_data);
+                                observe_response(MetricRpcCallResponse::MaxResponseSizeExceeded, &req_data);
                             } else {
                                 observe_response(MetricRpcCallResponse::IcError(code.to_string()), &req_data);
                             }
@@ -111,35 +111,36 @@ where
                                 response.status(),
                                 String::from_utf8_lossy(response.body())
                             );
-                        }
-                        HttpClientError::InvalidJsonResponse(
-                            JsonResponseConversionError::InvalidJsonResponse {
-                                status,
-                                body: _,
-                                parsing_error: _,
-                            },
-                        ) => {
-                            observe_error_with_status(*status, &req_data);
-                            log!(
+                            }
+                            HttpClientError::InvalidJsonResponse(
+                                JsonResponseConversionError::InvalidJsonResponse {
+                                    status,
+                                    body: _,
+                                    parsing_error: _,
+                                },
+                            ) => {
+                                observe_error_with_status(*status, &req_data);
+                                log!(
                                 Priority::TraceHttp,
                                 "Invalid JSON RPC response for request with id `{}`: {}",
                                 req_data.request_id,
                                 error
                             );
-                        }
-                        HttpClientError::InvalidJsonResponseId(ConsistentResponseIdFilterError::InconsistentId { status, request_id: _, response_id: _ }) => {
-                            observe_error_with_status(*status, &req_data);
-                            log!(
+                            }
+                            HttpClientError::InvalidJsonResponseId(ConsistentResponseIdFilterError::InconsistentId { status, request_id: _, response_id: _ }) => {
+                                observe_error_with_status(*status, &req_data);
+                                log!(
                                 Priority::TraceHttp,
                                 "Invalid JSON RPC response for request with id `{}`: {}",
                                 req_data.request_id,
                                 error
                             );
+                            }
+                            HttpClientError::NotHandledError(e) => {
+                                log!(Priority::Info, "BUG: Unexpected error: {}", e);
+                            }
+                            HttpClientError::CyclesAccountingError(_) => {}
                         }
-                        HttpClientError::NotHandledError(e) => {
-                            log!(Priority::Info, "BUG: Unexpected error: {}", e);
-                        }
-                        HttpClientError::CyclesAccountingError(_) => {}
                     },
                 ),
         )
@@ -189,7 +190,7 @@ fn observe_response(response: MetricRpcCallResponse, req_data: &MetricData) {
             (req_data.method.clone(), req_data.host.clone()),
             req_data.start_ns
         ),
-        MetricRpcCallResponse::IcError(_) | MetricRpcCallResponse::InsufficientCycles => {
+        MetricRpcCallResponse::IcError(_) | MetricRpcCallResponse::MaxResponseSizeExceeded => {
             // Don't record latency for IC errors and insufficient cycles errors
         }
     }

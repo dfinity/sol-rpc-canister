@@ -214,7 +214,7 @@ pub enum MetricRpcCallResponse {
     IcError(String),
     HttpError(MetricHttpStatusCode),
     JsonRpcError,
-    InsufficientCycles,
+    MaxResponseSizeExceeded,
 }
 
 impl MetricLabels for MetricRpcCallResponse {
@@ -230,7 +230,9 @@ impl MetricLabels for MetricRpcCallResponse {
                 .chain(status.metric_labels())
                 .collect(),
             MetricRpcCallResponse::JsonRpcError => vec![("error", "json-rpc")],
-            MetricRpcCallResponse::InsufficientCycles => vec![("error", "max-response-size-exceeded")],
+            MetricRpcCallResponse::MaxResponseSizeExceeded => {
+                vec![("error", "max-response-size-exceeded")]
+            }
         }
     }
 }
