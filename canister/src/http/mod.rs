@@ -190,7 +190,7 @@ fn observe_response(response: MetricRpcCallResponse, req_data: &MetricData) {
             req_data.start_ns
         ),
         MetricRpcCallResponse::IcError(_) | MetricRpcCallResponse::MaxResponseSizeExceeded => {
-            // Don't record latency for IC errors and insufficient cycles errors
+            // Don't record latency for IC errors
         }
     }
     add_metric_entry!(
