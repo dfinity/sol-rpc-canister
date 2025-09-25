@@ -2204,11 +2204,13 @@ mod get_signatures_for_address_tests {
 
 mod metrics_tests {
     use super::*;
+    use sol_rpc_types::HttpOutcallError;
 
     #[tokio::test]
     async fn should_retrieve_metrics() {
         let setup = Setup::new().await.with_mock_api_keys().await;
-        let client = setup
+
+        let result = setup
             .client()
             .with_consensus_strategy(ConsensusStrategy::Threshold {
                 total: Some(6),
@@ -2221,9 +2223,7 @@ mod metrics_tests {
                 RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
                 RpcSource::Supported(SupportedRpcProviderId::HeliusMainnet),
                 RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
-            ]));
-
-        let client = client
+            ]))
             .mock_http_sequence(vec![
                 MockOutcallBuilder::new(
                     200,
@@ -2257,10 +2257,38 @@ mod metrics_tests {
                 MockOutcallBuilder::new(500, json!({})),
                 MockOutcallBuilder::new_error(RejectionCode::SysFatal, "Fatal error!"),
             ])
-            .build();
-
-        let result = client.get_slot().send().await;
+            .build()
+            .get_slot()
+            .send()
+            .await;
         assert_eq!(result, MultiRpcResult::Consistent(Ok(1_450_300)));
+
+        let result = setup
+            .client()
+            .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Supported(
+                SupportedRpcProviderId::AlchemyMainnet,
+            )]))
+            .mock_http(MockOutcallBuilder::new_error(
+                RejectionCode::SysFatal,
+                "Http body exceeds size limit of 2000000 bytes.",
+            ))
+            .with_response_size_estimate(2_000_000)
+            .build()
+            .get_account_info(USDC_PUBLIC_KEY)
+            // To avoid retries, we set a high response size estimate,
+            // which incurs a large cycles cost.
+            .with_cycles(1_000_000_000_000)
+            .send()
+            .await;
+        assert_eq!(
+            result,
+            MultiRpcResult::Consistent(Err(RpcError::HttpOutcallError(
+                HttpOutcallError::IcError {
+                    code: RejectionCode::SysFatal,
+                    message: "Http body exceeds size limit of 2000000 bytes.".to_string()
+                }
+            )))
+        );
 
         setup
             .check_metrics()
@@ -2272,6 +2300,7 @@ mod metrics_tests {
             .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="lb.drpc.org"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="mainnet.helius-rpc.com"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_requests\{method="getSlot",host="solana-rpc.publicnode.com"\} 1 \d+"#)
+            .assert_contains_metric_matching(r#"solrpc_requests\{method="getAccountInfo",host="solana-mainnet.g.alchemy.com"\} 1 \d+"#)
             // `solrpc_responses` counters: success
             .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-mainnet.g.alchemy.com"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="rpc.ankr.com"\} 1 \d+"#)
@@ -2282,6 +2311,8 @@ mod metrics_tests {
             .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="mainnet.helius-rpc.com",error="http",status="500"\} .*"#)
             // `solrpc_responses` counters: IC error
             .assert_contains_metric_matching(r#"solrpc_responses\{method="getSlot",host="solana-rpc.publicnode.com",error="ic",code="SYS_FATAL"\} .*"#)
+            // `solrpc_responses` counters: insufficient cycles
+            .assert_contains_metric_matching(r#"solrpc_responses\{method="getAccountInfo",host="solana-mainnet.g.alchemy.com",error="max-response-size-exceeded"\} .*"#)
             // `solrpc_latencies` latency histograms
             .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="solana-mainnet.g.alchemy.com",le="\d+"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="rpc.ankr.com",le="\d+"\} 1 \d+"#)
@@ -2289,13 +2320,15 @@ mod metrics_tests {
             .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="lb.drpc.org",le="\d+"\} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_latencies_bucket\{method="getSlot",host="mainnet.helius-rpc.com",le="\d+"\} 1 \d+"#)
             .assert_does_not_contain_metric_matching(r#"solrpc_latencies\{method="getSlot",host="solana-rpc.publicnode.com",le="\d+"\} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_latencies_bucket\{method="getAccountInfo",host="solana-mainnet.g.alchemy.com",le="\d+"\} 1 \d+"#)
             // `solrpc_inconsistent_responses` counters: inconsistent results
             .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="solana-mainnet.g.alchemy.com"} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="rpc.ankr.com"} 1 \d+"#)
             .assert_contains_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="solana-mainnet.core.chainstack.com"} 1 \d+"#)
             .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="lb.drpc.org"} 1 \d+"#)
             .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="mainnet.helius-rpc.com"} 1 \d+"#)
-            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="solana-rpc.publicnode.com"} 1 \d+"#);
+            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getSlot",host="solana-rpc.publicnode.com"} 1 \d+"#)
+            .assert_does_not_contain_metric_matching(r#"solrpc_inconsistent_responses\{method="getAccountInfo",host="solana-mainnet.g.alchemy.com"} 1 \d+"#);
     }
 
     #[tokio::test]
