@@ -155,7 +155,9 @@ impl GetBlockRequest {
         let params = params.into();
         let consensus_strategy = config.response_consensus.unwrap_or_default();
         let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
-        let max_response_bytes = Self::response_size_estimate(&params);
+        let max_response_bytes = config
+            .response_size_estimate
+            .unwrap_or(Self::response_size_estimate(&params));
 
         Ok(MultiRpcRequest::new(
             providers,
