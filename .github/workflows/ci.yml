@@ -138,6 +138,19 @@ jobs:
           echo "$out"
           echo "$out" | grep -Eq "[0-9]+(_[0-9]+)*" || { echo "❌ Call to 'get_balance' failed"; exit 1; }
 
+  check-canister-wasm-endpoints:
+    needs: [ reproducible-build ]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Run IC WASM check-endpoints'
+        uses: dfinity/ic-wasm@lpahlavi/XC-391-add-github-action
+        with:
+          command: check-endpoints
+          wasm: ./wasms/sol_rpc_canister.wasm.gz
+
   integration-tests:
     needs: [ reproducible-build ]
     runs-on: ubuntu-22.04
