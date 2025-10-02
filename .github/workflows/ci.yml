@@ -151,11 +151,11 @@ jobs:
           name: sol_rpc_canister.wasm.gz
 
       - name: 'Run IC WASM check-endpoints'
-        uses: dfinity/ic-wasm@d2d1f16f8636891d9a7da50862efa7f8535efcbd
+        uses: dfinity/ic-wasm@72c486f152273f549bcdca50b2297be4a7e0576e
         with:
           command: check-endpoints
           wasm: ${{ github.workspace }}/sol_rpc_canister.wasm.gz
-          hidden: ./canister/hidden_endpoints.txt
+          args: --hidden ./canister/hidden_endpoints.txt
 
   integration-tests:
     needs: [ reproducible-build ]
