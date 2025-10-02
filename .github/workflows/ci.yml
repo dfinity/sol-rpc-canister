@@ -151,7 +151,7 @@ jobs:
           name: sol_rpc_canister.wasm.gz
 
       - name: 'Run IC WASM check-endpoints'
-        uses: dfinity/ic-wasm@72c486f152273f549bcdca50b2297be4a7e0576e
+        uses: dfinity/ic-wasm@2f96a89ea51ecf69312b5fb2e85d5d1788a7b1cb
         with:
           command: check-endpoints
           wasm: ${{ github.workspace }}/sol_rpc_canister.wasm.gz
