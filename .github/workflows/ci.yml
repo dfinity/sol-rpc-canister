@@ -155,6 +155,7 @@ jobs:
         with:
           command: check-endpoints
           wasm: ${{ github.workspace }}/sol_rpc_canister.wasm.gz
+          hidden: ./canister/hidden_endpoints.txt
 
   integration-tests:
     needs: [ reproducible-build ]
