@@ -150,12 +150,14 @@ jobs:
         with:
           name: sol_rpc_canister.wasm.gz
 
-      - name: 'Run IC WASM check-endpoints'
-        uses: dfinity/ic-wasm@2f96a89ea51ecf69312b5fb2e85d5d1788a7b1cb
+      - name: 'Install `ic-wasm`'
+        uses: taiki-e/install-action@v2
         with:
-          command: check-endpoints
-          wasm: ${{ github.workspace }}/sol_rpc_canister.wasm.gz
-          args: --hidden ./canister/hidden_endpoints.txt
+          tool: ic-wasm
+
+      - name: 'Check canister endpoints'
+        run: |
+          ic-wasm "$GITHUB_WORKSPACE/sol_rpc_canister.wasm.gz" check-endpoints --hidden ./canister/hidden_endpoints.txt
 
   integration-tests:
     needs: [ reproducible-build ]
