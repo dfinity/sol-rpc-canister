@@ -318,11 +318,11 @@ mod get_slot_tests {
 
         let slot = client
             .mock_http_sequence(vec![
-                MockOutcallBuilder::new(200, get_slot_response(0))
+                MockOutcallBuilder::new(200, get_slot_response(0, 1234))
                     .with_request_body(request_body(0)),
-                MockOutcallBuilder::new(200, get_slot_response(1))
+                MockOutcallBuilder::new(200, get_slot_response(1, 1234))
                     .with_request_body(request_body(1)),
-                MockOutcallBuilder::new(200, get_slot_response(2))
+                MockOutcallBuilder::new(200, get_slot_response(2, 1234))
                     .with_request_body(request_body(2)),
             ])
             .build()
@@ -349,7 +349,7 @@ mod get_slot_tests {
             let client = setup.client().with_rpc_sources(sources);
 
             let results = client
-                .mock_sequential_json_rpc_responses::<3>(200, get_slot_response(first_id))
+                .mock_sequential_json_rpc_responses::<3>(200, get_slot_response(first_id, 1234))
                 .build()
                 .get_slot()
                 .with_rounding_error(0)
@@ -372,10 +372,7 @@ mod get_slot_tests {
                 .into_iter()
                 .enumerate()
                 .map(|(id, slot)| {
-                    MockOutcallBuilder::new(
-                        200,
-                        get_slot_response_with_slot(id as u8 + first_id, slot),
-                    )
+                    MockOutcallBuilder::new(200, get_slot_response(id as u8 + first_id, slot))
                 })
                 .collect();
             let client = setup.client().with_rpc_sources(sources);
@@ -403,10 +400,7 @@ mod get_slot_tests {
                 .into_iter()
                 .enumerate()
                 .map(|(id, slot)| {
-                    MockOutcallBuilder::new(
-                        200,
-                        get_slot_response_with_slot(id as u8 + first_id, slot),
-                    )
+                    MockOutcallBuilder::new(200, get_slot_response(id as u8 + first_id, slot))
                 })
                 .collect();
             let client = setup.client().with_rpc_sources(sources);
@@ -1289,7 +1283,7 @@ mod rpc_config_tests {
                 MultiRpcResult<CandidOutput>,
                 MultiRpcResult<Output>,
             >,
-            Config: CandidType + Clone + Send + SolRpcConfig,
+            Config: CandidType + Clone + Send + SolRpcConfig + Default,
             Params: CandidType + Clone + Send,
             CandidOutput: CandidType + DeserializeOwned,
             Output: Debug + PartialEq,
@@ -1419,7 +1413,7 @@ mod rpc_config_tests {
                 MultiRpcResult<CandidOutput>,
                 MultiRpcResult<Output>,
             >,
-            Config: CandidType + Clone + Send + SolRpcConfig,
+            Config: CandidType + Clone + Send + SolRpcConfig + Default,
             Params: CandidType + Clone + Send,
             CandidOutput: CandidType + DeserializeOwned,
             Output: Debug + PartialEq,
@@ -1534,7 +1528,12 @@ mod rpc_config_tests {
                     .await;
                 }
                 SolRpcEndpoint::GetSlot => {
-                    check(&setup, |client| client.get_slot(), get_slot_response(36)).await;
+                    check(
+                        &setup,
+                        |client| client.get_slot(),
+                        get_slot_response(36, 1234),
+                    )
+                    .await;
                 }
                 SolRpcEndpoint::GetTokenAccountBalance => {
                     check(
@@ -2878,11 +2877,7 @@ fn get_signature_statuses_response(id: u8) -> Value {
     })
 }
 
-fn get_slot_response(id: u8) -> Value {
-    get_slot_response_with_slot(id, 1234)
-}
-
-fn get_slot_response_with_slot(id: u8, slot: u64) -> Value {
+fn get_slot_response(id: u8, slot: u64) -> Value {
     json!({
         "id": Id::from(ConstantSizeId::from(id)),
         "jsonrpc": "2.0",

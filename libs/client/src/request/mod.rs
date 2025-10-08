@@ -784,7 +784,7 @@ impl<Runtime, Config, Params, CandidOutput, Output>
 }
 
 /// Common behavior for the RPC config for SOL RPC canister endpoints.
-pub trait SolRpcConfig: Default {
+pub trait SolRpcConfig {
     /// Return a new RPC config with the given response size estimate.
     fn with_response_size_estimate(self, response_size_estimate: u64) -> Self;
 
@@ -836,7 +836,7 @@ impl SolRpcConfig for GetRecentPrioritizationFeesRpcConfig {
     }
 }
 
-impl<Runtime, Config: SolRpcConfig, Params, CandidOutput, Output>
+impl<Runtime, Config: SolRpcConfig + Default, Params, CandidOutput, Output>
     RequestBuilder<Runtime, Config, Params, CandidOutput, Output>
 {
     /// Change the response size estimate to use for that request.
