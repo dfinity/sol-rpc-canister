@@ -8,9 +8,9 @@ use ic_error_types::RejectCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
-    DataSlice, EncodedConfirmedTransactionWithStatusMeta, GetAccountInfoEncoding,
-    GetAccountInfoParams, GetBalanceParams, GetBlockCommitmentLevel, GetBlockParams,
-    GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
+    ConsensusStrategy, DataSlice, EncodedConfirmedTransactionWithStatusMeta,
+    GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams, GetBlockCommitmentLevel,
+    GetBlockParams, GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
     GetSignatureStatusesParams, GetSignaturesForAddressLimit, GetSignaturesForAddressParams,
     GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionEncoding,
     GetTransactionParams, Lamport, MultiRpcResult, NonZeroU8, PrioritizationFee, RoundingError,
@@ -779,6 +779,85 @@ impl<Runtime, Config, Params, CandidOutput, Output>
     /// Change the RPC configuration to use for that request.
     pub fn with_rpc_config(mut self, rpc_config: impl Into<Config>) -> Self {
         *self.request.rpc_config_mut() = Some(rpc_config.into());
+        self
+    }
+}
+
+/// Common behavior for the RPC config for SOL RPC canister endpoints.
+pub trait SolRpcConfig {
+    /// Return a new RPC config with the given response size estimate.
+    fn with_response_size_estimate(self, response_size_estimate: u64) -> Self;
+
+    /// Return a new RPC config with the given response consensys.
+    fn with_response_consensus(self, response_consensus: ConsensusStrategy) -> Self;
+}
+
+impl SolRpcConfig for RpcConfig {
+    fn with_response_size_estimate(self, response_size_estimate: u64) -> Self {
+        Self {
+            response_size_estimate: Some(response_size_estimate),
+            ..self
+        }
+    }
+
+    fn with_response_consensus(self, response_consensus: ConsensusStrategy) -> Self {
+        Self {
+            response_consensus: Some(response_consensus),
+            ..self
+        }
+    }
+}
+
+impl SolRpcConfig for GetSlotRpcConfig {
+    fn with_response_size_estimate(self, response_size_estimate: u64) -> Self {
+        Self {
+            response_size_estimate: Some(response_size_estimate),
+            ..self
+        }
+    }
+
+    fn with_response_consensus(self, response_consensus: ConsensusStrategy) -> Self {
+        Self {
+            response_consensus: Some(response_consensus),
+            ..self
+        }
+    }
+}
+
+impl SolRpcConfig for GetRecentPrioritizationFeesRpcConfig {
+    fn with_response_size_estimate(mut self, response_size_estimate: u64) -> Self {
+        self.set_response_size_estimate(response_size_estimate);
+        self
+    }
+
+    fn with_response_consensus(mut self, response_consensus: ConsensusStrategy) -> Self {
+        self.set_response_consensus(response_consensus);
+        self
+    }
+}
+
+impl<Runtime, Config: SolRpcConfig + Default, Params, CandidOutput, Output>
+    RequestBuilder<Runtime, Config, Params, CandidOutput, Output>
+{
+    /// Change the response size estimate to use for that request.
+    pub fn with_response_size_estimate(mut self, response_size_estimate: u64) -> Self {
+        self.request.rpc_config = Some(
+            self.request
+                .rpc_config
+                .unwrap_or_default()
+                .with_response_size_estimate(response_size_estimate),
+        );
+        self
+    }
+
+    /// Change the consensus strategy to use for that request.
+    pub fn with_response_consensus(mut self, response_consensus: ConsensusStrategy) -> Self {
+        self.request.rpc_config = Some(
+            self.request
+                .rpc_config
+                .unwrap_or_default()
+                .with_response_consensus(response_consensus),
+        );
         self
     }
 }

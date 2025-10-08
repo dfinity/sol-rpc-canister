@@ -146,7 +146,7 @@ use ic_cdk::api::call::RejectionCode as IcCdkRejectionCode;
 use ic_error_types::RejectCode;
 pub use request::{
     EstimateBlockhashRequestBuilder, EstimateRecentBlockhashError, Request, RequestBuilder,
-    SolRpcEndpoint, SolRpcRequest,
+    SolRpcConfig, SolRpcEndpoint, SolRpcRequest,
 };
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{

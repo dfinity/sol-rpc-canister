@@ -234,6 +234,16 @@ impl GetRecentPrioritizationFeesRpcConfig {
     pub fn set_max_length(&mut self, len: NonZeroU8) {
         self.max_length = Some(len)
     }
+
+    /// Change the `response_consensus` value.
+    pub fn set_response_consensus(&mut self, response_consensus: ConsensusStrategy) {
+        self.response_consensus = Some(response_consensus);
+    }
+
+    /// Change the `response_size_estimate` value.
+    pub fn set_response_size_estimate(&mut self, response_size_estimate: u64) {
+        self.response_size_estimate = Some(response_size_estimate);
+    }
 }
 
 impl From<RpcConfig> for GetRecentPrioritizationFeesRpcConfig {
