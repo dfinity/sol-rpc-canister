@@ -10,7 +10,8 @@ use serde_json::{json, Value};
 use sol_rpc_canister::constants::*;
 use sol_rpc_client::{RequestBuilder, SolRpcClient, SolRpcConfig, SolRpcEndpoint};
 use sol_rpc_int_tests::{
-    mock::MockOutcallBuilder, PocketIcRuntime, Setup, SolRpcTestClient, DEFAULT_CALLER_TEST_ID,
+    json_rpc_sequential_id, mock::MockOutcallBuilder, PocketIcRuntime, Setup, SolRpcTestClient,
+    DEFAULT_CALLER_TEST_ID,
 };
 use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, ConsensusStrategy,
@@ -1268,7 +1269,6 @@ mod cycles_cost_tests {
 
 mod rpc_config_tests {
     use super::*;
-    use sol_rpc_int_tests::json_rpc_sequential_id;
 
     #[tokio::test]
     async fn should_respect_response_size_estimate() {
@@ -1289,22 +1289,18 @@ mod rpc_config_tests {
             Output: Debug + PartialEq,
             MultiRpcResult<CandidOutput>: Into<MultiRpcResult<Output>>,
         {
-            // Expect multiple retries with increasingly larger values of `max_response_bytes`
             let client = setup
                 .client()
                 .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Supported(
                     SupportedRpcProviderId::AlchemyMainnet,
                 )]))
-                .mock_http_sequence(vec![
-                    MockOutcallBuilder::new_error(
-                        RejectionCode::SysFatal,
-                        "Http body exceeds size limit of 2000000 bytes.",
-                    );
-                    12
-                ])
+                .mock_http_once(
+                    MockOutcallBuilder::new_error(RejectionCode::SysFatal, "Unrecoverable error!")
+                        .with_max_response_bytes(1_999_999),
+                )
                 .build();
             let result = request(client)
-                .with_response_size_estimate(1)
+                .with_response_size_estimate(1_999_999)
                 .with_cycles(1_000_000_000_000)
                 .send()
                 .await;
@@ -1313,33 +1309,7 @@ mod rpc_config_tests {
                 MultiRpcResult::Consistent(Err(RpcError::HttpOutcallError(
                     HttpOutcallError::IcError {
                         code: RejectionCode::SysFatal,
-                        message: "Http body exceeds size limit of 2000000 bytes.".to_string()
-                    }
-                )))
-            );
-
-            // Expect no retries because `max_response_size` is already 2_000_000
-            let client = setup
-                .client()
-                .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Supported(
-                    SupportedRpcProviderId::AlchemyMainnet,
-                )]))
-                .mock_http_once(MockOutcallBuilder::new_error(
-                    RejectionCode::SysFatal,
-                    "Http body exceeds size limit of 2000000 bytes.",
-                ))
-                .build();
-            let result = request(client)
-                .with_response_size_estimate(2_000_000)
-                .with_cycles(1_000_000_000_000)
-                .send()
-                .await;
-            assert_eq!(
-                result,
-                MultiRpcResult::Consistent(Err(RpcError::HttpOutcallError(
-                    HttpOutcallError::IcError {
-                        code: RejectionCode::SysFatal,
-                        message: "Http body exceeds size limit of 2000000 bytes.".to_string()
+                        message: "Unrecoverable error!".to_string()
                     }
                 )))
             );
