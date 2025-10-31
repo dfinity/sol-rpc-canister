@@ -32,6 +32,7 @@ http = { workspace = true }
 ic-cdk = { workspace = true }
 ic-error-types = { workspace = true }
 ic-http-types = { workspace = true }
+ic-management-canister-types = { workspace = true }
 ic-metrics-encoder = { workspace = true }
 ic-stable-structures = { workspace = true }
 maplit = { workspace = true }

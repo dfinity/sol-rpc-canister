@@ -14,11 +14,13 @@ canhttp = { workspace = true }
 canlog = { workspace = true }
 const_format = { workspace = true }
 futures = { workspace = true }
+ic-canister-runtime = { workspace = true }
 ic-cdk = { workspace = true }
 ic-error-types = { workspace = true }
 ic-http-types = { workspace = true }
 ic-management-canister-types = { workspace = true }
 ic-metrics-assert = { workspace = true, features = ["pocket_ic"] }
+ic-pocket-canister-runtime = { workspace = true }
 ic-test-utilities-load-wasm = { workspace = true }
 num-traits = { workspace = true }
 pocket-ic = { workspace = true }

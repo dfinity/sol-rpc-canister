@@ -7,7 +7,7 @@ use crate::{
     types::OverrideProvider,
 };
 use canhttp::multi::{TimedSizedMap, TimedSizedVec, Timestamp};
-use ic_cdk::api::management_canister::http_request::HttpHeader;
+use ic_management_canister_types::HttpHeader;
 use maplit::btreemap;
 use sol_rpc_types::{
     ConsensusStrategy, ProviderError, RpcAccess, RpcAuth, RpcEndpoint, RpcError, RpcResult,
