@@ -1,10 +1,9 @@
 #[cfg(test)]
 mod tests;
 
-use crate::{Runtime, SolRpcClient};
+use crate::{IcError, Runtime, SolRpcClient};
 use candid::CandidType;
 use derive_more::From;
-use ic_canister_runtime::IcError;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
