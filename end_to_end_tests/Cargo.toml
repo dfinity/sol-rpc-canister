@@ -11,6 +11,8 @@ license.workspace = true
 async-trait = { workspace = true }
 candid = { workspace = true }
 ic-agent = { workspace = true }
+ic-agent-canister-runtime = { workspace = true }
+ic-canister-runtime = { workspace = true, features = ["wallet"] }
 ic-cdk = { workspace = true }
 ic-error-types = { workspace = true }
 serde = { workspace = true }

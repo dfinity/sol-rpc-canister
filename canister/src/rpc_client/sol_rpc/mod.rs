@@ -1,12 +1,9 @@
 #[cfg(test)]
 mod tests;
 
-use candid::candid_method;
 use canhttp::http::json::JsonRpcResponse;
-use ic_cdk::{
-    api::management_canister::http_request::{HttpResponse, TransformArgs},
-    query,
-};
+use ic_cdk::query;
+use ic_management_canister_types::{HttpRequestResult, TransformArgs};
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::{from_slice, Value};
@@ -179,8 +176,8 @@ impl ResponseTransform {
 }
 
 #[query]
-#[candid_method(query)]
-fn cleanup_response(mut args: TransformArgs) -> HttpResponse {
+fn cleanup_response(args: TransformArgs) -> HttpRequestResult {
+    let mut args = args;
     args.response.headers.clear();
     let status_ok = args.response.status >= 200u16 && args.response.status < 300u16;
     if status_ok && !args.context.is_empty() {
