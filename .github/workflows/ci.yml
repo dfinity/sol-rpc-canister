@@ -157,7 +157,7 @@ jobs:
 
       - name: 'Check canister endpoints'
         run: |
-          ic-wasm "$GITHUB_WORKSPACE/sol_rpc_canister.wasm.gz" check-endpoints --hidden ./canister/hidden_endpoints.txt
+          ic-wasm "$GITHUB_WORKSPACE/sol_rpc_canister.wasm.gz" check-endpoints --hidden ./canister/hidden_endpoints.conf
 
   integration-tests:
     needs: [ reproducible-build ]
