@@ -105,13 +105,14 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v4
 
-      - name: 'Set up Python'
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: 'Check ninja Cargo.toml'
-        run: python3 .github/scripts/check_ninja_cargo_toml.py
+# TODO DEFI-2462: Re-enable once `sol_rpc_client` and `sol_rpc_types` crates using `ic-cdk` v0.18.6 are published
+#      - name: 'Set up Python'
+#        uses: actions/setup-python@v5
+#        with:
+#          python-version: '3.11'
+#
+#      - name: 'Check ninja Cargo.toml'
+#        run: python3 .github/scripts/check_ninja_cargo_toml.py
 
       - name: 'Install dfx'
         uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365
