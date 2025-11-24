@@ -24,7 +24,7 @@ use sol_rpc_types::{
 use std::str::FromStr;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
-    let caller = ic_cdk::caller();
+    let caller = ic_cdk::api::msg_caller();
     if read_state(|state| state.is_api_key_principal(&caller)) || is_controller(&caller) {
         Ok(())
     } else {
@@ -34,7 +34,7 @@ pub fn require_api_key_principal_or_controller() -> Result<(), String> {
 
 pub fn require_base_http_outcall_fee() -> Result<(), String> {
     if read_state(|state| state.is_demo_mode_active())
-        || (ic_cdk::api::call::msg_cycles_available128()
+        || (ic_cdk::api::msg_cycles_available()
             >= mutate_state(|state| state.lazy_compute_base_http_outcall_fee()))
     {
         Ok(())
@@ -62,7 +62,7 @@ async fn update_api_keys(api_keys: Vec<(SupportedRpcProviderId, Option<String>)>
     log!(
         Priority::Info,
         "[{}] Updating API keys for providers: {}",
-        ic_cdk::caller(),
+        ic_cdk::api::msg_caller(),
         api_keys
             .iter()
             .map(|(provider, _)| format!("{:?}", provider))

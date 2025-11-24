@@ -3,7 +3,8 @@ use assert_matches::*;
 use candid::CandidType;
 use canhttp::http::json::{ConstantSizeId, Id};
 use const_format::formatcp;
-use ic_cdk::api::{call::RejectionCode, management_canister::http_request::HttpHeader};
+use ic_cdk::call::RejectCode;
+use ic_management_canister_types::HttpHeader;
 use pocket_ic::common::rest::CanisterHttpMethod;
 use serde::de::DeserializeOwned;
 use serde_json::{json, Value};
@@ -16,9 +17,9 @@ use sol_rpc_int_tests::{
 use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, ConsensusStrategy,
     GetSignaturesForAddressLimit, GetSlotParams, GetTransactionEncoding, HttpOutcallError,
-    InstallArgs, InstructionError, Mode, MultiRpcResult, PrioritizationFee, ProviderError,
-    RpcAccess, RpcAuth, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot,
-    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TransactionDetails,
+    InstallArgs, InstructionError, LegacyRejectionCode, Mode, MultiRpcResult, PrioritizationFee,
+    ProviderError, RpcAccess, RpcAuth, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources,
+    Slot, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TransactionDetails,
     TransactionError,
 };
 use solana_account_decoder_client_types::{
@@ -601,7 +602,7 @@ mod generic_request_tests {
                 .with_cycles(HTTP_OUTCALL_BASE_FEE - 1)
                 .try_send()
                 .await;
-            assert!(result.is_err_and(|(_code, message)| message.contains("Not enough cycles")));
+            assert!(result.is_err_and(|err| err.to_string().contains("Not enough cycles")));
         }
 
         let setup = Setup::new().await.with_mock_api_keys().await;
@@ -1295,7 +1296,7 @@ mod rpc_config_tests {
                     SupportedRpcProviderId::AlchemyMainnet,
                 )]))
                 .mock_http_once(
-                    MockOutcallBuilder::new_error(RejectionCode::SysFatal, "Unrecoverable error!")
+                    MockOutcallBuilder::new_error(RejectCode::SysFatal, "Unrecoverable error!")
                         .with_max_response_bytes(1_999_999),
                 )
                 .build();
@@ -1308,7 +1309,7 @@ mod rpc_config_tests {
                 result,
                 MultiRpcResult::Consistent(Err(RpcError::HttpOutcallError(
                     HttpOutcallError::IcError {
-                        code: RejectionCode::SysFatal,
+                        code: LegacyRejectionCode::SysFatal,
                         message: "Unrecoverable error!".to_string()
                     }
                 )))
@@ -1402,7 +1403,7 @@ mod rpc_config_tests {
                 .mock_http_sequence(vec![
                     MockOutcallBuilder::new(200, ok_result_0),
                     MockOutcallBuilder::new(200, ok_result_1),
-                    MockOutcallBuilder::new_error(RejectionCode::SysFatal, "Some error!"),
+                    MockOutcallBuilder::new_error(RejectCode::SysFatal, "Some error!"),
                 ])
                 .build();
 
@@ -1422,7 +1423,7 @@ mod rpc_config_tests {
                 .mock_http_sequence(vec![
                     MockOutcallBuilder::new(200, ok_result_3),
                     MockOutcallBuilder::new(200, ok_result_4),
-                    MockOutcallBuilder::new_error(RejectionCode::SysFatal, "Some error!"),
+                    MockOutcallBuilder::new_error(RejectCode::SysFatal, "Some error!"),
                 ])
                 .build();
 
@@ -1847,7 +1848,7 @@ mod metrics_tests {
                 ),
                 MockOutcallBuilder::new(429, json!({})),
                 MockOutcallBuilder::new(500, json!({})),
-                MockOutcallBuilder::new_error(RejectionCode::SysFatal, "Fatal error!"),
+                MockOutcallBuilder::new_error(RejectCode::SysFatal, "Fatal error!"),
             ])
             .build()
             .get_slot()
@@ -1861,7 +1862,7 @@ mod metrics_tests {
                 SupportedRpcProviderId::AlchemyMainnet,
             )]))
             .mock_http(MockOutcallBuilder::new_error(
-                RejectionCode::SysFatal,
+                RejectCode::SysFatal,
                 "Http body exceeds size limit of 2000000 bytes.",
             ))
             .with_response_size_estimate(2_000_000)
@@ -1876,7 +1877,7 @@ mod metrics_tests {
             result,
             MultiRpcResult::Consistent(Err(RpcError::HttpOutcallError(
                 HttpOutcallError::IcError {
-                    code: RejectionCode::SysFatal,
+                    code: LegacyRejectionCode::SysFatal,
                     message: "Http body exceeds size limit of 2000000 bytes.".to_string()
                 }
             )))

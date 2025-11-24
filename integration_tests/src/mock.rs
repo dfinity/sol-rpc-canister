@@ -1,5 +1,5 @@
 use canhttp::http::json::JsonRpcRequest;
-use ic_cdk::api::call::RejectionCode;
+use ic_cdk::call::RejectCode;
 use pocket_ic::common::rest::{
     CanisterHttpHeader, CanisterHttpMethod, CanisterHttpReject, CanisterHttpReply,
     CanisterHttpRequest, CanisterHttpResponse,
@@ -56,7 +56,7 @@ impl MockOutcallBuilder {
         })
     }
 
-    pub fn new_error(code: RejectionCode, message: impl ToString) -> Self {
+    pub fn new_error(code: RejectCode, message: impl ToString) -> Self {
         Self(MockOutcall {
             method: None,
             url: None,

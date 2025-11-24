@@ -2,9 +2,11 @@ use async_trait::async_trait;
 use candid::{decode_args, utils::ArgumentEncoder, CandidType, Encode, Principal};
 use canhttp::http::json::ConstantSizeId;
 use canlog::{Log, LogEntry};
+use ic_canister_runtime::IcError;
+use ic_cdk::call::{CallFailed, CallRejected};
 use ic_error_types::RejectCode;
 use ic_http_types::{HttpRequest, HttpResponse};
-use ic_management_canister_types::{CanisterId, CanisterSettings};
+use ic_management_canister_types_pocket_ic::{CanisterId, CanisterSettings};
 use ic_metrics_assert::{MetricsAssert, PocketIcAsyncHttpQuery};
 use num_traits::ToPrimitive;
 use pocket_ic::{
@@ -297,7 +299,7 @@ impl Runtime for PocketIcRuntime<'_> {
         method: &str,
         args: In,
         cycles: u128,
-    ) -> Result<Out, (RejectCode, String)>
+    ) -> Result<Out, IcError>
     where
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
@@ -327,7 +329,7 @@ impl Runtime for PocketIcRuntime<'_> {
         id: Principal,
         method: &str,
         args: In,
-    ) -> Result<Out, (RejectCode, String)>
+    ) -> Result<Out, IcError>
     where
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
@@ -413,17 +415,12 @@ impl PocketIcRuntime<'_> {
         true
     }
 
-    fn parse_reject_response(response: RejectResponse) -> (RejectCode, String) {
-        use pocket_ic::RejectCode as PocketIcRejectCode;
-        let rejection_code = match response.reject_code {
-            PocketIcRejectCode::SysFatal => RejectCode::SysFatal,
-            PocketIcRejectCode::SysTransient => RejectCode::SysTransient,
-            PocketIcRejectCode::DestinationInvalid => RejectCode::DestinationInvalid,
-            PocketIcRejectCode::CanisterReject => RejectCode::CanisterReject,
-            PocketIcRejectCode::CanisterError => RejectCode::CanisterError,
-            PocketIcRejectCode::SysUnknown => RejectCode::SysUnknown,
-        };
-        (rejection_code, response.reject_message)
+    fn parse_reject_response(response: RejectResponse) -> IcError {
+        CallFailed::CallRejected(CallRejected::with_rejection(
+            response.reject_code as u32,
+            response.reject_message,
+        ))
+        .into()
     }
 }
 
@@ -448,7 +445,7 @@ impl Runtime for PocketIcLiveModeRuntime<'_> {
         method: &str,
         args: In,
         cycles: u128,
-    ) -> Result<Out, (RejectCode, String)>
+    ) -> Result<Out, IcError>
     where
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
@@ -477,7 +474,7 @@ impl Runtime for PocketIcLiveModeRuntime<'_> {
         id: Principal,
         method: &str,
         args: In,
-    ) -> Result<Out, (RejectCode, String)>
+    ) -> Result<Out, IcError>
     where
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
@@ -495,20 +492,20 @@ pub fn encode_args<In: ArgumentEncoder>(args: In) -> Vec<u8> {
     candid::encode_args(args).expect("Failed to encode arguments.")
 }
 
-pub fn decode_call_response<Out>(bytes: Vec<u8>) -> Result<Out, (RejectCode, String)>
+pub fn decode_call_response<Out>(bytes: Vec<u8>) -> Result<Out, IcError>
 where
     Out: CandidType + DeserializeOwned,
 {
-    decode_args(&bytes).map(|(res,)| res).map_err(|e| {
-        (
-            RejectCode::CanisterError,
-            format!(
+    decode_args(&bytes)
+        .map(|(res,)| res)
+        .map_err(|e| IcError::CallRejected {
+            code: RejectCode::CanisterError,
+            message: format!(
                 "failed to decode canister response as {}: {}",
                 std::any::type_name::<Out>(),
                 e
             ),
-        )
-    })
+        })
 }
 
 #[async_trait]

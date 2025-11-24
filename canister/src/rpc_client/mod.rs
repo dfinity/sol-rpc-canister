@@ -7,23 +7,25 @@ mod tests;
 use crate::{
     add_metric_entry,
     candid_rpc::hostname,
+    constants::DEFAULT_MAX_RESPONSE_BYTES,
     http::{
-        errors::HttpClientError, http_client, service_request_builder, ChargingPolicyWithCollateral,
+        charging_policy_with_collateral, errors::HttpClientError, http_client,
+        service_request_builder,
     },
-    memory::{read_state, record_ok_result, State},
+    memory::{read_state, record_ok_result},
     metrics::MetricRpcMethod,
     providers::{get_provider, request_builder, resolve_rpc_provider, Providers},
     rpc_client::sol_rpc::ResponseTransform,
 };
 use canhttp::{
+    cycles::CyclesChargingPolicy,
     http::json::JsonRpcRequest,
     multi::{MultiResults, Reduce, ReduceWithEquality, ReduceWithThreshold, Timestamp},
-    CyclesChargingPolicy, CyclesCostEstimator, MaxResponseBytesRequestExtension,
-    TransformContextRequestExtension,
+    MaxResponseBytesRequestExtension, TransformContextRequestExtension,
 };
 use http::{Request, Response};
-use ic_cdk::api::management_canister::http_request::{
-    CanisterHttpRequestArgument as IcHttpRequest, TransformContext,
+use ic_management_canister_types::{
+    HttpRequestArgs as IcHttpRequest, TransformContext, TransformFunc,
 };
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{
@@ -171,7 +173,7 @@ impl GetBlockRequest {
     fn response_size_estimate(params: &json::GetBlockParams) -> u64 {
         let mut cycles = HEADER_SIZE_LIMIT;
         cycles += match params.get_transaction_details() {
-            Some(TransactionDetails::Accounts) => CyclesCostEstimator::DEFAULT_MAX_RESPONSE_BYTES,
+            Some(TransactionDetails::Accounts) => DEFAULT_MAX_RESPONSE_BYTES,
             Some(TransactionDetails::Signatures) => 256 * 1024,
             Some(TransactionDetails::None) | None => 512,
         };
@@ -179,7 +181,7 @@ impl GetBlockRequest {
             Some(true) | None => 256,
             Some(false) => 0,
         };
-        CyclesCostEstimator::DEFAULT_MAX_RESPONSE_BYTES.min(cycles)
+        DEFAULT_MAX_RESPONSE_BYTES.min(cycles)
     }
 }
 
@@ -511,11 +513,11 @@ impl<Params, Output> MultiRpcRequest<Params, Output> {
         );
 
         let mut cycles_to_attach = 0_u128;
-        let estimator = CyclesCostEstimator::new(read_state(State::get_num_subnet_nodes));
-        let policy = ChargingPolicyWithCollateral::default();
+
+        let policy = charging_policy_with_collateral();
         for request in requests.into_values() {
-            cycles_to_attach +=
-                policy.cycles_to_charge(&request, estimator.cost_of_http_request(&request));
+            let request_cycles_cost = ic_cdk::management_canister::cost_http_request(&request);
+            cycles_to_attach += policy.cycles_to_charge(&request, request_cycles_cost);
         }
         Ok(cycles_to_attach)
     }
@@ -538,10 +540,13 @@ impl<Params, Output> MultiRpcRequest<Params, Output> {
             .map(|builder| {
                 builder
                     .max_response_bytes(self.max_response_bytes)
-                    .transform_context(TransformContext::from_name(
-                        "cleanup_response".to_owned(),
-                        transform_op.clone(),
-                    ))
+                    .transform_context(TransformContext {
+                        function: TransformFunc(candid::Func {
+                            method: "cleanup_response".to_string(),
+                            principal: ic_cdk::api::canister_self(),
+                        }),
+                        context: transform_op.clone(),
+                    })
                     .body(self.request.clone())
                     .expect("BUG: invalid request")
             });

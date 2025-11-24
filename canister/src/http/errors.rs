@@ -1,4 +1,5 @@
 use canhttp::{
+    cycles::ChargeCallerError,
     http::{
         json::{
             ConsistentResponseIdFilterError, JsonRequestConversionError,
@@ -7,11 +8,10 @@ use canhttp::{
         FilterNonSuccessfulHttpResponseError, HttpRequestConversionError,
         HttpResponseConversionError,
     },
-    CyclesAccountingError, HttpsOutcallError, IcError,
+    HttpsOutcallError, IcError,
 };
 use derive_more::From;
-use ic_error_types::RejectCode;
-use sol_rpc_types::{HttpOutcallError, ProviderError, RpcError};
+use sol_rpc_types::{HttpOutcallError, LegacyRejectionCode, ProviderError, RpcError};
 use thiserror::Error;
 
 #[derive(Clone, Debug, Error, From)]
@@ -21,7 +21,7 @@ pub enum HttpClientError {
     #[error("unknown error (most likely sign of a bug): {0}")]
     NotHandledError(String),
     #[error("cycles accounting error: {0}")]
-    CyclesAccountingError(CyclesAccountingError),
+    CyclesAccountingError(ChargeCallerError),
     #[error("HTTP response was not successful: {0}")]
     UnsuccessfulHttpResponse(FilterNonSuccessfulHttpResponseError<Vec<u8>>),
     #[error("Error converting response to JSON: {0}")]
@@ -52,21 +52,18 @@ impl From<JsonRequestConversionError> for HttpClientError {
 impl From<HttpClientError> for RpcError {
     fn from(error: HttpClientError) -> Self {
         match error {
-            HttpClientError::IcError(IcError { code, message }) => {
-                use ic_cdk::api::call::RejectionCode as IcCdkRejectionCode;
-                let code = match code {
-                    RejectCode::SysFatal => IcCdkRejectionCode::SysFatal,
-                    RejectCode::SysTransient => IcCdkRejectionCode::SysTransient,
-                    RejectCode::DestinationInvalid => IcCdkRejectionCode::DestinationInvalid,
-                    RejectCode::CanisterReject => IcCdkRejectionCode::CanisterReject,
-                    RejectCode::CanisterError => IcCdkRejectionCode::CanisterError,
-                    RejectCode::SysUnknown => IcCdkRejectionCode::Unknown,
-                };
-                RpcError::HttpOutcallError(HttpOutcallError::IcError { code, message })
+            HttpClientError::IcError(IcError::CallRejected { code, message }) => {
+                RpcError::HttpOutcallError(HttpOutcallError::IcError {
+                    code: LegacyRejectionCode::from(code),
+                    message,
+                })
+            }
+            e @ HttpClientError::IcError(IcError::InsufficientLiquidCycleBalance { .. }) => {
+                panic!("{}", e.to_string())
             }
             HttpClientError::NotHandledError(e) => RpcError::ValidationError(e),
             HttpClientError::CyclesAccountingError(
-                CyclesAccountingError::InsufficientCyclesError { expected, received },
+                ChargeCallerError::InsufficientCyclesError { expected, received },
             ) => RpcError::ProviderError(ProviderError::TooFewCycles { expected, received }),
             HttpClientError::InvalidJsonResponse(
                 JsonResponseConversionError::InvalidJsonResponse {

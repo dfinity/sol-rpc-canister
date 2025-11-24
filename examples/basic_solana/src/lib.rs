@@ -74,7 +74,7 @@ impl From<Ed25519KeyName> for Ed25519KeyId {
 }
 
 pub fn validate_caller_not_anonymous() -> Principal {
-    let principal = ic_cdk::caller();
+    let principal = ic_cdk::api::msg_caller();
     if principal == Principal::anonymous() {
         panic!("anonymous principal is not allowed");
     }

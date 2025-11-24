@@ -2,7 +2,7 @@ use basic_solana::{Ed25519KeyName, SolanaNetwork};
 use candid::{
     decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encode, Nat, Principal,
 };
-use ic_management_canister_types::{CanisterId, CanisterSettings};
+use ic_management_canister_types_pocket_ic::{CanisterId, CanisterSettings};
 use pocket_ic::{PocketIc, PocketIcBuilder};
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
