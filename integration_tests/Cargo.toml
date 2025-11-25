@@ -8,11 +8,9 @@ homepage.workspace = true
 license.workspace = true
 
 [dependencies]
-async-trait = { workspace = true }
 candid = { workspace = true }
 canhttp = { workspace = true }
 canlog = { workspace = true }
-const_format = { workspace = true }
 futures = { workspace = true }
 ic-canister-runtime = { workspace = true, features = ["wallet"] }
 ic-cdk = { workspace = true }
@@ -45,6 +43,9 @@ url = { workspace = true }
 
 [dev-dependencies]
 assert_matches = { workspace = true }
+base64 = { workspace = true }
+bincode = { workspace = true }
+rand = { workspace = true }
 solana-client = { workspace = true }
 solana-compute-budget-interface = { workspace = true }
 solana-keypair = { workspace = true }
