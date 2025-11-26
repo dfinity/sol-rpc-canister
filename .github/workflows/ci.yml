@@ -100,9 +100,12 @@ jobs:
         run: cargo test --locked --workspace --exclude basic_solana --exclude sol_rpc_int_tests --exclude sol_rpc_e2e_tests
 
   basic-solana-deployment:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
         deployment:
           - ninja
           - local
