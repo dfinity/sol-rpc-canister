@@ -209,8 +209,9 @@ jobs:
           echo "BASIC_SOLANA_WASM_PATH=$GITHUB_WORKSPACE/target/wasm32-unknown-unknown/canister-release/basic_solana.wasm" >> "$GITHUB_ENV"
 
       - name: 'Test basic_solana'
+        working-directory: examples/basic_solana/
         run: |
-          cargo build --manifest-path examples/basic_solana/Cargo.toml --target wasm32-unknown-unknown --no-default-features --profile canister-release 
+          cargo build --target wasm32-unknown-unknown --no-default-features --profile canister-release 
           cargo test --locked --package basic_solana
 
       - name: 'Test sol_rpc_int_tests'
