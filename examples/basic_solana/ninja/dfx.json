@@ -5,10 +5,8 @@
       "type": "custom",
       "shrink": true,
       "gzip": true,
+      "build": "build.sh",
       "wasm": "target/wasm32-unknown-unknown/release/basic_solana.wasm",
-      "build": [
-        "cargo build --target wasm32-unknown-unknown --release -p basic_solana"
-      ],
       "metadata": [
         {
           "name": "candid:service"
