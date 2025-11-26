@@ -2030,7 +2030,7 @@ async fn should_log_request_and_response() {
     let logs = setup.retrieve_logs("TRACE_HTTP").await;
     assert_eq!(logs.len(), 2, "Unexpected amount of logs: {logs:?}");
 
-    assert_eq!(logs[0].message, "JSON-RPC request with id `00000000000000000000` to solana-mainnet.g.alchemy.com: JsonRpcRequest { jsonrpc: V2, method: \"getSlot\", id: String(\"00000000000000000000\"), params: Some(GetSlotParams(None)) }");
+    assert_eq!(logs[0].message, "JSON-RPC request with id `00000000000000000000` to solana-mainnet.g.alchemy.com: JsonRpcRequest { jsonrpc: V2, method: \"getSlot\", id: String(\"00000000000000000000\"), params: Some(GetSlotParams { config: None }) }");
     assert_eq!(logs[1].message, "Got response for request with id `00000000000000000000`. Response with status 200 OK: JsonRpcResponse { jsonrpc: V2, id: String(\"00000000000000000000\"), result: Ok(1234) }");
 
     setup.drop().await;

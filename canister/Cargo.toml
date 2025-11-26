@@ -39,6 +39,7 @@ minicbor = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+serde_tuple = { workspace = true }
 serde_with = { workspace = true }
 sol_rpc_types = { path = "../libs/types" }
 solana-account = { workspace = true, features = ["serde"] }
