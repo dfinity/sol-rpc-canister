@@ -126,7 +126,6 @@ jobs:
         working-directory: examples/basic_solana/${{ matrix.deployment }}
         run: |
           perl -pi -e 's|solana_network = opt variant { Devnet }|solana_network = opt variant { Custom = record { url = \\\"https://api.devnet.solana.com\\\"; headers = null } }|g' dfx.json
-          cat dfx.json
 
       - name: "Deploy locally"
         working-directory: examples/basic_solana/${{ matrix.deployment }}
