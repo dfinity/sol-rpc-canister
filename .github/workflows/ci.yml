@@ -127,6 +127,11 @@ jobs:
         run: |
           perl -pi -e 's|solana_network = opt variant { Devnet }|solana_network = opt variant { Custom = record { url = \\\"https://api.devnet.solana.com\\\"; headers = null } }|g' dfx.json
 
+      - name: 'Install llvm'
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install llvm
+
       - name: "Deploy locally"
         working-directory: examples/basic_solana/${{ matrix.deployment }}
         run: |
