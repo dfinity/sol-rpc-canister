@@ -1,5 +1,5 @@
 use derive_more::From;
-use serde::{Deserialize, Serialize};
+use serde::{ser::SerializeSeq, Deserialize, Serialize, Serializer};
 use serde_with::skip_serializing_none;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetBlockCommitmentLevel,
@@ -8,9 +8,7 @@ use sol_rpc_types::{
 };
 use solana_transaction_status_client_types::UiTransactionEncoding;
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(Option<GetSlotConfig>,)")]
+#[derive(Deserialize, Clone, Debug)]
 pub struct GetSlotParams(Option<GetSlotConfig>);
 
 impl From<sol_rpc_types::GetSlotParams> for GetSlotParams {
@@ -31,9 +29,9 @@ impl From<sol_rpc_types::GetSlotParams> for GetSlotParams {
     }
 }
 
-impl From<GetSlotParams> for (Option<GetSlotConfig>,) {
-    fn from(params: GetSlotParams) -> Self {
-        (params.0,)
+impl Serialize for GetSlotParams {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serialize_optional_config(serializer, &self.0)
     }
 }
 
@@ -45,9 +43,7 @@ pub struct GetSlotConfig {
     pub min_context_slot: Option<u64>,
 }
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(String, Option<GetAccountInfoConfig>)")]
+#[derive(Deserialize, Clone, Debug)]
 pub struct GetAccountInfoParams(String, Option<GetAccountInfoConfig>);
 
 impl From<sol_rpc_types::GetAccountInfoParams> for GetAccountInfoParams {
@@ -77,9 +73,9 @@ impl From<sol_rpc_types::GetAccountInfoParams> for GetAccountInfoParams {
     }
 }
 
-impl From<GetAccountInfoParams> for (String, Option<GetAccountInfoConfig>) {
-    fn from(params: GetAccountInfoParams) -> Self {
-        (params.0.to_string(), params.1)
+impl Serialize for GetAccountInfoParams {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serialize_params_and_optional_config(serializer, &self.0, &self.1)
     }
 }
 
@@ -94,9 +90,7 @@ pub struct GetAccountInfoConfig {
     pub min_context_slot: Option<u64>,
 }
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(String, Option<GetBalanceConfig>)")]
+#[derive(Deserialize, Clone, Debug)]
 pub struct GetBalanceParams(String, Option<GetBalanceConfig>);
 
 #[skip_serializing_none]
@@ -127,15 +121,13 @@ impl From<sol_rpc_types::GetBalanceParams> for GetBalanceParams {
     }
 }
 
-impl From<GetBalanceParams> for (String, Option<GetBalanceConfig>) {
-    fn from(value: GetBalanceParams) -> Self {
-        (value.0, value.1)
+impl Serialize for GetBalanceParams {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serialize_params_and_optional_config(serializer, &self.0, &self.1)
     }
 }
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(Slot, Option<GetBlockConfig>)")]
+#[derive(Deserialize, Clone, Debug)]
 pub struct GetBlockParams(Slot, Option<GetBlockConfig>);
 
 impl GetBlockParams {
@@ -165,9 +157,9 @@ impl From<sol_rpc_types::GetBlockParams> for GetBlockParams {
     }
 }
 
-impl From<GetBlockParams> for (Slot, Option<GetBlockConfig>) {
-    fn from(params: GetBlockParams) -> Self {
-        (params.0, params.1)
+impl Serialize for GetBlockParams {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serialize_params_and_optional_config(serializer, &self.0, &self.1)
     }
 }
 
@@ -200,9 +192,7 @@ impl From<sol_rpc_types::GetRecentPrioritizationFeesParams> for GetRecentPriorit
     }
 }
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(Pubkey, Option<GetSignaturesForAddressConfig>)")]
+#[derive(Deserialize, Clone, Debug)]
 pub struct GetSignaturesForAddressParams(Pubkey, Option<GetSignaturesForAddressConfig>);
 
 impl GetSignaturesForAddressParams {
@@ -245,9 +235,9 @@ impl From<sol_rpc_types::GetSignaturesForAddressParams> for GetSignaturesForAddr
     }
 }
 
-impl From<GetSignaturesForAddressParams> for (Pubkey, Option<GetSignaturesForAddressConfig>) {
-    fn from(params: GetSignaturesForAddressParams) -> Self {
-        (params.0, params.1)
+impl Serialize for GetSignaturesForAddressParams {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serialize_params_and_optional_config(serializer, &self.0, &self.1)
     }
 }
 
@@ -262,9 +252,7 @@ pub struct GetSignaturesForAddressConfig {
     pub until: Option<Signature>,
 }
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(Vec<Signature>, Option<GetSignatureStatusesConfig>)")]
+#[derive(Deserialize, Clone, Debug)]
 pub struct GetSignatureStatusesParams(Vec<Signature>, Option<GetSignatureStatusesConfig>);
 
 impl GetSignatureStatusesParams {
@@ -284,9 +272,9 @@ impl From<sol_rpc_types::GetSignatureStatusesParams> for GetSignatureStatusesPar
     }
 }
 
-impl From<GetSignatureStatusesParams> for (Vec<Signature>, Option<GetSignatureStatusesConfig>) {
-    fn from(params: GetSignatureStatusesParams) -> Self {
-        (params.0, params.1)
+impl Serialize for GetSignatureStatusesParams {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serialize_params_and_optional_config(serializer, &self.0, &self.1)
     }
 }
 
@@ -297,16 +285,8 @@ pub struct GetSignatureStatusesConfig {
     pub search_transaction_history: bool,
 }
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(String, Option<GetTokenAccountBalanceConfig>)")]
+#[derive(Deserialize, Clone, Debug)]
 pub struct GetTokenAccountBalanceParams(String, Option<GetTokenAccountBalanceConfig>);
-
-#[skip_serializing_none]
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct GetTokenAccountBalanceConfig {
-    pub commitment: Option<CommitmentLevel>,
-}
 
 impl From<sol_rpc_types::GetTokenAccountBalanceParams> for GetTokenAccountBalanceParams {
     fn from(params: sol_rpc_types::GetTokenAccountBalanceParams) -> Self {
@@ -321,15 +301,19 @@ impl From<sol_rpc_types::GetTokenAccountBalanceParams> for GetTokenAccountBalanc
     }
 }
 
-impl From<GetTokenAccountBalanceParams> for (String, Option<GetTokenAccountBalanceConfig>) {
-    fn from(value: GetTokenAccountBalanceParams) -> Self {
-        (value.0, value.1)
+impl Serialize for GetTokenAccountBalanceParams {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serialize_params_and_optional_config(serializer, &self.0, &self.1)
     }
 }
 
 #[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(String, Option<GetTransactionConfig>)")]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct GetTokenAccountBalanceConfig {
+    pub commitment: Option<CommitmentLevel>,
+}
+
+#[derive(Deserialize, Clone, Debug)]
 pub struct GetTransactionParams(String, Option<GetTransactionConfig>);
 
 impl From<sol_rpc_types::GetTransactionParams> for GetTransactionParams {
@@ -356,9 +340,9 @@ impl From<sol_rpc_types::GetTransactionParams> for GetTransactionParams {
     }
 }
 
-impl From<GetTransactionParams> for (String, Option<GetTransactionConfig>) {
-    fn from(params: GetTransactionParams) -> Self {
-        (params.0.to_string(), params.1)
+impl Serialize for GetTransactionParams {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serialize_params_and_optional_config(serializer, &self.0, &self.1)
     }
 }
 
@@ -371,9 +355,7 @@ pub struct GetTransactionConfig {
     pub encoding: Option<GetTransactionEncoding>,
 }
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(String, Option<SendTransactionConfig>)")]
+#[derive(Deserialize, Clone, Debug)]
 pub struct SendTransactionParams(String, Option<SendTransactionConfig>);
 
 impl From<sol_rpc_types::SendTransactionParams> for SendTransactionParams {
@@ -407,9 +389,9 @@ impl From<sol_rpc_types::SendTransactionParams> for SendTransactionParams {
     }
 }
 
-impl From<SendTransactionParams> for (String, Option<SendTransactionConfig>) {
-    fn from(params: SendTransactionParams) -> Self {
-        (params.0.to_string(), params.1)
+impl Serialize for SendTransactionParams {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serialize_params_and_optional_config(serializer, &self.0, &self.1)
     }
 }
 
@@ -425,4 +407,43 @@ pub struct SendTransactionConfig {
     pub max_retries: Option<u32>,
     #[serde(rename = "minContextSlot")]
     pub min_context_slot: Option<u64>,
+}
+
+fn serialize_optional_config<S: Serializer, Config: Serialize>(
+    serializer: S,
+    maybe_config: &Option<Config>,
+) -> Result<S::Ok, S::Error> {
+    let length = match maybe_config {
+        None => 0,
+        Some(_) => 1,
+    };
+    let mut seq = serializer.serialize_seq(Some(length))?;
+    serialize_if_not_none(&mut seq, maybe_config)?;
+    seq.end()
+}
+
+fn serialize_params_and_optional_config<S: Serializer, Params: Serialize, Config: Serialize>(
+    serializer: S,
+    params: &Params,
+    maybe_config: &Option<Config>,
+) -> Result<S::Ok, S::Error> {
+    let length = match maybe_config {
+        None => 1,
+        Some(_) => 2,
+    };
+    let mut seq = serializer.serialize_seq(Some(length))?;
+    seq.serialize_element(params)?;
+    serialize_if_not_none(&mut seq, maybe_config)?;
+    seq.end()
+}
+
+fn serialize_if_not_none<S: SerializeSeq, T: Serialize>(
+    seq: &mut S,
+    maybe_value: &Option<T>,
+) -> Result<(), <S as SerializeSeq>::Error> {
+    if let Some(value) = &maybe_value {
+        Ok(seq.serialize_element(value)?)
+    } else {
+        Ok(())
+    }
 }

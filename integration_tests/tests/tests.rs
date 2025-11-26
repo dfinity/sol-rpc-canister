@@ -2040,7 +2040,7 @@ async fn should_log_request_and_response() {
 async fn should_change_default_providers_when_one_keeps_failing() {
     fn request_body(id: u8) -> Value {
         let id = ConstantSizeId::from(id).to_string();
-        json!({ "jsonrpc": "2.0", "id": id, "method": "getSlot", "params": [null] })
+        json!({ "jsonrpc": "2.0", "id": id, "method": "getSlot", "params": [] })
     }
 
     fn response_body(id: u8) -> Value {

@@ -36,7 +36,7 @@ mod request_serialization_tests {
                 Timestamp::default(),
             )
             .unwrap(),
-            json!(["11111111111111111111111111111111", null]),
+            json!(["11111111111111111111111111111111"]),
         );
         assert_params_eq(
             GetAccountInfoRequest::get_account_info(
@@ -76,7 +76,7 @@ mod request_serialization_tests {
                 Timestamp::default(),
             )
             .unwrap(),
-            json!([null]),
+            json!([]),
         );
         assert_params_eq(
             GetSlotRequest::get_slot(
@@ -115,7 +115,7 @@ mod request_serialization_tests {
                 Timestamp::default(),
             )
             .unwrap(),
-            json!(["11111111111111111111111111111111", null]),
+            json!(["11111111111111111111111111111111"]),
         );
         assert_params_eq(
             GetSignaturesForAddressRequest::get_signatures_for_address(
@@ -158,7 +158,7 @@ mod request_serialization_tests {
                 Timestamp::default(),
             )
             .unwrap(),
-            json!([[], null]),
+            json!([[]]),
         );
         assert_params_eq(
             GetSignatureStatusesRequest::get_signature_statuses(
@@ -196,7 +196,7 @@ mod request_serialization_tests {
                 Timestamp::default(),
             )
             .unwrap(),
-            json!([signature, null]),
+            json!([signature]),
         );
         assert_params_eq(
             GetTransactionRequest::get_transaction(
@@ -233,7 +233,7 @@ mod request_serialization_tests {
                 Timestamp::default(),
             )
             .unwrap(),
-            json!([pubkey.to_string(), null]),
+            json!([pubkey.to_string()]),
         );
 
         assert_params_eq(
@@ -271,7 +271,7 @@ mod request_serialization_tests {
                 Timestamp::default(),
             )
             .unwrap(),
-            json!([pubkey.to_string(), null]),
+            json!([pubkey.to_string()]),
         );
 
         assert_params_eq(
