@@ -206,7 +206,7 @@ jobs:
 
       - name: 'Set BASIC_SOLANA_WASM_PATH for load_wasm'
         run: |
-          echo "BASIC_SOLANA_WASM_PATH=$GITHUB_WORKSPACE/target/wasm32-unknown-unknown/canister-release/basic_solana.wasm" >> "$GITHUB_ENV"
+          echo "BASIC_SOLANA_WASM_PATH=$GITHUB_WORKSPACE/examples/basic_solana/target/wasm32-unknown-unknown/canister-release/basic_solana.wasm" >> "$GITHUB_ENV"
 
       - name: 'Test basic_solana'
         working-directory: examples/basic_solana/
