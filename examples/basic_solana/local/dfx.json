@@ -24,7 +24,7 @@
       "package": "basic_solana",
       "type": "custom",
       "build": "../build.sh",
-      "wasm": "../../../target/wasm32-unknown-unknown/release/basic_solana.wasm",
+      "wasm": "../target/wasm32-unknown-unknown/release/basic_solana.wasm",
       "metadata": [
         {
           "name": "candid:service"
