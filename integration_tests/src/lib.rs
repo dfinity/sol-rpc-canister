@@ -6,7 +6,7 @@ use ic_canister_runtime::IcError;
 use ic_cdk::call::{CallFailed, CallRejected};
 use ic_error_types::RejectCode;
 use ic_http_types::{HttpRequest, HttpResponse};
-use ic_management_canister_types_pocket_ic::{CanisterId, CanisterSettings};
+use ic_management_canister_types::{CanisterId, CanisterSettings};
 use ic_metrics_assert::{MetricsAssert, PocketIcAsyncHttpQuery};
 use num_traits::ToPrimitive;
 use pocket_ic::{

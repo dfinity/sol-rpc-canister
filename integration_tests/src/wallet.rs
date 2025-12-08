@@ -4,7 +4,7 @@ use crate::{decode_call_response, encode_args};
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
 use ic_canister_runtime::IcError;
 use ic_error_types::RejectCode;
-use ic_management_canister_types_pocket_ic::CanisterId;
+use ic_management_canister_types::CanisterId;
 use regex::Regex;
 use serde::{de::DeserializeOwned, Deserialize};
 

@@ -2077,7 +2077,7 @@ dependencies = [
  "candid",
  "ic-http-types",
  "ic-management-canister-types 0.3.3",
- "pocket-ic",
+ "pocket-ic 10.0.0",
  "regex",
  "serde",
  "serde_bytes",
@@ -3118,6 +3118,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "pocket-ic"
+version = "11.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67394a1de5e9bd67e92eef90c9034fbd28f26cfcb64854f187f3979191d6380c"
+dependencies = [
+ "backoff",
+ "base64 0.13.1",
+ "candid",
+ "flate2",
+ "hex",
+ "ic-certification",
+ "ic-management-canister-types 0.5.0",
+ "ic-transport-types",
+ "reqwest",
+ "schemars 0.8.22",
+ "semver",
+ "serde",
+ "serde_bytes",
+ "serde_cbor",
+ "serde_json",
+ "sha2 0.10.9",
+ "slog",
+ "strum 0.26.3",
+ "strum_macros 0.26.4",
+ "tempfile",
+ "thiserror 2.0.16",
+ "tokio",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+ "wslpath",
+]
+
+[[package]]
 name = "portable-atomic"
 version = "1.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3502,9 +3536,9 @@ checksum = "caf4aa5b0f434c91fe5c7f1ecb6a5ece2130b02ad2a590589dda5146df959001"
 
 [[package]]
 name = "reqwest"
-version = "0.12.23"
+version = "0.12.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d429f34c8092b2d42c7c93cec323bb4adeb7c67698f70839adec842ec10c7ceb"
+checksum = "9d0946410b9f7b082a427e4ef5c8ff541a88b357bc6c637c40db3a68ac70a36f"
 dependencies = [
  "async-compression",
  "base64 0.22.1",
@@ -4259,12 +4293,11 @@ dependencies = [
  "ic-cdk",
  "ic-error-types",
  "ic-http-types",
- "ic-management-canister-types 0.3.3",
  "ic-management-canister-types 0.5.0",
  "ic-metrics-assert",
  "ic-test-utilities-load-wasm",
  "num-traits",
- "pocket-ic",
+ "pocket-ic 11.0.0",
  "regex",
  "serde",
  "serde_bytes",
