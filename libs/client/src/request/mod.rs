@@ -1044,8 +1044,10 @@ impl<R: Runtime, Config, Params> RequestCostBuilder<R, Config, Params> {
 }
 
 fn set_default<T>(default_value: Option<T>, value: &mut Option<T>) {
-    if default_value.is_some() && value.is_none() {
-        *value = Some(default_value.unwrap())
+    if value.is_none() {
+        if let Some(default) = default_value {
+            *value = Some(default);
+        }
     }
 }
 
