@@ -180,11 +180,11 @@ impl Setup {
             .entries
     }
 
-    pub fn client(&self) -> ClientBuilder<PocketIcRuntime> {
+    pub fn client(&self) -> ClientBuilder<PocketIcRuntime<'_>> {
         SolRpcClient::builder(self.new_pocket_ic_runtime(), self.sol_rpc_canister_id)
     }
 
-    pub fn client_live_mode(&self) -> ClientBuilder<PocketIcLiveModeRuntime> {
+    pub fn client_live_mode(&self) -> ClientBuilder<PocketIcLiveModeRuntime<'_>> {
         SolRpcClient::builder(self.new_live_pocket_ic_runtime(), self.sol_rpc_canister_id)
     }
 
@@ -199,7 +199,7 @@ impl Setup {
             .unwrap()
     }
 
-    fn new_pocket_ic_runtime(&self) -> PocketIcRuntime {
+    fn new_pocket_ic_runtime(&self) -> PocketIcRuntime<'_> {
         PocketIcRuntime {
             env: &self.env,
             caller: self.caller,
@@ -209,7 +209,7 @@ impl Setup {
         }
     }
 
-    fn new_live_pocket_ic_runtime(&self) -> PocketIcLiveModeRuntime {
+    fn new_live_pocket_ic_runtime(&self) -> PocketIcLiveModeRuntime<'_> {
         PocketIcLiveModeRuntime {
             env: &self.env,
             caller: self.caller,

@@ -51,18 +51,18 @@ impl Setup {
         }
     }
 
-    pub fn new_ic_agent_runtime(&self) -> IcAgentRuntime {
+    pub fn new_ic_agent_runtime(&self) -> IcAgentRuntime<'_> {
         IcAgentRuntime {
             agent: &self.agent,
             wallet_canister_id: self.wallet_canister_id,
         }
     }
 
-    pub fn client_builder(&self) -> ClientBuilder<IcAgentRuntime> {
+    pub fn client_builder(&self) -> ClientBuilder<IcAgentRuntime<'_>> {
         SolRpcClient::builder(self.new_ic_agent_runtime(), self.sol_rpc_canister_id)
     }
 
-    pub fn client(&self) -> SolRpcClient<IcAgentRuntime> {
+    pub fn client(&self) -> SolRpcClient<IcAgentRuntime<'_>> {
         self.client_builder()
             .with_rpc_sources(RpcSources::Custom(vec![
                 RpcSource::Supported(SupportedRpcProviderId::AnkrDevnet),

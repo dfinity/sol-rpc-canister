@@ -620,7 +620,7 @@ impl Setup {
         }
     }
 
-    fn icp_client(&self) -> SolRpcClient<PocketIcLiveModeRuntime> {
+    fn icp_client(&self) -> SolRpcClient<PocketIcLiveModeRuntime<'_>> {
         self.setup
             .client_live_mode()
             .with_default_commitment_level(CommitmentLevel::Confirmed)
