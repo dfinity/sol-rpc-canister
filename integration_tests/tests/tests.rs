@@ -587,15 +587,18 @@ mod get_transaction_tests {
 
 mod generic_request_tests {
     use super::*;
+    use sol_rpc_client::DefaultRequestCycles;
 
     #[tokio::test]
     async fn should_require_base_http_outcall_fee() {
-        async fn check<Config, Params, CandidOutput, Output>(
-            request: RequestBuilder<PocketIcRuntime<'_>, Config, Params, CandidOutput, Output>,
+        async fn check<Runtime, Config, Params, CandidOutput, Output>(
+            request: RequestBuilder<Runtime, Config, Params, CandidOutput, Output>,
         ) where
+            Runtime: sol_rpc_client::Runtime,
             Config: CandidType + Clone + Send,
             Params: CandidType + Clone + Send,
             CandidOutput: Into<Output> + CandidType + DeserializeOwned,
+            RequestBuilder<Runtime, Config, Params, CandidOutput, Output>: DefaultRequestCycles,
         {
             let result = request
                 .with_cycles(HTTP_OUTCALL_BASE_FEE - 1)
@@ -650,12 +653,14 @@ mod generic_request_tests {
 
     #[tokio::test]
     async fn should_not_require_cycles_in_demo_mode() {
-        async fn check<Config, Params, CandidOutput, Output>(
-            request: RequestBuilder<PocketIcRuntime<'_>, Config, Params, CandidOutput, Output>,
+        async fn check<Runtime, Config, Params, CandidOutput, Output>(
+            request: RequestBuilder<Runtime, Config, Params, CandidOutput, Output>,
         ) where
+            Runtime: sol_rpc_client::Runtime,
             Config: CandidType + Clone + Send,
             Params: CandidType + Clone + Send,
             CandidOutput: Into<Output> + CandidType + DeserializeOwned,
+            RequestBuilder<Runtime, Config, Params, CandidOutput, Output>: DefaultRequestCycles,
         {
             let result = request.with_cycles(0).try_send().await;
             assert!(result.is_ok());
@@ -977,6 +982,7 @@ fn rpc_sources() -> Vec<RpcSources> {
 
 mod cycles_cost_tests {
     use super::*;
+    use sol_rpc_client::DefaultRequestCycles;
 
     #[tokio::test]
     async fn should_be_idempotent() {
@@ -1100,10 +1106,10 @@ mod cycles_cost_tests {
 
     #[tokio::test]
     async fn should_get_exact_cycles_cost() {
-        async fn check<Config, Params, CandidOutput, Output>(
+        async fn check<Runtime, Config, Params, CandidOutput, Output>(
             setup: &Setup,
             request: RequestBuilder<
-                PocketIcRuntime<'_>,
+                Runtime,
                 Config,
                 Params,
                 MultiRpcResult<CandidOutput>,
@@ -1111,11 +1117,19 @@ mod cycles_cost_tests {
             >,
             expected_cycles_cost: u128,
         ) where
+            Runtime: sol_rpc_client::Runtime,
             Config: CandidType + Clone + Send,
             Params: CandidType + Clone + Send,
             CandidOutput: CandidType + DeserializeOwned,
             Output: Debug,
             MultiRpcResult<CandidOutput>: Into<MultiRpcResult<Output>>,
+            RequestBuilder<
+                Runtime,
+                Config,
+                Params,
+                MultiRpcResult<CandidOutput>,
+                MultiRpcResult<Output>,
+            >: DefaultRequestCycles,
         {
             let five_percents = 5_u8;
 
@@ -1269,10 +1283,11 @@ mod cycles_cost_tests {
 
 mod rpc_config_tests {
     use super::*;
+    use sol_rpc_client::DefaultRequestCycles;
 
     #[tokio::test]
     async fn should_respect_response_size_estimate() {
-        async fn check<F, Config, Params, CandidOutput, Output>(setup: &Setup, request: F)
+        async fn check<'a, F, Config, Params, CandidOutput, Output>(setup: &'a Setup, request: F)
         where
             F: Fn(
                 SolRpcClient<PocketIcRuntime<'_>>,
@@ -1288,6 +1303,13 @@ mod rpc_config_tests {
             CandidOutput: CandidType + DeserializeOwned,
             Output: Debug + PartialEq,
             MultiRpcResult<CandidOutput>: Into<MultiRpcResult<Output>>,
+            RequestBuilder<
+                PocketIcRuntime<'a>,
+                Config,
+                Params,
+                MultiRpcResult<CandidOutput>,
+                MultiRpcResult<Output>,
+            >: DefaultRequestCycles,
         {
             let client = setup
                 .client()
@@ -1369,8 +1391,8 @@ mod rpc_config_tests {
 
     #[tokio::test]
     async fn should_respect_response_strategy() {
-        async fn check<F, Config, Params, CandidOutput, Output>(
-            setup: &Setup,
+        async fn check<'a, F, Config, Params, CandidOutput, Output>(
+            setup: &'a Setup,
             request: F,
             ok_result: Value,
         ) where
@@ -1388,6 +1410,13 @@ mod rpc_config_tests {
             CandidOutput: CandidType + DeserializeOwned,
             Output: Debug + PartialEq,
             MultiRpcResult<CandidOutput>: Into<MultiRpcResult<Output>>,
+            RequestBuilder<
+                PocketIcRuntime<'a>,
+                Config,
+                Params,
+                MultiRpcResult<CandidOutput>,
+                MultiRpcResult<Output>,
+            >: DefaultRequestCycles,
         {
             let [ok_result_0, ok_result_1, _, ok_result_3, ok_result_4] =
                 json_rpc_sequential_id(ok_result);

@@ -57,9 +57,19 @@ pub use solana::{
 pub struct VecWithMaxLen<T, const CAPACITY: usize>(Vec<T>);
 
 impl<T, const CAPACITY: usize> VecWithMaxLen<T, CAPACITY> {
-    /// Constructs a new, empty `VecWithMaxLen<T, CAPACITY>`.
+    /// Constructs a new, empty [`VecWithMaxLen`].
     pub fn new() -> Self {
         Self(Vec::new())
+    }
+
+    /// Returns the number of elements in this [`VecWithMaxLen`].
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    /// Returns true if the [`VecWithMaxLen`] is empty.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 }
 
