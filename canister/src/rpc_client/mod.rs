@@ -490,7 +490,7 @@ impl<Params, Output> MultiRpcRequest<Params, Output> {
 
         let client = service_request_builder()
             .service_fn(extract_request)
-            .map_err(RpcError::from)
+            .map_err(|e| RpcError::try_from(e).unwrap())
             .map_response(Response::into_body);
 
         let (requests, errors) = requests.into_inner();

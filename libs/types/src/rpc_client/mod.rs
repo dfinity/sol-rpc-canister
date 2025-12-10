@@ -640,8 +640,8 @@ impl TryFrom<u8> for NonZeroU8 {
 /// This implementation was [copied](https://github.com/dfinity/cdk-rs/blob/83ba5fc7b3316a6fa4e7f704b689c95c9e677029/src/ic-cdk/src/api/call.rs#L21) from ic-cdk v0.17.
 ///
 /// The `ic_cdk::api::call::RejectionCode` type is deprecated since ic-cdk v0.18.
-/// The replacement `ic_cdk::call::RejectCode` re-exports the type defined in the `ic-error-types` 
-/// crate. We cannot simply switch to the replacement because the existing `RejectionCode` is a 
+/// The replacement `ic_cdk::call::RejectCode` re-exports the type defined in the `ic-error-types`
+/// crate. We cannot simply switch to the replacement because the existing `RejectionCode` is a
 /// public type in SOL RPC canister's interface.
 /// To maintain compatibility, we retain the "outdated" definition here.
 #[repr(i32)]

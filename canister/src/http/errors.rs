@@ -49,41 +49,50 @@ impl From<JsonRequestConversionError> for HttpClientError {
     }
 }
 
-impl From<HttpClientError> for RpcError {
-    fn from(error: HttpClientError) -> Self {
+impl TryFrom<HttpClientError> for RpcError {
+    type Error = HttpClientError;
+
+    fn try_from(error: HttpClientError) -> Result<Self, Self::Error> {
         match error {
             HttpClientError::IcError(IcError::CallRejected { code, message }) => {
-                RpcError::HttpOutcallError(HttpOutcallError::IcError {
+                Ok(RpcError::HttpOutcallError(HttpOutcallError::IcError {
                     code: LegacyRejectionCode::from(code),
                     message,
-                })
+                }))
             }
-            e @ HttpClientError::IcError(IcError::InsufficientLiquidCycleBalance { .. }) => {
-                panic!("{}", e.to_string())
-            }
-            HttpClientError::NotHandledError(e) => RpcError::ValidationError(e),
+            e @ HttpClientError::IcError(IcError::InsufficientLiquidCycleBalance { .. }) => Err(e),
+            HttpClientError::NotHandledError(e) => Ok(RpcError::ValidationError(e)),
             HttpClientError::CyclesAccountingError(
                 ChargeCallerError::InsufficientCyclesError { expected, received },
-            ) => RpcError::ProviderError(ProviderError::TooFewCycles { expected, received }),
+            ) => Ok(RpcError::ProviderError(ProviderError::TooFewCycles {
+                expected,
+                received,
+            })),
             HttpClientError::InvalidJsonResponse(
                 JsonResponseConversionError::InvalidJsonResponse {
                     status,
                     body,
                     parsing_error,
                 },
-            ) => RpcError::HttpOutcallError(HttpOutcallError::InvalidHttpJsonRpcResponse {
-                status,
-                body,
-                parsing_error: Some(parsing_error),
-            }),
+            ) => Ok(RpcError::HttpOutcallError(
+                HttpOutcallError::InvalidHttpJsonRpcResponse {
+                    status,
+                    body,
+                    parsing_error: Some(parsing_error),
+                },
+            )),
             HttpClientError::UnsuccessfulHttpResponse(
                 FilterNonSuccessfulHttpResponseError::UnsuccessfulResponse(response),
-            ) => RpcError::HttpOutcallError(HttpOutcallError::InvalidHttpJsonRpcResponse {
-                status: response.status().as_u16(),
-                body: String::from_utf8_lossy(response.body()).to_string(),
-                parsing_error: None,
-            }),
-            HttpClientError::InvalidJsonResponseId(e) => RpcError::ValidationError(e.to_string()),
+            ) => Ok(RpcError::HttpOutcallError(
+                HttpOutcallError::InvalidHttpJsonRpcResponse {
+                    status: response.status().as_u16(),
+                    body: String::from_utf8_lossy(response.body()).to_string(),
+                    parsing_error: None,
+                },
+            )),
+            HttpClientError::InvalidJsonResponseId(e) => {
+                Ok(RpcError::ValidationError(e.to_string()))
+            }
         }
     }
 }

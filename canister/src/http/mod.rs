@@ -59,7 +59,7 @@ where
     };
     ServiceBuilder::new()
         .map_result(extract_json_rpc_response)
-        .map_err(|e: HttpClientError| RpcError::from(e))
+        .map_err(|e| RpcError::try_from(e).unwrap())
         .option_layer(maybe_retry)
         .option_layer(maybe_unique_id)
         .layer(
