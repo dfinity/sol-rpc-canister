@@ -222,7 +222,6 @@ jobs:
     runs-on: ubuntu-22.04
     concurrency:
       group: ci_environment
-      cancel-in-progress: true
     env:
       sol_rpc_canister_id: zaylz-mqaaa-aaaar-qaqzq-cai
       wallet_canister_id: zo2gr-xaaaa-aaaar-qaqyq-cai
