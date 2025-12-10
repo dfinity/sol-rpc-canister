@@ -1,5 +1,6 @@
 use derive_more::From;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
+use serde_tuple::Serialize_tuple;
 use serde_with::skip_serializing_none;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetBlockCommitmentLevel,
@@ -8,10 +9,10 @@ use sol_rpc_types::{
 };
 use solana_transaction_status_client_types::UiTransactionEncoding;
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(Option<GetSlotConfig>,)")]
-pub struct GetSlotParams(Option<GetSlotConfig>);
+#[derive(Serialize_tuple, Clone, Debug)]
+pub struct GetSlotParams {
+    config: Option<GetSlotConfig>,
+}
 
 impl From<sol_rpc_types::GetSlotParams> for GetSlotParams {
     fn from(params: sol_rpc_types::GetSlotParams) -> Self {
@@ -27,28 +28,23 @@ impl From<sol_rpc_types::GetSlotParams> for GetSlotParams {
                 min_context_slot,
             })
         };
-        Self(config)
-    }
-}
-
-impl From<GetSlotParams> for (Option<GetSlotConfig>,) {
-    fn from(params: GetSlotParams) -> Self {
-        (params.0,)
+        Self { config }
     }
 }
 
 #[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Clone, Debug)]
 pub struct GetSlotConfig {
     pub commitment: Option<CommitmentLevel>,
     #[serde(rename = "minContextSlot")]
     pub min_context_slot: Option<u64>,
 }
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(String, Option<GetAccountInfoConfig>)")]
-pub struct GetAccountInfoParams(String, Option<GetAccountInfoConfig>);
+#[derive(Serialize_tuple, Clone, Debug)]
+pub struct GetAccountInfoParams {
+    pubkey: Pubkey,
+    config: Option<GetAccountInfoConfig>,
+}
 
 impl From<sol_rpc_types::GetAccountInfoParams> for GetAccountInfoParams {
     fn from(params: sol_rpc_types::GetAccountInfoParams) -> Self {
@@ -73,18 +69,12 @@ impl From<sol_rpc_types::GetAccountInfoParams> for GetAccountInfoParams {
                 min_context_slot,
             })
         };
-        Self(pubkey.to_string(), config)
-    }
-}
-
-impl From<GetAccountInfoParams> for (String, Option<GetAccountInfoConfig>) {
-    fn from(params: GetAccountInfoParams) -> Self {
-        (params.0.to_string(), params.1)
+        Self { pubkey, config }
     }
 }
 
 #[skip_serializing_none]
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct GetAccountInfoConfig {
     pub commitment: Option<CommitmentLevel>,
     pub encoding: Option<GetAccountInfoEncoding>,
@@ -94,13 +84,14 @@ pub struct GetAccountInfoConfig {
     pub min_context_slot: Option<u64>,
 }
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(String, Option<GetBalanceConfig>)")]
-pub struct GetBalanceParams(String, Option<GetBalanceConfig>);
+#[derive(Serialize_tuple, Clone, Debug)]
+pub struct GetBalanceParams {
+    pubkey: Pubkey,
+    config: Option<GetBalanceConfig>,
+}
 
 #[skip_serializing_none]
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct GetBalanceConfig {
     pub commitment: Option<CommitmentLevel>,
     #[serde(rename = "minContextSlot")]
@@ -123,56 +114,52 @@ impl From<sol_rpc_types::GetBalanceParams> for GetBalanceParams {
         } else {
             None
         };
-        GetBalanceParams(pubkey.to_string(), config)
+        GetBalanceParams { pubkey, config }
     }
 }
 
-impl From<GetBalanceParams> for (String, Option<GetBalanceConfig>) {
-    fn from(value: GetBalanceParams) -> Self {
-        (value.0, value.1)
-    }
+#[derive(Serialize_tuple, Clone, Debug)]
+pub struct GetBlockParams {
+    slot: Slot,
+    config: Option<GetBlockConfig>,
 }
-
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(Slot, Option<GetBlockConfig>)")]
-pub struct GetBlockParams(Slot, Option<GetBlockConfig>);
 
 impl GetBlockParams {
     pub fn get_transaction_details(&self) -> Option<TransactionDetails> {
-        self.1
+        self.config
             .as_ref()
             .and_then(|config| config.transaction_details)
     }
 
     pub fn include_rewards(&self) -> Option<bool> {
-        self.1.as_ref().and_then(|config| config.rewards)
+        self.config.as_ref().and_then(|config| config.rewards)
     }
 }
 
 impl From<sol_rpc_types::GetBlockParams> for GetBlockParams {
     fn from(params: sol_rpc_types::GetBlockParams) -> Self {
+        let sol_rpc_types::GetBlockParams {
+            slot,
+            commitment,
+            max_supported_transaction_version,
+            transaction_details,
+            rewards,
+        } = params;
         // We always use a non-null config since the default value for `transaction_details` is
         // `none` which is different from the Solana RPC API default of `full`.
         let config = Some(GetBlockConfig {
             encoding: None,
-            transaction_details: Some(params.transaction_details.unwrap_or_default()),
-            rewards: params.rewards,
-            commitment: params.commitment,
-            max_supported_transaction_version: params.max_supported_transaction_version,
+            transaction_details: Some(transaction_details.unwrap_or_default()),
+            rewards,
+            commitment,
+            max_supported_transaction_version,
         });
-        Self(params.slot, config)
-    }
-}
-
-impl From<GetBlockParams> for (Slot, Option<GetBlockConfig>) {
-    fn from(params: GetBlockParams) -> Self {
-        (params.0, params.1)
+        Self { slot, config }
     }
 }
 
 #[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Clone, Debug)]
 pub struct GetBlockConfig {
     pub encoding: Option<UiTransactionEncoding>,
     #[serde(rename = "transactionDetails")]
@@ -200,14 +187,15 @@ impl From<sol_rpc_types::GetRecentPrioritizationFeesParams> for GetRecentPriorit
     }
 }
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(Pubkey, Option<GetSignaturesForAddressConfig>)")]
-pub struct GetSignaturesForAddressParams(Pubkey, Option<GetSignaturesForAddressConfig>);
+#[derive(Serialize_tuple, Clone, Debug)]
+pub struct GetSignaturesForAddressParams {
+    pubkey: Pubkey,
+    config: Option<GetSignaturesForAddressConfig>,
+}
 
 impl GetSignaturesForAddressParams {
     pub fn get_limit(&self) -> u32 {
-        self.1
+        self.config
             .as_ref()
             .and_then(|c| c.limit)
             .unwrap_or_default()
@@ -241,18 +229,12 @@ impl From<sol_rpc_types::GetSignaturesForAddressParams> for GetSignaturesForAddr
         } else {
             None
         };
-        Self(pubkey, config)
-    }
-}
-
-impl From<GetSignaturesForAddressParams> for (Pubkey, Option<GetSignaturesForAddressConfig>) {
-    fn from(params: GetSignaturesForAddressParams) -> Self {
-        (params.0, params.1)
+        Self { pubkey, config }
     }
 }
 
 #[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug, From)]
+#[derive(Serialize, Clone, Debug, From)]
 pub struct GetSignaturesForAddressConfig {
     pub commitment: Option<CommitmentLevel>,
     #[serde(rename = "minContextSlot")]
@@ -262,75 +244,67 @@ pub struct GetSignaturesForAddressConfig {
     pub until: Option<Signature>,
 }
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(Vec<Signature>, Option<GetSignatureStatusesConfig>)")]
-pub struct GetSignatureStatusesParams(Vec<Signature>, Option<GetSignatureStatusesConfig>);
+#[derive(Serialize_tuple, Clone, Debug)]
+pub struct GetSignatureStatusesParams {
+    signatures: Vec<Signature>,
+    config: Option<GetSignatureStatusesConfig>,
+}
 
 impl GetSignatureStatusesParams {
     pub fn num_signatures(&self) -> usize {
-        self.0.len()
+        self.signatures.len()
     }
 }
 
 impl From<sol_rpc_types::GetSignatureStatusesParams> for GetSignatureStatusesParams {
     fn from(params: sol_rpc_types::GetSignatureStatusesParams) -> Self {
-        Self(
-            params.signatures.into(),
-            params
-                .search_transaction_history
-                .map(GetSignatureStatusesConfig::from),
-        )
-    }
-}
-
-impl From<GetSignatureStatusesParams> for (Vec<Signature>, Option<GetSignatureStatusesConfig>) {
-    fn from(params: GetSignatureStatusesParams) -> Self {
-        (params.0, params.1)
+        let sol_rpc_types::GetSignatureStatusesParams {
+            signatures,
+            search_transaction_history,
+        } = params;
+        Self {
+            signatures: signatures.into(),
+            config: search_transaction_history.map(GetSignatureStatusesConfig::from),
+        }
     }
 }
 
 #[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug, From)]
+#[derive(Serialize, Clone, Debug, From)]
 pub struct GetSignatureStatusesConfig {
     #[serde(rename = "searchTransactionHistory")]
     pub search_transaction_history: bool,
 }
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(String, Option<GetTokenAccountBalanceConfig>)")]
-pub struct GetTokenAccountBalanceParams(String, Option<GetTokenAccountBalanceConfig>);
-
-#[skip_serializing_none]
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct GetTokenAccountBalanceConfig {
-    pub commitment: Option<CommitmentLevel>,
+#[derive(Serialize_tuple, Clone, Debug)]
+pub struct GetTokenAccountBalanceParams {
+    pubkey: Pubkey,
+    config: Option<GetTokenAccountBalanceConfig>,
 }
 
 impl From<sol_rpc_types::GetTokenAccountBalanceParams> for GetTokenAccountBalanceParams {
     fn from(params: sol_rpc_types::GetTokenAccountBalanceParams) -> Self {
-        Self(
-            params.pubkey.to_string(),
-            params
-                .commitment
-                .map(|commitment| GetTokenAccountBalanceConfig {
-                    commitment: Some(commitment),
-                }),
-        )
-    }
-}
-
-impl From<GetTokenAccountBalanceParams> for (String, Option<GetTokenAccountBalanceConfig>) {
-    fn from(value: GetTokenAccountBalanceParams) -> Self {
-        (value.0, value.1)
+        let sol_rpc_types::GetTokenAccountBalanceParams { pubkey, commitment } = params;
+        Self {
+            pubkey,
+            config: commitment.map(|commitment| GetTokenAccountBalanceConfig {
+                commitment: Some(commitment),
+            }),
+        }
     }
 }
 
 #[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(String, Option<GetTransactionConfig>)")]
-pub struct GetTransactionParams(String, Option<GetTransactionConfig>);
+#[derive(Debug, Clone, Serialize)]
+pub struct GetTokenAccountBalanceConfig {
+    pub commitment: Option<CommitmentLevel>,
+}
+
+#[derive(Serialize_tuple, Clone, Debug)]
+pub struct GetTransactionParams {
+    signature: Signature,
+    config: Option<GetTransactionConfig>,
+}
 
 impl From<sol_rpc_types::GetTransactionParams> for GetTransactionParams {
     fn from(params: sol_rpc_types::GetTransactionParams) -> Self {
@@ -352,18 +326,12 @@ impl From<sol_rpc_types::GetTransactionParams> for GetTransactionParams {
                 encoding,
             })
         };
-        Self(signature.to_string(), config)
-    }
-}
-
-impl From<GetTransactionParams> for (String, Option<GetTransactionConfig>) {
-    fn from(params: GetTransactionParams) -> Self {
-        (params.0.to_string(), params.1)
+        Self { signature, config }
     }
 }
 
 #[skip_serializing_none]
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct GetTransactionConfig {
     pub commitment: Option<CommitmentLevel>,
     #[serde(rename = "maxSupportedTransactionVersion")]
@@ -371,10 +339,11 @@ pub struct GetTransactionConfig {
     pub encoding: Option<GetTransactionEncoding>,
 }
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(into = "(String, Option<SendTransactionConfig>)")]
-pub struct SendTransactionParams(String, Option<SendTransactionConfig>);
+#[derive(Serialize_tuple, Clone, Debug)]
+pub struct SendTransactionParams {
+    transaction: String,
+    config: Option<SendTransactionConfig>,
+}
 
 impl From<sol_rpc_types::SendTransactionParams> for SendTransactionParams {
     fn from(params: sol_rpc_types::SendTransactionParams) -> Self {
@@ -403,18 +372,15 @@ impl From<sol_rpc_types::SendTransactionParams> for SendTransactionParams {
                 min_context_slot,
             })
         };
-        Self(transaction, config)
-    }
-}
-
-impl From<SendTransactionParams> for (String, Option<SendTransactionConfig>) {
-    fn from(params: SendTransactionParams) -> Self {
-        (params.0.to_string(), params.1)
+        Self {
+            transaction,
+            config,
+        }
     }
 }
 
 #[skip_serializing_none]
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct SendTransactionConfig {
     pub encoding: Option<SendTransactionEncoding>,
     #[serde(rename = "skipPreflight")]
