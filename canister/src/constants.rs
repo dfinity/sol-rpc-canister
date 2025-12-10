@@ -1,4 +1,4 @@
-// The default value of max_response_bytes is 2_000_000.
+// The default value of `max_response_bytes` for HTTP outcalls is 2MB.
 pub const DEFAULT_MAX_RESPONSE_BYTES: u64 = 2_000_000;
 
 // Cycles (per node) which must be passed with each RPC request
