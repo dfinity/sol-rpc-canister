@@ -11,12 +11,11 @@ license.workspace = true
 async-trait = { workspace = true }
 candid = { workspace = true }
 ic-agent = { workspace = true }
-ic-canister-runtime = { workspace = true }
-ic-error-types = { workspace = true }
+ic-agent-canister-runtime = { workspace = true }
+ic-canister-runtime = { workspace = true, features = ["wallet"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 sol_rpc_client = { path = "../libs/client", features = ["ed25519"] }
-sol_rpc_int_tests = { path = "../integration_tests" }
 sol_rpc_types = { path = "../libs/types" }
 solana-client = { workspace = true }
 solana-commitment-config = { workspace = true }
@@ -30,4 +29,3 @@ tokio = { workspace = true }
 
 [dev-dependencies]
 solana-compute-budget-interface = { workspace = true }
-solana-program = { workspace = true }

@@ -1,17 +1,19 @@
 #![recursion_limit = "512"]
 use assert_matches::*;
 use candid::CandidType;
+use candid::{encode_args, Principal};
 use canhttp::http::json::{ConstantSizeId, Id};
 use const_format::formatcp;
+use ic_canister_runtime::CyclesWalletRuntime;
 use ic_cdk::call::RejectCode;
-use ic_management_canister_types::HttpHeader;
-use pocket_ic::common::rest::CanisterHttpMethod;
+use ic_pocket_canister_runtime::PocketIcRuntime;
+use pocket_ic::{common::rest::CanisterHttpMethod, ErrorCode, RejectResponse};
 use serde::de::DeserializeOwned;
 use serde_json::{json, Value};
 use sol_rpc_canister::constants::*;
 use sol_rpc_client::{RequestBuilder, SolRpcClient, SolRpcConfig, SolRpcEndpoint};
 use sol_rpc_int_tests::{
-    json_rpc_sequential_id, mock::MockOutcallBuilder, PocketIcRuntime, Setup, SolRpcTestClient,
+    json_rpc_sequential_id, mock::MockOutcallBuilder, Setup, SolRpcTestClient,
     DEFAULT_CALLER_TEST_ID,
 };
 use sol_rpc_types::{
@@ -49,6 +51,7 @@ const HTTP_OUTCALL_BASE_FEE: u128 = (3_000_000 + 60_000 * 34) * 34;
 
 mod mock_request_tests {
     use super::*;
+    use ic_management_canister_types::HttpHeader;
 
     async fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
         let setup = Setup::with_args(InstallArgs {
@@ -592,7 +595,13 @@ mod generic_request_tests {
     #[tokio::test]
     async fn should_require_base_http_outcall_fee() {
         async fn check<Config, Params, CandidOutput, Output>(
-            request: RequestBuilder<PocketIcRuntime<'_>, Config, Params, CandidOutput, Output>,
+            request: RequestBuilder<
+                CyclesWalletRuntime<PocketIcRuntime<'_>>,
+                Config,
+                Params,
+                CandidOutput,
+                Output,
+            >,
         ) where
             Config: CandidType + Clone + Send,
             Params: CandidType + Clone + Send,
@@ -652,7 +661,13 @@ mod generic_request_tests {
     #[tokio::test]
     async fn should_not_require_cycles_in_demo_mode() {
         async fn check<Config, Params, CandidOutput, Output>(
-            request: RequestBuilder<PocketIcRuntime<'_>, Config, Params, CandidOutput, Output>,
+            request: RequestBuilder<
+                CyclesWalletRuntime<PocketIcRuntime<'_>>,
+                Config,
+                Params,
+                CandidOutput,
+                Output,
+            >,
         ) where
             Config: CandidType + Clone + Send,
             Params: CandidType + Clone + Send,
@@ -782,8 +797,6 @@ mod retrieve_logs_tests {
 
 mod update_api_key_tests {
     use super::*;
-    use candid::{encode_args, Principal};
-    use pocket_ic::{ErrorCode, RejectCode, RejectResponse};
 
     #[tokio::test]
     async fn should_update_api_key() {
@@ -858,7 +871,7 @@ mod update_api_key_tests {
             assert_eq!(
                 result,
                 Err(RejectResponse {
-                    reject_code: RejectCode::CanisterReject,
+                    reject_code: pocket_ic::RejectCode::CanisterReject,
                     reject_message: "You are not authorized".to_string(),
                     error_code: ErrorCode::CanisterRejectedMessage,
                     certified: false,
@@ -982,7 +995,13 @@ mod cycles_cost_tests {
     #[tokio::test]
     async fn should_be_idempotent() {
         async fn check<Config, Params, CandidOutput, Output>(
-            request: RequestBuilder<PocketIcRuntime<'_>, Config, Params, CandidOutput, Output>,
+            request: RequestBuilder<
+                CyclesWalletRuntime<PocketIcRuntime<'_>>,
+                Config,
+                Params,
+                CandidOutput,
+                Output,
+            >,
         ) where
             Config: CandidType + Clone + Send,
             Params: CandidType + Clone + Send,
@@ -1040,7 +1059,13 @@ mod cycles_cost_tests {
     #[tokio::test]
     async fn should_be_zero_when_in_demo_mode() {
         async fn check<Config, Params, CandidOutput, Output>(
-            request: RequestBuilder<PocketIcRuntime<'_>, Config, Params, CandidOutput, Output>,
+            request: RequestBuilder<
+                CyclesWalletRuntime<PocketIcRuntime<'_>>,
+                Config,
+                Params,
+                CandidOutput,
+                Output,
+            >,
         ) where
             Config: CandidType + Clone + Send,
             Params: CandidType + Clone + Send,
@@ -1104,7 +1129,7 @@ mod cycles_cost_tests {
         async fn check<Config, Params, CandidOutput, Output>(
             setup: &Setup,
             request: RequestBuilder<
-                PocketIcRuntime<'_>,
+                CyclesWalletRuntime<PocketIcRuntime<'_>>,
                 Config,
                 Params,
                 MultiRpcResult<CandidOutput>,
@@ -1270,15 +1295,17 @@ mod cycles_cost_tests {
 
 mod rpc_config_tests {
     use super::*;
+    use ic_cdk::call::RejectCode;
+    use sol_rpc_types::LegacyRejectionCode;
 
     #[tokio::test]
     async fn should_respect_response_size_estimate() {
         async fn check<F, Config, Params, CandidOutput, Output>(setup: &Setup, request: F)
         where
             F: Fn(
-                SolRpcClient<PocketIcRuntime<'_>>,
+                SolRpcClient<CyclesWalletRuntime<PocketIcRuntime<'_>>>,
             ) -> RequestBuilder<
-                PocketIcRuntime<'_>,
+                CyclesWalletRuntime<PocketIcRuntime<'_>>,
                 Config,
                 Params,
                 MultiRpcResult<CandidOutput>,
@@ -1376,9 +1403,9 @@ mod rpc_config_tests {
             ok_result: Value,
         ) where
             F: Fn(
-                SolRpcClient<PocketIcRuntime<'_>>,
+                SolRpcClient<CyclesWalletRuntime<PocketIcRuntime<'_>>>,
             ) -> RequestBuilder<
-                PocketIcRuntime<'_>,
+                CyclesWalletRuntime<PocketIcRuntime<'_>>,
                 Config,
                 Params,
                 MultiRpcResult<CandidOutput>,
@@ -1797,7 +1824,6 @@ mod get_signatures_for_address_tests {
 
 mod metrics_tests {
     use super::*;
-    use sol_rpc_types::HttpOutcallError;
 
     #[tokio::test]
     async fn should_retrieve_metrics() {

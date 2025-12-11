@@ -204,17 +204,17 @@ pub async fn sign_message<R: Runtime>(
 ///
 /// ```rust
 /// use candid::Principal;
+/// use ic_canister_runtime::IcRuntime;
 /// use solana_pubkey::pubkey;
 /// use sol_rpc_client::{
 ///     ed25519::{get_pubkey, DerivationPath, Ed25519KeyId},
-///     IcRuntime
 /// };
 ///
-/// #[tokio::main]
+/// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # use sol_rpc_client::fixtures::MockRuntime;
 /// # use ic_management_canister_types::SchnorrPublicKeyResult;
-/// let runtime = IcRuntime;
+/// let runtime = IcRuntime::new();
 /// # let runtime = MockRuntime::default()
 /// # .with_response_for_method("schnorr_public_key", SchnorrPublicKeyResult {
 /// #     public_key: pubkey!("BPebStjcgCPnWTK3FXZJ8KhqwNYLk9aubC9b4Cgqb6oE").as_ref().to_vec(),

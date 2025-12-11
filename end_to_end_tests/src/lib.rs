@@ -1,15 +1,9 @@
-use async_trait::async_trait;
-use candid::{utils::ArgumentEncoder, CandidType, Encode, Principal};
+use candid::Principal;
 use ic_agent::{identity::Secp256k1Identity, Agent};
-use ic_canister_runtime::IcError;
-use ic_error_types::RejectCode;
-use serde::de::DeserializeOwned;
+use ic_agent_canister_runtime::AgentRuntime;
+use ic_canister_runtime::CyclesWalletRuntime;
 use serde_json::json;
-use sol_rpc_client::{ClientBuilder, Runtime, SolRpcClient};
-use sol_rpc_int_tests::{
-    decode_call_response, encode_args,
-    wallet::{decode_cycles_wallet_response, CallCanisterArgs},
-};
+use sol_rpc_client::{ClientBuilder, SolRpcClient};
 use sol_rpc_types::{
     CommitmentLevel, ConsensusStrategy, Lamport, MultiRpcResult, RpcSource, RpcSources,
     SupportedRpcProviderId,
@@ -51,18 +45,15 @@ impl Setup {
         }
     }
 
-    pub fn new_ic_agent_runtime(&self) -> IcAgentRuntime<'_> {
-        IcAgentRuntime {
-            agent: &self.agent,
-            wallet_canister_id: self.wallet_canister_id,
-        }
+    pub fn new_ic_agent_runtime(&self) -> CyclesWalletRuntime<AgentRuntime<'_>> {
+        CyclesWalletRuntime::new(AgentRuntime::new(&self.agent), self.wallet_canister_id)
     }
 
-    pub fn client_builder(&self) -> ClientBuilder<IcAgentRuntime<'_>> {
+    pub fn client_builder(&self) -> ClientBuilder<CyclesWalletRuntime<AgentRuntime<'_>>> {
         SolRpcClient::builder(self.new_ic_agent_runtime(), self.sol_rpc_canister_id)
     }
 
-    pub fn client(&self) -> SolRpcClient<IcAgentRuntime<'_>> {
+    pub fn client(&self) -> SolRpcClient<CyclesWalletRuntime<AgentRuntime<'_>>> {
         self.client_builder()
             .with_rpc_sources(RpcSources::Custom(vec![
                 RpcSource::Supported(SupportedRpcProviderId::AnkrDevnet),
@@ -192,70 +183,4 @@ impl Default for Setup {
 
 pub fn env(key: &str) -> String {
     env::var(key).unwrap_or_else(|_| panic!("Environment variable '{key}' is not set!"))
-}
-
-#[derive(Clone, Debug)]
-pub struct IcAgentRuntime<'a> {
-    pub agent: &'a Agent,
-    pub wallet_canister_id: Principal,
-}
-
-impl<'a> IcAgentRuntime<'a> {
-    pub fn new(agent: &'a Agent, wallet_canister_id: Principal) -> Self {
-        Self {
-            agent,
-            wallet_canister_id,
-        }
-    }
-}
-
-#[async_trait]
-impl Runtime for IcAgentRuntime<'_> {
-    async fn update_call<In, Out>(
-        &self,
-        id: Principal,
-        method: &str,
-        args: In,
-        cycles: u128,
-    ) -> Result<Out, IcError>
-    where
-        In: ArgumentEncoder + Send,
-        Out: CandidType + DeserializeOwned,
-    {
-        // Forward the call through the wallet canister
-        let result = self
-            .agent
-            .update(&self.wallet_canister_id, "wallet_call128")
-            .with_arg(Encode!(&CallCanisterArgs::new(id, method, args, cycles)).unwrap())
-            .call_and_wait()
-            .await
-            .map_err(|e| IcError::CallRejected {
-                code: RejectCode::SysFatal,
-                message: e.to_string(),
-            })?;
-        decode_cycles_wallet_response(result)
-    }
-
-    async fn query_call<In, Out>(
-        &self,
-        id: Principal,
-        method: &str,
-        args: In,
-    ) -> Result<Out, IcError>
-    where
-        In: ArgumentEncoder + Send,
-        Out: CandidType + DeserializeOwned,
-    {
-        let result = self
-            .agent
-            .query(&id, method)
-            .with_arg(encode_args(args))
-            .call()
-            .await
-            .map_err(|e| IcError::CallRejected {
-                code: RejectCode::SysFatal,
-                message: e.to_string(),
-            })?;
-        decode_call_response(result)
-    }
 }

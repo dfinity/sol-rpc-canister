@@ -4,9 +4,10 @@
 
 use assert_matches::assert_matches;
 use futures::future;
+use ic_canister_runtime::CyclesWalletRuntime;
+use ic_pocket_canister_runtime::PocketIcRuntime;
 use pocket_ic::PocketIcBuilder;
 use sol_rpc_client::SolRpcClient;
-use sol_rpc_int_tests::PocketIcLiveModeRuntime;
 use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetAccountInfoEncoding,
     GetBlockCommitmentLevel, GetTransactionEncoding, InstallArgs, Lamport, OverrideProvider,
@@ -620,9 +621,9 @@ impl Setup {
         }
     }
 
-    fn icp_client(&self) -> SolRpcClient<PocketIcLiveModeRuntime<'_>> {
+    fn icp_client(&self) -> SolRpcClient<CyclesWalletRuntime<PocketIcRuntime<'_>>> {
         self.setup
-            .client_live_mode()
+            .client()
             .with_default_commitment_level(CommitmentLevel::Confirmed)
             .build()
     }
@@ -634,7 +635,7 @@ impl Setup {
     ) -> (SolOutput, IcpOutput)
     where
         Sol: FnOnce(&SolanaRpcClient) -> SolOutput,
-        Icp: FnOnce(SolRpcClient<PocketIcLiveModeRuntime<'a>>) -> Fut,
+        Icp: FnOnce(SolRpcClient<CyclesWalletRuntime<PocketIcRuntime<'a>>>) -> Fut,
         Fut: Future<Output = IcpOutput>,
     {
         let a = async { solana_call(&self.solana_client) };
