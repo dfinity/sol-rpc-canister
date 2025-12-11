@@ -1,21 +1,12 @@
-use async_trait::async_trait;
 use candid::{encode_one, Encode, Principal};
-use canhttp::http::json::ConstantSizeId;
 use canlog::{Log, LogEntry};
 use ic_canister_runtime::{CyclesWalletRuntime, Runtime};
 use ic_http_types::{HttpRequest, HttpResponse};
 use ic_management_canister_types::{CanisterId, CanisterSettings};
 use ic_metrics_assert::{MetricsAssert, PocketIcAsyncHttpQuery};
-use ic_pocket_canister_runtime::{ExecuteHttpOutcallMocks, PocketIcRuntime};
-use mock::{MockOutcall, MockOutcallBuilder};
+use ic_pocket_canister_runtime::{MockHttpOutcalls, PocketIcRuntime};
 use num_traits::ToPrimitive;
-use pocket_ic::{
-    common::rest::{
-        CanisterHttpReject, CanisterHttpRequest, CanisterHttpResponse, MockCanisterHttpResponse,
-    },
-    nonblocking::PocketIc,
-    PocketIcBuilder,
-};
+use pocket_ic::{nonblocking::PocketIc, PocketIcBuilder};
 use sol_rpc_canister::logs::Priority;
 use sol_rpc_client::{ClientBuilder, SolRpcClient};
 use sol_rpc_types::{InstallArgs, RpcAccess, SupportedRpcProviderId};
@@ -25,10 +16,6 @@ use std::{
     time::Duration,
 };
 
-pub mod mock;
-
-const DEFAULT_MAX_RESPONSE_BYTES: u64 = 2_000_000;
-const MAX_TICKS: usize = 10;
 pub const DEFAULT_CALLER_TEST_ID: Principal =
     Principal::from_slice(&[0x0, 0x0, 0x0, 0x0, 0x0, 0x31, 0x1, 0x8, 0x1, 0x1]);
 pub const DEFAULT_CONTROLLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x02]);
@@ -123,7 +110,7 @@ impl Setup {
     }
 
     pub async fn with_mock_api_keys(self) -> Self {
-        let client = self.client().build();
+        let client = self.client(MockHttpOutcalls::never()).build();
         let providers = client.get_providers().await;
         let mut api_keys = Vec::new();
         for (id, provider) in providers {
@@ -171,7 +158,17 @@ impl Setup {
             .entries
     }
 
-    pub fn client(&self) -> ClientBuilder<CyclesWalletRuntime<PocketIcRuntime<'_>>> {
+    pub fn client(
+        &self,
+        mocks: impl Into<MockHttpOutcalls>,
+    ) -> ClientBuilder<CyclesWalletRuntime<PocketIcRuntime<'_>>> {
+        self.client_without_mocks().with_runtime(|wallet_runtime| {
+            wallet_runtime
+                .with_runtime(|pocket_ic_runtime| pocket_ic_runtime.with_http_mocks(mocks.into()))
+        })
+    }
+
+    pub fn client_without_mocks(&self) -> ClientBuilder<CyclesWalletRuntime<PocketIcRuntime<'_>>> {
         SolRpcClient::builder(self.new_pocket_ic_runtime(), self.sol_rpc_canister_id)
     }
 
@@ -220,17 +217,10 @@ impl PocketIcAsyncHttpQuery for Setup {
     }
 }
 
-async fn tick_until_http_request(env: &PocketIc) -> Vec<CanisterHttpRequest> {
-    let mut requests = Vec::new();
-    for _ in 0..MAX_TICKS {
-        requests = env.get_canister_http().await;
-        if !requests.is_empty() {
-            break;
-        }
-        env.tick().await;
-        env.advance_time(Duration::from_nanos(1)).await;
+impl AsRef<PocketIc> for Setup {
+    fn as_ref(&self) -> &PocketIc {
+        &self.env
     }
-    requests
 }
 
 fn sol_rpc_wasm() -> Vec<u8> {
@@ -251,154 +241,4 @@ fn wallet_wasm() -> Vec<u8> {
         }
     };
     ic_test_utilities_load_wasm::load_wasm(PathBuf::new(), "wallet", &[])
-}
-
-impl AsRef<PocketIc> for Setup {
-    fn as_ref(&self) -> &PocketIc {
-        &self.env
-    }
-}
-
-#[async_trait]
-impl ExecuteHttpOutcallMocks for MockStrategy {
-    async fn execute_http_outcall_mocks(&mut self, runtime: &PocketIc) -> () {
-        match &self {
-            MockStrategy::Mock(mock) => {
-                self.mock_http_once_inner(mock, runtime).await;
-                while self.try_mock_http_inner(mock, runtime).await {}
-            }
-            MockStrategy::MockOnce(mock) => {
-                self.mock_http_once_inner(mock, runtime).await;
-            }
-            MockStrategy::MockSequence(mocks) => {
-                for mock in mocks {
-                    self.mock_http_once_inner(mock, runtime).await;
-                }
-            }
-        }
-    }
-}
-
-impl MockStrategy {
-    async fn mock_http_once_inner(&self, mock: &MockOutcall, env: &PocketIc) {
-        if !self.try_mock_http_inner(mock, env).await {
-            panic!("no pending HTTP request")
-        }
-    }
-
-    async fn try_mock_http_inner(&self, mock: &MockOutcall, env: &PocketIc) -> bool {
-        let http_requests = tick_until_http_request(env).await;
-        let request = match http_requests.first() {
-            Some(request) => request,
-            None => return false,
-        };
-        mock.assert_matches(request);
-
-        let response = match mock.response.clone() {
-            CanisterHttpResponse::CanisterHttpReply(reply) => {
-                let max_response_bytes = request
-                    .max_response_bytes
-                    .unwrap_or(DEFAULT_MAX_RESPONSE_BYTES);
-                if reply.body.len() as u64 > max_response_bytes {
-                    //approximate replica behaviour since headers are not accounted for.
-                    CanisterHttpResponse::CanisterHttpReject(CanisterHttpReject {
-                        reject_code: 1, //SYS_FATAL
-                        message: format!(
-                            "Http body exceeds size limit of {} bytes.",
-                            max_response_bytes
-                        ),
-                    })
-                } else {
-                    CanisterHttpResponse::CanisterHttpReply(reply)
-                }
-            }
-            CanisterHttpResponse::CanisterHttpReject(reject) => {
-                CanisterHttpResponse::CanisterHttpReject(reject)
-            }
-        };
-        let mock_response = MockCanisterHttpResponse {
-            subnet_id: request.subnet_id,
-            request_id: request.request_id,
-            response,
-            additional_responses: vec![],
-        };
-        env.mock_canister_http_response(mock_response).await;
-        true
-    }
-}
-
-#[async_trait]
-pub trait SolRpcTestClient<R: Runtime> {
-    fn mock_http(self, mock: impl Into<MockOutcall>) -> Self;
-    fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self;
-    fn mock_http_sequence(self, mocks: Vec<impl Into<MockOutcall>>) -> Self;
-    fn mock_sequential_json_rpc_responses<const N: usize>(
-        self,
-        status: u16,
-        body: serde_json::Value,
-    ) -> Self;
-}
-
-#[async_trait]
-impl SolRpcTestClient<CyclesWalletRuntime<PocketIcRuntime<'_>>>
-    for ClientBuilder<CyclesWalletRuntime<PocketIcRuntime<'_>>>
-{
-    fn mock_http(self, mock: impl Into<MockOutcall>) -> Self {
-        self.with_runtime(|r| {
-            r.with_runtime(|r| r.with_http_mocks(MockStrategy::Mock(mock.into())))
-        })
-    }
-
-    fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self {
-        self.with_runtime(|r| {
-            r.with_runtime(|r| r.with_http_mocks(MockStrategy::MockOnce(mock.into())))
-        })
-    }
-
-    fn mock_http_sequence(self, mocks: Vec<impl Into<MockOutcall>>) -> Self {
-        self.with_runtime(|r| {
-            r.with_runtime(|r| {
-                r.with_http_mocks(MockStrategy::MockSequence(
-                    mocks.into_iter().map(|mock| mock.into()).collect(),
-                ))
-            })
-        })
-    }
-
-    fn mock_sequential_json_rpc_responses<const N: usize>(
-        self,
-        status: u16,
-        body: serde_json::Value,
-    ) -> Self {
-        let mocks = json_rpc_sequential_id::<N>(body)
-            .into_iter()
-            .map(|response| MockOutcallBuilder::new(status, &response))
-            .collect();
-        self.mock_http_sequence(mocks)
-    }
-}
-
-pub fn json_rpc_sequential_id<const N: usize>(
-    response: serde_json::Value,
-) -> [serde_json::Value; N] {
-    let mut first_id: ConstantSizeId = response["id"]
-        .as_str()
-        .expect("missing request ID")
-        .parse()
-        .expect("invalid request ID");
-    let mut requests = Vec::with_capacity(N);
-    for _ in 0..N {
-        let mut next_request = response.clone();
-        let new_id = first_id.get_and_increment();
-        *next_request.get_mut("id").unwrap() = serde_json::Value::String(new_id.to_string());
-        requests.push(next_request);
-    }
-    requests.try_into().unwrap()
-}
-
-#[derive(Clone, Debug)]
-enum MockStrategy {
-    Mock(MockOutcall),
-    MockOnce(MockOutcall),
-    MockSequence(Vec<MockOutcall>),
 }
