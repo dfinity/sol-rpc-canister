@@ -62,7 +62,7 @@ impl ConfigState {
 }
 
 impl Storable for ConfigState {
-    fn to_bytes(&self) -> Cow<[u8]> {
+    fn to_bytes(&self) -> Cow<'_, [u8]> {
         match &self {
             ConfigState::Uninitialized => Cow::Borrowed(&[]),
             ConfigState::Initialized(config) => Cow::Owned(encode(config)),

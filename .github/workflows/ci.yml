@@ -184,7 +184,7 @@ jobs:
       - name: 'Install PocketIC server'
         uses: dfinity/pocketic@main
         with:
-          pocket-ic-server-version: "9.0.1"
+          pocket-ic-server-version: "11.0.0"
 
       - name: 'Install Solana CLI'
         run: |

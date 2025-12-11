@@ -6,8 +6,8 @@ use candid::{
     CandidType,
 };
 use derive_more::{From, Into};
-use ic_cdk::api::call::RejectionCode;
-pub use ic_cdk::api::management_canister::http_request::HttpHeader;
+use ic_cdk::call::RejectCode;
+pub use ic_management_canister_types::HttpHeader;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, num::TryFromIntError};
@@ -78,7 +78,7 @@ pub enum HttpOutcallError {
     #[error("IC error (code: {code:?}): {message}")]
     IcError {
         /// The error code.
-        code: RejectionCode,
+        code: LegacyRejectionCode,
         /// The error message.
         message: String,
     },
@@ -632,5 +632,62 @@ impl TryFrom<u8> for NonZeroU8 {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         std::num::NonZeroU8::try_from(value).map(Self)
+    }
+}
+
+/// Rejection code from calling another canister.
+///
+/// This implementation was [copied](https://github.com/dfinity/cdk-rs/blob/83ba5fc7b3316a6fa4e7f704b689c95c9e677029/src/ic-cdk/src/api/call.rs#L21) from ic-cdk v0.17.
+///
+/// The `ic_cdk::api::call::RejectionCode` type is deprecated since ic-cdk v0.18.
+/// The replacement `ic_cdk::call::RejectCode` re-exports the type defined in the `ic-error-types`
+/// crate. We cannot simply switch to the replacement because the existing `RejectionCode` is a
+/// public type in SOL RPC canister's interface.
+/// To maintain compatibility, we retain the "outdated" definition here.
+#[repr(i32)]
+#[derive(CandidType, Deserialize, Clone, Copy, Hash, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename = "RejectionCode")]
+pub enum LegacyRejectionCode {
+    /// No error occurred.
+    NoError = 0,
+
+    /// Fatal system error, retry unlikely to be useful.
+    SysFatal = 1,
+    /// Transient system error, retry might be possible.
+    SysTransient = 2,
+    /// Invalid destination (e.g. canister/account does not exist).
+    DestinationInvalid = 3,
+    /// Explicit reject by the canister.
+    CanisterReject = 4,
+    /// Canister error (e.g., trap, no response).
+    CanisterError = 5,
+
+    /// An unknown error occurred.
+    Unknown,
+}
+
+impl From<RejectCode> for LegacyRejectionCode {
+    fn from(value: RejectCode) -> Self {
+        match value {
+            RejectCode::SysFatal => Self::SysFatal,
+            RejectCode::SysTransient => Self::SysTransient,
+            RejectCode::DestinationInvalid => Self::DestinationInvalid,
+            RejectCode::CanisterReject => Self::CanisterReject,
+            RejectCode::CanisterError => Self::CanisterError,
+            RejectCode::SysUnknown => Self::Unknown,
+        }
+    }
+}
+
+impl From<u32> for LegacyRejectionCode {
+    fn from(value: u32) -> Self {
+        match value {
+            1 => LegacyRejectionCode::SysFatal,
+            2 => LegacyRejectionCode::SysTransient,
+            3 => LegacyRejectionCode::DestinationInvalid,
+            4 => LegacyRejectionCode::CanisterReject,
+            5 => LegacyRejectionCode::CanisterError,
+            _ => LegacyRejectionCode::Unknown,
+        }
     }
 }

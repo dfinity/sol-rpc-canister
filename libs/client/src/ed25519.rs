@@ -6,11 +6,11 @@
 use crate::Runtime;
 use candid::Principal;
 use derive_more::{From, Into};
-use ic_cdk::api::management_canister::schnorr::{
-    SchnorrAlgorithm, SchnorrKeyId, SchnorrPublicKeyArgument, SchnorrPublicKeyResponse,
-    SignWithSchnorrArgument, SignWithSchnorrResponse,
+use ic_canister_runtime::IcError;
+use ic_management_canister_types::{
+    SchnorrAlgorithm, SchnorrKeyId, SchnorrPublicKeyArgs, SchnorrPublicKeyResult,
+    SignWithSchnorrArgs, SignWithSchnorrResult,
 };
-use ic_error_types::RejectCode;
 
 // Source: https://internetcomputer.org/docs/current/references/t-sigs-how-it-works/#fees-for-the-t-schnorr-test-key
 const SIGN_WITH_SCHNORR_TEST_FEE: u128 = 10_000_000_000;
@@ -88,7 +88,7 @@ impl Ed25519KeyId {
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # use sol_rpc_types::{ConfirmedBlock, MultiRpcResult};
 /// # use std::str::FromStr;
-/// # use ic_cdk::api::management_canister::schnorr::{SchnorrPublicKeyResponse, SignWithSchnorrResponse};
+/// # use ic_management_canister_types::{SchnorrPublicKeyResult, SignWithSchnorrResult};
 /// let client = SolRpcClient::builder_for_ic()
 /// #   .with_mocked_responses()
 /// #   .with_response_for_method("getSlot", MultiRpcResult::Consistent(Ok(332_577_897_u64)))
@@ -103,11 +103,11 @@ impl Ed25519KeyId {
 /// #       num_reward_partitions: None,
 /// #       transactions: None,
 /// #   }))))
-/// #   .with_response_for_method("schnorr_public_key", SchnorrPublicKeyResponse {
+/// #   .with_response_for_method("schnorr_public_key", SchnorrPublicKeyResult {
 /// #       public_key: pubkey!("BPebStjcgCPnWTK3FXZJ8KhqwNYLk9aubC9b4Cgqb6oE").as_ref().to_vec(),
 /// #       chain_code: "UWbC6EgDnWEJIU4KFBqASTCYAzEiJGsR".as_bytes().to_vec(),
 /// #   })
-/// #   .with_response_for_method("sign_with_schnorr", SignWithSchnorrResponse {
+/// #   .with_response_for_method("sign_with_schnorr", SignWithSchnorrResult {
 /// #       signature: Signature::from_str("37HbmunhjSC1xxnVsaFX2xaS8gYnb5JYiLy9B51Ky9Up69aF7Qra6dHSLMCaiurRYq3Y8ZxSVUwC5sntziWuhZee").unwrap().as_ref().to_vec()
 /// #    })
 ///     .build();
@@ -164,16 +164,17 @@ pub async fn sign_message<R: Runtime>(
     message: &solana_message::Message,
     key_id: Ed25519KeyId,
     derivation_path: Option<&DerivationPath>,
-) -> Result<solana_signature::Signature, (RejectCode, String)> {
-    let arg = SignWithSchnorrArgument {
+) -> Result<solana_signature::Signature, IcError> {
+    let arg = SignWithSchnorrArgs {
         message: message.serialize(),
         derivation_path: derivation_path.cloned().unwrap_or_default().into(),
         key_id: SchnorrKeyId {
             algorithm: SchnorrAlgorithm::Ed25519,
             name: key_id.id().to_string(),
         },
+        aux: None,
     };
-    let SignWithSchnorrResponse { signature } = runtime
+    let SignWithSchnorrResult { signature } = runtime
         .update_call(
             Principal::management_canister(),
             "sign_with_schnorr",
@@ -212,10 +213,10 @@ pub async fn sign_message<R: Runtime>(
 /// #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # use sol_rpc_client::fixtures::MockRuntime;
-/// # use ic_cdk::api::management_canister::schnorr::SchnorrPublicKeyResponse;
+/// # use ic_management_canister_types::SchnorrPublicKeyResult;
 /// let runtime = IcRuntime;
 /// # let runtime = MockRuntime::default()
-/// # .with_response_for_method("schnorr_public_key", SchnorrPublicKeyResponse {
+/// # .with_response_for_method("schnorr_public_key", SchnorrPublicKeyResult {
 /// #     public_key: pubkey!("BPebStjcgCPnWTK3FXZJ8KhqwNYLk9aubC9b4Cgqb6oE").as_ref().to_vec(),
 /// #     chain_code: "UWbC6EgDnWEJIU4KFBqASTCYAzEiJGsR".as_bytes().to_vec(),
 /// # });
@@ -253,8 +254,8 @@ pub async fn get_pubkey<R: Runtime>(
     canister_id: Option<Principal>,
     derivation_path: Option<&DerivationPath>,
     key_id: Ed25519KeyId,
-) -> Result<(solana_pubkey::Pubkey, [u8; 32]), (RejectCode, String)> {
-    let arg = SchnorrPublicKeyArgument {
+) -> Result<(solana_pubkey::Pubkey, [u8; 32]), IcError> {
+    let arg = SchnorrPublicKeyArgs {
         canister_id,
         derivation_path: derivation_path.cloned().unwrap_or_default().into(),
         key_id: SchnorrKeyId {
@@ -262,7 +263,7 @@ pub async fn get_pubkey<R: Runtime>(
             name: key_id.id().to_string(),
         },
     };
-    let SchnorrPublicKeyResponse {
+    let SchnorrPublicKeyResult {
         public_key,
         chain_code,
     } = runtime

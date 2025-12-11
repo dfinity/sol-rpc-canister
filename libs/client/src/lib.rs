@@ -142,8 +142,8 @@ use crate::request::{
 };
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Principal};
-use ic_cdk::api::call::RejectionCode as IcCdkRejectionCode;
-use ic_error_types::RejectCode;
+use ic_canister_runtime::IcError;
+use ic_cdk::call::Call;
 pub use request::{
     EstimateBlockhashRequestBuilder, EstimateRecentBlockhashError, Request, RequestBuilder,
     SolRpcConfig, SolRpcEndpoint, SolRpcRequest,
@@ -180,7 +180,7 @@ pub trait Runtime {
         method: &str,
         args: In,
         cycles: u128,
-    ) -> Result<Out, (RejectCode, String)>
+    ) -> Result<Out, IcError>
     where
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned;
@@ -191,7 +191,7 @@ pub trait Runtime {
         id: Principal,
         method: &str,
         args: In,
-    ) -> Result<Out, (RejectCode, String)>
+    ) -> Result<Out, IcError>
     where
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned;
@@ -1136,7 +1136,7 @@ impl<R: Runtime> SolRpcClient<R> {
     async fn try_execute_request<Config, Params, CandidOutput, Output>(
         &self,
         request: Request<Config, Params, CandidOutput, Output>,
-    ) -> Result<Output, (RejectCode, String)>
+    ) -> Result<Output, IcError>
     where
         Config: CandidType + Send,
         Params: CandidType + Send,
@@ -1193,15 +1193,17 @@ impl Runtime for IcRuntime {
         method: &str,
         args: In,
         cycles: u128,
-    ) -> Result<Out, (RejectCode, String)>
+    ) -> Result<Out, IcError>
     where
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
     {
-        ic_cdk::api::call::call_with_payment128(id, method, args, cycles)
+        Call::unbounded_wait(id, method)
+            .with_args(&args)
+            .with_cycles(cycles)
             .await
-            .map(|(res,)| res)
-            .map_err(|(code, message)| (convert_reject_code(code), message))
+            .map_err(IcError::from)
+            .and_then(|response| response.candid::<Out>().map_err(IcError::from))
     }
 
     async fn query_call<In, Out>(
@@ -1209,33 +1211,15 @@ impl Runtime for IcRuntime {
         id: Principal,
         method: &str,
         args: In,
-    ) -> Result<Out, (RejectCode, String)>
+    ) -> Result<Out, IcError>
     where
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
     {
-        ic_cdk::api::call::call(id, method, args)
+        Call::unbounded_wait(id, method)
+            .with_args(&args)
             .await
-            .map(|(res,)| res)
-            .map_err(|(code, message)| (convert_reject_code(code), message))
-    }
-}
-
-fn convert_reject_code(code: IcCdkRejectionCode) -> RejectCode {
-    match code {
-        IcCdkRejectionCode::SysFatal => RejectCode::SysFatal,
-        IcCdkRejectionCode::SysTransient => RejectCode::SysTransient,
-        IcCdkRejectionCode::DestinationInvalid => RejectCode::DestinationInvalid,
-        IcCdkRejectionCode::CanisterReject => RejectCode::CanisterReject,
-        IcCdkRejectionCode::CanisterError => RejectCode::CanisterError,
-        IcCdkRejectionCode::Unknown => {
-            // This can only happen if there is a new error code on ICP that the CDK is not aware of.
-            // We map it to SysFatal since none of the other error codes apply.
-            // In particular, note that RejectCode::SysUnknown is only applicable to inter-canister calls that used ic0.call_with_best_effort_response.
-            RejectCode::SysFatal
-        }
-        IcCdkRejectionCode::NoError => {
-            unreachable!("inter-canister calls should never produce a RejectionCode::NoError error")
-        }
+            .map_err(IcError::from)
+            .and_then(|response| response.candid::<Out>().map_err(IcError::from))
     }
 }

@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use candid::{utils::ArgumentEncoder, CandidType, Encode, Principal};
 use ic_agent::{identity::Secp256k1Identity, Agent};
+use ic_canister_runtime::IcError;
 use ic_error_types::RejectCode;
 use serde::de::DeserializeOwned;
 use serde_json::json;
@@ -50,18 +51,18 @@ impl Setup {
         }
     }
 
-    pub fn new_ic_agent_runtime(&self) -> IcAgentRuntime {
+    pub fn new_ic_agent_runtime(&self) -> IcAgentRuntime<'_> {
         IcAgentRuntime {
             agent: &self.agent,
             wallet_canister_id: self.wallet_canister_id,
         }
     }
 
-    pub fn client_builder(&self) -> ClientBuilder<IcAgentRuntime> {
+    pub fn client_builder(&self) -> ClientBuilder<IcAgentRuntime<'_>> {
         SolRpcClient::builder(self.new_ic_agent_runtime(), self.sol_rpc_canister_id)
     }
 
-    pub fn client(&self) -> SolRpcClient<IcAgentRuntime> {
+    pub fn client(&self) -> SolRpcClient<IcAgentRuntime<'_>> {
         self.client_builder()
             .with_rpc_sources(RpcSources::Custom(vec![
                 RpcSource::Supported(SupportedRpcProviderId::AnkrDevnet),
@@ -216,7 +217,7 @@ impl Runtime for IcAgentRuntime<'_> {
         method: &str,
         args: In,
         cycles: u128,
-    ) -> Result<Out, (RejectCode, String)>
+    ) -> Result<Out, IcError>
     where
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
@@ -228,7 +229,10 @@ impl Runtime for IcAgentRuntime<'_> {
             .with_arg(Encode!(&CallCanisterArgs::new(id, method, args, cycles)).unwrap())
             .call_and_wait()
             .await
-            .map_err(|e| (RejectCode::SysFatal, e.to_string()))?;
+            .map_err(|e| IcError::CallRejected {
+                code: RejectCode::SysFatal,
+                message: e.to_string(),
+            })?;
         decode_cycles_wallet_response(result)
     }
 
@@ -237,7 +241,7 @@ impl Runtime for IcAgentRuntime<'_> {
         id: Principal,
         method: &str,
         args: In,
-    ) -> Result<Out, (RejectCode, String)>
+    ) -> Result<Out, IcError>
     where
         In: ArgumentEncoder + Send,
         Out: CandidType + DeserializeOwned,
@@ -248,7 +252,10 @@ impl Runtime for IcAgentRuntime<'_> {
             .with_arg(encode_args(args))
             .call()
             .await
-            .map_err(|e| (RejectCode::SysFatal, e.to_string()))?;
+            .map_err(|e| IcError::CallRejected {
+                code: RejectCode::SysFatal,
+                message: e.to_string(),
+            })?;
         decode_call_response(result)
     }
 }
