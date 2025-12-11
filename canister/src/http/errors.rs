@@ -49,8 +49,12 @@ impl From<JsonRequestConversionError> for HttpClientError {
     }
 }
 
+#[derive(Error, Clone, Debug, PartialEq, Eq)]
+#[error(transparent)]
+pub struct UnrecoverableError(IcError);
+
 impl TryFrom<HttpClientError> for RpcError {
-    type Error = HttpClientError;
+    type Error = UnrecoverableError;
 
     fn try_from(error: HttpClientError) -> Result<Self, Self::Error> {
         match error {
@@ -60,7 +64,9 @@ impl TryFrom<HttpClientError> for RpcError {
                     message,
                 }))
             }
-            e @ HttpClientError::IcError(IcError::InsufficientLiquidCycleBalance { .. }) => Err(e),
+            HttpClientError::IcError(e @ IcError::InsufficientLiquidCycleBalance { .. }) => {
+                Err(UnrecoverableError(e))
+            }
             HttpClientError::NotHandledError(e) => Ok(RpcError::ValidationError(e)),
             HttpClientError::CyclesAccountingError(
                 ChargeCallerError::InsufficientCyclesError { expected, received },

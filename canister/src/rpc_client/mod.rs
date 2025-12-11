@@ -12,6 +12,7 @@ use crate::{
         charging_policy_with_collateral, errors::HttpClientError, http_client,
         service_request_builder,
     },
+    logs::Priority,
     memory::{read_state, record_ok_result},
     metrics::MetricRpcMethod,
     providers::{get_provider, request_builder, resolve_rpc_provider, Providers},
@@ -23,6 +24,7 @@ use canhttp::{
     multi::{MultiResults, Reduce, ReduceWithEquality, ReduceWithThreshold, Timestamp},
     MaxResponseBytesRequestExtension, TransformContextRequestExtension,
 };
+use canlog::log;
 use http::{Request, Response};
 use ic_management_canister_types::{
     HttpRequestArgs as IcHttpRequest, TransformContext, TransformFunc,
@@ -481,8 +483,8 @@ impl<Params, Output> MultiRpcRequest<Params, Output> {
     {
         async fn extract_request(
             request: IcHttpRequest,
-        ) -> Result<http::Response<IcHttpRequest>, HttpClientError> {
-            Ok(http::Response::new(request))
+        ) -> Result<Response<IcHttpRequest>, HttpClientError> {
+            Ok(Response::new(request))
         }
 
         let num_providers = self.providers.sources.len();
@@ -490,7 +492,12 @@ impl<Params, Output> MultiRpcRequest<Params, Output> {
 
         let client = service_request_builder()
             .service_fn(extract_request)
-            .map_err(|e| RpcError::try_from(e).unwrap())
+            .map_err(|e| {
+                RpcError::try_from(e).unwrap_or_else(|e| {
+                    log!(Priority::Info, "Unrecoverable error: {}", e);
+                    panic!("{}", e);
+                })
+            })
             .map_response(Response::into_body);
 
         let (requests, errors) = requests.into_inner();

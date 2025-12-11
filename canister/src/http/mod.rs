@@ -59,7 +59,10 @@ where
     };
     ServiceBuilder::new()
         .map_result(extract_json_rpc_response)
-        .map_err(|e| RpcError::try_from(e).unwrap())
+        .map_err(|e| RpcError::try_from(e).unwrap_or_else(|e| {
+            log!(Priority::Info, "Unrecoverable error: {}", e);
+            panic!("{}", e);
+        }))
         .option_layer(maybe_retry)
         .option_layer(maybe_unique_id)
         .layer(
