@@ -17,6 +17,7 @@ candid = { workspace = true }
 canlog = { workspace = true }
 derive_more = { workspace = true }
 ic-cdk = { workspace = true }
+ic-management-canister-types = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

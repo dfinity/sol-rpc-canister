@@ -46,9 +46,9 @@
 //! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! # use sol_rpc_types::RpcError;
 //! let client = SolRpcClient::builder_for_ic()
-//! #   .with_mocked_responses()
-//! #   .with_response_for_method("getSlotCyclesCost", Ok::<u128, RpcError>(100_000_000_000))
-//! #   .with_response_for_method("getSlot", MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+//! #   .with_stub_responses()
+//! #   .add_stub_response(Ok::<u128, RpcError>(100_000_000_000))
+//! #   .add_stub_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
 //!     .build();
 //!
 //! let request = client.get_slot();
@@ -85,7 +85,7 @@
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! let client = SolRpcClient::builder_for_ic()
-//! #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+//! #   .with_stub_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
 //!     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
 //!     .with_rpc_config(RpcConfig {
 //!         response_consensus: Some(ConsensusStrategy::Threshold {
@@ -140,10 +140,8 @@ use crate::request::{
     GetTransactionRequest, GetTransactionRequestBuilder, JsonRequest, JsonRequestBuilder,
     SendTransactionRequest, SendTransactionRequestBuilder,
 };
-use async_trait::async_trait;
-use candid::{utils::ArgumentEncoder, CandidType, Principal};
-use ic_cdk::api::call::RejectionCode as IcCdkRejectionCode;
-use ic_error_types::RejectCode;
+use candid::{CandidType, Principal};
+use ic_canister_runtime::{IcError, IcRuntime, Runtime};
 pub use request::{
     DefaultRequestCycles, EstimateBlockhashRequestBuilder, EstimateRecentBlockhashError, Request,
     RequestBuilder, SolRpcConfig, SolRpcEndpoint, SolRpcRequest,
@@ -166,36 +164,6 @@ use std::{fmt::Debug, sync::Arc};
 /// assert_eq!(SOL_RPC_CANISTER, Principal::from_text("tghme-zyaaa-aaaar-qarca-cai").unwrap())
 /// ```
 pub const SOL_RPC_CANISTER: Principal = Principal::from_slice(&[0, 0, 0, 0, 2, 48, 4, 68, 1, 1]);
-
-/// Abstract the canister runtime so that the client code can be reused:
-/// * in production using `ic_cdk`,
-/// * in unit tests by mocking this trait,
-/// * in integration tests by implementing this trait for `PocketIc`.
-#[async_trait]
-pub trait Runtime {
-    /// Defines how asynchronous inter-canister update calls are made.
-    async fn update_call<In, Out>(
-        &self,
-        id: Principal,
-        method: &str,
-        args: In,
-        cycles: u128,
-    ) -> Result<Out, (RejectCode, String)>
-    where
-        In: ArgumentEncoder + Send,
-        Out: CandidType + DeserializeOwned;
-
-    /// Defines how asynchronous inter-canister query calls are made.
-    async fn query_call<In, Out>(
-        &self,
-        id: Principal,
-        method: &str,
-        args: In,
-    ) -> Result<Out, (RejectCode, String)>
-    where
-        In: ArgumentEncoder + Send,
-        Out: CandidType + DeserializeOwned;
-}
 
 /// Client to interact with the SOL RPC canister.
 #[derive(Debug)]
@@ -227,7 +195,7 @@ impl SolRpcClient<IcRuntime> {
     /// Creates a [`ClientBuilder`] to configure a [`SolRpcClient`] targeting [`SOL_RPC_CANISTER`]
     /// running on the Internet Computer.
     pub fn builder_for_ic() -> ClientBuilder<IcRuntime> {
-        ClientBuilder::new(IcRuntime, SOL_RPC_CANISTER)
+        ClientBuilder::new(IcRuntime::new(), SOL_RPC_CANISTER)
     }
 }
 
@@ -337,7 +305,7 @@ impl<R> SolRpcClient<R> {
     /// # use sol_rpc_client::fixtures::usdc_account;
     /// # use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo, MultiRpcResult};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(Some(usdc_account()))))
+    /// #   .with_stub_response(MultiRpcResult::Consistent(Ok(Some(usdc_account()))))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
@@ -372,7 +340,7 @@ impl<R> SolRpcClient<R> {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # use sol_rpc_types::MultiRpcResult;
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(389_086_612_571_u64)))
+    /// #   .with_stub_response(MultiRpcResult::Consistent(Ok(389_086_612_571_u64)))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
@@ -406,7 +374,7 @@ impl<R> SolRpcClient<R> {
     /// # use std::str::FromStr;
     /// # use sol_rpc_types::{Hash, Pubkey};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(ConfirmedBlock {
+    /// #   .with_stub_response(MultiRpcResult::Consistent(Ok(ConfirmedBlock {
     /// #     previous_blockhash: Hash::from_str("4yeCoXK2Q4yXcunuLtF37yTE1wVD4x8313adneZDmi8w").unwrap(),
     /// #     blockhash: Hash::from_str("C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY").unwrap(),
     /// #     parent_slot: 343459193,
@@ -474,7 +442,7 @@ impl<R> SolRpcClient<R> {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # use sol_rpc_types::{MultiRpcResult, TokenAmount};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(TokenAmount {
+    /// #   .with_stub_response(MultiRpcResult::Consistent(Ok(TokenAmount {
     /// #       ui_amount: Some(251153323.575906),
     /// #       decimals: 6,
     /// #       amount: "251153323575906".to_string(),
@@ -522,7 +490,7 @@ impl<R> SolRpcClient<R> {
     /// use std::num::NonZeroU8;
     /// use sol_rpc_types::{MultiRpcResult, PrioritizationFee, TokenAmount};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(vec![PrioritizationFee{slot: 338637772, prioritization_fee: 166667}])))
+    /// #   .with_stub_response(MultiRpcResult::Consistent(Ok(vec![PrioritizationFee{slot: 338637772, prioritization_fee: 166667}])))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
@@ -602,7 +570,7 @@ impl<R> SolRpcClient<R> {
     /// # use std::str::FromStr;
     /// # use sol_rpc_types::MultiRpcResult;
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(vec![
+    /// #   .with_stub_response(MultiRpcResult::Consistent(Ok(vec![
     /// #        ConfirmedTransactionStatusWithSignature {
     /// #            signature: Signature::from_str("3jPA8CnZb9sfs4zVAypa9KB7VAGwrTdXB6mg9H1H9XpATN6Y8iek4Y21Nb9LjbrpYACbF9USV8RBWvXFFhVoQUAs").unwrap(),
     /// #            confirmation_status: Some(TransactionConfirmationStatus::Finalized),
@@ -680,7 +648,7 @@ impl<R> SolRpcClient<R> {
     /// # use std::str::FromStr;
     /// # use sol_rpc_types::MultiRpcResult;
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(vec![
+    /// #   .with_stub_response(MultiRpcResult::Consistent(Ok(vec![
     /// #        Some(sol_rpc_types::TransactionStatus {
     /// #            slot: 338837593,
     /// #            status: Ok(()),
@@ -782,7 +750,7 @@ impl<R> SolRpcClient<R> {
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+    /// #   .with_stub_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
@@ -824,7 +792,7 @@ impl<R> SolRpcClient<R> {
     /// # use std::str::FromStr;
     /// # use sol_rpc_types::{ConfirmedBlock, GetTransactionEncoding, Hash, MultiRpcResult, Pubkey};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok(sol_rpc_types::EncodedConfirmedTransactionWithStatusMeta {
+    /// #   .with_stub_response(MultiRpcResult::Consistent(Ok(sol_rpc_types::EncodedConfirmedTransactionWithStatusMeta {
     /// #       slot: 344115445,
     /// #       block_time: Some(1748865196),
     /// #       transaction: sol_rpc_types::EncodedTransactionWithStatusMeta {
@@ -897,7 +865,7 @@ impl<R> SolRpcClient<R> {
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_default_mocked_response(MultiRpcResult::Consistent(Ok("tspfR5p1PFphquz4WzDb7qM4UhJdgQXkEZtW88BykVEdX2zL2kBT9kidwQBviKwQuA3b6GMCR1gknHvzQ3r623T")))
+    /// #   .with_stub_response(MultiRpcResult::Consistent(Ok("tspfR5p1PFphquz4WzDb7qM4UhJdgQXkEZtW88BykVEdX2zL2kBT9kidwQBviKwQuA3b6GMCR1gknHvzQ3r623T")))
     ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
     ///     .build();
     ///
@@ -945,7 +913,7 @@ impl<R> SolRpcClient<R> {
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SolRpcClient::builder_for_ic()
-    /// #    .with_default_mocked_response(MultiRpcResult::Consistent(Ok(json!({
+    /// #    .with_stub_response(MultiRpcResult::Consistent(Ok(json!({
     /// #            "jsonrpc": "2.0",
     /// #            "result": {
     /// #                "feature-set": 3271415109_u32,
@@ -1039,9 +1007,9 @@ impl<R: Runtime> SolRpcClient<R> {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # use sol_rpc_types::{ConfirmedBlock, MultiRpcResult};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_responses()
-    /// #   .with_response_for_method("getSlot", MultiRpcResult::Consistent(Ok(332_577_897_u64)))
-    /// #   .with_response_for_method("getBlock", MultiRpcResult::Consistent(Ok(ConfirmedBlock {
+    /// #   .with_stub_responses()
+    /// #   .add_stub_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+    /// #   .add_stub_response(MultiRpcResult::Consistent(Ok(ConfirmedBlock {
     /// #       previous_blockhash: Default::default(),
     /// #       blockhash: Hash::from_str("C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY").unwrap().into(),
     /// #       parent_slot: 0,
@@ -1076,9 +1044,9 @@ impl<R: Runtime> SolRpcClient<R> {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # use sol_rpc_types::{ConfirmedBlock, MultiRpcResult};
     /// let client = SolRpcClient::builder_for_ic()
-    /// #   .with_mocked_responses()
-    /// #   .with_response_for_method("getSlot", MultiRpcResult::Consistent(Ok(332_577_897_u64)))
-    /// #   .with_response_for_method("getBlock", MultiRpcResult::Consistent(Ok(None::<ConfirmedBlock>)))
+    /// #   .with_stub_responses()
+    /// #   .add_stub_response(MultiRpcResult::Consistent(Ok(332_577_897_u64)))
+    /// #   .add_stub_response(MultiRpcResult::Consistent(Ok(None::<ConfirmedBlock>)))
     ///     .build();
     ///
     /// let blockhash = client
@@ -1100,7 +1068,7 @@ impl<R: Runtime> SolRpcClient<R> {
         &self,
         request: Request<Config, Params, CandidOutput, Output>,
         cycles: u128,
-    ) -> Result<Output, (RejectCode, String)>
+    ) -> Result<Output, IcError>
     where
         Config: CandidType + Send,
         Params: CandidType + Send,
@@ -1142,64 +1110,5 @@ impl<R: Runtime> SolRpcClient<R> {
                 )
             })
             .into()
-    }
-}
-
-/// Runtime when interacting with a canister running on the Internet Computer.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub struct IcRuntime;
-
-#[async_trait]
-impl Runtime for IcRuntime {
-    async fn update_call<In, Out>(
-        &self,
-        id: Principal,
-        method: &str,
-        args: In,
-        cycles: u128,
-    ) -> Result<Out, (RejectCode, String)>
-    where
-        In: ArgumentEncoder + Send,
-        Out: CandidType + DeserializeOwned,
-    {
-        ic_cdk::api::call::call_with_payment128(id, method, args, cycles)
-            .await
-            .map(|(res,)| res)
-            .map_err(|(code, message)| (convert_reject_code(code), message))
-    }
-
-    async fn query_call<In, Out>(
-        &self,
-        id: Principal,
-        method: &str,
-        args: In,
-    ) -> Result<Out, (RejectCode, String)>
-    where
-        In: ArgumentEncoder + Send,
-        Out: CandidType + DeserializeOwned,
-    {
-        ic_cdk::api::call::call(id, method, args)
-            .await
-            .map(|(res,)| res)
-            .map_err(|(code, message)| (convert_reject_code(code), message))
-    }
-}
-
-fn convert_reject_code(code: IcCdkRejectionCode) -> RejectCode {
-    match code {
-        IcCdkRejectionCode::SysFatal => RejectCode::SysFatal,
-        IcCdkRejectionCode::SysTransient => RejectCode::SysTransient,
-        IcCdkRejectionCode::DestinationInvalid => RejectCode::DestinationInvalid,
-        IcCdkRejectionCode::CanisterReject => RejectCode::CanisterReject,
-        IcCdkRejectionCode::CanisterError => RejectCode::CanisterError,
-        IcCdkRejectionCode::Unknown => {
-            // This can only happen if there is a new error code on ICP that the CDK is not aware of.
-            // We map it to SysFatal since none of the other error codes apply.
-            // In particular, note that RejectCode::SysUnknown is only applicable to inter-canister calls that used ic0.call_with_best_effort_response.
-            RejectCode::SysFatal
-        }
-        IcCdkRejectionCode::NoError => {
-            unreachable!("inter-canister calls should never produce a RejectionCode::NoError error")
-        }
     }
 }

@@ -1,10 +1,9 @@
 #[cfg(test)]
 mod tests;
 
-use crate::{Runtime, SolRpcClient};
+use crate::{IcError, Runtime, SolRpcClient};
 use candid::CandidType;
 use derive_more::From;
-use ic_error_types::RejectCode;
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
@@ -955,7 +954,7 @@ impl<R: Runtime, Config, Params, CandidOutput, Output>
 
     /// Constructs the [`Request`] and sends it using the [`SolRpcClient`]. This method returns
     /// either the request response or any error that occurs while sending the request.
-    pub async fn try_send(self) -> Result<Output, (RejectCode, String)>
+    pub async fn try_send(self) -> Result<Output, IcError>
     where
         Config: CandidType + Send,
         Params: CandidType + Send,
@@ -1121,8 +1120,10 @@ impl<R: Runtime, Config, Params> RequestCostBuilder<R, Config, Params> {
 }
 
 fn set_default<T>(default_value: Option<T>, value: &mut Option<T>) {
-    if default_value.is_some() && value.is_none() {
-        *value = Some(default_value.unwrap())
+    if value.is_none() {
+        if let Some(default) = default_value {
+            *value = Some(default);
+        }
     }
 }
 

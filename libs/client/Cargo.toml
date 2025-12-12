@@ -22,13 +22,12 @@ ed25519 = [
 ]
 
 [dependencies]
-async-trait = { workspace = true }
 bincode = { workspace = true }
 candid = { workspace = true }
 derive_more = { workspace = true }
-ic-cdk = { workspace = true }
+ic-canister-runtime = { workspace = true }
 ic-ed25519 = { workspace = true, optional = true }
-ic-error-types = { workspace = true }
+ic-management-canister-types = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 sol_rpc_types = { version = "3.0.0", path = "../types" }

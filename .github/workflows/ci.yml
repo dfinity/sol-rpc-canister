@@ -184,7 +184,7 @@ jobs:
       - name: 'Install PocketIC server'
         uses: dfinity/pocketic@main
         with:
-          pocket-ic-server-version: "9.0.1"
+          pocket-ic-server-version: "11.0.0"
 
       - name: 'Install Solana CLI'
         run: |
@@ -222,7 +222,6 @@ jobs:
     runs-on: ubuntu-22.04
     concurrency:
       group: ci_environment
-      cancel-in-progress: true
     env:
       sol_rpc_canister_id: zaylz-mqaaa-aaaar-qaqzq-cai
       wallet_canister_id: zo2gr-xaaaa-aaaar-qaqyq-cai

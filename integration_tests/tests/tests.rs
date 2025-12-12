@@ -1,24 +1,29 @@
 #![recursion_limit = "512"]
 use assert_matches::*;
 use candid::CandidType;
+use candid::{encode_args, Principal};
 use canhttp::http::json::{ConstantSizeId, Id};
 use const_format::formatcp;
-use ic_cdk::api::{call::RejectionCode, management_canister::http_request::HttpHeader};
-use pocket_ic::common::rest::CanisterHttpMethod;
+use ic_canister_runtime::CyclesWalletRuntime;
+use ic_cdk::call::RejectCode;
+use ic_pocket_canister_runtime::PocketIcRuntime;
+use pocket_ic::{common::rest::CanisterHttpMethod, ErrorCode, RejectResponse};
 use serde::de::DeserializeOwned;
 use serde_json::{json, Value};
 use sol_rpc_canister::constants::*;
-use sol_rpc_client::{RequestBuilder, SolRpcClient, SolRpcConfig, SolRpcEndpoint};
+use sol_rpc_client::{
+    DefaultRequestCycles, RequestBuilder, SolRpcClient, SolRpcConfig, SolRpcEndpoint,
+};
 use sol_rpc_int_tests::{
-    json_rpc_sequential_id, mock::MockOutcallBuilder, PocketIcRuntime, Setup, SolRpcTestClient,
+    json_rpc_sequential_id, mock::MockOutcallBuilder, Setup, SolRpcTestClient,
     DEFAULT_CALLER_TEST_ID,
 };
 use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, ConsensusStrategy,
     GetSignaturesForAddressLimit, GetSlotParams, GetTransactionEncoding, HttpOutcallError,
-    InstallArgs, InstructionError, Mode, MultiRpcResult, PrioritizationFee, ProviderError,
-    RpcAccess, RpcAuth, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources, Slot,
-    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TransactionDetails,
+    InstallArgs, InstructionError, LegacyRejectionCode, Mode, MultiRpcResult, PrioritizationFee,
+    ProviderError, RpcAccess, RpcAuth, RpcEndpoint, RpcError, RpcResult, RpcSource, RpcSources,
+    Slot, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TransactionDetails,
     TransactionError,
 };
 use solana_account_decoder_client_types::{
@@ -48,6 +53,7 @@ const HTTP_OUTCALL_BASE_FEE: u128 = (3_000_000 + 60_000 * 34) * 34;
 
 mod mock_request_tests {
     use super::*;
+    use ic_management_canister_types::HttpHeader;
 
     async fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
         let setup = Setup::with_args(InstallArgs {
@@ -587,14 +593,13 @@ mod get_transaction_tests {
 
 mod generic_request_tests {
     use super::*;
-    use sol_rpc_client::DefaultRequestCycles;
 
     #[tokio::test]
     async fn should_require_base_http_outcall_fee() {
         async fn check<Runtime, Config, Params, CandidOutput, Output>(
             request: RequestBuilder<Runtime, Config, Params, CandidOutput, Output>,
         ) where
-            Runtime: sol_rpc_client::Runtime,
+            Runtime: ic_canister_runtime::Runtime,
             Config: CandidType + Clone + Send,
             Params: CandidType + Clone + Send,
             CandidOutput: Into<Output> + CandidType + DeserializeOwned,
@@ -604,7 +609,7 @@ mod generic_request_tests {
                 .with_cycles(HTTP_OUTCALL_BASE_FEE - 1)
                 .try_send()
                 .await;
-            assert!(result.is_err_and(|(_code, message)| message.contains("Not enough cycles")));
+            assert!(result.is_err_and(|err| err.to_string().contains("Not enough cycles")));
         }
 
         let setup = Setup::new().await.with_mock_api_keys().await;
@@ -656,7 +661,7 @@ mod generic_request_tests {
         async fn check<Runtime, Config, Params, CandidOutput, Output>(
             request: RequestBuilder<Runtime, Config, Params, CandidOutput, Output>,
         ) where
-            Runtime: sol_rpc_client::Runtime,
+            Runtime: ic_canister_runtime::Runtime,
             Config: CandidType + Clone + Send,
             Params: CandidType + Clone + Send,
             CandidOutput: Into<Output> + CandidType + DeserializeOwned,
@@ -786,8 +791,6 @@ mod retrieve_logs_tests {
 
 mod update_api_key_tests {
     use super::*;
-    use candid::{encode_args, Principal};
-    use pocket_ic::{ErrorCode, RejectCode, RejectResponse};
 
     #[tokio::test]
     async fn should_update_api_key() {
@@ -862,7 +865,7 @@ mod update_api_key_tests {
             assert_eq!(
                 result,
                 Err(RejectResponse {
-                    reject_code: RejectCode::CanisterReject,
+                    reject_code: pocket_ic::RejectCode::CanisterReject,
                     reject_message: "You are not authorized".to_string(),
                     error_code: ErrorCode::CanisterRejectedMessage,
                     certified: false,
@@ -982,12 +985,17 @@ fn rpc_sources() -> Vec<RpcSources> {
 
 mod cycles_cost_tests {
     use super::*;
-    use sol_rpc_client::DefaultRequestCycles;
 
     #[tokio::test]
     async fn should_be_idempotent() {
         async fn check<Config, Params, CandidOutput, Output>(
-            request: RequestBuilder<PocketIcRuntime<'_>, Config, Params, CandidOutput, Output>,
+            request: RequestBuilder<
+                CyclesWalletRuntime<PocketIcRuntime<'_>>,
+                Config,
+                Params,
+                CandidOutput,
+                Output,
+            >,
         ) where
             Config: CandidType + Clone + Send,
             Params: CandidType + Clone + Send,
@@ -1045,7 +1053,13 @@ mod cycles_cost_tests {
     #[tokio::test]
     async fn should_be_zero_when_in_demo_mode() {
         async fn check<Config, Params, CandidOutput, Output>(
-            request: RequestBuilder<PocketIcRuntime<'_>, Config, Params, CandidOutput, Output>,
+            request: RequestBuilder<
+                CyclesWalletRuntime<PocketIcRuntime<'_>>,
+                Config,
+                Params,
+                CandidOutput,
+                Output,
+            >,
         ) where
             Config: CandidType + Clone + Send,
             Params: CandidType + Clone + Send,
@@ -1117,7 +1131,7 @@ mod cycles_cost_tests {
             >,
             expected_cycles_cost: u128,
         ) where
-            Runtime: sol_rpc_client::Runtime,
+            Runtime: ic_canister_runtime::Runtime,
             Config: CandidType + Clone + Send,
             Params: CandidType + Clone + Send,
             CandidOutput: CandidType + DeserializeOwned,
@@ -1283,16 +1297,15 @@ mod cycles_cost_tests {
 
 mod rpc_config_tests {
     use super::*;
-    use sol_rpc_client::DefaultRequestCycles;
 
     #[tokio::test]
     async fn should_respect_response_size_estimate() {
         async fn check<'a, F, Config, Params, CandidOutput, Output>(setup: &'a Setup, request: F)
         where
             F: Fn(
-                SolRpcClient<PocketIcRuntime<'_>>,
+                SolRpcClient<CyclesWalletRuntime<PocketIcRuntime<'_>>>,
             ) -> RequestBuilder<
-                PocketIcRuntime<'_>,
+                CyclesWalletRuntime<PocketIcRuntime<'_>>,
                 Config,
                 Params,
                 MultiRpcResult<CandidOutput>,
@@ -1304,7 +1317,7 @@ mod rpc_config_tests {
             Output: Debug + PartialEq,
             MultiRpcResult<CandidOutput>: Into<MultiRpcResult<Output>>,
             RequestBuilder<
-                PocketIcRuntime<'a>,
+                CyclesWalletRuntime<PocketIcRuntime<'a>>,
                 Config,
                 Params,
                 MultiRpcResult<CandidOutput>,
@@ -1317,7 +1330,7 @@ mod rpc_config_tests {
                     SupportedRpcProviderId::AlchemyMainnet,
                 )]))
                 .mock_http_once(
-                    MockOutcallBuilder::new_error(RejectionCode::SysFatal, "Unrecoverable error!")
+                    MockOutcallBuilder::new_error(RejectCode::SysFatal, "Unrecoverable error!")
                         .with_max_response_bytes(1_999_999),
                 )
                 .build();
@@ -1330,7 +1343,7 @@ mod rpc_config_tests {
                 result,
                 MultiRpcResult::Consistent(Err(RpcError::HttpOutcallError(
                     HttpOutcallError::IcError {
-                        code: RejectionCode::SysFatal,
+                        code: LegacyRejectionCode::SysFatal,
                         message: "Unrecoverable error!".to_string()
                     }
                 )))
@@ -1397,9 +1410,9 @@ mod rpc_config_tests {
             ok_result: Value,
         ) where
             F: Fn(
-                SolRpcClient<PocketIcRuntime<'_>>,
+                SolRpcClient<CyclesWalletRuntime<PocketIcRuntime<'_>>>,
             ) -> RequestBuilder<
-                PocketIcRuntime<'_>,
+                CyclesWalletRuntime<PocketIcRuntime<'_>>,
                 Config,
                 Params,
                 MultiRpcResult<CandidOutput>,
@@ -1411,7 +1424,7 @@ mod rpc_config_tests {
             Output: Debug + PartialEq,
             MultiRpcResult<CandidOutput>: Into<MultiRpcResult<Output>>,
             RequestBuilder<
-                PocketIcRuntime<'a>,
+                CyclesWalletRuntime<PocketIcRuntime<'a>>,
                 Config,
                 Params,
                 MultiRpcResult<CandidOutput>,
@@ -1431,7 +1444,7 @@ mod rpc_config_tests {
                 .mock_http_sequence(vec![
                     MockOutcallBuilder::new(200, ok_result_0),
                     MockOutcallBuilder::new(200, ok_result_1),
-                    MockOutcallBuilder::new_error(RejectionCode::SysFatal, "Some error!"),
+                    MockOutcallBuilder::new_error(RejectCode::SysFatal, "Some error!"),
                 ])
                 .build();
 
@@ -1451,7 +1464,7 @@ mod rpc_config_tests {
                 .mock_http_sequence(vec![
                     MockOutcallBuilder::new(200, ok_result_3),
                     MockOutcallBuilder::new(200, ok_result_4),
-                    MockOutcallBuilder::new_error(RejectionCode::SysFatal, "Some error!"),
+                    MockOutcallBuilder::new_error(RejectCode::SysFatal, "Some error!"),
                 ])
                 .build();
 
@@ -1825,7 +1838,6 @@ mod get_signatures_for_address_tests {
 
 mod metrics_tests {
     use super::*;
-    use sol_rpc_types::HttpOutcallError;
 
     #[tokio::test]
     async fn should_retrieve_metrics() {
@@ -1876,7 +1888,7 @@ mod metrics_tests {
                 ),
                 MockOutcallBuilder::new(429, json!({})),
                 MockOutcallBuilder::new(500, json!({})),
-                MockOutcallBuilder::new_error(RejectionCode::SysFatal, "Fatal error!"),
+                MockOutcallBuilder::new_error(RejectCode::SysFatal, "Fatal error!"),
             ])
             .build()
             .get_slot()
@@ -1890,7 +1902,7 @@ mod metrics_tests {
                 SupportedRpcProviderId::AlchemyMainnet,
             )]))
             .mock_http(MockOutcallBuilder::new_error(
-                RejectionCode::SysFatal,
+                RejectCode::SysFatal,
                 "Http body exceeds size limit of 2000000 bytes.",
             ))
             .with_response_size_estimate(2_000_000)
@@ -1905,7 +1917,7 @@ mod metrics_tests {
             result,
             MultiRpcResult::Consistent(Err(RpcError::HttpOutcallError(
                 HttpOutcallError::IcError {
-                    code: RejectionCode::SysFatal,
+                    code: LegacyRejectionCode::SysFatal,
                     message: "Http body exceeds size limit of 2000000 bytes.".to_string()
                 }
             )))

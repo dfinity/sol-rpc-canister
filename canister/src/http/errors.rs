@@ -1,4 +1,5 @@
 use canhttp::{
+    cycles::ChargeCallerError,
     http::{
         json::{
             ConsistentResponseIdFilterError, JsonRequestConversionError,
@@ -7,11 +8,10 @@ use canhttp::{
         FilterNonSuccessfulHttpResponseError, HttpRequestConversionError,
         HttpResponseConversionError,
     },
-    CyclesAccountingError, HttpsOutcallError, IcError,
+    HttpsOutcallError, IcError,
 };
 use derive_more::From;
-use ic_error_types::RejectCode;
-use sol_rpc_types::{HttpOutcallError, ProviderError, RpcError};
+use sol_rpc_types::{HttpOutcallError, LegacyRejectionCode, ProviderError, RpcError};
 use thiserror::Error;
 
 #[derive(Clone, Debug, Error, From)]
@@ -21,7 +21,7 @@ pub enum HttpClientError {
     #[error("unknown error (most likely sign of a bug): {0}")]
     NotHandledError(String),
     #[error("cycles accounting error: {0}")]
-    CyclesAccountingError(CyclesAccountingError),
+    CyclesAccountingError(ChargeCallerError),
     #[error("HTTP response was not successful: {0}")]
     UnsuccessfulHttpResponse(FilterNonSuccessfulHttpResponseError<Vec<u8>>),
     #[error("Error converting response to JSON: {0}")]
@@ -49,44 +49,56 @@ impl From<JsonRequestConversionError> for HttpClientError {
     }
 }
 
-impl From<HttpClientError> for RpcError {
-    fn from(error: HttpClientError) -> Self {
+#[derive(Error, Clone, Debug, PartialEq, Eq)]
+#[error(transparent)]
+pub struct UnrecoverableError(IcError);
+
+impl TryFrom<HttpClientError> for RpcError {
+    type Error = UnrecoverableError;
+
+    fn try_from(error: HttpClientError) -> Result<Self, Self::Error> {
         match error {
-            HttpClientError::IcError(IcError { code, message }) => {
-                use ic_cdk::api::call::RejectionCode as IcCdkRejectionCode;
-                let code = match code {
-                    RejectCode::SysFatal => IcCdkRejectionCode::SysFatal,
-                    RejectCode::SysTransient => IcCdkRejectionCode::SysTransient,
-                    RejectCode::DestinationInvalid => IcCdkRejectionCode::DestinationInvalid,
-                    RejectCode::CanisterReject => IcCdkRejectionCode::CanisterReject,
-                    RejectCode::CanisterError => IcCdkRejectionCode::CanisterError,
-                    RejectCode::SysUnknown => IcCdkRejectionCode::Unknown,
-                };
-                RpcError::HttpOutcallError(HttpOutcallError::IcError { code, message })
+            HttpClientError::IcError(IcError::CallRejected { code, message }) => {
+                Ok(RpcError::HttpOutcallError(HttpOutcallError::IcError {
+                    code: LegacyRejectionCode::from(code),
+                    message,
+                }))
             }
-            HttpClientError::NotHandledError(e) => RpcError::ValidationError(e),
+            HttpClientError::IcError(e @ IcError::InsufficientLiquidCycleBalance { .. }) => {
+                Err(UnrecoverableError(e))
+            }
+            HttpClientError::NotHandledError(e) => Ok(RpcError::ValidationError(e)),
             HttpClientError::CyclesAccountingError(
-                CyclesAccountingError::InsufficientCyclesError { expected, received },
-            ) => RpcError::ProviderError(ProviderError::TooFewCycles { expected, received }),
+                ChargeCallerError::InsufficientCyclesError { expected, received },
+            ) => Ok(RpcError::ProviderError(ProviderError::TooFewCycles {
+                expected,
+                received,
+            })),
             HttpClientError::InvalidJsonResponse(
                 JsonResponseConversionError::InvalidJsonResponse {
                     status,
                     body,
                     parsing_error,
                 },
-            ) => RpcError::HttpOutcallError(HttpOutcallError::InvalidHttpJsonRpcResponse {
-                status,
-                body,
-                parsing_error: Some(parsing_error),
-            }),
+            ) => Ok(RpcError::HttpOutcallError(
+                HttpOutcallError::InvalidHttpJsonRpcResponse {
+                    status,
+                    body,
+                    parsing_error: Some(parsing_error),
+                },
+            )),
             HttpClientError::UnsuccessfulHttpResponse(
                 FilterNonSuccessfulHttpResponseError::UnsuccessfulResponse(response),
-            ) => RpcError::HttpOutcallError(HttpOutcallError::InvalidHttpJsonRpcResponse {
-                status: response.status().as_u16(),
-                body: String::from_utf8_lossy(response.body()).to_string(),
-                parsing_error: None,
-            }),
-            HttpClientError::InvalidJsonResponseId(e) => RpcError::ValidationError(e.to_string()),
+            ) => Ok(RpcError::HttpOutcallError(
+                HttpOutcallError::InvalidHttpJsonRpcResponse {
+                    status: response.status().as_u16(),
+                    body: String::from_utf8_lossy(response.body()).to_string(),
+                    parsing_error: None,
+                },
+            )),
+            HttpClientError::InvalidJsonResponseId(e) => {
+                Ok(RpcError::ValidationError(e.to_string()))
+            }
         }
     }
 }

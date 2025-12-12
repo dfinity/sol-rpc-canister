@@ -1,22 +1,23 @@
 use async_trait::async_trait;
-use candid::{decode_args, utils::ArgumentEncoder, CandidType, Encode, Principal};
+use candid::{encode_one, Encode, Principal};
 use canhttp::http::json::ConstantSizeId;
 use canlog::{Log, LogEntry};
-use ic_error_types::RejectCode;
+use ic_canister_runtime::{CyclesWalletRuntime, Runtime};
 use ic_http_types::{HttpRequest, HttpResponse};
 use ic_management_canister_types::{CanisterId, CanisterSettings};
 use ic_metrics_assert::{MetricsAssert, PocketIcAsyncHttpQuery};
+use ic_pocket_canister_runtime::{ExecuteHttpOutcallMocks, PocketIcRuntime};
+use mock::{MockOutcall, MockOutcallBuilder};
 use num_traits::ToPrimitive;
 use pocket_ic::{
     common::rest::{
         CanisterHttpReject, CanisterHttpRequest, CanisterHttpResponse, MockCanisterHttpResponse,
     },
     nonblocking::PocketIc,
-    PocketIcBuilder, RejectResponse,
+    PocketIcBuilder,
 };
-use serde::de::DeserializeOwned;
 use sol_rpc_canister::logs::Priority;
-use sol_rpc_client::{ClientBuilder, Runtime, SolRpcClient};
+use sol_rpc_client::{ClientBuilder, SolRpcClient};
 use sol_rpc_types::{InstallArgs, RpcAccess, SupportedRpcProviderId};
 use std::{
     env::{set_var, var},
@@ -25,21 +26,16 @@ use std::{
 };
 
 pub mod mock;
-pub mod wallet;
-
-use mock::{MockOutcall, MockOutcallBuilder};
-use wallet::CallCanisterArgs;
 
 const DEFAULT_MAX_RESPONSE_BYTES: u64 = 2_000_000;
 const MAX_TICKS: usize = 10;
 pub const DEFAULT_CALLER_TEST_ID: Principal =
-    Principal::from_slice(&[0x0, 0x0, 0x0, 0x0, 0x3, 0x31, 0x1, 0x8, 0x2, 0x2]);
+    Principal::from_slice(&[0x0, 0x0, 0x0, 0x0, 0x0, 0x31, 0x1, 0x8, 0x1, 0x1]);
 pub const DEFAULT_CONTROLLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x02]);
 const MOCK_API_KEY: &str = "mock-api-key";
 
 pub struct Setup {
     env: PocketIc,
-    caller: Principal,
     controller: Principal,
     sol_rpc_canister_id: CanisterId,
     wallet_canister_id: CanisterId,
@@ -63,7 +59,6 @@ impl Setup {
 
     pub async fn with_pocket_ic_and_args(env: PocketIc, args: InstallArgs) -> Self {
         let controller = DEFAULT_CONTROLLER_TEST_ID;
-        let caller = DEFAULT_CALLER_TEST_ID;
         let wallet = DEFAULT_CALLER_TEST_ID;
 
         let sol_rpc_canister_id = env
@@ -101,7 +96,6 @@ impl Setup {
 
         Self {
             env,
-            caller,
             controller,
             sol_rpc_canister_id,
             wallet_canister_id,
@@ -140,13 +134,12 @@ impl Setup {
                 RpcAccess::Unauthenticated { .. } => {}
             }
         }
-        let args = (api_keys,);
         self.env
             .update_call(
                 self.sol_rpc_canister_id,
                 self.controller,
                 "updateApiKeys",
-                encode_args(args),
+                encode_one(api_keys).expect("Failed to encode arguments."),
             )
             .await
             .expect("BUG: Failed to call updateApiKeys");
@@ -178,12 +171,8 @@ impl Setup {
             .entries
     }
 
-    pub fn client(&self) -> ClientBuilder<PocketIcRuntime> {
+    pub fn client(&self) -> ClientBuilder<CyclesWalletRuntime<PocketIcRuntime<'_>>> {
         SolRpcClient::builder(self.new_pocket_ic_runtime(), self.sol_rpc_canister_id)
-    }
-
-    pub fn client_live_mode(&self) -> ClientBuilder<PocketIcLiveModeRuntime> {
-        SolRpcClient::builder(self.new_live_pocket_ic_runtime(), self.sol_rpc_canister_id)
     }
 
     pub async fn sol_rpc_canister_cycles_balance(&self) -> u128 {
@@ -197,23 +186,11 @@ impl Setup {
             .unwrap()
     }
 
-    fn new_pocket_ic_runtime(&self) -> PocketIcRuntime {
-        PocketIcRuntime {
-            env: &self.env,
-            caller: self.caller,
-            mock_strategy: None,
-            controller: self.controller,
-            wallet: self.wallet_canister_id,
-        }
-    }
-
-    fn new_live_pocket_ic_runtime(&self) -> PocketIcLiveModeRuntime {
-        PocketIcLiveModeRuntime {
-            env: &self.env,
-            caller: self.caller,
-            controller: self.controller,
-            wallet: self.wallet_canister_id,
-        }
+    fn new_pocket_ic_runtime(&self) -> CyclesWalletRuntime<PocketIcRuntime<'_>> {
+        CyclesWalletRuntime::new(
+            PocketIcRuntime::new(&self.env, self.controller),
+            self.wallet_canister_id,
+        )
     }
 
     pub async fn drop(self) {
@@ -266,10 +243,12 @@ fn sol_rpc_wasm() -> Vec<u8> {
 
 fn wallet_wasm() -> Vec<u8> {
     if var("WALLET_WASM_PATH").is_err() {
-        set_var(
-            "WALLET_WASM_PATH",
-            PathBuf::from(var("CARGO_MANIFEST_DIR").unwrap()).join("wallet.wasm.gz"),
-        )
+        unsafe {
+            set_var(
+                "WALLET_WASM_PATH",
+                PathBuf::from(var("CARGO_MANIFEST_DIR").unwrap()).join("wallet.wasm.gz"),
+            )
+        }
     };
     ic_test_utilities_load_wasm::load_wasm(PathBuf::new(), "wallet", &[])
 }
@@ -280,101 +259,35 @@ impl AsRef<PocketIc> for Setup {
     }
 }
 
-#[derive(Clone)]
-pub struct PocketIcRuntime<'a> {
-    env: &'a PocketIc,
-    caller: Principal,
-    mock_strategy: Option<MockStrategy>,
-    wallet: Principal,
-    controller: Principal,
-}
-
 #[async_trait]
-impl Runtime for PocketIcRuntime<'_> {
-    async fn update_call<In, Out>(
-        &self,
-        id: Principal,
-        method: &str,
-        args: In,
-        cycles: u128,
-    ) -> Result<Out, (RejectCode, String)>
-    where
-        In: ArgumentEncoder + Send,
-        Out: CandidType + DeserializeOwned,
-    {
-        // Forward the call through the wallet canister to attach cycles
-        let message_id = self
-            .env
-            .submit_call(
-                self.wallet,
-                self.controller,
-                "wallet_call128",
-                Encode!(&CallCanisterArgs::new(id, method, args, cycles)).unwrap(),
-            )
-            .await
-            .unwrap();
-        self.execute_mock().await;
-        wallet::decode_cycles_wallet_response(
-            self.env
-                .await_call(message_id)
-                .await
-                .map_err(PocketIcRuntime::parse_reject_response)?,
-        )
-    }
-
-    async fn query_call<In, Out>(
-        &self,
-        id: Principal,
-        method: &str,
-        args: In,
-    ) -> Result<Out, (RejectCode, String)>
-    where
-        In: ArgumentEncoder + Send,
-        Out: CandidType + DeserializeOwned,
-    {
-        let result = self
-            .env
-            .query_call(id, self.caller, method, encode_args(args))
-            .await
-            .map_err(PocketIcRuntime::parse_reject_response);
-        decode_call_response(result?)
-    }
-}
-
-impl PocketIcRuntime<'_> {
-    fn with_strategy(self, strategy: MockStrategy) -> Self {
-        Self {
-            mock_strategy: Some(strategy),
-            ..self
-        }
-    }
-
-    async fn execute_mock(&self) {
-        match &self.mock_strategy {
-            None => (),
-            Some(MockStrategy::Mock(mock)) => {
-                self.mock_http_once_inner(mock).await;
-                while self.try_mock_http_inner(mock).await {}
+impl ExecuteHttpOutcallMocks for MockStrategy {
+    async fn execute_http_outcall_mocks(&mut self, runtime: &PocketIc) -> () {
+        match &self {
+            MockStrategy::Mock(mock) => {
+                self.mock_http_once_inner(mock, runtime).await;
+                while self.try_mock_http_inner(mock, runtime).await {}
             }
-            Some(MockStrategy::MockOnce(mock)) => {
-                self.mock_http_once_inner(mock).await;
+            MockStrategy::MockOnce(mock) => {
+                self.mock_http_once_inner(mock, runtime).await;
             }
-            Some(MockStrategy::MockSequence(mocks)) => {
+            MockStrategy::MockSequence(mocks) => {
                 for mock in mocks {
-                    self.mock_http_once_inner(mock).await;
+                    self.mock_http_once_inner(mock, runtime).await;
                 }
             }
         }
     }
+}
 
-    async fn mock_http_once_inner(&self, mock: &MockOutcall) {
-        if !self.try_mock_http_inner(mock).await {
+impl MockStrategy {
+    async fn mock_http_once_inner(&self, mock: &MockOutcall, env: &PocketIc) {
+        if !self.try_mock_http_inner(mock, env).await {
             panic!("no pending HTTP request")
         }
     }
 
-    async fn try_mock_http_inner(&self, mock: &MockOutcall) -> bool {
-        let http_requests = tick_until_http_request(self.env).await;
+    async fn try_mock_http_inner(&self, mock: &MockOutcall, env: &PocketIc) -> bool {
+        let http_requests = tick_until_http_request(env).await;
         let request = match http_requests.first() {
             Some(request) => request,
             None => return false,
@@ -409,106 +322,9 @@ impl PocketIcRuntime<'_> {
             response,
             additional_responses: vec![],
         };
-        self.env.mock_canister_http_response(mock_response).await;
+        env.mock_canister_http_response(mock_response).await;
         true
     }
-
-    fn parse_reject_response(response: RejectResponse) -> (RejectCode, String) {
-        use pocket_ic::RejectCode as PocketIcRejectCode;
-        let rejection_code = match response.reject_code {
-            PocketIcRejectCode::SysFatal => RejectCode::SysFatal,
-            PocketIcRejectCode::SysTransient => RejectCode::SysTransient,
-            PocketIcRejectCode::DestinationInvalid => RejectCode::DestinationInvalid,
-            PocketIcRejectCode::CanisterReject => RejectCode::CanisterReject,
-            PocketIcRejectCode::CanisterError => RejectCode::CanisterError,
-            PocketIcRejectCode::SysUnknown => RejectCode::SysUnknown,
-        };
-        (rejection_code, response.reject_message)
-    }
-}
-
-/// Runtime for when Pocket IC is used in [live mode](https://github.com/dfinity/ic/blob/f0c82237ae16745ac54dd3838b3f91ce32a6bc52/packages/pocket-ic/HOWTO.md?plain=1#L43).
-///
-/// The pocket IC instance will automatically progress and execute HTTPs outcalls (without mocking).
-/// This setting renders the tests non-deterministic, which is unavoidable since
-/// the solana-test-validator also progresses automatically (and also acceptable for end-to-end tests).
-#[derive(Clone)]
-pub struct PocketIcLiveModeRuntime<'a> {
-    env: &'a PocketIc,
-    caller: Principal,
-    wallet: Principal,
-    controller: Principal,
-}
-
-#[async_trait]
-impl Runtime for PocketIcLiveModeRuntime<'_> {
-    async fn update_call<In, Out>(
-        &self,
-        id: Principal,
-        method: &str,
-        args: In,
-        cycles: u128,
-    ) -> Result<Out, (RejectCode, String)>
-    where
-        In: ArgumentEncoder + Send,
-        Out: CandidType + DeserializeOwned,
-    {
-        // Forward the call through the wallet canister to attach cycles
-        let message_id = self
-            .env
-            .submit_call(
-                self.wallet,
-                self.controller,
-                "wallet_call128",
-                Encode!(&CallCanisterArgs::new(id, method, args, cycles)).unwrap(),
-            )
-            .await
-            .unwrap();
-        wallet::decode_cycles_wallet_response(
-            self.env
-                .await_call_no_ticks(message_id)
-                .await
-                .map_err(PocketIcRuntime::parse_reject_response)?,
-        )
-    }
-
-    async fn query_call<In, Out>(
-        &self,
-        id: Principal,
-        method: &str,
-        args: In,
-    ) -> Result<Out, (RejectCode, String)>
-    where
-        In: ArgumentEncoder + Send,
-        Out: CandidType + DeserializeOwned,
-    {
-        let result = self
-            .env
-            .query_call(id, self.caller, method, encode_args(args))
-            .await
-            .map_err(PocketIcRuntime::parse_reject_response);
-        decode_call_response(result?)
-    }
-}
-
-pub fn encode_args<In: ArgumentEncoder>(args: In) -> Vec<u8> {
-    candid::encode_args(args).expect("Failed to encode arguments.")
-}
-
-pub fn decode_call_response<Out>(bytes: Vec<u8>) -> Result<Out, (RejectCode, String)>
-where
-    Out: CandidType + DeserializeOwned,
-{
-    decode_args(&bytes).map(|(res,)| res).map_err(|e| {
-        (
-            RejectCode::CanisterError,
-            format!(
-                "failed to decode canister response as {}: {}",
-                std::any::type_name::<Out>(),
-                e
-            ),
-        )
-    })
 }
 
 #[async_trait]
@@ -524,20 +340,28 @@ pub trait SolRpcTestClient<R: Runtime> {
 }
 
 #[async_trait]
-impl SolRpcTestClient<PocketIcRuntime<'_>> for ClientBuilder<PocketIcRuntime<'_>> {
+impl SolRpcTestClient<CyclesWalletRuntime<PocketIcRuntime<'_>>>
+    for ClientBuilder<CyclesWalletRuntime<PocketIcRuntime<'_>>>
+{
     fn mock_http(self, mock: impl Into<MockOutcall>) -> Self {
-        self.with_runtime(|r| r.with_strategy(MockStrategy::Mock(mock.into())))
+        self.with_runtime(|r| {
+            r.with_runtime(|r| r.with_http_mocks(MockStrategy::Mock(mock.into())))
+        })
     }
 
     fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self {
-        self.with_runtime(|r| r.with_strategy(MockStrategy::MockOnce(mock.into())))
+        self.with_runtime(|r| {
+            r.with_runtime(|r| r.with_http_mocks(MockStrategy::MockOnce(mock.into())))
+        })
     }
 
     fn mock_http_sequence(self, mocks: Vec<impl Into<MockOutcall>>) -> Self {
         self.with_runtime(|r| {
-            r.with_strategy(MockStrategy::MockSequence(
-                mocks.into_iter().map(|mock| mock.into()).collect(),
-            ))
+            r.with_runtime(|r| {
+                r.with_http_mocks(MockStrategy::MockSequence(
+                    mocks.into_iter().map(|mock| mock.into()).collect(),
+                ))
+            })
         })
     }
 
