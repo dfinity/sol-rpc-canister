@@ -19,8 +19,9 @@ use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, ConsensusStrategy,
     GetSignaturesForAddressLimit, GetSlotParams, GetTransactionEncoding, HttpOutcallError,
     InstallArgs, InstructionError, LegacyRejectionCode, Mode, MultiRpcResult, PrioritizationFee,
-    ProviderError, RpcAccess, RpcAuth, RpcError, RpcResult, RpcSource, RpcSources, SolanaCluster,
-    SupportedRpcProvider, SupportedRpcProviderId, TransactionDetails, TransactionError,
+    ProviderError, RpcAccess, RpcAuth, RpcError, RpcResult, RpcSource, RpcSources, Slot,
+    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TransactionDetails,
+    TransactionError,
 };
 use solana_account_decoder_client_types::{
     token::UiTokenAmount, UiAccount, UiAccountData, UiAccountEncoding,
@@ -40,9 +41,8 @@ const USDC_PUBLIC_KEY: solana_pubkey::Pubkey =
 // See: https://internetcomputer.org/docs/references/cycles-cost-formulas#https-outcalls
 const HTTP_OUTCALL_BASE_FEE: u128 = (3_000_000 + 60_000 * 34) * 34;
 
-const SOME_SLOT: u64 = 386_766_418;
-const ANOTHER_SLOT: u64 = 386_862_552;
-const YET_ANOTHER_SLOT: u64 = 386_976_279;
+const SLOT: Slot = 386_766_418;
+const SLOTS: [Slot; 3] = [SLOT, 386_862_552, 386_976_279];
 
 mod get_provider_tests {
     use super::*;
@@ -85,13 +85,11 @@ mod get_account_info_tests {
         let setup = Setup::new().await.with_mock_api_keys().await;
 
         for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
-            let mocks = MockHttpOutcallsBuilder::new()
-                .given(get_account_info_request().with_id(offset))
-                .respond_with(get_account_info_response().with_id(offset))
-                .given(get_account_info_request().with_id(1 + offset))
-                .respond_with(get_account_info_response().with_id(1 + offset))
-                .given(get_account_info_request().with_id(2 + offset))
-                .respond_with(get_account_info_response().with_id(2 + offset));
+            let mocks = mock_for_ids(
+                get_account_info_request,
+                get_account_info_response,
+                offset..=offset + 2,
+            );
             let client = setup.client(mocks).with_rpc_sources(sources).build();
 
             let results = client
@@ -122,13 +120,11 @@ mod get_account_info_tests {
         let setup = Setup::new().await.with_mock_api_keys().await;
 
         for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
-            let mocks = MockHttpOutcallsBuilder::new()
-                .given(get_account_info_request().with_id(offset))
-                .respond_with(not_found_response().with_id(offset))
-                .given(get_account_info_request().with_id(1 + offset))
-                .respond_with(not_found_response().with_id(1 + offset))
-                .given(get_account_info_request().with_id(2 + offset))
-                .respond_with(not_found_response().with_id(2 + offset));
+            let mocks = mock_for_ids(
+                get_account_info_request,
+                not_found_response,
+                offset..=offset + 2,
+            );
             let client = setup.client(mocks).with_rpc_sources(sources).build();
 
             let results = client
@@ -152,13 +148,7 @@ mod get_block_tests {
         let setup = Setup::new().await.with_mock_api_keys().await;
 
         for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
-            let mocks = MockHttpOutcallsBuilder::new()
-                .given(get_block_request().with_id(offset))
-                .respond_with(get_block_response().with_id(offset))
-                .given(get_block_request().with_id(1 + offset))
-                .respond_with(get_block_response().with_id(1 + offset))
-                .given(get_block_request().with_id(2 + offset))
-                .respond_with(get_block_response().with_id(2 + offset));
+            let mocks = mock_for_ids(get_block_request, get_block_response, offset..=offset + 2);
             let client = setup.client(mocks).with_rpc_sources(sources).build();
 
             let results = client.get_block(577996).send().await.expect_consistent();
@@ -190,13 +180,7 @@ mod get_block_tests {
         let setup = Setup::new().await.with_mock_api_keys().await;
 
         for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
-            let mocks = MockHttpOutcallsBuilder::new()
-                .given(get_block_request().with_id(offset))
-                .respond_with(not_found_response().with_id(offset))
-                .given(get_block_request().with_id(1 + offset))
-                .respond_with(not_found_response().with_id(1 + offset))
-                .given(get_block_request().with_id(2 + offset))
-                .respond_with(not_found_response().with_id(2 + offset));
+            let mocks = mock_for_ids(get_block_request, not_found_response, offset..=offset + 2);
             let client = setup.client(mocks).with_rpc_sources(sources).build();
 
             let results = client.get_block(577996).send().await.expect_consistent();
@@ -248,13 +232,12 @@ mod get_slot_tests {
         let setup = Setup::new().await.with_mock_api_keys().await;
 
         for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
-            let mocks = MockHttpOutcallsBuilder::new()
-                .given(get_slot_request().with_id(offset))
-                .respond_with(get_slot_response(1234).with_id(offset))
-                .given(get_slot_request().with_id(1 + offset))
-                .respond_with(get_slot_response(1234).with_id(1 + offset))
-                .given(get_slot_request().with_id(2 + offset))
-                .respond_with(get_slot_response(1234).with_id(2 + offset));
+            let mocks = mock_with_response_slots_for_ids(
+                get_slot_request,
+                get_slot_response,
+                [1234; 3],
+                offset..=offset + 2,
+            );
             let client = setup.client(mocks).with_rpc_sources(sources).build();
 
             let results = client
@@ -275,13 +258,12 @@ mod get_slot_tests {
         let setup = Setup::new().await.with_mock_api_keys().await;
 
         for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
-            let mocks = MockHttpOutcallsBuilder::new()
-                .given(get_slot_request().with_id(offset))
-                .respond_with(get_slot_response(1234).with_id(offset))
-                .given(get_slot_request().with_id(1 + offset))
-                .respond_with(get_slot_response(1229).with_id(1 + offset))
-                .given(get_slot_request().with_id(2 + offset))
-                .respond_with(get_slot_response(1237).with_id(2 + offset));
+            let mocks = mock_with_response_slots_for_ids(
+                get_slot_request,
+                get_slot_response,
+                [1234, 1229, 1237],
+                offset..=offset + 2,
+            );
             let client = setup.client(mocks).with_rpc_sources(sources).build();
 
             let results = client.get_slot().send().await.expect_consistent();
@@ -297,13 +279,12 @@ mod get_slot_tests {
         let setup = Setup::new().await.with_mock_api_keys().await;
 
         for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
-            let mocks = MockHttpOutcallsBuilder::new()
-                .given(get_slot_request().with_id(offset))
-                .respond_with(get_slot_response(1234).with_id(offset))
-                .given(get_slot_request().with_id(1 + offset))
-                .respond_with(get_slot_response(1229).with_id(1 + offset))
-                .given(get_slot_request().with_id(2 + offset))
-                .respond_with(get_slot_response(1237).with_id(2 + offset));
+            let mocks = mock_with_response_slots_for_ids(
+                get_slot_request,
+                get_slot_response,
+                [1234, 1229, 1237],
+                offset..=offset + 2,
+            );
             let client = setup.client(mocks).with_rpc_sources(sources).build();
 
             let results: Vec<RpcResult<_>> = client
@@ -330,13 +311,11 @@ mod get_recent_prioritization_fees_tests {
     async fn should_get_fees_with_rounding() {
         let setup = Setup::new().await.with_mock_api_keys().await;
 
-        let mocks = MockHttpOutcallsBuilder::new()
-            .given(get_recent_prioritization_fees_request().with_id(0))
-            .respond_with(get_recent_prioritization_fees_response().with_id(0))
-            .given(get_recent_prioritization_fees_request().with_id(1))
-            .respond_with(get_recent_prioritization_fees_response().with_id(1))
-            .given(get_recent_prioritization_fees_request().with_id(2))
-            .respond_with(get_recent_prioritization_fees_response().with_id(2));
+        let mocks = mock_for_ids(
+            get_recent_prioritization_fees_request,
+            get_recent_prioritization_fees_response,
+            0..=2,
+        );
         let client = setup.client(mocks).build();
 
         let fees = client
@@ -388,13 +367,11 @@ mod send_transaction_tests {
         for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
             let transaction = some_transaction();
 
-            let mocks = MockHttpOutcallsBuilder::new()
-                .given(send_transaction_request(&transaction).with_id(offset))
-                .respond_with(send_transaction_response().with_id(offset))
-                .given(send_transaction_request(&transaction).with_id(1 + offset))
-                .respond_with(send_transaction_response().with_id(1 + offset))
-                .given(send_transaction_request(&transaction).with_id(2 + offset))
-                .respond_with(send_transaction_response().with_id(2 + offset));
+            let mocks = mock_for_ids(
+                || send_transaction_request(&transaction),
+                send_transaction_response,
+                offset..=offset + 2,
+            );
             let client = setup.client(mocks).with_rpc_sources(sources).build();
 
             let results = client
@@ -418,13 +395,11 @@ mod get_transaction_tests {
         let setup = Setup::new().await.with_mock_api_keys().await;
 
         for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
-            let mocks = MockHttpOutcallsBuilder::new()
-                .given(get_transaction_request().with_id(offset))
-                .respond_with(get_transaction_response().with_id(offset))
-                .given(get_transaction_request().with_id(1 + offset))
-                .respond_with(get_transaction_response().with_id(1 + offset))
-                .given(get_transaction_request().with_id(2 + offset))
-                .respond_with(get_transaction_response().with_id(2 + offset));
+            let mocks = mock_for_ids(
+                get_transaction_request,
+                get_transaction_response,
+                offset..=offset + 2,
+            );
             let client = setup.client(mocks).with_rpc_sources(sources).build();
 
             let results = client
@@ -640,13 +615,7 @@ mod generic_request_tests {
         .await
         .with_mock_api_keys()
         .await;
-        let mocks = MockHttpOutcallsBuilder::new()
-            .given(get_version_request().with_id(0))
-            .respond_with(get_version_response().with_id(0))
-            .given(get_version_request().with_id(1))
-            .respond_with(get_version_response().with_id(1))
-            .given(get_version_request().with_id(2))
-            .respond_with(get_version_response().with_id(2));
+        let mocks = mock_for_ids(get_version_request, get_version_response, 0..=2);
         let client = setup.client(mocks).build();
 
         let result = client
@@ -1385,7 +1354,7 @@ mod rpc_config_tests {
                         },
                         &mut offset,
                         get_balance_request(),
-                        get_balance_response(),
+                        get_balance_response(SLOT),
                     )
                     .await;
                 }
@@ -1440,7 +1409,7 @@ mod rpc_config_tests {
                         },
                         &mut offset,
                         get_signature_statuses_request(),
-                        get_signature_statuses_response(),
+                        get_signature_statuses_response(SLOT),
                     )
                     .await;
                 }
@@ -1464,7 +1433,7 @@ mod rpc_config_tests {
                         },
                         &mut offset,
                         get_token_account_balance_request(),
-                        get_token_account_balance_response(),
+                        get_token_account_balance_response(SLOT),
                     )
                     .await;
                 }
@@ -1518,13 +1487,12 @@ mod get_balance_tests {
         let setup = Setup::new().await.with_mock_api_keys().await;
 
         for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
-            let mocks = MockHttpOutcallsBuilder::new()
-                .given(get_balance_request().with_id(offset))
-                .respond_with(get_balance_response(SOME_SLOT).with_id(offset))
-                .given(get_balance_request().with_id(1 + offset))
-                .respond_with(get_balance_response(ANOTHER_SLOT).with_id(1 + offset))
-                .given(get_balance_request().with_id(2 + offset))
-                .respond_with(get_balance_response(YET_ANOTHER_SLOT).with_id(2 + offset));
+            let mocks = mock_with_response_slots_for_ids(
+                get_balance_request,
+                get_balance_response,
+                SLOTS,
+                offset..=offset + 2,
+            );
             let client = setup.client(mocks).with_rpc_sources(sources).build();
 
             let results = client
@@ -1550,13 +1518,12 @@ mod get_token_account_balance_tests {
         let setup = Setup::new().await.with_mock_api_keys().await;
 
         for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
-            let mocks = MockHttpOutcallsBuilder::new()
-                .given(get_token_account_balance_request().with_id(offset))
-                .respond_with(get_token_account_balance_response(SOME_SLOT).with_id(offset))
-                .given(get_token_account_balance_request().with_id(1 + offset))
-                .respond_with(get_token_account_balance_response(ANOTHER_SLOT).with_id(1 + offset))
-                .given(get_token_account_balance_request().with_id(2 + offset))
-                .respond_with(get_token_account_balance_response(YET_ANOTHER_SLOT).with_id(2 + offset));
+            let mocks = mock_with_response_slots_for_ids(
+                get_token_account_balance_request,
+                get_token_account_balance_response,
+                SLOTS,
+                offset..=offset + 2,
+            );
             let client = setup.client(mocks).with_rpc_sources(sources).build();
 
             let results = client
@@ -1589,13 +1556,12 @@ mod get_signature_statuses_tests {
         let setup = Setup::new().await.with_mock_api_keys().await;
 
         for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
-            let mocks = MockHttpOutcallsBuilder::new()
-                .given(get_signature_statuses_request().with_id(offset))
-                .respond_with(get_signature_statuses_response(SOME_SLOT).with_id(offset))
-                .given(get_signature_statuses_request().with_id(1 + offset))
-                .respond_with(get_signature_statuses_response(ANOTHER_SLOT).with_id(1 + offset))
-                .given(get_signature_statuses_request().with_id(2 + offset))
-                .respond_with(get_signature_statuses_response(YET_ANOTHER_SLOT).with_id(2 + offset));
+            let mocks = mock_with_response_slots_for_ids(
+                get_signature_statuses_request,
+                get_signature_statuses_response,
+                SLOTS,
+                offset..=offset + 2,
+            );
             let client = setup.client(mocks).with_rpc_sources(sources).build();
 
             let results = client
@@ -1633,13 +1599,11 @@ mod get_signatures_for_address_tests {
         let setup = Setup::new().await.with_mock_api_keys().await;
 
         for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
-            let mocks = MockHttpOutcallsBuilder::new()
-                .given(get_signatures_for_address_request().with_id(offset))
-                .respond_with(get_signatures_for_address_response().with_id(offset))
-                .given(get_signatures_for_address_request().with_id(1 + offset))
-                .respond_with(get_signatures_for_address_response().with_id(1 + offset))
-                .given(get_signatures_for_address_request().with_id(2 + offset))
-                .respond_with(get_signatures_for_address_response().with_id(2 + offset));
+            let mocks = mock_for_ids(
+                get_signatures_for_address_request,
+                get_signatures_for_address_response,
+                offset..=offset + 2,
+            );
             let client = setup.client(mocks).with_rpc_sources(sources).build();
 
             let results = client
@@ -2164,7 +2128,7 @@ fn get_account_info_response() -> JsonRpcResponse {
     }))
 }
 
-fn get_balance_response(slot: u64) -> JsonRpcResponse {
+fn get_balance_response(slot: Slot) -> JsonRpcResponse {
     JsonRpcResponse::from(json!({
         "id": Id::from(ConstantSizeId::ZERO),
         "jsonrpc": "2.0",
@@ -2850,7 +2814,7 @@ fn get_signatures_for_address_response() -> JsonRpcResponse {
     }))
 }
 
-fn get_signature_statuses_response(slot: u64) -> JsonRpcResponse {
+fn get_signature_statuses_response(slot: Slot) -> JsonRpcResponse {
     JsonRpcResponse::from(json!({
         "id": Id::from(ConstantSizeId::ZERO),
         "jsonrpc": "2.0",
@@ -2872,7 +2836,7 @@ fn get_signature_statuses_response(slot: u64) -> JsonRpcResponse {
     }))
 }
 
-fn get_slot_response(slot: u64) -> JsonRpcResponse {
+fn get_slot_response(slot: Slot) -> JsonRpcResponse {
     JsonRpcResponse::from(json!({
         "id": Id::from(ConstantSizeId::ZERO),
         "jsonrpc": "2.0",
@@ -2880,7 +2844,7 @@ fn get_slot_response(slot: u64) -> JsonRpcResponse {
     }))
 }
 
-fn get_token_account_balance_response(slot: u64) -> JsonRpcResponse {
+fn get_token_account_balance_response(slot: Slot) -> JsonRpcResponse {
     JsonRpcResponse::from(json!({
         "id": Id::from(ConstantSizeId::ZERO),
         "jsonrpc": "2.0",
@@ -2975,4 +2939,33 @@ fn send_transaction_response() -> JsonRpcResponse {
 
 fn not_found_response() -> JsonRpcResponse {
     JsonRpcResponse::from(json!({"id": 0, "jsonrpc": "2.0", "result": null}))
+}
+
+fn mock_for_ids(
+    request: impl Fn() -> JsonRpcRequestMatcher,
+    response: impl Fn() -> JsonRpcResponse,
+    ids: impl IntoIterator<Item = u64>,
+) -> MockHttpOutcallsBuilder {
+    let mut mocks = MockHttpOutcallsBuilder::new();
+    for id in ids {
+        mocks = mocks
+            .given(request().with_id(id))
+            .respond_with(response().with_id(id))
+    }
+    mocks
+}
+
+fn mock_with_response_slots_for_ids(
+    request: impl Fn() -> JsonRpcRequestMatcher,
+    response: impl Fn(Slot) -> JsonRpcResponse,
+    slots: impl IntoIterator<Item = Slot>,
+    ids: impl IntoIterator<Item = u64>,
+) -> MockHttpOutcallsBuilder {
+    let mut mocks = MockHttpOutcallsBuilder::new();
+    for (slot, id) in zip(slots, ids) {
+        mocks = mocks
+            .given(request().with_id(id))
+            .respond_with(response(slot).with_id(id))
+    }
+    mocks
 }
