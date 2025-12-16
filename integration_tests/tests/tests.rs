@@ -10,7 +10,6 @@ use ic_pocket_canister_runtime::{
     MockHttpOutcalls, MockHttpOutcallsBuilder, PocketIcRuntime,
 };
 use pocket_ic::{common::rest::CanisterHttpResponse, ErrorCode, RejectResponse};
-use rand::Rng;
 use serde::de::DeserializeOwned;
 use serde_json::{json, Value};
 use sol_rpc_client::{RequestBuilder, SolRpcEndpoint};
@@ -40,6 +39,10 @@ const USDC_PUBLIC_KEY: solana_pubkey::Pubkey =
     pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
 // See: https://internetcomputer.org/docs/references/cycles-cost-formulas#https-outcalls
 const HTTP_OUTCALL_BASE_FEE: u128 = (3_000_000 + 60_000 * 34) * 34;
+
+const SOME_SLOT: u64 = 386_766_418;
+const ANOTHER_SLOT: u64 = 386_862_552;
+const YET_ANOTHER_SLOT: u64 = 386_976_279;
 
 mod get_provider_tests {
     use super::*;
@@ -1517,11 +1520,11 @@ mod get_balance_tests {
         for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
             let mocks = MockHttpOutcallsBuilder::new()
                 .given(get_balance_request().with_id(offset))
-                .respond_with(get_balance_response().with_id(offset))
+                .respond_with(get_balance_response(SOME_SLOT).with_id(offset))
                 .given(get_balance_request().with_id(1 + offset))
-                .respond_with(get_balance_response().with_id(1 + offset))
+                .respond_with(get_balance_response(ANOTHER_SLOT).with_id(1 + offset))
                 .given(get_balance_request().with_id(2 + offset))
-                .respond_with(get_balance_response().with_id(2 + offset));
+                .respond_with(get_balance_response(YET_ANOTHER_SLOT).with_id(2 + offset));
             let client = setup.client(mocks).with_rpc_sources(sources).build();
 
             let results = client
@@ -1549,11 +1552,11 @@ mod get_token_account_balance_tests {
         for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
             let mocks = MockHttpOutcallsBuilder::new()
                 .given(get_token_account_balance_request().with_id(offset))
-                .respond_with(get_token_account_balance_response().with_id(offset))
+                .respond_with(get_token_account_balance_response(SOME_SLOT).with_id(offset))
                 .given(get_token_account_balance_request().with_id(1 + offset))
-                .respond_with(get_token_account_balance_response().with_id(1 + offset))
+                .respond_with(get_token_account_balance_response(ANOTHER_SLOT).with_id(1 + offset))
                 .given(get_token_account_balance_request().with_id(2 + offset))
-                .respond_with(get_token_account_balance_response().with_id(2 + offset));
+                .respond_with(get_token_account_balance_response(YET_ANOTHER_SLOT).with_id(2 + offset));
             let client = setup.client(mocks).with_rpc_sources(sources).build();
 
             let results = client
@@ -1588,11 +1591,11 @@ mod get_signature_statuses_tests {
         for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
             let mocks = MockHttpOutcallsBuilder::new()
                 .given(get_signature_statuses_request().with_id(offset))
-                .respond_with(get_signature_statuses_response().with_id(offset))
+                .respond_with(get_signature_statuses_response(SOME_SLOT).with_id(offset))
                 .given(get_signature_statuses_request().with_id(1 + offset))
-                .respond_with(get_signature_statuses_response().with_id(1 + offset))
+                .respond_with(get_signature_statuses_response(ANOTHER_SLOT).with_id(1 + offset))
                 .given(get_signature_statuses_request().with_id(2 + offset))
-                .respond_with(get_signature_statuses_response().with_id(2 + offset));
+                .respond_with(get_signature_statuses_response(YET_ANOTHER_SLOT).with_id(2 + offset));
             let client = setup.client(mocks).with_rpc_sources(sources).build();
 
             let results = client
@@ -2161,14 +2164,13 @@ fn get_account_info_response() -> JsonRpcResponse {
     }))
 }
 
-fn get_balance_response() -> JsonRpcResponse {
-    let mut rng = rand::rng();
+fn get_balance_response(slot: u64) -> JsonRpcResponse {
     JsonRpcResponse::from(json!({
         "id": Id::from(ConstantSizeId::ZERO),
         "jsonrpc": "2.0",
         "result": {
             // context should be filtered out by transform
-            "context": { "slot": rng.random::<u64>(), "apiVersion": "2.1.9" },
+            "context": { "slot": slot, "apiVersion": "2.1.9" },
             "value": 389086612571_u64
         },
     }))
@@ -2848,19 +2850,18 @@ fn get_signatures_for_address_response() -> JsonRpcResponse {
     }))
 }
 
-fn get_signature_statuses_response() -> JsonRpcResponse {
-    let mut rng = rand::rng();
+fn get_signature_statuses_response(slot: u64) -> JsonRpcResponse {
     JsonRpcResponse::from(json!({
         "id": Id::from(ConstantSizeId::ZERO),
         "jsonrpc": "2.0",
         "result": {
             // context should be filtered out by transform
-            "context": { "slot": rng.random::<u64>(), "apiVersion": "2.1.9" },
+            "context": { "slot": slot, "apiVersion": "2.1.9" },
             "value": [
                   {
                     "slot": 48,
                     // confirmations should be filtered out by transform
-                    "confirmations": rng.random::<u32>(),
+                    "confirmations": (slot >> 32) as u32,
                     "err": null,
                     "status": { "Ok": null },
                     "confirmationStatus": "finalized"
@@ -2879,14 +2880,13 @@ fn get_slot_response(slot: u64) -> JsonRpcResponse {
     }))
 }
 
-fn get_token_account_balance_response() -> JsonRpcResponse {
-    let mut rng = rand::rng();
+fn get_token_account_balance_response(slot: u64) -> JsonRpcResponse {
     JsonRpcResponse::from(json!({
         "id": Id::from(ConstantSizeId::ZERO),
         "jsonrpc": "2.0",
         "result": {
             // context should be filtered out by transform
-            "context": { "slot": rng.random::<u64>(), "apiVersion": "2.1.9" },
+            "context": { "slot": slot, "apiVersion": "2.1.9" },
             "value": {
                 "amount": "9864",
                 "decimals": 2,
