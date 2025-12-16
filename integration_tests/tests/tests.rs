@@ -562,7 +562,10 @@ mod generic_request_tests {
         // We always return a dummy response so that individual responses
         // do not need to be mocked.
         let client = setup
-            .client(with_dummy_response_for_each_endpoint())
+            .client(mock_all_endpoints(
+                |request| request,
+                CanisterHttpReply::with_status(403),
+            ))
             .build();
 
         for endpoint in SolRpcEndpoint::iter() {
@@ -1036,21 +1039,24 @@ mod cycles_cost_tests {
 
         let setup = Setup::new().await.with_mock_api_keys().await;
 
-        // The exact cycles cost of an HTTPs outcall is independent of the response,
-        // so we always return a dummy response so that individual responses
-        // do not need to be mocked.
+        // The cycles cost of an HTTPS outcall is independent of the response, so we always
+        // return a dummy response (403 Forbidden). This avoids needing to mock specific
+        // responses for each endpoint.
         fn add_mocks_for(
             rpc_method: &str,
             mut mocks: MockHttpOutcallsBuilder,
             request_ids: &mut RangeFrom<u64>,
         ) -> MockHttpOutcallsBuilder {
+            // Mock 5 HTTPS outcalls with dummy responses:
+            // - first canister call: exact number of cycles, calls to all 3 providers succeed
+            // - second canister call: insufficient cycles, calls to only 2 providers succeed
             for id in request_ids.by_ref().take(5) {
                 mocks = mocks
                     .given(JsonRpcRequestMatcher::with_method(rpc_method).with_id(id))
                     .respond_with(CanisterHttpReply::with_status(403));
             }
-            // Advance ID by 1 to account for the call with insufficient cycles, for which only the
-            // call to the last provider does not result in an HTTP outcall
+            // Advance ID by 1 but do not mock an HTTPS outcall since the call to the third
+            // provider fails due to insufficient cycles.
             for _ in request_ids.by_ref().take(1) {}
             mocks
         }
@@ -1060,6 +1066,7 @@ mod cycles_cost_tests {
         for endpoint in SolRpcEndpoint::iter() {
             match endpoint {
                 SolRpcEndpoint::JsonRequest => mocks = add_mocks_for("getVersion", mocks, &mut ids),
+                // Mock once for each value of `TransactionDetails`
                 SolRpcEndpoint::GetBlock => {
                     for _ in 0..3 {
                         mocks = add_mocks_for(endpoint.rpc_method(), mocks, &mut ids)
@@ -1191,43 +1198,20 @@ mod rpc_config_tests {
             let result = request
                 .with_response_size_estimate(1_999_999)
                 .with_cycles(1_000_000_000_000)
-                .send()
+                .try_send()
                 .await;
-            assert_eq!(
-                result,
-                MultiRpcResult::Consistent(Err(RpcError::HttpOutcallError(
-                    HttpOutcallError::IcError {
-                        code: LegacyRejectionCode::SysFatal,
-                        message: "Unrecoverable error!".to_string()
-                    }
-                )))
-            );
+            // We do not care about the actual result here, only that the request matches the mock
+            // with the correct value for the response size estimate.
+            assert!(result.is_ok());
         }
 
         let setup = Setup::new().await.with_mock_api_keys().await;
 
-        let mut mocks = MockHttpOutcallsBuilder::new();
-        for (endpoint, id) in SolRpcEndpoint::iter().zip(0..) {
-            let rpc_method = match endpoint {
-                SolRpcEndpoint::JsonRequest => "getVersion",
-                _ => endpoint.rpc_method(),
-            };
-            mocks = mocks
-                .given(
-                    JsonRpcRequestMatcher::with_method(rpc_method)
-                        .with_max_response_bytes(1_999_999_u64)
-                        .with_id(id),
-                )
-                .respond_with(
-                    CanisterHttpReject::with_reject_code(RejectCode::SysFatal)
-                        .with_message("Unrecoverable error!"),
-                );
-        }
         let client = setup
-            .client(mocks)
-            .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Supported(
-                SupportedRpcProviderId::AlchemyMainnet,
-            )]))
+            .client(mock_all_endpoints(
+                |request| request.with_max_response_bytes(1_999_999_u64),
+                CanisterHttpReply::with_status(403),
+            ))
             .build();
 
         for endpoint in SolRpcEndpoint::iter() {
@@ -2003,12 +1987,8 @@ fn another_signature() -> solana_signature::Signature {
     .unwrap()
 }
 
-fn with_dummy_response_for_each_endpoint() -> MockHttpOutcallsBuilder {
-    with_mock_for_each_endpoint(|request| request, CanisterHttpReply::with_status(403))
-}
-
-fn with_mock_for_each_endpoint(
-    mut request: impl FnMut(JsonRpcRequestMatcher) -> JsonRpcRequestMatcher,
+fn mock_all_endpoints(
+    request: impl Fn(JsonRpcRequestMatcher) -> JsonRpcRequestMatcher,
     response: impl Into<CanisterHttpResponse>,
 ) -> MockHttpOutcallsBuilder {
     let mut mocks = MockHttpOutcallsBuilder::new();
