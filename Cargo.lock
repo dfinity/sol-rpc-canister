@@ -4315,11 +4315,11 @@ name = "sol_rpc_int_tests"
 version = "1.0.0"
 dependencies = [
  "assert_matches",
- "async-trait",
+ "base64 0.22.1",
+ "bincode",
  "candid",
  "canhttp",
  "canlog",
- "const_format",
  "futures",
  "ic-canister-runtime",
  "ic-cdk",
