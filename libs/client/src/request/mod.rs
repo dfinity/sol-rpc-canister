@@ -108,6 +108,14 @@ impl SolRpcEndpoint {
     }
 }
 
+/// Specifies the default number of cycles attached with a request if it was not set.
+pub trait DefaultRequestCycles {
+    /// The default number of cycles to attach with this request.
+    ///
+    /// This method will be called just before sending the request and only if the user did not set a number of cycles to attach.
+    fn default_request_cycles(&self) -> u128;
+}
+
 #[derive(Debug, Clone)]
 pub struct GetAccountInfoRequest(GetAccountInfoParams);
 
@@ -141,6 +149,12 @@ pub type GetAccountInfoRequestBuilder<R> = RequestBuilder<
     MultiRpcResult<Option<AccountInfo>>,
     MultiRpcResult<Option<solana_account_decoder_client_types::UiAccount>>,
 >;
+
+impl<R> DefaultRequestCycles for GetAccountInfoRequestBuilder<R> {
+    fn default_request_cycles(&self) -> u128 {
+        10_000_000_000
+    }
+}
 
 impl<R> GetAccountInfoRequestBuilder<R> {
     /// Change the `commitment` parameter for a `getAccountInfo` request.
@@ -201,6 +215,12 @@ pub type GetBalanceRequestBuilder<R> = RequestBuilder<
     MultiRpcResult<Lamport>,
     MultiRpcResult<Lamport>,
 >;
+
+impl<R> DefaultRequestCycles for GetBalanceRequestBuilder<R> {
+    fn default_request_cycles(&self) -> u128 {
+        10_000_000_000
+    }
+}
 
 impl<R> GetBalanceRequestBuilder<R> {
     /// Change the `commitment` parameter for a `getBalance` request.
@@ -263,6 +283,19 @@ pub type GetBlockRequestBuilder<R> = RequestBuilder<
     MultiRpcResult<Option<UiConfirmedBlock>>,
 >;
 
+impl<R> DefaultRequestCycles for GetBlockRequestBuilder<R> {
+    fn default_request_cycles(&self) -> u128 {
+        match self.request.params.transaction_details.unwrap_or_default() {
+            TransactionDetails::Accounts => 1_000_000_000_000,
+            TransactionDetails::Signatures => 100_000_000_000,
+            TransactionDetails::None => match self.request.params.rewards {
+                Some(true) | None => 20_000_000_000,
+                Some(false) => 10_000_000_000,
+            },
+        }
+    }
+}
+
 impl<R> GetBlockRequestBuilder<R> {
     /// Change the `commitment` parameter for a `getBlock` request.
     pub fn with_commitment(mut self, commitment_level: impl Into<GetBlockCommitmentLevel>) -> Self {
@@ -282,26 +315,13 @@ impl<R> GetBlockRequestBuilder<R> {
         transaction_details: impl Into<TransactionDetails>,
     ) -> Self {
         self.request.params.transaction_details = Some(transaction_details.into());
-        self.update_cycles()
+        self
     }
 
     /// Change the `rewards` parameter for a `getBlock` request to `false`.
     pub fn without_rewards(mut self) -> Self {
         self.request.params.rewards = Some(false);
-        self.update_cycles()
-    }
-
-    /// Update the cycles estimate for this request
-    pub fn update_cycles(self) -> Self {
-        let cycles = match self.request.params.transaction_details.unwrap_or_default() {
-            TransactionDetails::Accounts => 1_000_000_000_000,
-            TransactionDetails::Signatures => 100_000_000_000,
-            TransactionDetails::None => match self.request.params.rewards {
-                Some(true) | None => 20_000_000_000,
-                Some(false) => 10_000_000_000,
-            },
-        };
-        self.with_cycles(cycles)
+        self
     }
 }
 
@@ -358,6 +378,12 @@ pub type GetSignaturesForAddressRequestBuilder<R> = RequestBuilder<
     MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>,
     MultiRpcResult<Vec<ConfirmedTransactionStatusWithSignature>>,
 >;
+
+impl<R> DefaultRequestCycles for GetSignaturesForAddressRequestBuilder<R> {
+    fn default_request_cycles(&self) -> u128 {
+        2_000_000_000 // TODO XC-338: Check heuristic
+    }
+}
 
 impl<R> GetSignaturesForAddressRequestBuilder<R> {
     /// Change the `commitment` parameter for a `getSignaturesForAddress` request.
@@ -418,6 +444,13 @@ pub type GetSignatureStatusesRequestBuilder<R> = RequestBuilder<
     MultiRpcResult<Vec<Option<solana_transaction_status_client_types::TransactionStatus>>>,
 >;
 
+impl<R> DefaultRequestCycles for GetSignatureStatusesRequestBuilder<R> {
+    fn default_request_cycles(&self) -> u128 {
+        // TODO XC-338: Check heuristic
+        2_000_000_000 + self.request.params.signatures.len() as u128 * 1_000_000
+    }
+}
+
 impl<R> GetSignatureStatusesRequestBuilder<R> {
     /// Change the `searchTransactionHistory` parameter for a `getSignatureStatuses` request.
     pub fn with_search_transaction_history(mut self, search_transaction_history: bool) -> Self {
@@ -462,6 +495,12 @@ pub type GetSlotRequestBuilder<R> = RequestBuilder<
     MultiRpcResult<Slot>,
     MultiRpcResult<Slot>,
 >;
+
+impl<R> DefaultRequestCycles for GetSlotRequestBuilder<R> {
+    fn default_request_cycles(&self) -> u128 {
+        10_000_000_000
+    }
+}
 
 impl<R> GetSlotRequestBuilder<R> {
     /// Change the `commitment` parameter for a `getSlot` request.
@@ -511,6 +550,12 @@ pub type GetTokenAccountBalanceRequestBuilder<R> = RequestBuilder<
     MultiRpcResult<UiTokenAmount>,
 >;
 
+impl<R> DefaultRequestCycles for GetTokenAccountBalanceRequestBuilder<R> {
+    fn default_request_cycles(&self) -> u128 {
+        10_000_000_000
+    }
+}
+
 impl<R> GetTokenAccountBalanceRequestBuilder<R> {
     /// Change the `commitment` parameter for a `getTokenAccountBalance` request.
     pub fn with_commitment(mut self, commitment_level: CommitmentLevel) -> Self {
@@ -556,6 +601,12 @@ pub type GetTransactionRequestBuilder<R> = RequestBuilder<
         Option<solana_transaction_status_client_types::EncodedConfirmedTransactionWithStatusMeta>,
     >,
 >;
+
+impl<R> DefaultRequestCycles for GetTransactionRequestBuilder<R> {
+    fn default_request_cycles(&self) -> u128 {
+        10_000_000_000
+    }
+}
 
 impl<R> GetTransactionRequestBuilder<R> {
     /// Change the `commitment` parameter for a `getTransaction` request.
@@ -610,6 +661,12 @@ pub type SendTransactionRequestBuilder<R> = RequestBuilder<
     MultiRpcResult<Signature>,
     MultiRpcResult<solana_signature::Signature>,
 >;
+
+impl<R> DefaultRequestCycles for SendTransactionRequestBuilder<R> {
+    fn default_request_cycles(&self) -> u128 {
+        10_000_000_000
+    }
+}
 
 impl<R> SendTransactionRequestBuilder<R> {
     /// Change the `skipPreflight` parameter for a `sendTransaction` request.
@@ -667,6 +724,12 @@ impl SolRpcRequest for JsonRequest {
 pub type JsonRequestBuilder<R> =
     RequestBuilder<R, RpcConfig, String, MultiRpcResult<String>, MultiRpcResult<String>>;
 
+impl<R> DefaultRequestCycles for JsonRequestBuilder<R> {
+    fn default_request_cycles(&self) -> u128 {
+        10_000_000_000
+    }
+}
+
 /// A builder to construct a [`Request`].
 ///
 /// To construct a [`RequestBuilder`], refer to the [`SolRpcClient`] documentation.
@@ -683,6 +746,12 @@ pub type GetRecentPrioritizationFeesRequestBuilder<R> = RequestBuilder<
     MultiRpcResult<Vec<PrioritizationFee>>,
     MultiRpcResult<Vec<PrioritizationFee>>,
 >;
+
+impl<R> DefaultRequestCycles for GetRecentPrioritizationFeesRequestBuilder<R> {
+    fn default_request_cycles(&self) -> u128 {
+        10_000_000_000
+    }
+}
 
 impl<Runtime, Config: Clone, Params: Clone, CandidOutput, Output> Clone
     for RequestBuilder<Runtime, Config, Params, CandidOutput, Output>
@@ -710,11 +779,7 @@ impl<Runtime: Debug, Config: Debug, Params: Debug, CandidOutput, Output> Debug
 impl<Runtime, Config, Params, CandidOutput, Output>
     RequestBuilder<Runtime, Config, Params, CandidOutput, Output>
 {
-    pub(super) fn new<RpcRequest>(
-        client: SolRpcClient<Runtime>,
-        rpc_request: RpcRequest,
-        cycles: u128,
-    ) -> Self
+    pub(super) fn new<RpcRequest>(client: SolRpcClient<Runtime>, rpc_request: RpcRequest) -> Self
     where
         RpcRequest: SolRpcRequest<
             Config = Config,
@@ -731,7 +796,7 @@ impl<Runtime, Config, Params, CandidOutput, Output>
             rpc_sources: client.config.rpc_sources.clone(),
             rpc_config: client.config.rpc_config.clone().map(Config::from),
             params,
-            cycles,
+            cycles: None,
             _candid_marker: Default::default(),
             _output_marker: Default::default(),
         };
@@ -747,7 +812,7 @@ impl<Runtime, Config, Params, CandidOutput, Output>
                 rpc_sources: self.request.rpc_sources,
                 rpc_config: self.request.rpc_config,
                 params: self.request.params,
-                cycles: 0,
+                cycles: None,
                 _candid_marker: Default::default(),
                 _output_marker: Default::default(),
             },
@@ -756,7 +821,7 @@ impl<Runtime, Config, Params, CandidOutput, Output>
 
     /// Change the amount of cycles to send for that request.
     pub fn with_cycles(mut self, cycles: u128) -> Self {
-        *self.request.cycles_mut() = cycles;
+        *self.request.cycles_mut() = Some(cycles);
         self
     }
 
@@ -874,10 +939,12 @@ impl<R: Runtime, Config, Params, CandidOutput, Output>
         Config: CandidType + Send,
         Params: CandidType + Send,
         CandidOutput: Into<Output> + CandidType + DeserializeOwned,
+        RequestBuilder<R, Config, Params, CandidOutput, Output>: DefaultRequestCycles,
     {
-        self.client
-            .execute_request::<Config, Params, CandidOutput, Output>(self.request)
+        let rpc_method = self.request.endpoint.rpc_method();
+        self.try_send()
             .await
+            .unwrap_or_else(|e| panic!("Client error: failed to call `{}`: {e:?}", rpc_method))
     }
 
     /// Constructs the [`Request`] and sends it using the [`SolRpcClient`]. This method returns
@@ -887,9 +954,14 @@ impl<R: Runtime, Config, Params, CandidOutput, Output>
         Config: CandidType + Send,
         Params: CandidType + Send,
         CandidOutput: Into<Output> + CandidType + DeserializeOwned,
+        RequestBuilder<R, Config, Params, CandidOutput, Output>: DefaultRequestCycles,
     {
+        let cycles = self
+            .request
+            .cycles
+            .unwrap_or_else(|| self.default_request_cycles());
         self.client
-            .try_execute_request::<Config, Params, CandidOutput, Output>(self.request)
+            .try_execute_request::<Config, Params, CandidOutput, Output>(self.request, cycles)
             .await
     }
 }
@@ -932,7 +1004,7 @@ pub struct Request<Config, Params, CandidOutput, Output> {
     pub(super) rpc_sources: RpcSources,
     pub(super) rpc_config: Option<Config>,
     pub(super) params: Params,
-    pub(super) cycles: u128,
+    pub(super) cycles: Option<u128>,
     pub(super) _candid_marker: std::marker::PhantomData<CandidOutput>,
     pub(super) _output_marker: std::marker::PhantomData<Output>,
 }
@@ -1006,7 +1078,7 @@ impl<Config: Clone, Params: Clone, CandidOutput, Output> Clone
 impl<Config, Params, CandidOutput, Output> Request<Config, Params, CandidOutput, Output> {
     /// Get a mutable reference to the cycles.
     #[inline]
-    pub fn cycles_mut(&mut self) -> &mut u128 {
+    pub fn cycles_mut(&mut self) -> &mut Option<u128> {
         &mut self.cycles
     }
 

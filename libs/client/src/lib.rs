@@ -143,8 +143,8 @@ use crate::request::{
 use candid::{CandidType, Principal};
 use ic_canister_runtime::{IcError, IcRuntime, Runtime};
 pub use request::{
-    EstimateBlockhashRequestBuilder, EstimateRecentBlockhashError, Request, RequestBuilder,
-    SolRpcConfig, SolRpcEndpoint, SolRpcRequest,
+    DefaultRequestCycles, EstimateBlockhashRequestBuilder, EstimateRecentBlockhashError, Request,
+    RequestBuilder, SolRpcConfig, SolRpcEndpoint, SolRpcRequest,
 };
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
@@ -324,11 +324,7 @@ impl<R> SolRpcClient<R> {
         &self,
         params: impl Into<GetAccountInfoParams>,
     ) -> GetAccountInfoRequestBuilder<R> {
-        RequestBuilder::new(
-            self.clone(),
-            GetAccountInfoRequest::new(params.into()),
-            10_000_000_000,
-        )
+        RequestBuilder::new(self.clone(), GetAccountInfoRequest::new(params.into()))
     }
 
     /// Call `getBalance` on the SOL RPC canister.
@@ -359,11 +355,7 @@ impl<R> SolRpcClient<R> {
     /// # }
     /// ```
     pub fn get_balance(&self, params: impl Into<GetBalanceParams>) -> GetBalanceRequestBuilder<R> {
-        RequestBuilder::new(
-            self.clone(),
-            GetBalanceRequest::new(params.into()),
-            10_000_000_000,
-        )
+        RequestBuilder::new(self.clone(), GetBalanceRequest::new(params.into()))
     }
 
     /// Call `getBlock` on the SOL RPC canister.
@@ -433,7 +425,7 @@ impl<R> SolRpcClient<R> {
     /// # }
     /// ```
     pub fn get_block(&self, params: impl Into<GetBlockParams>) -> GetBlockRequestBuilder<R> {
-        RequestBuilder::new(self.clone(), GetBlockRequest::new(params.into()), 0).update_cycles()
+        RequestBuilder::new(self.clone(), GetBlockRequest::new(params.into()))
     }
 
     /// Call `getTokenAccountBalance` on the SOL RPC canister.
@@ -481,7 +473,6 @@ impl<R> SolRpcClient<R> {
         RequestBuilder::new(
             self.clone(),
             GetTokenAccountBalanceRequest::new(params.into()),
-            10_000_000_000,
         )
     }
 
@@ -559,7 +550,6 @@ impl<R> SolRpcClient<R> {
         Ok(RequestBuilder::new(
             self.clone(),
             GetRecentPrioritizationFeesRequest::from(params),
-            10_000_000_000,
         ))
     }
 
@@ -638,7 +628,6 @@ impl<R> SolRpcClient<R> {
         RequestBuilder::new(
             self.clone(),
             GetSignaturesForAddressRequest::from(params.into()),
-            2_000_000_000, // TODO XC-338: Check heuristic
         )
     }
 
@@ -744,11 +733,9 @@ impl<R> SolRpcClient<R> {
         I: IntoIterator<Item = &'a solana_signature::Signature>,
     {
         let signatures = signatures.into_iter().collect::<Vec<_>>();
-        let num_signatures = signatures.len();
         Ok(RequestBuilder::new(
             self.clone(),
             GetSignatureStatusesRequest::from(GetSignatureStatusesParams::try_from(signatures)?),
-            2_000_000_000 + num_signatures as u128 * 1_000_000, // TODO XC-338: Check heuristic
         ))
     }
 
@@ -782,7 +769,7 @@ impl<R> SolRpcClient<R> {
     /// # }
     /// ```
     pub fn get_slot(&self) -> GetSlotRequestBuilder<R> {
-        RequestBuilder::new(self.clone(), GetSlotRequest::default(), 10_000_000_000)
+        RequestBuilder::new(self.clone(), GetSlotRequest::default())
     }
 
     /// Call `getTransaction` on the SOL RPC canister.
@@ -861,11 +848,7 @@ impl<R> SolRpcClient<R> {
         &self,
         params: impl Into<GetTransactionParams>,
     ) -> GetTransactionRequestBuilder<R> {
-        RequestBuilder::new(
-            self.clone(),
-            GetTransactionRequest::new(params.into()),
-            10_000_000_000,
-        )
+        RequestBuilder::new(self.clone(), GetTransactionRequest::new(params.into()))
     }
 
     /// Call `sendTransaction` on the SOL RPC canister.
@@ -910,11 +893,7 @@ impl<R> SolRpcClient<R> {
         let params = params
             .try_into()
             .expect("Unable to build request parameters");
-        RequestBuilder::new(
-            self.clone(),
-            SendTransactionRequest::new(params),
-            10_000_000_000,
-        )
+        RequestBuilder::new(self.clone(), SendTransactionRequest::new(params))
     }
 
     /// Call `jsonRequest` on the SOL RPC canister.
@@ -976,7 +955,6 @@ impl<R> SolRpcClient<R> {
         RequestBuilder::new(
             self.clone(),
             JsonRequest::try_from(json_request).expect("Client error: invalid JSON request"),
-            10_000_000_000,
         )
     }
 }
@@ -1086,24 +1064,10 @@ impl<R: Runtime> SolRpcClient<R> {
         EstimateBlockhashRequestBuilder::new(self.clone())
     }
 
-    async fn execute_request<Config, Params, CandidOutput, Output>(
-        &self,
-        request: Request<Config, Params, CandidOutput, Output>,
-    ) -> Output
-    where
-        Config: CandidType + Send,
-        Params: CandidType + Send,
-        CandidOutput: Into<Output> + CandidType + DeserializeOwned,
-    {
-        let rpc_method = request.endpoint.rpc_method();
-        self.try_execute_request(request)
-            .await
-            .unwrap_or_else(|e| panic!("Client error: failed to call `{}`: {e:?}", rpc_method))
-    }
-
     async fn try_execute_request<Config, Params, CandidOutput, Output>(
         &self,
         request: Request<Config, Params, CandidOutput, Output>,
+        cycles: u128,
     ) -> Result<Output, IcError>
     where
         Config: CandidType + Send,
@@ -1116,7 +1080,7 @@ impl<R: Runtime> SolRpcClient<R> {
                 self.config.sol_rpc_canister,
                 request.endpoint.rpc_method(),
                 (request.rpc_sources, request.rpc_config, request.params),
-                request.cycles,
+                cycles,
             )
             .await
             .map(Into::into)
