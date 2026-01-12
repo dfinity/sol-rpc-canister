@@ -623,7 +623,7 @@ impl Setup {
 
     fn icp_client(&self) -> SolRpcClient<CyclesWalletRuntime<PocketIcRuntime<'_>>> {
         self.setup
-            .client()
+            .client_without_mocks()
             .with_default_commitment_level(CommitmentLevel::Confirmed)
             .build()
     }
