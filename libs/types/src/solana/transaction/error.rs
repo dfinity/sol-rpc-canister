@@ -580,7 +580,8 @@ impl From<InstructionError> for solana_instruction::error::InstructionError {
             }
             // This variant is kept to match the upstream enum 1:1, even though the upstream variant
             // is deprecated as of `solana_instruction_error` v2.1.0.
-            InstructionError::NotEnoughAccountKeys => {
+            InstructionError::NotEnoughAccountKeys =>
+            {
                 #[allow(deprecated)]
                 solana_instruction::error::InstructionError::NotEnoughAccountKeys
             }
