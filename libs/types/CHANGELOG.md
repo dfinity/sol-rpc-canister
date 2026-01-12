@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Bump `ic-cdk` to v0.19.0 ([#251](https://github.com/dfinity/sol-rpc-canister/pull/251))
+- Upgrade various dependencies ([#260](https://github.com/dfinity/sol-rpc-canister/pull/260))
 
 [3.1.0]: https://github.com/dfinity/sol-rpc-canister/compare/3.0.0..3.1.0
 

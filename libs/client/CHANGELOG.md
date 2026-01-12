@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Use `ic_canister_runtime::Runtime` instead of local `Runtime` trait ([#248](https://github.com/dfinity/sol-rpc-canister/pull/248))
 - **BREAKING:** Bump `ic-cdk` to v0.19.0. See PR description for more details on the breaking changes. ([#251](https://github.com/dfinity/sol-rpc-canister/pull/251))
+- Upgrade various dependencies ([#260](https://github.com/dfinity/sol-rpc-canister/pull/260))
 
 ### Fixed
 
