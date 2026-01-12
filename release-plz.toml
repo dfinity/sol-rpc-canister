@@ -45,10 +45,6 @@ name = "sol_rpc_types"
 publish = true # enable `cargo publish`
 
 [[package]]
-name = "basic_solana"
-release = false # don't process this package
-
-[[package]]
 name = "sol_rpc_int_tests"
 release = false # don't process this package
 
