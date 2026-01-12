@@ -462,6 +462,7 @@ impl From<solana_instruction::error::InstructionError> for InstructionError {
             InstructionError::DuplicateAccountIndex => Self::DuplicateAccountIndex,
             InstructionError::ExecutableModified => Self::ExecutableModified,
             InstructionError::RentEpochModified => Self::RentEpochModified,
+            #[allow(deprecated)]
             InstructionError::NotEnoughAccountKeys => Self::NotEnoughAccountKeys,
             InstructionError::AccountDataSizeChanged => Self::AccountDataSizeChanged,
             InstructionError::AccountNotExecutable => Self::AccountNotExecutable,
@@ -575,7 +576,9 @@ impl From<InstructionError> for solana_instruction::error::InstructionError {
             InstructionError::RentEpochModified => {
                 solana_instruction::error::InstructionError::RentEpochModified
             }
-            InstructionError::NotEnoughAccountKeys => {
+            InstructionError::NotEnoughAccountKeys =>
+            {
+                #[allow(deprecated)]
                 solana_instruction::error::InstructionError::NotEnoughAccountKeys
             }
             InstructionError::AccountDataSizeChanged => {
