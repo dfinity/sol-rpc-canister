@@ -323,12 +323,6 @@ impl<R> GetBlockRequestBuilder<R> {
         self.request.params.rewards = Some(false);
         self
     }
-
-    /// Update the cycles estimate for this request
-    #[deprecated(since = "3.1.0", note = "This method is not needed anymore")]
-    pub fn update_cycles(self) -> Self {
-        self
-    }
 }
 
 #[derive(Debug, Clone, Default)]
