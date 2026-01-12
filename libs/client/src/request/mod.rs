@@ -108,10 +108,11 @@ impl SolRpcEndpoint {
     }
 }
 
-/// Provides the [`DefaultRequestCycles::default_request_cycles`] method which provides the
-/// default number of cycles attached with a request if the value is not explicitly specified.
+/// Specifies the default number of cycles attached with a request if it was not set.
 pub trait DefaultRequestCycles {
     /// The default number of cycles to attach with this request.
+    ///
+    /// This method will be called just before sending the request and only if the user did not set a number of cycles to attach.
     fn default_request_cycles(&self) -> u128;
 }
 
