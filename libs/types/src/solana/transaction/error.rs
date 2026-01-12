@@ -462,6 +462,8 @@ impl From<solana_instruction::error::InstructionError> for InstructionError {
             InstructionError::DuplicateAccountIndex => Self::DuplicateAccountIndex,
             InstructionError::ExecutableModified => Self::ExecutableModified,
             InstructionError::RentEpochModified => Self::RentEpochModified,
+            // This variant is deprecated as of `solana_instruction_error` v2.1.0, but is still
+            // part of the enum, so we handle it here to keep the match statement exhaustive.
             #[allow(deprecated)]
             InstructionError::NotEnoughAccountKeys => Self::NotEnoughAccountKeys,
             InstructionError::AccountDataSizeChanged => Self::AccountDataSizeChanged,
@@ -576,8 +578,9 @@ impl From<InstructionError> for solana_instruction::error::InstructionError {
             InstructionError::RentEpochModified => {
                 solana_instruction::error::InstructionError::RentEpochModified
             }
-            InstructionError::NotEnoughAccountKeys =>
-            {
+            // This variant is kept to match the upstream enum 1:1, even though the upstream variant
+            // is deprecated as of `solana_instruction_error` v2.1.0.
+            InstructionError::NotEnoughAccountKeys => {
                 #[allow(deprecated)]
                 solana_instruction::error::InstructionError::NotEnoughAccountKeys
             }
