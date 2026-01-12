@@ -30,7 +30,7 @@ ic-ed25519 = { workspace = true, optional = true }
 ic-management-canister-types = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-sol_rpc_types = { version = "4.0.0", path = "../types" }
+sol_rpc_types = { workspace = true }
 solana-account-decoder-client-types = { workspace = true, features = ["zstd"] }
 solana-hash = { workspace = true }
 solana-instruction = { workspace = true }

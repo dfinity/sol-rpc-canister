@@ -9,13 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Use canister runtime crates ([#248](https://github.com/dfinity/sol-rpc-canister/pull/248))
-- Bump `ic-cdk` to v0.19.0 ([#251](https://github.com/dfinity/sol-rpc-canister/pull/251))
+- Use `ic_canister_runtime::Runtime` instead of local `Runtime` trait ([#248](https://github.com/dfinity/sol-rpc-canister/pull/248))
+- **BREAKING:** Bump `ic-cdk` to v0.19.0. See PR description for more details on the breaking changes. ([#251](https://github.com/dfinity/sol-rpc-canister/pull/251))
 
 ### Fixed
 
-- Calculate default request cost before sending ([#256](https://github.com/dfinity/sol-rpc-canister/pull/256))
-- Integration tests that RPC config is respected ([#237](https://github.com/dfinity/sol-rpc-canister/pull/237))
+- **BREAKING:** Calculate default request cost before sending. See PR description for more details on the breaking changes. ([#256](https://github.com/dfinity/sol-rpc-canister/pull/256))
 
 [4.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/3.0.0..4.0.0
 
