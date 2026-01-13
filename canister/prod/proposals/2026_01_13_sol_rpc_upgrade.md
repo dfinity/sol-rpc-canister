@@ -15,8 +15,13 @@ Previous SOL RPC proposal: https://dashboard.internetcomputer.org/proposal/13847
 ---
 
 ## Motivation
-TODO: THIS MUST BE FILLED OUT
 
+Upgrade the SOL RPC canister to the latest version [v1.3.0](https://github.com/dfinity/sol-rpc-canister/releases/tag/sol_rpc_canister-v1.3.0),
+which includes in particular the following changes:
+* Correctly take `response_size_estimate` parameter into account for `getBlock` endpoint.
+* Upgrade various dependencies including bumping the `ic-cdk` to v0.19.0.
+
+See the Gihub release [v1.3.0](https://github.com/dfinity/sol-rpc-canister/releases/tag/sol_rpc_canister-v1.3.0) for more details.
 
 ## Release Notes
 
