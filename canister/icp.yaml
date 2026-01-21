@@ -1,0 +1,26 @@
+canisters:
+  - name: sol_rpc
+    build:
+      steps:
+        - type: script
+          commands:
+            - "../scripts/docker-build"
+            - "mv ../wasms/sol_rpc_canister.wasm.gz ${ICP_WASM_OUTPUT_PATH}"
+
+networks:
+  - name: ic
+    mode: connected
+    url: https://icp-api.io
+
+environments:
+  - name: ci
+    network: ic
+    canisters: [sol_rpc]
+
+  - name: staging
+    network: ic
+    canisters: [sol_rpc]
+
+  - name: prod
+    network: ic
+    canisters: [sol_rpc]
