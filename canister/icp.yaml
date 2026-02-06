@@ -5,7 +5,7 @@ canisters:
         - type: script
           commands:
             - "../scripts/docker-build"
-            - "mv ../wasms/sol_rpc_canister.wasm.gz ${ICP_WASM_OUTPUT_PATH}"
+            - "cp ../wasms/sol_rpc_canister.wasm.gz ${ICP_WASM_OUTPUT_PATH}"
 
 networks:
   - name: ic
