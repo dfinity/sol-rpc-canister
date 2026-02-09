@@ -28,7 +28,7 @@ pub fn client() -> SolRpcClient<IcRuntime> {
         .with_default_commitment_level(read_state(State::solana_commitment_level))
         .build()
 }
-
+//dummy commit
 #[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq)]
 pub struct InitArg {
     pub sol_rpc_canister_id: Option<Principal>,
