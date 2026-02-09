@@ -23,7 +23,7 @@ base64 = "0.22.1"
 bincode = "1.3.3"
 bs58 = "0.5.1"
 candid = "0.10.21"
-candid_parser = "0.1.4"
+candid_parser = "0.3.0"
 canhttp = "0.4.0"
 canlog = { version = "0.2.0", features = ["derive"] }
 ciborium = "0.2.2"
