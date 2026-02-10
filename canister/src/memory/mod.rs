@@ -39,7 +39,6 @@ thread_local! {
             MEMORY_MANAGER.with_borrow(|m| m.get(STATE_MEMORY_ID)),
             ConfigState::default(),
         )
-        .expect("Unable to read memory from stable memory"),
     );
 }
 
@@ -67,6 +66,10 @@ impl Storable for ConfigState {
             ConfigState::Uninitialized => Cow::Borrowed(&[]),
             ConfigState::Initialized(config) => Cow::Owned(encode(config)),
         }
+    }
+
+    fn into_bytes(self) -> Vec<u8> {
+        self.to_bytes().into_owned()
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
@@ -204,9 +207,7 @@ where
         let mut borrowed = cell.borrow_mut();
         let mut state = borrowed.get().expect_initialized().clone();
         let result = f(&mut state);
-        borrowed
-            .set(ConfigState::Initialized(state))
-            .expect("failed to write memory in stable cell");
+        borrowed.set(ConfigState::Initialized(state));
         result
     })
 }
@@ -220,9 +221,7 @@ pub fn init_state(state: State) {
             "BUG: State is already initialized and has value {:?}",
             borrowed.get()
         );
-        borrowed
-            .set(ConfigState::Initialized(state))
-            .expect("failed to initialize memory in stable cell")
+        borrowed.set(ConfigState::Initialized(state))
     });
 }
 
@@ -230,9 +229,7 @@ pub fn init_state(state: State) {
 /// the thread gets re-used and thus the memory persists across test instances.
 pub fn reset_state() {
     STATE.with(|cell| {
-        cell.borrow_mut()
-            .set(ConfigState::Uninitialized)
-            .unwrap_or_else(|err| panic!("Could not reset memory: {:?}", err));
+        cell.borrow_mut().set(ConfigState::Uninitialized);
     })
 }
 
