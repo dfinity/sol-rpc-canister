@@ -207,8 +207,7 @@ where
         let mut borrowed = cell.borrow_mut();
         let mut state = borrowed.get().expect_initialized().clone();
         let result = f(&mut state);
-        borrowed
-            .set(ConfigState::Initialized(state));
+        borrowed.set(ConfigState::Initialized(state));
         result
     })
 }
@@ -222,8 +221,7 @@ pub fn init_state(state: State) {
             "BUG: State is already initialized and has value {:?}",
             borrowed.get()
         );
-        borrowed
-            .set(ConfigState::Initialized(state))
+        borrowed.set(ConfigState::Initialized(state))
     });
 }
 
@@ -231,8 +229,7 @@ pub fn init_state(state: State) {
 /// the thread gets re-used and thus the memory persists across test instances.
 pub fn reset_state() {
     STATE.with(|cell| {
-        cell.borrow_mut()
-            .set(ConfigState::Uninitialized);
+        cell.borrow_mut().set(ConfigState::Uninitialized);
     })
 }
 
