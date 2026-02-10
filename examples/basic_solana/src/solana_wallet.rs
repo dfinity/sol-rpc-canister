@@ -9,10 +9,8 @@ use crate::{
     state::{lazy_call_ed25519_public_key, read_state},
 };
 use candid::Principal;
-use sol_rpc_client::{
-    ed25519::{sign_message, DerivationPath},
-    IcRuntime,
-};
+use ic_canister_runtime::IcRuntime;
+use sol_rpc_client::ed25519::{sign_message, DerivationPath};
 use solana_message::Message;
 use solana_pubkey::Pubkey;
 use solana_signature::Signature;
@@ -42,7 +40,7 @@ impl SolanaAccount {
 
     pub async fn sign_message(&self, message: &Message) -> Signature {
         sign_message(
-            &IcRuntime,
+            &IcRuntime::default(),
             message,
             read_state(|s| s.ed25519_key_name()).into(),
             Some(&self.derivation_path),

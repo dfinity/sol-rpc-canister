@@ -1,6 +1,7 @@
 use crate::Ed25519KeyName;
+use ic_canister_runtime::IcRuntime;
 use ic_ed25519::PublicKey;
-use sol_rpc_client::{ed25519::DerivationPath, IcRuntime};
+use sol_rpc_client::ed25519::DerivationPath;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Ed25519ExtendedPublicKey {
@@ -31,7 +32,7 @@ pub async fn get_ed25519_public_key(
     derivation_path: &DerivationPath,
 ) -> Ed25519ExtendedPublicKey {
     let (pubkey, chain_code) = sol_rpc_client::ed25519::get_pubkey(
-        &IcRuntime,
+        &IcRuntime::default(),
         None,
         Some(derivation_path),
         key_name.into(),

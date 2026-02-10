@@ -5,8 +5,9 @@ pub mod state;
 
 use crate::state::{read_state, State};
 use candid::{CandidType, Principal};
+use ic_canister_runtime::IcRuntime;
 use serde::Deserialize;
-use sol_rpc_client::{ed25519::Ed25519KeyId, IcRuntime, SolRpcClient};
+use sol_rpc_client::{ed25519::Ed25519KeyId, SolRpcClient};
 use sol_rpc_types::{
     CommitmentLevel, ConsensusStrategy, RpcEndpoint, RpcSource, RpcSources, SolanaCluster,
 };
@@ -21,7 +22,7 @@ pub fn client() -> SolRpcClient<IcRuntime> {
         },
     };
     read_state(|state| state.sol_rpc_canister_id())
-        .map(|canister_id| SolRpcClient::builder(IcRuntime, canister_id))
+        .map(|canister_id| SolRpcClient::builder(IcRuntime::default(), canister_id))
         .unwrap_or(SolRpcClient::builder_for_ic())
         .with_rpc_sources(rpc_sources)
         .with_consensus_strategy(consensus_strategy)
@@ -74,7 +75,7 @@ impl From<Ed25519KeyName> for Ed25519KeyId {
 }
 
 pub fn validate_caller_not_anonymous() -> Principal {
-    let principal = ic_cdk::caller();
+    let principal = ic_cdk::api::msg_caller();
     if principal == Principal::anonymous() {
         panic!("anonymous principal is not allowed");
     }
