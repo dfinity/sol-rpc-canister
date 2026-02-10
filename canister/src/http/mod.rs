@@ -153,6 +153,15 @@ where
                                 error
                             );
                         }
+                        HttpClientError::InvalidJsonResponseId(ConsistentResponseIdFilterError::InconsistentBatchIds { status, request_ids:_,  response_ids: _ }) => {
+                            observe_error_with_status(*status, &req_data);
+                            log!(
+                                Priority::TraceHttp,
+                                "Invalid JSON RPC response for batch requests with id `{}`: {}",
+                                req_data.request_id,
+                                error
+                            );
+                        }
                         HttpClientError::NotHandledError(e) => {
                             log!(Priority::Info, "BUG: Unexpected error: {}", e);
                         }
