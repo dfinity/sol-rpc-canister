@@ -7,7 +7,7 @@ use crate::state::{read_state, State};
 use candid::{CandidType, Principal};
 use ic_canister_runtime::IcRuntime;
 use serde::Deserialize;
-use sol_rpc_client::{ed25519::Ed25519KeyId, SolRpcClient};
+use sol_rpc_client::{ed25519::Ed25519KeyId, SolRpcClient, SOL_RPC_CANISTER};
 use sol_rpc_types::{
     CommitmentLevel, ConsensusStrategy, RpcEndpoint, RpcSource, RpcSources, SolanaCluster,
 };
@@ -21,13 +21,21 @@ pub fn client() -> SolRpcClient<IcRuntime> {
             total: Some(3),
         },
     };
-    read_state(|state| state.sol_rpc_canister_id())
-        .map(|canister_id| SolRpcClient::builder(IcRuntime::default(), canister_id))
-        .unwrap_or(SolRpcClient::builder_for_ic())
+    SolRpcClient::builder(IcRuntime::new(), sol_rpc_canister_id())
         .with_rpc_sources(rpc_sources)
         .with_consensus_strategy(consensus_strategy)
         .with_default_commitment_level(read_state(State::solana_commitment_level))
         .build()
+}
+
+fn sol_rpc_canister_id() -> Principal {
+    const ENV_VAR_NAME: &str = "PUBLIC_CANISTER_ID:sol_rpc";
+    if ic_cdk::api::env_var_name_exists(ENV_VAR_NAME) {
+        Principal::from_text(&ic_cdk::api::env_var_value(ENV_VAR_NAME))
+            .expect("Invalid SOL RPC canister ID")
+    } else {
+        SOL_RPC_CANISTER
+    }
 }
 
 #[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq)]
