@@ -2,7 +2,6 @@ use crate::{
     ed25519::{get_ed25519_public_key, Ed25519ExtendedPublicKey},
     Ed25519KeyName, InitArg, SolanaNetwork,
 };
-use candid::Principal;
 use sol_rpc_types::CommitmentLevel;
 use std::{
     cell::RefCell,

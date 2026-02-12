@@ -99,16 +99,13 @@ jobs:
       - name: 'Run unit tests'
         run: cargo test --locked --workspace --exclude basic_solana --exclude sol_rpc_int_tests --exclude sol_rpc_e2e_tests
 
-  basic-solana-deployment:
+  basic-solana-ninja-deployment:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os:
           - ubuntu-latest
           - macos-latest
-        deployment:
-          - ninja
-          - local
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
@@ -116,14 +113,13 @@ jobs:
       - name: 'Install dfx'
         uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365
         with:
-          dfx-version: "0.27.0"
+          dfx-version: "latest"
 
-      - name: 'Confirm dfx successful installation'
+      - name: 'Confirm dfx installation'
         run: dfx --version
 
       - name: 'Use free Solana RPC provider'
-        if: matrix.deployment == 'ninja'
-        working-directory: examples/basic_solana/${{ matrix.deployment }}
+        working-directory: examples/basic_solana/ninja
         run: |
           perl -pi -e 's|solana_network = opt variant { Devnet }|solana_network = opt variant { Custom = record { url = \\\"https://api.devnet.solana.com\\\"; headers = null } }|g' dfx.json
 
@@ -132,8 +128,8 @@ jobs:
         run: |
           brew install llvm
 
-      - name: "Deploy locally"
-        working-directory: examples/basic_solana/${{ matrix.deployment }}
+      - name: "Deploy locally and test with dfx"
+        working-directory: examples/basic_solana/ninja
         run: |
           dfx start --clean --background
           dfx deploy
@@ -141,6 +137,51 @@ jobs:
           echo "$out"
           echo "$out" | grep -Eq "[1-9A-HJ-NP-Za-km-z]{32,44}" || { echo "❌ Call to 'solana_account' failed"; exit 1; }
           out=$(dfx canister call basic_solana get_balance --output json)
+          echo "$out"
+          echo "$out" | grep -Eq "[0-9]+(_[0-9]+)*" || { echo "❌ Call to 'get_balance' failed"; exit 1; }
+
+  basic-solana-local-deployment:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Install icp-cli'
+        run: |
+          npm install -g @icp-sdk/icp-cli @icp-sdk/ic-wasm
+
+      - name: 'Confirm icp-cli installation'
+        run: icp --version
+
+      - name: 'Install llvm'
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install llvm
+
+      - name: 'Install Rust toolchain'
+        run: rustup show
+
+      - name: 'Install idl2json'
+        uses: taiki-e/install-action@v2
+        with:
+          tool: idl2json_cli
+
+      - name: "Deploy locally and test with icp-cli"
+        working-directory: examples/basic_solana
+        run: |
+          icp network start --background
+          icp deploy --environment local
+          icp identity new --storage plaintext caller
+          icp identity default caller
+          out=$(icp canister call basic_solana solana_account '(null)' | idl2json)
+          echo "$out"
+          echo "$out" | grep -Eq "[1-9A-HJ-NP-Za-km-z]{32,44}" || { echo "❌ Call to 'solana_account' failed"; exit 1; }
+          out=$(icp canister call basic_solana get_balance '(null)' | idl2json)
           echo "$out"
           echo "$out" | grep -Eq "[0-9]+(_[0-9]+)*" || { echo "❌ Call to 'get_balance' failed"; exit 1; }
 
@@ -225,8 +266,6 @@ jobs:
     env:
       sol_rpc_canister_id: zaylz-mqaaa-aaaar-qaqzq-cai
       wallet_canister_id: zo2gr-xaaaa-aaaar-qaqyq-cai
-      # Needed to surpass dfx error to use the insecure plaintext identity
-      DFX_WARNING: -mainnet_plaintext_identity
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
@@ -236,13 +275,12 @@ jobs:
         with:
           name: sol_rpc_canister.wasm.gz
 
-      - name: 'Install dfx'
-        uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365
-        with:
-          dfx-version: "0.27.0"
+      - name: 'Install icp-cli'
+        run: |
+          npm install -g @icp-sdk/icp-cli @icp-sdk/ic-wasm
 
-      - name: 'Confirm dfx successful installation'
-        run: dfx --version
+      - name: 'Confirm icp-cli successful installation'
+        run: icp --version
 
       - name: "Import dfx deploy key"
         env:
@@ -250,38 +288,25 @@ jobs:
         run: |
           key_pem=$(mktemp)
           printenv "DFX_DEPLOY_KEY" > "$key_pem"
-          dfx identity import --storage-mode plaintext ci "$key_pem"
+          icp identity import --storage plaintext --from-pem "$key_pem" ci
           rm "$key_pem"
-          dfx identity use ci
-          dfx identity get-principal
-          dfx identity set-wallet --ic --force "${{ env.wallet_canister_id }}"
-          dfx wallet balance --ic
-
-      - name: "Deploy basic_solana locally"
-        working-directory: examples/basic_solana/local
-        run: |
-          dfx start --clean --background
-          dfx deploy
-          out=$(dfx canister call basic_solana solana_account --output json)
-          echo "$out"
-          echo "$out" | grep -Eq "[1-9A-HJ-NP-Za-km-z]{32,44}" || { echo "❌ Call to 'solana_account' failed"; exit 1; }
-          out=$(dfx canister call basic_solana get_balance --output json)
-          echo "$out"
-          echo "$out" | grep -Eq "[0-9]+(_[0-9]+)*" || { echo "❌ Call to 'get_balance' failed"; exit 1; }
+          icp identity default ci
+          icp identity principal
 
       - name: "Deploy SOL RPC Canister"
         run: |
-          wallet="${{ env.wallet_canister_id }}"
-          dfx canister --network ic --wallet "$wallet" install --mode upgrade \
-          --wasm "$GITHUB_WORKSPACE/sol_rpc_canister.wasm.gz" \
-          "${{ env.sol_rpc_canister_id }}"          
+          icp canister install \
+            --network ic \
+            --mode upgrade \
+            --wasm "$GITHUB_WORKSPACE/sol_rpc_canister.wasm.gz" \
+            "${{ env.sol_rpc_canister_id }}"      
 
       - name: "Run examples"
-        working-directory: canister/ci
+        working-directory: canister
         run: ../scripts/examples.sh 2>&1 | tee e2e_examples.log
 
       - name: "Detect inconsistent results"
-        working-directory: canister/ci
+        working-directory: canister
         run: cat e2e_examples.log | grep -q -e Inconsistent && exit 1 || exit 0
 
       - name: "Run end-to-end tests"

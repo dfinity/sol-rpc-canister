@@ -40,7 +40,6 @@ fn sol_rpc_canister_id() -> Principal {
 
 #[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq)]
 pub struct InitArg {
-    pub sol_rpc_canister_id: Option<Principal>,
     pub solana_network: Option<SolanaNetwork>,
     pub ed25519_key_name: Option<Ed25519KeyName>,
     pub solana_commitment_level: Option<CommitmentLevel>,

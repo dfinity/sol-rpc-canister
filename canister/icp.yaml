@@ -7,11 +7,6 @@ canisters:
             - "../scripts/docker-build"
             - "cp ../wasms/sol_rpc_canister.wasm.gz ${ICP_WASM_OUTPUT_PATH}"
 
-networks:
-  - name: ic
-    mode: connected
-    url: https://icp-api.io
-
 environments:
   - name: ci
     network: ic

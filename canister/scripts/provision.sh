@@ -13,11 +13,11 @@ set -u # or set -o nounset
 
 NETWORK="ic"
 IDENTITY="ci"
-WALLET=$(dfx identity get-wallet --network=$NETWORK --identity=$IDENTITY)
+WALLET=$(icp identity get-wallet --network=$NETWORK --identity=$IDENTITY)
 CANISTER="sol_rpc"
 FLAGS="--network=$NETWORK --identity=$IDENTITY --wallet=$WALLET"
 
-dfx canister call ${CANISTER} updateApiKeys "(vec {
+icp canister call ${CANISTER} updateApiKeys "(vec {
   record { variant { AlchemyMainnet }; opt \"${ALCHEMY_API_KEY}\" };
   record { variant { AlchemyDevnet }; opt \"${ALCHEMY_API_KEY}\" };
   record { variant { AnkrMainnet }; opt \"${ANKR_API_KEY}\" };

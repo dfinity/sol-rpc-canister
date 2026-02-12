@@ -2,7 +2,7 @@ use basic_solana::{Ed25519KeyName, SolanaNetwork};
 use candid::{
     decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encode, Nat, Principal,
 };
-use ic_management_canister_types::{CanisterId, CanisterSettings};
+use ic_management_canister_types::{CanisterId, CanisterSettings, EnvironmentVariable};
 use pocket_ic::{PocketIc, PocketIcBuilder};
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
@@ -285,10 +285,18 @@ impl Setup {
             Some(Self::DEFAULT_CONTROLLER),
         );
 
-        let basic_solana_canister_id = env.create_canister();
+        let basic_solana_canister_id = env.create_canister_with_settings(
+            None,
+            Some(CanisterSettings {
+                environment_variables: Some(vec![EnvironmentVariable {
+                    name: "PUBLIC_CANISTER_ID:sol_rpc".to_string(),
+                    value: sol_rpc_canister_id.to_string(),
+                }]),
+                ..CanisterSettings::default()
+            }),
+        );
         env.add_cycles(basic_solana_canister_id, u64::MAX as u128);
         let basic_solana_install_args = basic_solana::InitArg {
-            sol_rpc_canister_id: Some(sol_rpc_canister_id),
             solana_network: Some(SolanaNetwork::Devnet),
             ed25519_key_name: Some(Ed25519KeyName::MainnetProdKey1),
             solana_commitment_level: Some(CommitmentLevel::Confirmed),

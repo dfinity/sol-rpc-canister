@@ -46,7 +46,7 @@ impl From<Principal> for DerivationPath {
 /// for more details.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Ed25519KeyId {
-    /// Only available on the local development environment started by `dfx`.
+    /// Only available on the local development environment started by `icp-cli`.
     LocalDevelopment,
     /// Test key available on the ICP mainnet.
     MainnetTestKey1,

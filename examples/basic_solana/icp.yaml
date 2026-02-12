@@ -21,24 +21,16 @@ canisters:
             - gzip --no-name "$ICP_WASM_OUTPUT_PATH"
             - mv "${ICP_WASM_OUTPUT_PATH}.gz" "$ICP_WASM_OUTPUT_PATH"
 
-networks:
-  - name: local
-    mode: managed
-
-  - name: ic
-    mode: connected
-    url: https://icp-api.io
-
 environments:
   - name: mainnet
     network: ic
     canisters: [basic_solana]
     init_args:
-      basic_solana: "( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { MainnetTestKey1 }; sol_rpc_canister_id = opt principal \"tghme-zyaaa-aaaar-qarca-cai\" } )"
+      basic_solana: "( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { MainnetTestKey1 } } )"
 
-  - name: testing
+  - name: local
     network: local
     canisters: [basic_solana, sol_rpc]
     init_args:
-      basic_solana: "( record { solana_network = opt variant { Custom = record { url = \"https://api.devnet.solana.com\"; headers = null } }; ed25519_key_name = opt variant { LocalDevelopment }; sol_rpc_canister_id = opt principal \"${PUBLIC_CANISTER_ID:sol_rpc}\" } )"
+      basic_solana: "( record { solana_network = opt variant { Custom = record { url = \"https://api.devnet.solana.com\"; headers = null } }; ed25519_key_name = opt variant { LocalDevelopment } } )"
       sol_rpc: "( record { manageApiKeys = null; overrideProvider = null; logFilter = opt variant { ShowAll }; numSubnetNodes = null; mode = opt variant { Demo }; } )"
