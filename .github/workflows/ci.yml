@@ -12,6 +12,9 @@ on:
       - "README.md"
 env:
   CARGO_TERM_COLOR: always
+  IC_WASM_VERSION: "0.9.10"
+  ICP_CLI_VERSION: "0.1.0"
+  POCKET_IC_VERSION: "12.0.0"
   SOLANA_CLI_VERSION: "2.1.15"
   RUSTFLAGS: "-Dwarnings"
 
@@ -153,7 +156,7 @@ jobs:
 
       - name: 'Install icp-cli'
         run: |
-          npm install -g @icp-sdk/icp-cli@0.1.0 @icp-sdk/ic-wasm@0.9.10
+          npm install -g @icp-sdk/icp-cli@${ICP_CLI_VERSION} @icp-sdk/ic-wasm@${IC_WASM_VERSION}
 
       - name: 'Confirm icp-cli installation'
         run: icp --version
@@ -225,7 +228,7 @@ jobs:
       - name: 'Install PocketIC server'
         uses: dfinity/pocketic@main
         with:
-          pocket-ic-server-version: "12.0.0"
+          pocket-ic-server-version: ${POCKET_IC_VERSION}
 
       - name: 'Install Solana CLI'
         run: |
@@ -277,7 +280,7 @@ jobs:
 
       - name: 'Install icp-cli'
         run: |
-          npm install -g @icp-sdk/icp-cli@0.1.0 @icp-sdk/ic-wasm@0.9.10
+          npm install -g @icp-sdk/icp-cli@${ICP_CLI_VERSION} @icp-sdk/ic-wasm@${IC_WASM_VERSION}
 
       - name: 'Confirm icp-cli successful installation'
         run: icp --version
