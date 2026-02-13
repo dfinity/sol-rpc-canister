@@ -1,0 +1,36 @@
+canisters:
+  - name: basic_solana
+    build:
+      steps:
+        - type: script
+          commands:
+            - "./build.sh"
+            - "cp target/wasm32-unknown-unknown/release/basic_solana.wasm ${ICP_WASM_OUTPUT_PATH}"
+            - "ic-wasm \"$ICP_WASM_OUTPUT_PATH\" -o \"${ICP_WASM_OUTPUT_PATH}\" metadata \"candid:service\" -f basic_solana.did -v public --keep-name-section"
+  - name: sol_rpc
+    build:
+      steps:
+        - type: script
+          commands:
+            - "./build.sh \"../../canister/Cargo.toml\""
+            - "cp ../../target/wasm32-unknown-unknown/release/sol_rpc_canister.wasm ${ICP_WASM_OUTPUT_PATH}"
+            - "ic-wasm \"$ICP_WASM_OUTPUT_PATH\" -o \"${ICP_WASM_OUTPUT_PATH}\" metadata \"candid:service\" -f \"../../canister/sol_rpc_canister.did\" -v public --keep-name-section"
+            - command -v ic-wasm >/dev/null 2>&1 || { echo >&2 "ic-wasm not found. To install ic-wasm, see https://github.com/dfinity/ic-wasm \n"; exit 1; }
+            - ic-wasm "$ICP_WASM_OUTPUT_PATH" -o "${ICP_WASM_OUTPUT_PATH}" shrink --keep-name-section
+            - command -v gzip >/dev/null 2>&1 || { echo >&2 "gzip not found. Please install gzip to compress build output. \n"; exit 1; }
+            - gzip --no-name "$ICP_WASM_OUTPUT_PATH"
+            - mv "${ICP_WASM_OUTPUT_PATH}.gz" "$ICP_WASM_OUTPUT_PATH"
+
+environments:
+  - name: mainnet
+    network: ic
+    canisters: [basic_solana]
+    init_args:
+      basic_solana: "( record { solana_network = opt variant { Devnet }; ed25519_key_name = opt variant { MainnetTestKey1 } } )"
+
+  - name: local
+    network: local
+    canisters: [basic_solana, sol_rpc]
+    init_args:
+      basic_solana: "( record { solana_network = opt variant { Custom = record { url = \"https://api.devnet.solana.com\"; headers = null } }; ed25519_key_name = opt variant { LocalDevelopment } } )"
+      sol_rpc: "( record { manageApiKeys = null; overrideProvider = null; logFilter = opt variant { ShowAll }; numSubnetNodes = null; mode = opt variant { Demo }; } )"
