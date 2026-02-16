@@ -75,13 +75,13 @@ To deploy the Solana wallet smart contract locally, navigate to `examples/basic_
 following commands:
 
 ```bash
-icp network start --clean --background
+icp network start --background
 icp deploy --environment local
 ```
 
 What this does:
-- `dfx start --clean --background` starts a local instance of the ICP blockchain. 
-- `dfx deploy` deploys a Solana wallet canister as well as a SOL RPC canister, both locally. The Solana wallet canister interacts with
+- `icp network start --background` starts a local instance of the ICP blockchain. 
+- `icp deploy --environment local` deploys a Solana wallet canister as well as a SOL RPC canister, both locally. The Solana wallet canister interacts with
   the Solana Devnet via the local SOL RPC canister.
 
 > [!TIP]
@@ -256,7 +256,7 @@ icp identity new sender
 icp identity new recipient
 ```
 
-We have to make sure the Solana accounts belonging to the new identities created above actually hold SOL to pay for transaction fees. For this, follow the instructions outlined in [Step 2](#step-2-generating-a-solana-account) and [Step 3](#step-3-receiving-sol) for each identity. You can switch between identities using the `icp identity use <IDENTITY_NAME>` command or specify the identity to use by adding the `--identity <IDENTITY_NAME>` flag to the `icp-cli` commands.
+We have to make sure the Solana accounts belonging to the new identities created above actually hold SOL to pay for transaction fees. For this, follow the instructions outlined in [Step 2](#step-2-generating-a-solana-account) and [Step 3](#step-3-receiving-sol) for each identity. You can switch between identities using the `icp identity default <IDENTITY_NAME>` command or specify the identity to use by adding the `--identity <IDENTITY_NAME>` flag to the `icp-cli` commands.
 
 To create the ATAs for the sender and
 recipient, you can run the following commands:
@@ -265,9 +265,9 @@ recipient, you can run the following commands:
 > If no principal is provided as the first argument, the caller's principal is used.
 
 ```bash
-icp identity use sender
+icp identity default sender
 icp canister --network ic call basic_solana create_associated_token_account '(null, "<TOKEN MINT ADDRESS>")'
-icp identity use recipient
+icp identity default recipient
 icp canister --network ic call basic_solana create_associated_token_account '(null, "<TOKEN MINT ADDRESS>")'
 ```
 
@@ -284,7 +284,7 @@ can for example get it by running the following command:
 > If no principal is provided as the first argument, the caller's principal is used.
 
 ```bash
-icp identity use sender
+icp identity default sender
 icp canister --network ic call basic_solana associated_token_account '(null, "<TOKEN MINT ADDRESS>")'
 ```
 
@@ -295,7 +295,7 @@ To transfer some tokens from the sender to the recipient, you can run the follow
 > Make sure to use the `RECIPIENT SOLANA ADDRESS`, not their ATA.
 
 ```bash
-icp identity use sender
+icp identity default sender
 icp canister --network ic call basic_solana send_spl_token '(null, "<TOKEN MINT ADDRESS>", "<RECIPIENT SOLANA ADDRESS>", <AMOUNT>)'
 ```
 
