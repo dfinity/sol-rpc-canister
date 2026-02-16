@@ -29,7 +29,7 @@ canlog = { version = "0.2.0", features = ["derive"] }
 ciborium = "0.2.2"
 const_format = "0.2.35"
 derive_more = { version = "2.1.1", features = ["from", "into"] }
-futures = "0.3.31"
+futures = "0.3.32"
 # Transitive dependency
 # See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
 getrandom = { version = "*", default-features = false, features = ["custom"] }
