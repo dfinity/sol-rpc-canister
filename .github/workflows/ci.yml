@@ -228,7 +228,7 @@ jobs:
       - name: 'Install PocketIC server'
         uses: dfinity/pocketic@main
         with:
-          pocket-ic-server-version: ${POCKET_IC_VERSION}
+          pocket-ic-server-version: ${{ env.POCKET_IC_VERSION }}
 
       - name: 'Install Solana CLI'
         run: |
