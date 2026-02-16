@@ -3235,6 +3235,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
+name = "pastey"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b867cad97c0791bbd3aaa6472142568c6c9e8f71937e98379f584cfb0cf35bec"
+
+[[package]]
 name = "pbkdf2"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4773,7 +4779,7 @@ dependencies = [
  "solana-program-error",
  "solana-sanitize",
  "solana-sha256-hasher",
- "wincode",
+ "wincode 0.2.5",
 ]
 
 [[package]]
@@ -5157,7 +5163,7 @@ dependencies = [
  "serde_derive",
  "solana-atomic-u64",
  "solana-sanitize",
- "wincode",
+ "wincode 0.2.5",
 ]
 
 [[package]]
@@ -5842,9 +5848,9 @@ dependencies = [
 
 [[package]]
 name = "solana-signature"
-version = "3.2.0"
+version = "3.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4028aeedd443d80f1dccbf64872593a80e6a9676ee9007f6eccb63b65983ebd"
+checksum = "132a93134f1262aa832f1849b83bec6c9945669b866da18661a427943b9e801e"
 dependencies = [
  "ed25519-dalek",
  "five8",
@@ -5852,7 +5858,7 @@ dependencies = [
  "serde-big-array",
  "serde_derive",
  "solana-sanitize",
- "wincode",
+ "wincode 0.4.4",
 ]
 
 [[package]]
@@ -7480,7 +7486,20 @@ dependencies = [
  "proc-macro2",
  "quote",
  "thiserror 2.0.18",
- "wincode-derive",
+ "wincode-derive 0.2.3",
+]
+
+[[package]]
+name = "wincode"
+version = "0.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "466e67917609b2d40a838a5b972d1a6237c9749600cb8de8f65559b90d48485b"
+dependencies = [
+ "pastey",
+ "proc-macro2",
+ "quote",
+ "thiserror 2.0.18",
+ "wincode-derive 0.4.2",
 ]
 
 [[package]]
@@ -7488,6 +7507,18 @@ name = "wincode-derive"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8961eb04054a1b2e026b5628e24da7e001350249a787e1a85aa961f33dc5f286"
+dependencies = [
+ "darling 0.21.3",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.114",
+]
+
+[[package]]
+name = "wincode-derive"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26a7a568eda854acc9945ed136a9d50b8c6d31911584624958808ae96eee3912"
 dependencies = [
  "darling 0.21.3",
  "proc-macro2",
