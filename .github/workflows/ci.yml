@@ -172,7 +172,7 @@ jobs:
       - name: 'Install idl2json'
         uses: taiki-e/install-action@v2
         with:
-          tool: idl2json_cli
+          tool: idl2json_cli@0.10.1
 
       - name: "Deploy locally and test with icp-cli"
         working-directory: examples/basic_solana
@@ -203,7 +203,7 @@ jobs:
       - name: 'Install `ic-wasm`'
         uses: taiki-e/install-action@v2
         with:
-          tool: ic-wasm
+          tool: ic-wasm@${IC_WASM_VERSION}
 
       - name: 'Check canister endpoints'
         run: |
