@@ -8,9 +8,6 @@ type InitArg = record {
     // EdDSA keys will be derived from this key.
     // If not specified, the value is set to `TestKeyLocalDevelopment`.
     ed25519_key_name : opt Ed25519KeyName;
-    // The canister will interact with this SOL RPC canister.
-    // If not specified, the value is set to `tghme-zyaaa-aaaar-qarca-cai`.
-    sol_rpc_canister_id : opt principal;
 };
 
 type SolanaNetwork = variant {
@@ -53,7 +50,7 @@ type CommitmentLevel = variant {
 };
 
 type Ed25519KeyName = variant {
-    // For local development with `dfx`.
+    // For local development with `icp-cli`.
     LocalDevelopment;
     // For testing with the Internet Computer's test key.
     MainnetTestKey1;
