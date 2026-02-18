@@ -11,6 +11,7 @@ jobs:
     permissions:
       pull-requests: write
       contents: write
+      id-token: write # Required for OIDC token exchange
     concurrency:
       group: publish
       cancel-in-progress: true
@@ -67,6 +68,10 @@ jobs:
       - name: "Install parse-changelog"
         uses: taiki-e/install-action@parse-changelog
 
+      - name: "Authenticate with crates.io"
+        id: auth
+        uses: rust-lang/crates-io-auth-action@v1
+
       - name: "Run release-plz"
         id: release-plz
         uses: release-plz/action@bbd1afc9813d25602e002b29e96e0aacebab1160 # v0.5.105
@@ -75,7 +80,7 @@ jobs:
           version: 0.3.142
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
 
       - name: "Generate Github release body"
         env:
