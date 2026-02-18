@@ -5,13 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.0.1] - 2026-02-18
+## [5.0.0] - 2026-02-18
 
 ### Changed
 
-- Update Cargo.toml dependencies
-
-[4.0.1]: https://github.com/dfinity/sol-rpc-canister/compare/4.0.0..4.0.1
+- **BREAKING:** Bump `ic-canister-runtime` to v0.2.0. See PR description for more details on the breaking changes. ([#288](https://github.com/dfinity/sol-rpc-canister/pull/288))
+- Upgrade various dependencies ([#266](https://github.com/dfinity/sol-rpc-canister/pull/266) and [#279](https://github.com/dfinity/sol-rpc-canister/pull/279))
 
 ## [4.0.0] - 2026-01-12
 
@@ -24,8 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **BREAKING:** Calculate default request cost before sending. See PR description for more details on the breaking changes. ([#256](https://github.com/dfinity/sol-rpc-canister/pull/256))
-
-[4.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/3.0.0..4.0.0
 
 ## [3.0.0] - 2025-08-29
 
@@ -94,6 +91,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use a default commitment level for requests made by the client ([#77](https://github.com/dfinity/sol-rpc-canister/pull/77))
 - Add Rust documentation tests for the client ([#65](https://github.com/dfinity/sol-rpc-canister/pull/65))
 
+[5.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_client-v4.0.0..sol_rpc_client-v5.0.0
+[4.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_client-v3.0.0..sol_rpc_client-v4.0.0
 [3.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_client-v2.0.0...sol_rpc_client-v3.0.0
 [2.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/v1.0.0...sol_rpc_client-v2.0.0
 [1.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/v0.2.0...v1.0.0

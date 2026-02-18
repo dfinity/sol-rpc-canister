@@ -4569,7 +4569,7 @@ dependencies = [
 
 [[package]]
 name = "sol_rpc_client"
-version = "4.0.1"
+version = "5.0.0"
 dependencies = [
  "assert_matches",
  "bincode",
