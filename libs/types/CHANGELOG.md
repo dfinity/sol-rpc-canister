@@ -18,8 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `ic-cdk` to v0.19.0 ([#251](https://github.com/dfinity/sol-rpc-canister/pull/251))
 - Upgrade various dependencies ([#260](https://github.com/dfinity/sol-rpc-canister/pull/260))
 
-[3.1.0]: https://github.com/dfinity/sol-rpc-canister/compare/3.0.0..3.1.0
-
 ## [3.0.0] - 2025-08-29
 
 ### Changed
@@ -73,7 +71,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add logging ([#13](https://github.com/dfinity/sol-rpc-canister/pull/13))
 - Add support for override providers for local testing ([#12](https://github.com/dfinity/sol-rpc-canister/pull/12))
 
-[3.1.1]: https://github.com/dfinity/sol-rpc-canister/compare/3.1.0..3.1.1
+[3.1.1]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_types-v3.1.0..sol_rpc_types-v3.1.1
+[3.1.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_types-v3.0.0..sol_rpc_types-v3.1.0
 [3.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_types-v2.0.0...sol_rpc_types-v3.0.0
 [2.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/v1.0.0...sol_rpc_types-v2.0.0
 [1.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/v0.2.0...v1.0.0
