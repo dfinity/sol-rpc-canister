@@ -63,7 +63,7 @@ serde_tuple = "1.1.3"
 serde_with = "3.16.1"
 sol_rpc_client = { version = "5.0.0", path = "libs/client" }
 sol_rpc_types = { version = "3.1.1", path = "libs/types" }
-solana-account = "3.4.0"
+solana-account = "4.0.0"
 solana-account-decoder-client-types = "3.1.8"
 solana-client = "3.1.8"
 solana-clock = "3.0.0"
