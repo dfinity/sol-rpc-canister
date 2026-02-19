@@ -48,7 +48,7 @@ ic-pocket-canister-runtime = "0.4.0"
 ic-stable-structures = "0.7.2"
 ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", tag = "release-2025-01-23_03-04-base" }
 maplit = "1.0.2"
-minicbor = { version = "1.1.0", features = ["alloc", "derive"] }
+minicbor = { version = "2.2.0", features = ["alloc", "derive"] }
 num = "0.4.3"
 num-traits = "0.2.19"
 pocket-ic = "12.0.0"
