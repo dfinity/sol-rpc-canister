@@ -86,7 +86,7 @@ solana-transaction = "3.1.0"
 solana-transaction-error = "3.0.0"
 solana-transaction-status-client-types = { version = ">=3.1.6, <3.2.0", features = ["agave-unstable-api"] }
 spl-associated-token-account-interface = "2.0.0"
-strum = { version = "0.27.2", features = ["derive"] }
+strum = { version = "0.28.0", features = ["derive"] }
 thiserror = "2.0.18"
 tokio = "1.49.0"
 tower = "0.5.3"
