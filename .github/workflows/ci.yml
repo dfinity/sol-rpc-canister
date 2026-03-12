@@ -29,7 +29,7 @@ jobs:
           cargo clippy --locked --verbose --target wasm32-unknown-unknown -p sol_rpc_canister -- -D clippy::all
 
       - name: 'Install cargo-sort'
-        run: cargo install cargo-sort
+        run: cargo install cargo-sort@2.0.2
 
       - name: 'Check Cargo.toml'
         run: cargo sort --workspace --check
