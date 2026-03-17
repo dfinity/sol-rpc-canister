@@ -141,7 +141,8 @@ use crate::request::{
     SendTransactionRequest, SendTransactionRequestBuilder,
 };
 use candid::{CandidType, Principal};
-use ic_canister_runtime::{IcError, IcRuntime, Runtime};
+pub use ic_canister_runtime::IcError;
+use ic_canister_runtime::{IcRuntime, Runtime};
 pub use request::{
     DefaultRequestCycles, EstimateBlockhashRequestBuilder, EstimateRecentBlockhashError, Request,
     RequestBuilder, SolRpcConfig, SolRpcEndpoint, SolRpcRequest,
