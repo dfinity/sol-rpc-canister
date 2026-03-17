@@ -193,6 +193,175 @@ mod get_block_tests {
     }
 }
 
+mod estimate_recent_blockhash_tests {
+    use super::*;
+    use sol_rpc_client::EstimateRecentBlockhashError;
+    use solana_hash::Hash;
+    use std::num::NonZeroUsize;
+
+    const TEST_BLOCKHASH: &str = "8QeCusqSTKeC23NwjTKRBDcPuEfVLtszkxbpL6mXQEp4";
+
+    fn estimate_blockhash_get_slot_request() -> JsonRpcRequestMatcher {
+        JsonRpcRequestMatcher::with_method("getSlot")
+            .with_params(json!([null]))
+            .with_id(0)
+    }
+
+    fn estimate_blockhash_get_block_request(slot: Slot) -> JsonRpcRequestMatcher {
+        JsonRpcRequestMatcher::with_method("getBlock")
+            .with_params(json!([
+                slot,
+                {
+                    "transactionDetails": "none",
+                    "rewards": false,
+                    "maxSupportedTransactionVersion": 0
+                }
+            ]))
+            .with_id(0)
+    }
+
+    fn estimate_blockhash_get_block_response(blockhash: &str) -> JsonRpcResponse {
+        JsonRpcResponse::from(json!({
+            "id": Id::from(ConstantSizeId::ZERO),
+            "jsonrpc": "2.0",
+            "result": {
+                "blockHeight": 360854634,
+                "blockTime": 1744122369,
+                "parentSlot": 372877611,
+                "blockhash": blockhash,
+                "previousBlockhash": "4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3"
+            }
+        }))
+    }
+
+    #[tokio::test]
+    async fn should_get_recent_blockhash() {
+        let expected_hash = Hash::from_str(TEST_BLOCKHASH).unwrap();
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        let slot: Slot = 372877612;
+        let rounded_slot = slot - (slot % 20);
+
+        let mocks = MockHttpOutcallsBuilder::new()
+            // getSlot responses (IDs 0, 1, 2)
+            .given(estimate_blockhash_get_slot_request().with_id(0))
+            .respond_with(get_slot_response(slot).with_id(0))
+            .given(estimate_blockhash_get_slot_request().with_id(1))
+            .respond_with(get_slot_response(slot).with_id(1))
+            .given(estimate_blockhash_get_slot_request().with_id(2))
+            .respond_with(get_slot_response(slot).with_id(2))
+            // getBlock responses (IDs 3, 4, 5)
+            .given(estimate_blockhash_get_block_request(rounded_slot).with_id(3))
+            .respond_with(estimate_blockhash_get_block_response(TEST_BLOCKHASH).with_id(3))
+            .given(estimate_blockhash_get_block_request(rounded_slot).with_id(4))
+            .respond_with(estimate_blockhash_get_block_response(TEST_BLOCKHASH).with_id(4))
+            .given(estimate_blockhash_get_block_request(rounded_slot).with_id(5))
+            .respond_with(estimate_blockhash_get_block_response(TEST_BLOCKHASH).with_id(5));
+
+        let client = setup.client(mocks).build();
+
+        let result = client.estimate_recent_blockhash().send().await;
+
+        assert_eq!(result, Ok(expected_hash));
+
+        setup.drop().await;
+    }
+
+    #[tokio::test]
+    async fn should_not_try_again_to_get_recent_blockhash() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        let slot: Slot = 372877612;
+        let rounded_slot = slot - (slot % 20);
+
+        let mocks = MockHttpOutcallsBuilder::new()
+            // getSlot responses (IDs 0, 1, 2)
+            .given(estimate_blockhash_get_slot_request().with_id(0))
+            .respond_with(get_slot_response(slot).with_id(0))
+            .given(estimate_blockhash_get_slot_request().with_id(1))
+            .respond_with(get_slot_response(slot).with_id(1))
+            .given(estimate_blockhash_get_slot_request().with_id(2))
+            .respond_with(get_slot_response(slot).with_id(2))
+            // getBlock responses - block not found (IDs 3, 4, 5)
+            .given(estimate_blockhash_get_block_request(rounded_slot).with_id(3))
+            .respond_with(not_found_response().with_id(3))
+            .given(estimate_blockhash_get_block_request(rounded_slot).with_id(4))
+            .respond_with(not_found_response().with_id(4))
+            .given(estimate_blockhash_get_block_request(rounded_slot).with_id(5))
+            .respond_with(not_found_response().with_id(5));
+
+        let client = setup.client(mocks).build();
+
+        let result = client
+            .estimate_recent_blockhash()
+            .with_num_tries(NonZeroUsize::MIN)
+            .send()
+            .await;
+
+        assert_eq!(
+            result,
+            Err(vec![EstimateRecentBlockhashError::MissingBlock(
+                rounded_slot
+            )])
+        );
+
+        setup.drop().await;
+    }
+
+    #[tokio::test]
+    async fn should_try_again_to_get_recent_blockhash() {
+        let expected_hash = Hash::from_str(TEST_BLOCKHASH).unwrap();
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        let slot1: Slot = 372877612;
+        let rounded_slot1 = slot1 - (slot1 % 20);
+        let slot2: Slot = 372877632;
+        let rounded_slot2 = slot2 - (slot2 % 20);
+
+        let mocks = MockHttpOutcallsBuilder::new()
+            // First attempt: getSlot (IDs 0, 1, 2)
+            .given(estimate_blockhash_get_slot_request().with_id(0))
+            .respond_with(get_slot_response(slot1).with_id(0))
+            .given(estimate_blockhash_get_slot_request().with_id(1))
+            .respond_with(get_slot_response(slot1).with_id(1))
+            .given(estimate_blockhash_get_slot_request().with_id(2))
+            .respond_with(get_slot_response(slot1).with_id(2))
+            // First attempt: getBlock - block not found (IDs 3, 4, 5)
+            .given(estimate_blockhash_get_block_request(rounded_slot1).with_id(3))
+            .respond_with(not_found_response().with_id(3))
+            .given(estimate_blockhash_get_block_request(rounded_slot1).with_id(4))
+            .respond_with(not_found_response().with_id(4))
+            .given(estimate_blockhash_get_block_request(rounded_slot1).with_id(5))
+            .respond_with(not_found_response().with_id(5))
+            // Second attempt: getSlot (IDs 6, 7, 8)
+            .given(estimate_blockhash_get_slot_request().with_id(6))
+            .respond_with(get_slot_response(slot2).with_id(6))
+            .given(estimate_blockhash_get_slot_request().with_id(7))
+            .respond_with(get_slot_response(slot2).with_id(7))
+            .given(estimate_blockhash_get_slot_request().with_id(8))
+            .respond_with(get_slot_response(slot2).with_id(8))
+            // Second attempt: getBlock - success (IDs 9, 10, 11)
+            .given(estimate_blockhash_get_block_request(rounded_slot2).with_id(9))
+            .respond_with(estimate_blockhash_get_block_response(TEST_BLOCKHASH).with_id(9))
+            .given(estimate_blockhash_get_block_request(rounded_slot2).with_id(10))
+            .respond_with(estimate_blockhash_get_block_response(TEST_BLOCKHASH).with_id(10))
+            .given(estimate_blockhash_get_block_request(rounded_slot2).with_id(11))
+            .respond_with(estimate_blockhash_get_block_response(TEST_BLOCKHASH).with_id(11));
+
+        let client = setup.client(mocks).build();
+
+        let result = client
+            .estimate_recent_blockhash()
+            .with_num_tries(NonZeroUsize::new(2).unwrap())
+            .send()
+            .await;
+
+        assert_eq!(result, Ok(expected_hash));
+
+        setup.drop().await;
+    }
+}
+
 mod get_slot_tests {
     use super::*;
 
