@@ -4,7 +4,7 @@
 
 use crate::ClientBuilder;
 use candid::CandidType;
-use ic_canister_runtime::StubRuntime;
+use ic_canister_runtime::{IcError, StubRuntime};
 use sol_rpc_types::{AccountData, AccountEncoding, AccountInfo};
 
 impl<R> ClientBuilder<R> {
@@ -29,6 +29,11 @@ impl ClientBuilder<StubRuntime> {
         stub_response: Out,
     ) -> ClientBuilder<StubRuntime> {
         self.with_runtime(|runtime| runtime.add_stub_response(stub_response))
+    }
+
+    /// Change the runtime to return the given stub error for all calls.
+    pub fn add_stub_error(self, stub_error: IcError) -> ClientBuilder<StubRuntime> {
+        self.with_runtime(|runtime| runtime.add_stub_error(stub_error))
     }
 }
 

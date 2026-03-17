@@ -252,6 +252,7 @@ fn should_set_request_parameters() {
 
 mod estimate_recent_blockhash {
     use super::*;
+    use ic_canister_runtime::IcError;
 
     #[tokio::test]
     async fn should_return_blockhash_on_success() {
@@ -399,6 +400,47 @@ mod estimate_recent_blockhash {
             Err(vec![EstimateRecentBlockhashError::GetBlockConsensusError(
                 expected_results
             )])
+        );
+    }
+
+    #[tokio::test]
+    async fn should_return_get_slot_ic_error() {
+        let error = IcError::CallPerformFailed;
+        let client = SolRpcClient::builder_for_ic()
+            .with_stub_responses()
+            .add_stub_error(error.clone())
+            .build();
+
+        let result = client
+            .estimate_recent_blockhash()
+            .with_num_tries(NonZeroUsize::MIN)
+            .send()
+            .await;
+
+        assert_eq!(
+            result,
+            Err(vec![EstimateRecentBlockhashError::IcError(error)])
+        );
+    }
+
+    #[tokio::test]
+    async fn should_return_get_block_ic_error() {
+        let error = IcError::CallPerformFailed;
+        let client = SolRpcClient::builder_for_ic()
+            .with_stub_responses()
+            .add_stub_response(MultiRpcResult::Consistent(Ok(SLOT)))
+            .add_stub_error(error.clone())
+            .build();
+
+        let result = client
+            .estimate_recent_blockhash()
+            .with_num_tries(NonZeroUsize::MIN)
+            .send()
+            .await;
+
+        assert_eq!(
+            result,
+            Err(vec![EstimateRecentBlockhashError::IcError(error)])
         );
     }
 
