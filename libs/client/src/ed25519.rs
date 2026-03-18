@@ -127,7 +127,7 @@ impl Ed25519KeyId {
 ///
 /// let recipient = pubkey!("BPebStjcgCPnWTK3FXZJ8KhqwNYLk9aubC9b4Cgqb6oE");
 ///
-/// let blockhash = client
+/// let (_slot, blockhash) = client
 ///     .estimate_recent_blockhash()
 ///     .send()
 ///     .await

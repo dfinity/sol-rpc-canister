@@ -319,7 +319,7 @@ async fn should_send_transaction() {
     let (sender, sender_balance_before) = setup.generate_keypair_and_fund_account();
     let (recipient, recipient_balance_before) = setup.generate_keypair_and_fund_account();
 
-    let blockhash = setup
+    let (_slot, blockhash) = setup
         .icp_client()
         .estimate_recent_blockhash()
         .send()

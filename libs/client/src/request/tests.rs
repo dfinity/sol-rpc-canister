@@ -268,7 +268,10 @@ mod estimate_recent_blockhash {
             .send()
             .await;
 
-        assert_eq!(result, Ok(solana_hash::Hash::from_str(BLOCKHASH).unwrap()));
+        assert_eq!(
+            result,
+            Ok((SLOT, solana_hash::Hash::from_str(BLOCKHASH).unwrap()))
+        );
     }
 
     #[tokio::test]
@@ -462,7 +465,10 @@ mod estimate_recent_blockhash {
             .send()
             .await;
 
-        assert_eq!(result, Ok(solana_hash::Hash::from_str(BLOCKHASH).unwrap()));
+        assert_eq!(
+            result,
+            Ok((SLOT, solana_hash::Hash::from_str(BLOCKHASH).unwrap()))
+        );
     }
 
     #[tokio::test]

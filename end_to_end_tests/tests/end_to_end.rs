@@ -191,12 +191,12 @@ impl CreateSolanaMessage for CreateMessageWithRecentBlockhash<'_> {
             instruction::transfer(&sender_pubkey, &recipient_pubkey, TRANSACTION_AMOUNT);
 
         // Fetch a recent blockhash
-        let blockhash = client
+        let (slot, blockhash) = client
             .estimate_recent_blockhash()
             .send()
             .await
             .expect("Failed to fetch recent blockhash");
-        println!("Fetched recent blockhash: {blockhash}");
+        println!("Fetched recent blockhash: {blockhash} at slot {slot}");
 
         Message::new_with_blockhash(
             &[set_cu_limit_ix, add_priority_fee_ix, transfer_ix],

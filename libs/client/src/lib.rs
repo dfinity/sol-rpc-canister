@@ -1024,12 +1024,14 @@ impl<R: Runtime> SolRpcClient<R> {
     ///     .build();
     ///
     /// // Try to fetch a slot and the corresponding block up to 3 times
-    /// let blockhash = client
+    /// let (slot, blockhash) = client
     ///     .estimate_recent_blockhash()
     ///     .send()
-    ///     .await;
+    ///     .await
+    ///     .unwrap();
     ///
-    /// assert_eq!(blockhash, Ok(Hash::from_str("C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY").unwrap()));
+    /// assert_eq!(slot, 332_577_897_u64);
+    /// assert_eq!(blockhash, Hash::from_str("C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY").unwrap());
     /// # Ok(())
     /// # }
     /// ```
