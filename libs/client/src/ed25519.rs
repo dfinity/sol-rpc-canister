@@ -129,7 +129,7 @@ impl Ed25519KeyId {
 ///
 /// let blockhash = client
 ///     .estimate_recent_blockhash()
-///     .send()
+///     .try_send()
 ///     .await
 ///     .expect("Failed to fetch recent blockhash");
 ///

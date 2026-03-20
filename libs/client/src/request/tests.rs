@@ -265,7 +265,7 @@ mod estimate_recent_blockhash {
         let result = client
             .estimate_recent_blockhash()
             .with_num_tries(NonZeroUsize::MIN)
-            .send()
+            .try_send()
             .await;
 
         assert_eq!(result, Ok(solana_hash::Hash::from_str(BLOCKHASH).unwrap()));
@@ -282,7 +282,7 @@ mod estimate_recent_blockhash {
         let result = client
             .estimate_recent_blockhash()
             .with_num_tries(NonZeroUsize::MIN)
-            .send()
+            .try_send()
             .await;
 
         assert_eq!(
@@ -302,7 +302,7 @@ mod estimate_recent_blockhash {
         let result = client
             .estimate_recent_blockhash()
             .with_num_tries(NonZeroUsize::MIN)
-            .send()
+            .try_send()
             .await;
 
         assert_eq!(
@@ -325,7 +325,7 @@ mod estimate_recent_blockhash {
         let result = client
             .estimate_recent_blockhash()
             .with_num_tries(NonZeroUsize::MIN)
-            .send()
+            .try_send()
             .await;
 
         assert_eq!(
@@ -354,7 +354,7 @@ mod estimate_recent_blockhash {
         let result = client
             .estimate_recent_blockhash()
             .with_num_tries(NonZeroUsize::MIN)
-            .send()
+            .try_send()
             .await;
 
         assert_eq!(
@@ -387,7 +387,7 @@ mod estimate_recent_blockhash {
         let result = client
             .estimate_recent_blockhash()
             .with_num_tries(NonZeroUsize::MIN)
-            .send()
+            .try_send()
             .await;
 
         // Convert ConfirmedBlock to UiConfirmedBlock for comparison
@@ -414,7 +414,7 @@ mod estimate_recent_blockhash {
         let result = client
             .estimate_recent_blockhash()
             .with_num_tries(NonZeroUsize::MIN)
-            .send()
+            .try_send()
             .await;
 
         assert_eq!(
@@ -435,7 +435,7 @@ mod estimate_recent_blockhash {
         let result = client
             .estimate_recent_blockhash()
             .with_num_tries(NonZeroUsize::MIN)
-            .send()
+            .try_send()
             .await;
 
         assert_eq!(
@@ -459,7 +459,7 @@ mod estimate_recent_blockhash {
         let result = client
             .estimate_recent_blockhash()
             .with_num_tries(NonZeroUsize::new(2).unwrap())
-            .send()
+            .try_send()
             .await;
 
         assert_eq!(result, Ok(solana_hash::Hash::from_str(BLOCKHASH).unwrap()));
@@ -480,7 +480,7 @@ mod estimate_recent_blockhash {
         let result = client
             .estimate_recent_blockhash()
             .with_num_tries(NonZeroUsize::new(2).unwrap())
-            .send()
+            .try_send()
             .await;
 
         assert_eq!(
