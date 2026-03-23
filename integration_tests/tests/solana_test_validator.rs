@@ -319,12 +319,13 @@ async fn should_send_transaction() {
     let (sender, sender_balance_before) = setup.generate_keypair_and_fund_account();
     let (recipient, recipient_balance_before) = setup.generate_keypair_and_fund_account();
 
-    let (_slot, blockhash) = setup
+    let (_slot, block) = setup
         .icp_client()
-        .estimate_recent_blockhash()
+        .get_recent_block()
         .try_send()
         .await
         .unwrap();
+    let blockhash: solana_hash::Hash = block.blockhash.parse().unwrap();
 
     let transaction_amount = 1_000;
     let instruction =

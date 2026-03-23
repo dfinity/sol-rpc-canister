@@ -17,12 +17,10 @@ use sol_rpc_types::{
     TokenAmount, TransactionDetails, TransactionStatus,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
-use solana_hash::Hash;
 use solana_transaction_status_client_types::UiConfirmedBlock;
 use std::{
     fmt::{Debug, Formatter},
     num::NonZeroUsize,
-    str::FromStr,
 };
 use strum::EnumIter;
 use thiserror::Error;
@@ -1122,10 +1120,10 @@ fn set_default<T>(default_value: Option<T>, value: &mut Option<T>) {
     }
 }
 
-/// An error that occurred while trying to fetch a recent blockhash.
-/// See [`SolRpcClient::estimate_recent_blockhash`]
+/// An error that occurred while trying to fetch a recent block.
+/// See [`SolRpcClient::get_recent_block`]
 #[derive(Debug, Clone, PartialEq, Error)]
-pub enum EstimateRecentBlockhashError {
+pub enum GetRecentBlockError {
     /// The results from the different providers were not consistent for a `getSlot` call.
     #[error("Inconsistent result while fetching slot: {0:?}")]
     GetSlotConsensusError(Vec<(RpcSource, RpcResult<Slot>)>),
@@ -1146,23 +1144,23 @@ pub enum EstimateRecentBlockhashError {
     IcError(IcError),
 }
 
-type EstimateRecentBlockhashResult<T> = Result<T, EstimateRecentBlockhashError>;
+type GetRecentBlockResult<T> = Result<T, GetRecentBlockError>;
 
-/// A builder to build a request to fetch a recent blockhash.
-/// See [`SolRpcClient::estimate_recent_blockhash`].
-#[must_use = "EstimateBlockhashRequestBuilder does nothing until you 'send' it"]
-pub struct EstimateBlockhashRequestBuilder<R> {
+/// A builder to build a request to fetch a recent block.
+/// See [`SolRpcClient::get_recent_block`].
+#[must_use = "GetRecentBlockRequestBuilder does nothing until you 'send' it"]
+pub struct GetRecentBlockRequestBuilder<R> {
     client: SolRpcClient<R>,
     num_tries: NonZeroUsize,
     rounding_error: Option<RoundingError>,
     rpc_config: Option<RpcConfig>,
 }
 
-impl<R> EstimateBlockhashRequestBuilder<R> {
-    /// Create a new [`EstimateBlockhashRequestBuilder`] request with the given [`SolRpcClient`]
+impl<R> GetRecentBlockRequestBuilder<R> {
+    /// Create a new [`GetRecentBlockRequestBuilder`] request with the given [`SolRpcClient`]
     /// and default parameters.
     ///
-    /// The maximum number of attempts that will be performed to retrieve a blockhash is set to 3.
+    /// The maximum number of attempts that will be performed to retrieve a recent block is set to 3.
     pub fn new(client: SolRpcClient<R>) -> Self {
         Self {
             client,
@@ -1172,7 +1170,7 @@ impl<R> EstimateBlockhashRequestBuilder<R> {
         }
     }
 
-    /// Sets the maximum number of attempts that will be performed to retrieve a blockhash.
+    /// Sets the maximum number of attempts that will be performed to retrieve a recent block.
     ///
     /// Each attempt consists of at most one `getSlot` and one `getBlock` call, such that the
     /// maximum number of RPC calls performed is `2 * num_tries`.
@@ -1196,18 +1194,18 @@ impl<R> EstimateBlockhashRequestBuilder<R> {
     }
 }
 
-impl<R: Runtime> EstimateBlockhashRequestBuilder<R> {
-    /// Constructs the required [`getSlot`] and [`getBlock`] requests and try to estimate
-    /// a recent blockhash using the [`SolRpcClient`], possibly with re-tries (see the
-    /// [`estimate_recent_blockhash`] method).
+impl<R: Runtime> GetRecentBlockRequestBuilder<R> {
+    /// Constructs the required [`getSlot`] and [`getBlock`] requests and tries to fetch
+    /// a recent block using the [`SolRpcClient`], possibly with re-tries (see the
+    /// [`get_recent_block`] method).
     ///
     /// [`getSlot`]: https://solana.com/docs/rpc/http/getslot
     /// [`getBlock`]: https://solana.com/docs/rpc/http/getblock
-    /// [`estimate_recent_blockhash`]: SolRpcClient::estimate_recent_blockhash
-    pub async fn try_send(self) -> Result<(Slot, Hash), Vec<EstimateRecentBlockhashError>> {
+    /// [`get_recent_block`]: SolRpcClient::get_recent_block
+    pub async fn try_send(self) -> Result<(Slot, UiConfirmedBlock), Vec<GetRecentBlockError>> {
         let mut errors = Vec::with_capacity(self.num_tries.into());
         while errors.len() < usize::from(self.num_tries) {
-            match self.get_slot_then_get_blockhash().await {
+            match self.get_slot_then_get_block().await {
                 Ok(result) => return Ok(result),
                 Err(error) => errors.push(error),
             }
@@ -1215,16 +1213,15 @@ impl<R: Runtime> EstimateBlockhashRequestBuilder<R> {
         Err(errors)
     }
 
-    async fn get_slot_then_get_blockhash(&self) -> EstimateRecentBlockhashResult<(Slot, Hash)> {
+    async fn get_slot_then_get_block(
+        &self,
+    ) -> GetRecentBlockResult<(Slot, UiConfirmedBlock)> {
         let slot = self.get_slot().await?;
         let block = self.get_block(slot).await?;
-        match Hash::from_str(&block.blockhash) {
-            Ok(blockhash) => Ok((slot, blockhash)),
-            Err(e) => Err(EstimateRecentBlockhashError::GetBlockRpcError(e.into())),
-        }
+        Ok((slot, block))
     }
 
-    async fn get_slot(&self) -> EstimateRecentBlockhashResult<Slot> {
+    async fn get_slot(&self) -> GetRecentBlockResult<Slot> {
         let mut request = self.client.get_slot();
         if let Some(rpc_config) = self.rpc_config.as_ref() {
             request = request.with_rpc_config(rpc_config.clone());
@@ -1235,16 +1232,16 @@ impl<R: Runtime> EstimateBlockhashRequestBuilder<R> {
         match request.try_send().await {
             Ok(MultiRpcResult::Consistent(Ok(slot))) => Ok(slot),
             Ok(MultiRpcResult::Consistent(Err(e))) => {
-                Err(EstimateRecentBlockhashError::GetSlotRpcError(e))
+                Err(GetRecentBlockError::GetSlotRpcError(e))
             }
             Ok(MultiRpcResult::Inconsistent(results)) => {
-                Err(EstimateRecentBlockhashError::GetSlotConsensusError(results))
+                Err(GetRecentBlockError::GetSlotConsensusError(results))
             }
-            Err(e) => Err(EstimateRecentBlockhashError::IcError(e)),
+            Err(e) => Err(GetRecentBlockError::IcError(e)),
         }
     }
 
-    async fn get_block(&self, slot: Slot) -> EstimateRecentBlockhashResult<UiConfirmedBlock> {
+    async fn get_block(&self, slot: Slot) -> GetRecentBlockResult<UiConfirmedBlock> {
         let mut request = self
             .client
             .get_block(slot)
@@ -1257,15 +1254,15 @@ impl<R: Runtime> EstimateBlockhashRequestBuilder<R> {
         match request.try_send().await {
             Ok(MultiRpcResult::Consistent(Ok(Some(block)))) => Ok(block),
             Ok(MultiRpcResult::Consistent(Ok(None))) => {
-                Err(EstimateRecentBlockhashError::MissingBlock(slot))
+                Err(GetRecentBlockError::MissingBlock(slot))
             }
             Ok(MultiRpcResult::Consistent(Err(e))) => {
-                Err(EstimateRecentBlockhashError::GetBlockRpcError(e))
+                Err(GetRecentBlockError::GetBlockRpcError(e))
             }
-            Ok(MultiRpcResult::Inconsistent(results)) => Err(
-                EstimateRecentBlockhashError::GetBlockConsensusError(results),
-            ),
-            Err(e) => Err(EstimateRecentBlockhashError::IcError(e)),
+            Ok(MultiRpcResult::Inconsistent(results)) => {
+                Err(GetRecentBlockError::GetBlockConsensusError(results))
+            }
+            Err(e) => Err(GetRecentBlockError::IcError(e)),
         }
     }
 }

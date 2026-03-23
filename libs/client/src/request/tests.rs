@@ -1,4 +1,4 @@
-use crate::{EstimateRecentBlockhashError, RequestBuilder, SolRpcClient, SolRpcEndpoint};
+use crate::{GetRecentBlockError, RequestBuilder, SolRpcClient, SolRpcEndpoint};
 use serde_json::json;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
@@ -250,12 +250,12 @@ fn should_set_request_parameters() {
     }
 }
 
-mod estimate_recent_blockhash {
+mod get_recent_block {
     use super::*;
     use ic_canister_runtime::IcError;
 
     #[tokio::test]
-    async fn should_return_blockhash_on_success() {
+    async fn should_return_block_on_success() {
         let client = SolRpcClient::builder_for_ic()
             .with_stub_responses()
             .add_stub_response(MultiRpcResult::Consistent(Ok(SLOT)))
@@ -263,14 +263,14 @@ mod estimate_recent_blockhash {
             .build();
 
         let result = client
-            .estimate_recent_blockhash()
+            .get_recent_block()
             .with_num_tries(NonZeroUsize::MIN)
             .try_send()
             .await;
 
         assert_eq!(
             result,
-            Ok((SLOT, solana_hash::Hash::from_str(BLOCKHASH).unwrap()))
+            Ok((SLOT, solana_transaction_status_client_types::UiConfirmedBlock::from(block())))
         );
     }
 
@@ -283,14 +283,14 @@ mod estimate_recent_blockhash {
             .build();
 
         let result = client
-            .estimate_recent_blockhash()
+            .get_recent_block()
             .with_num_tries(NonZeroUsize::MIN)
             .try_send()
             .await;
 
         assert_eq!(
             result,
-            Err(vec![EstimateRecentBlockhashError::MissingBlock(SLOT)])
+            Err(vec![GetRecentBlockError::MissingBlock(SLOT)])
         );
     }
 
@@ -303,14 +303,14 @@ mod estimate_recent_blockhash {
             .build();
 
         let result = client
-            .estimate_recent_blockhash()
+            .get_recent_block()
             .with_num_tries(NonZeroUsize::MIN)
             .try_send()
             .await;
 
         assert_eq!(
             result,
-            Err(vec![EstimateRecentBlockhashError::GetSlotRpcError(error)])
+            Err(vec![GetRecentBlockError::GetSlotRpcError(error)])
         );
     }
 
@@ -326,14 +326,14 @@ mod estimate_recent_blockhash {
             .build();
 
         let result = client
-            .estimate_recent_blockhash()
+            .get_recent_block()
             .with_num_tries(NonZeroUsize::MIN)
             .try_send()
             .await;
 
         assert_eq!(
             result,
-            Err(vec![EstimateRecentBlockhashError::GetBlockRpcError(error)])
+            Err(vec![GetRecentBlockError::GetBlockRpcError(error)])
         );
     }
 
@@ -355,14 +355,14 @@ mod estimate_recent_blockhash {
             .build();
 
         let result = client
-            .estimate_recent_blockhash()
+            .get_recent_block()
             .with_num_tries(NonZeroUsize::MIN)
             .try_send()
             .await;
 
         assert_eq!(
             result,
-            Err(vec![EstimateRecentBlockhashError::GetSlotConsensusError(
+            Err(vec![GetRecentBlockError::GetSlotConsensusError(
                 inconsistent_results
             )])
         );
@@ -388,7 +388,7 @@ mod estimate_recent_blockhash {
             .build();
 
         let result = client
-            .estimate_recent_blockhash()
+            .get_recent_block()
             .with_num_tries(NonZeroUsize::MIN)
             .try_send()
             .await;
@@ -400,7 +400,7 @@ mod estimate_recent_blockhash {
             .collect();
         assert_eq!(
             result,
-            Err(vec![EstimateRecentBlockhashError::GetBlockConsensusError(
+            Err(vec![GetRecentBlockError::GetBlockConsensusError(
                 expected_results
             )])
         );
@@ -415,14 +415,14 @@ mod estimate_recent_blockhash {
             .build();
 
         let result = client
-            .estimate_recent_blockhash()
+            .get_recent_block()
             .with_num_tries(NonZeroUsize::MIN)
             .try_send()
             .await;
 
         assert_eq!(
             result,
-            Err(vec![EstimateRecentBlockhashError::IcError(error)])
+            Err(vec![GetRecentBlockError::IcError(error)])
         );
     }
 
@@ -436,14 +436,14 @@ mod estimate_recent_blockhash {
             .build();
 
         let result = client
-            .estimate_recent_blockhash()
+            .get_recent_block()
             .with_num_tries(NonZeroUsize::MIN)
             .try_send()
             .await;
 
         assert_eq!(
             result,
-            Err(vec![EstimateRecentBlockhashError::IcError(error)])
+            Err(vec![GetRecentBlockError::IcError(error)])
         );
     }
 
@@ -460,14 +460,14 @@ mod estimate_recent_blockhash {
             .build();
 
         let result = client
-            .estimate_recent_blockhash()
+            .get_recent_block()
             .with_num_tries(NonZeroUsize::new(2).unwrap())
             .try_send()
             .await;
 
         assert_eq!(
             result,
-            Ok((SLOT, solana_hash::Hash::from_str(BLOCKHASH).unwrap()))
+            Ok((SLOT, solana_transaction_status_client_types::UiConfirmedBlock::from(block())))
         );
     }
 
@@ -484,7 +484,7 @@ mod estimate_recent_blockhash {
             .build();
 
         let result = client
-            .estimate_recent_blockhash()
+            .get_recent_block()
             .with_num_tries(NonZeroUsize::new(2).unwrap())
             .try_send()
             .await;
@@ -492,8 +492,8 @@ mod estimate_recent_blockhash {
         assert_eq!(
             result,
             Err(vec![
-                EstimateRecentBlockhashError::GetSlotRpcError(error1),
-                EstimateRecentBlockhashError::GetSlotRpcError(error2),
+                GetRecentBlockError::GetSlotRpcError(error1),
+                GetRecentBlockError::GetSlotRpcError(error2),
             ])
         );
     }

@@ -190,12 +190,13 @@ impl CreateSolanaMessage for CreateMessageWithRecentBlockhash<'_> {
         let transfer_ix =
             instruction::transfer(&sender_pubkey, &recipient_pubkey, TRANSACTION_AMOUNT);
 
-        // Fetch a recent blockhash
-        let (slot, blockhash) = client
-            .estimate_recent_blockhash()
+        // Fetch a recent block
+        let (slot, block) = client
+            .get_recent_block()
             .try_send()
             .await
-            .expect("Failed to fetch recent blockhash");
+            .expect("Failed to fetch recent block");
+        let blockhash: solana_hash::Hash = block.blockhash.parse().expect("Invalid blockhash");
         println!("Fetched recent blockhash: {blockhash} at slot {slot}");
 
         Message::new_with_blockhash(
