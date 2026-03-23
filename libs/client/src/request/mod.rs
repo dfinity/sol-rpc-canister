@@ -1201,12 +1201,10 @@ impl<R: Runtime> EstimateBlockhashRequestBuilder<R> {
     /// a recent blockhash using the [`SolRpcClient`], possibly with re-tries (see the
     /// [`estimate_recent_blockhash`] method).
     ///
-    /// Returns a tuple containing the slot and the blockhash on success.
-    ///
     /// [`getSlot`]: https://solana.com/docs/rpc/http/getslot
     /// [`getBlock`]: https://solana.com/docs/rpc/http/getblock
     /// [`estimate_recent_blockhash`]: SolRpcClient::estimate_recent_blockhash
-    pub async fn send(self) -> Result<(Slot, Hash), Vec<EstimateRecentBlockhashError>> {
+    pub async fn try_send(self) -> Result<(Slot, Hash), Vec<EstimateRecentBlockhashError>> {
         let mut errors = Vec::with_capacity(self.num_tries.into());
         while errors.len() < usize::from(self.num_tries) {
             match self.get_slot_then_get_blockhash().await {

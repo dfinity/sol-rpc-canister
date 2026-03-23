@@ -193,7 +193,7 @@ impl CreateSolanaMessage for CreateMessageWithRecentBlockhash<'_> {
         // Fetch a recent blockhash
         let (slot, blockhash) = client
             .estimate_recent_blockhash()
-            .send()
+            .try_send()
             .await
             .expect("Failed to fetch recent blockhash");
         println!("Fetched recent blockhash: {blockhash} at slot {slot}");

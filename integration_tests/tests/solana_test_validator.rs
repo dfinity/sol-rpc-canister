@@ -322,7 +322,7 @@ async fn should_send_transaction() {
     let (_slot, blockhash) = setup
         .icp_client()
         .estimate_recent_blockhash()
-        .send()
+        .try_send()
         .await
         .unwrap();
 
