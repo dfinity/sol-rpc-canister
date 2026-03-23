@@ -4615,6 +4615,7 @@ dependencies = [
  "solana-client",
  "solana-commitment-config",
  "solana-compute-budget-interface",
+ "solana-hash 4.2.0",
  "solana-message",
  "solana-pubkey 4.1.0",
  "solana-signature",
