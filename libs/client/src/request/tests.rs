@@ -270,7 +270,10 @@ mod get_recent_block {
 
         assert_eq!(
             result,
-            Ok((SLOT, solana_transaction_status_client_types::UiConfirmedBlock::from(block())))
+            Ok((
+                SLOT,
+                solana_transaction_status_client_types::UiConfirmedBlock::from(block())
+            ))
         );
     }
 
@@ -288,10 +291,7 @@ mod get_recent_block {
             .try_send()
             .await;
 
-        assert_eq!(
-            result,
-            Err(vec![GetRecentBlockError::MissingBlock(SLOT)])
-        );
+        assert_eq!(result, Err(vec![GetRecentBlockError::MissingBlock(SLOT)]));
     }
 
     #[tokio::test]
@@ -420,10 +420,7 @@ mod get_recent_block {
             .try_send()
             .await;
 
-        assert_eq!(
-            result,
-            Err(vec![GetRecentBlockError::IcError(error)])
-        );
+        assert_eq!(result, Err(vec![GetRecentBlockError::IcError(error)]));
     }
 
     #[tokio::test]
@@ -441,10 +438,7 @@ mod get_recent_block {
             .try_send()
             .await;
 
-        assert_eq!(
-            result,
-            Err(vec![GetRecentBlockError::IcError(error)])
-        );
+        assert_eq!(result, Err(vec![GetRecentBlockError::IcError(error)]));
     }
 
     #[tokio::test]
@@ -467,7 +461,10 @@ mod get_recent_block {
 
         assert_eq!(
             result,
-            Ok((SLOT, solana_transaction_status_client_types::UiConfirmedBlock::from(block())))
+            Ok((
+                SLOT,
+                solana_transaction_status_client_types::UiConfirmedBlock::from(block())
+            ))
         );
     }
 

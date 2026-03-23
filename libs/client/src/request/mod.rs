@@ -1213,9 +1213,7 @@ impl<R: Runtime> GetRecentBlockRequestBuilder<R> {
         Err(errors)
     }
 
-    async fn get_slot_then_get_block(
-        &self,
-    ) -> GetRecentBlockResult<(Slot, UiConfirmedBlock)> {
+    async fn get_slot_then_get_block(&self) -> GetRecentBlockResult<(Slot, UiConfirmedBlock)> {
         let slot = self.get_slot().await?;
         let block = self.get_block(slot).await?;
         Ok((slot, block))
@@ -1231,9 +1229,7 @@ impl<R: Runtime> GetRecentBlockRequestBuilder<R> {
         }
         match request.try_send().await {
             Ok(MultiRpcResult::Consistent(Ok(slot))) => Ok(slot),
-            Ok(MultiRpcResult::Consistent(Err(e))) => {
-                Err(GetRecentBlockError::GetSlotRpcError(e))
-            }
+            Ok(MultiRpcResult::Consistent(Err(e))) => Err(GetRecentBlockError::GetSlotRpcError(e)),
             Ok(MultiRpcResult::Inconsistent(results)) => {
                 Err(GetRecentBlockError::GetSlotConsensusError(results))
             }
@@ -1256,9 +1252,7 @@ impl<R: Runtime> GetRecentBlockRequestBuilder<R> {
             Ok(MultiRpcResult::Consistent(Ok(None))) => {
                 Err(GetRecentBlockError::MissingBlock(slot))
             }
-            Ok(MultiRpcResult::Consistent(Err(e))) => {
-                Err(GetRecentBlockError::GetBlockRpcError(e))
-            }
+            Ok(MultiRpcResult::Consistent(Err(e))) => Err(GetRecentBlockError::GetBlockRpcError(e)),
             Ok(MultiRpcResult::Inconsistent(results)) => {
                 Err(GetRecentBlockError::GetBlockConsensusError(results))
             }
