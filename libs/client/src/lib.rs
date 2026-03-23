@@ -984,7 +984,7 @@ impl<R: Runtime> SolRpcClient<R> {
             .unwrap()
     }
 
-    /// Estimate a recent blockhash based on successive calls to `getSlot` and `getBlock`.
+    /// Fetch a recent block based on successive calls to `getSlot` and `getBlock`.
     ///
     /// Due to Solana's fast block time, the [`getLatestBlockhash`](https://solana.com/de/docs/rpc/http/getlatestblockhash)
     /// RPC method cannot directly be called by a canister running on the Internet Computer.
