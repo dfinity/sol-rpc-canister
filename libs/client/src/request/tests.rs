@@ -1,4 +1,4 @@
-use crate::{RequestBuilder, SolRpcClient, SolRpcEndpoint};
+use crate::{EstimateRecentBlockhashError, RequestBuilder, SolRpcClient, SolRpcEndpoint};
 use serde_json::json;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
@@ -7,13 +7,18 @@ use sol_rpc_types::{
     GetTransactionEncoding, GetTransactionParams, SendTransactionEncoding, SendTransactionParams,
     Slot, TransactionDetails,
 };
+use sol_rpc_types::{
+    ConfirmedBlock, Hash, MultiRpcResult, RpcError, RpcSource, SupportedRpcProviderId,
+};
 use solana_pubkey::{pubkey, Pubkey};
 use solana_signature::Signature;
-use std::{fmt::Debug, str::FromStr};
+use std::{fmt::Debug, num::NonZeroUsize, str::FromStr};
 use strum::IntoEnumIterator;
 
 const PUBKEY: Pubkey = pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+const BLOCKHASH: &str = "C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY";
 const MIN_CONTEXT_SLOT: Slot = 1144441;
+const SLOT: Slot = 332_577_897;
 
 #[test]
 fn should_set_correct_commitment_level() {
@@ -245,6 +250,249 @@ fn should_set_request_parameters() {
     }
 }
 
+mod estimate_recent_blockhash {
+    use super::*;
+    use ic_canister_runtime::IcError;
+
+    #[tokio::test]
+    async fn should_return_blockhash_on_success() {
+        let client = SolRpcClient::builder_for_ic()
+            .with_stub_responses()
+            .add_stub_response(MultiRpcResult::Consistent(Ok(SLOT)))
+            .add_stub_response(MultiRpcResult::Consistent(Ok(Some(block()))))
+            .build();
+
+        let result = client
+            .estimate_recent_blockhash()
+            .with_num_tries(NonZeroUsize::MIN)
+            .try_send()
+            .await;
+
+        assert_eq!(result, Ok(solana_hash::Hash::from_str(BLOCKHASH).unwrap()));
+    }
+
+    #[tokio::test]
+    async fn should_return_missing_block_error() {
+        let client = SolRpcClient::builder_for_ic()
+            .with_stub_responses()
+            .add_stub_response(MultiRpcResult::Consistent(Ok(SLOT)))
+            .add_stub_response(MultiRpcResult::Consistent(Ok(None::<ConfirmedBlock>)))
+            .build();
+
+        let result = client
+            .estimate_recent_blockhash()
+            .with_num_tries(NonZeroUsize::MIN)
+            .try_send()
+            .await;
+
+        assert_eq!(
+            result,
+            Err(vec![EstimateRecentBlockhashError::MissingBlock(SLOT)])
+        );
+    }
+
+    #[tokio::test]
+    async fn should_return_get_slot_rpc_error() {
+        let error = RpcError::ValidationError("getSlot error".to_string());
+        let client = SolRpcClient::builder_for_ic()
+            .with_stub_responses()
+            .add_stub_response(MultiRpcResult::Consistent(Err::<Slot, _>(error.clone())))
+            .build();
+
+        let result = client
+            .estimate_recent_blockhash()
+            .with_num_tries(NonZeroUsize::MIN)
+            .try_send()
+            .await;
+
+        assert_eq!(
+            result,
+            Err(vec![EstimateRecentBlockhashError::GetSlotRpcError(error)])
+        );
+    }
+
+    #[tokio::test]
+    async fn should_return_get_block_rpc_error() {
+        let error = RpcError::ValidationError("getBlock error".to_string());
+        let client = SolRpcClient::builder_for_ic()
+            .with_stub_responses()
+            .add_stub_response(MultiRpcResult::Consistent(Ok(SLOT)))
+            .add_stub_response(MultiRpcResult::Consistent(
+                Err::<Option<ConfirmedBlock>, _>(error.clone()),
+            ))
+            .build();
+
+        let result = client
+            .estimate_recent_blockhash()
+            .with_num_tries(NonZeroUsize::MIN)
+            .try_send()
+            .await;
+
+        assert_eq!(
+            result,
+            Err(vec![EstimateRecentBlockhashError::GetBlockRpcError(error)])
+        );
+    }
+
+    #[tokio::test]
+    async fn should_return_get_slot_consensus_error() {
+        let inconsistent_results = vec![
+            (
+                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
+                Ok(SLOT),
+            ),
+            (
+                RpcSource::Supported(SupportedRpcProviderId::AnkrMainnet),
+                Ok(SLOT + 1),
+            ),
+        ];
+        let client = SolRpcClient::builder_for_ic()
+            .with_stub_responses()
+            .add_stub_response(MultiRpcResult::Inconsistent(inconsistent_results.clone()))
+            .build();
+
+        let result = client
+            .estimate_recent_blockhash()
+            .with_num_tries(NonZeroUsize::MIN)
+            .try_send()
+            .await;
+
+        assert_eq!(
+            result,
+            Err(vec![EstimateRecentBlockhashError::GetSlotConsensusError(
+                inconsistent_results
+            )])
+        );
+    }
+
+    #[tokio::test]
+    async fn should_return_get_block_consensus_error() {
+        let block = block();
+        let inconsistent_results = vec![
+            (
+                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
+                Ok(Some(block.clone())),
+            ),
+            (
+                RpcSource::Supported(SupportedRpcProviderId::AnkrMainnet),
+                Ok(None),
+            ),
+        ];
+        let client = SolRpcClient::builder_for_ic()
+            .with_stub_responses()
+            .add_stub_response(MultiRpcResult::Consistent(Ok(SLOT)))
+            .add_stub_response(MultiRpcResult::Inconsistent(inconsistent_results.clone()))
+            .build();
+
+        let result = client
+            .estimate_recent_blockhash()
+            .with_num_tries(NonZeroUsize::MIN)
+            .try_send()
+            .await;
+
+        // Convert ConfirmedBlock to UiConfirmedBlock for comparison
+        let expected_results: Vec<_> = inconsistent_results
+            .into_iter()
+            .map(|(source, r)| (source, r.map(|opt| opt.map(Into::into))))
+            .collect();
+        assert_eq!(
+            result,
+            Err(vec![EstimateRecentBlockhashError::GetBlockConsensusError(
+                expected_results
+            )])
+        );
+    }
+
+    #[tokio::test]
+    async fn should_return_get_slot_ic_error() {
+        let error = IcError::CallPerformFailed;
+        let client = SolRpcClient::builder_for_ic()
+            .with_stub_responses()
+            .add_stub_error(error.clone())
+            .build();
+
+        let result = client
+            .estimate_recent_blockhash()
+            .with_num_tries(NonZeroUsize::MIN)
+            .try_send()
+            .await;
+
+        assert_eq!(
+            result,
+            Err(vec![EstimateRecentBlockhashError::IcError(error)])
+        );
+    }
+
+    #[tokio::test]
+    async fn should_return_get_block_ic_error() {
+        let error = IcError::CallPerformFailed;
+        let client = SolRpcClient::builder_for_ic()
+            .with_stub_responses()
+            .add_stub_response(MultiRpcResult::Consistent(Ok(SLOT)))
+            .add_stub_error(error.clone())
+            .build();
+
+        let result = client
+            .estimate_recent_blockhash()
+            .with_num_tries(NonZeroUsize::MIN)
+            .try_send()
+            .await;
+
+        assert_eq!(
+            result,
+            Err(vec![EstimateRecentBlockhashError::IcError(error)])
+        );
+    }
+
+    #[tokio::test]
+    async fn should_retry_on_error() {
+        let error = RpcError::ValidationError("first attempt fails".to_string());
+        let client = SolRpcClient::builder_for_ic()
+            .with_stub_responses()
+            // First attempt: getSlot fails
+            .add_stub_response(MultiRpcResult::Consistent(Err::<Slot, _>(error.clone())))
+            // Second attempt: getSlot succeeds, getBlock succeeds
+            .add_stub_response(MultiRpcResult::Consistent(Ok(SLOT)))
+            .add_stub_response(MultiRpcResult::Consistent(Ok(Some(block()))))
+            .build();
+
+        let result = client
+            .estimate_recent_blockhash()
+            .with_num_tries(NonZeroUsize::new(2).unwrap())
+            .try_send()
+            .await;
+
+        assert_eq!(result, Ok(solana_hash::Hash::from_str(BLOCKHASH).unwrap()));
+    }
+
+    #[tokio::test]
+    async fn should_collect_all_errors_on_exhausted_retries() {
+        let error1 = RpcError::ValidationError("first error".to_string());
+        let error2 = RpcError::ValidationError("second error".to_string());
+        let client = SolRpcClient::builder_for_ic()
+            .with_stub_responses()
+            // First attempt fails
+            .add_stub_response(MultiRpcResult::Consistent(Err::<Slot, _>(error1.clone())))
+            // Second attempt fails
+            .add_stub_response(MultiRpcResult::Consistent(Err::<Slot, _>(error2.clone())))
+            .build();
+
+        let result = client
+            .estimate_recent_blockhash()
+            .with_num_tries(NonZeroUsize::new(2).unwrap())
+            .try_send()
+            .await;
+
+        assert_eq!(
+            result,
+            Err(vec![
+                EstimateRecentBlockhashError::GetSlotRpcError(error1),
+                EstimateRecentBlockhashError::GetSlotRpcError(error2),
+            ])
+        );
+    }
+}
+
 fn assert_params_eq<Runtime, Config, Params, CandidOutput, Output>(
     left: RequestBuilder<Runtime, Config, Params, CandidOutput, Output>,
     right: RequestBuilder<Runtime, Config, Params, CandidOutput, Output>,
@@ -278,4 +526,18 @@ fn transaction() -> solana_transaction::Transaction {
         &[keypair],
         solana_hash::Hash::from_str("4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3").unwrap(),
     )
+}
+
+fn block() -> ConfirmedBlock {
+    ConfirmedBlock {
+        previous_blockhash: Hash::from_str("4yeCoXK2Q4yXcunuLtF37yTE1wVD4x8313adneZDmi8w").unwrap(),
+        blockhash: Hash::from_str(BLOCKHASH).unwrap(),
+        parent_slot: SLOT - 1,
+        block_time: Some(1748606929),
+        block_height: Some(321673899),
+        signatures: None,
+        rewards: None,
+        num_reward_partitions: None,
+        transactions: None,
+    }
 }

@@ -141,7 +141,8 @@ use crate::request::{
     SendTransactionRequest, SendTransactionRequestBuilder,
 };
 use candid::{CandidType, Principal};
-use ic_canister_runtime::{IcError, IcRuntime, Runtime};
+pub use ic_canister_runtime::IcError;
+use ic_canister_runtime::{IcRuntime, Runtime};
 pub use request::{
     DefaultRequestCycles, EstimateBlockhashRequestBuilder, EstimateRecentBlockhashError, Request,
     RequestBuilder, SolRpcConfig, SolRpcEndpoint, SolRpcRequest,
@@ -1025,7 +1026,7 @@ impl<R: Runtime> SolRpcClient<R> {
     /// // Try to fetch a slot and the corresponding block up to 3 times
     /// let blockhash = client
     ///     .estimate_recent_blockhash()
-    ///     .send()
+    ///     .try_send()
     ///     .await;
     ///
     /// assert_eq!(blockhash, Ok(Hash::from_str("C6Cxgzq6yZWxjYnxwvxvP2dhWFeQSEVxRQbUXG2eMYsY").unwrap()));
@@ -1052,7 +1053,7 @@ impl<R: Runtime> SolRpcClient<R> {
     /// let blockhash = client
     ///     .estimate_recent_blockhash()
     ///     .with_num_tries(NonZeroUsize::MIN)
-    ///     .send()
+    ///     .try_send()
     ///     .await;
     ///
     /// // Only one attempt was performed and there was no block for the fetched slot
