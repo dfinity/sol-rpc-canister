@@ -30,6 +30,7 @@ derive_more = { workspace = true }
 hex = { workspace = true }
 http = { workspace = true }
 ic-cdk = { workspace = true }
+ic-cdk-management-canister = { workspace = true }
 ic-http-types = { workspace = true }
 ic-management-canister-types = { workspace = true }
 ic-metrics-encoder = { workspace = true }
