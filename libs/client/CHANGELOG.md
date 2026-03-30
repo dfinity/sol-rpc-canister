@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0] - 2026-03-30
+
+### Changed
+
+- Rename `estimate_recent_blockhash` to `get_recent_block` and return full block ([#301](https://github.com/dfinity/sol-rpc-canister/pull/301))
+- Use `try_send` in `EstimateBlockhashRequestBuilder` ([#300](https://github.com/dfinity/sol-rpc-canister/pull/300))
+
+[6.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/5.0.0..6.0.0
+
 ## [5.0.0] - 2026-02-18
 
 ### Changed
