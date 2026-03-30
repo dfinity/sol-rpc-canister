@@ -2173,7 +2173,7 @@ dependencies = [
  "ic-cdk-executor",
  "ic-cdk-macros",
  "ic-error-types",
- "ic-management-canister-types",
+ "ic-management-canister-types 0.5.0",
  "ic0",
  "pin-project-lite",
  "serde",
@@ -2286,6 +2286,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-management-canister-types"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "575dc446e3ac4e973ed88b013c069888a7da3fea774fe2902d04bd65392e149f"
+dependencies = [
+ "candid",
+ "serde",
+ "serde_bytes",
+]
+
+[[package]]
 name = "ic-metrics-assert"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2294,7 +2305,7 @@ dependencies = [
  "async-trait",
  "candid",
  "ic-http-types",
- "ic-management-canister-types",
+ "ic-management-canister-types 0.5.0",
  "pocket-ic",
  "regex",
 ]
@@ -3444,7 +3455,7 @@ dependencies = [
  "flate2",
  "hex",
  "ic-certification",
- "ic-management-canister-types",
+ "ic-management-canister-types 0.5.0",
  "ic-transport-types 0.40.1",
  "reqwest",
  "schemars 0.8.22",
@@ -4539,7 +4550,7 @@ dependencies = [
  "http 1.4.0",
  "ic-cdk",
  "ic-http-types",
- "ic-management-canister-types",
+ "ic-management-canister-types 0.6.0",
  "ic-metrics-encoder",
  "ic-stable-structures",
  "maplit",
@@ -4577,7 +4588,7 @@ dependencies = [
  "derive_more",
  "ic-canister-runtime",
  "ic-ed25519 0.6.0",
- "ic-management-canister-types",
+ "ic-management-canister-types 0.6.0",
  "serde",
  "serde_json",
  "sol_rpc_types",
@@ -4639,7 +4650,7 @@ dependencies = [
  "ic-canister-runtime",
  "ic-cdk",
  "ic-http-types",
- "ic-management-canister-types",
+ "ic-management-canister-types 0.6.0",
  "ic-metrics-assert",
  "ic-pocket-canister-runtime",
  "ic-test-utilities-load-wasm",
@@ -4684,7 +4695,7 @@ dependencies = [
  "canlog",
  "derive_more",
  "ic-cdk",
- "ic-management-canister-types",
+ "ic-management-canister-types 0.6.0",
  "proptest",
  "regex",
  "serde",
