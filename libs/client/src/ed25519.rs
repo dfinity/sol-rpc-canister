@@ -127,16 +127,16 @@ impl Ed25519KeyId {
 ///
 /// let recipient = pubkey!("BPebStjcgCPnWTK3FXZJ8KhqwNYLk9aubC9b4Cgqb6oE");
 ///
-/// let blockhash = client
-///     .estimate_recent_blockhash()
+/// let (_slot, block) = client
+///     .get_recent_block()
 ///     .try_send()
 ///     .await
-///     .expect("Failed to fetch recent blockhash");
+///     .expect("Failed to fetch recent block");
 ///
 /// let message = Message::new_with_blockhash(
 ///     &[transfer(&payer, &recipient, 1_000_000)],
 ///     Some(&payer),
-///     &blockhash,
+///     &block.blockhash.parse().unwrap(),
 ///  );
 ///
 /// let signature = sign_message(
