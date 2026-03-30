@@ -11,8 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Rename `estimate_recent_blockhash` to `get_recent_block` and return full block ([#301](https://github.com/dfinity/sol-rpc-canister/pull/301))
 - Use `try_send` in `EstimateBlockhashRequestBuilder` ([#300](https://github.com/dfinity/sol-rpc-canister/pull/300))
-
-[6.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/5.0.0..6.0.0
+- Upgrade various dependencies ([#304](https://github.com/dfinity/sol-rpc-canister/pull/304))
 
 ## [5.0.0] - 2026-02-18
 
@@ -100,6 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use a default commitment level for requests made by the client ([#77](https://github.com/dfinity/sol-rpc-canister/pull/77))
 - Add Rust documentation tests for the client ([#65](https://github.com/dfinity/sol-rpc-canister/pull/65))
 
+[6.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_client-v5.0.0..sol_rpc_client-v6.0.0
 [5.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_client-v4.0.0..sol_rpc_client-v5.0.0
 [4.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_client-v3.0.0..sol_rpc_client-v4.0.0
 [3.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_client-v2.0.0...sol_rpc_client-v3.0.0
