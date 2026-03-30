@@ -27,7 +27,7 @@ use canhttp::{
 };
 use canlog::log;
 use http::{header::CONTENT_TYPE, HeaderValue};
-use ic_management_canister_types::HttpRequestArgs as IcHttpRequest;
+use ic_cdk_management_canister::HttpRequestArgs as IcHttpRequest;
 use serde::{de::DeserializeOwned, Serialize};
 use sol_rpc_types::{JsonRpcError, RpcError};
 use std::fmt::Debug;

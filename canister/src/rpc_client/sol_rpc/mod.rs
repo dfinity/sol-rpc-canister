@@ -3,7 +3,7 @@ mod tests;
 
 use canhttp::http::json::JsonRpcResponse;
 use ic_cdk::query;
-use ic_management_canister_types::{HttpRequestResult, TransformArgs};
+use ic_cdk_management_canister::{HttpRequestResult, TransformArgs};
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::{from_slice, Value};
