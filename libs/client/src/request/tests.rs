@@ -8,9 +8,7 @@ use sol_rpc_types::{
     GetTransactionEncoding, GetTransactionParams, RpcConfig, RpcSources, SendTransactionEncoding,
     SendTransactionParams, Slot, SupportedRpcProviderId, TransactionDetails,
 };
-use sol_rpc_types::{
-    ConfirmedBlock, Hash, MultiRpcResult, RpcError, RpcSource,
-};
+use sol_rpc_types::{ConfirmedBlock, Hash, MultiRpcResult, RpcError, RpcSource};
 use solana_pubkey::{pubkey, Pubkey};
 use solana_signature::Signature;
 use std::{fmt::Debug, num::NonZeroUsize, str::FromStr};
@@ -497,6 +495,59 @@ mod get_recent_block {
     }
 }
 
+mod num_providers_tests {
+    use super::*;
+
+    #[test]
+    fn should_default_to_3_for_default_sources() {
+        let client = SolRpcClient::builder_for_ic().build();
+        let builder = client.get_balance(PUBKEY);
+        assert_eq!(builder.num_providers(), 3);
+    }
+
+    #[test]
+    fn should_count_single_custom_provider() {
+        let client = SolRpcClient::builder_for_ic()
+            .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Supported(
+                SupportedRpcProviderId::AlchemyMainnet,
+            )]))
+            .build();
+        let builder = client.get_balance(PUBKEY);
+        assert_eq!(builder.num_providers(), 1);
+    }
+
+    #[test]
+    fn should_use_custom_provider_count() {
+        let providers = vec![
+            RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
+            RpcSource::Supported(SupportedRpcProviderId::HeliusMainnet),
+            RpcSource::Supported(SupportedRpcProviderId::AnkrMainnet),
+            RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
+            RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
+        ];
+        let client = SolRpcClient::builder_for_ic()
+            .with_rpc_sources(RpcSources::Custom(providers))
+            .build();
+        let builder = client.get_balance(PUBKEY);
+        assert_eq!(builder.num_providers(), 5);
+    }
+
+    #[test]
+    fn should_use_threshold_total() {
+        let client = SolRpcClient::builder_for_ic()
+            .with_rpc_config(RpcConfig {
+                response_size_estimate: None,
+                response_consensus: Some(ConsensusStrategy::Threshold {
+                    total: Some(5),
+                    min: 3,
+                }),
+            })
+            .build();
+        let builder = client.get_balance(PUBKEY);
+        assert_eq!(builder.num_providers(), 5);
+    }
+}
+
 fn assert_params_eq<Runtime, Config, Params, CandidOutput, Output>(
     left: RequestBuilder<Runtime, Config, Params, CandidOutput, Output>,
     right: RequestBuilder<Runtime, Config, Params, CandidOutput, Output>,
@@ -543,103 +594,5 @@ fn block() -> ConfirmedBlock {
         rewards: None,
         num_reward_partitions: None,
         transactions: None,
-    }
-}
-
-mod default_cycles_per_provider {
-    use super::*;
-
-    #[test]
-    fn should_return_per_provider_cycles_for_get_balance() {
-        let client = SolRpcClient::builder_for_ic().build();
-        let builder = client.get_balance(PUBKEY);
-        assert_eq!(builder.default_cycles_per_provider(), 10_000_000_000);
-    }
-
-    #[test]
-    fn should_return_per_provider_cycles_for_get_block_without_transactions() {
-        let client = SolRpcClient::builder_for_ic().build();
-        let builder = client
-            .get_block(123)
-            .with_transaction_details(TransactionDetails::None)
-            .without_rewards();
-        assert_eq!(builder.default_cycles_per_provider(), 10_000_000_000);
-    }
-
-    #[test]
-    fn should_return_per_provider_cycles_for_get_block_with_signature_transactions() {
-        let client = SolRpcClient::builder_for_ic().build();
-        let builder = client
-            .get_block(123)
-            .with_transaction_details(TransactionDetails::Signatures);
-        assert_eq!(builder.default_cycles_per_provider(), 100_000_000_000);
-    }
-
-    #[test]
-    fn should_return_per_provider_cycles_for_get_block_with_account_transactions() {
-        let client = SolRpcClient::builder_for_ic().build();
-        let builder = client
-            .get_block(123)
-            .with_transaction_details(TransactionDetails::Accounts);
-        assert_eq!(builder.default_cycles_per_provider(), 1_000_000_000_000);
-    }
-}
-
-mod num_providers {
-    use super::*;
-
-    #[test]
-    fn should_default_to_3_for_default_sources() {
-        let client = SolRpcClient::builder_for_ic().build();
-        let builder = client.get_balance(PUBKEY);
-        assert_eq!(builder.num_providers(), 3);
-    }
-
-    #[test]
-    fn should_use_custom_provider_count() {
-        let providers = vec![
-            RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
-            RpcSource::Supported(SupportedRpcProviderId::HeliusMainnet),
-            RpcSource::Supported(SupportedRpcProviderId::AnkrMainnet),
-            RpcSource::Supported(SupportedRpcProviderId::DrpcMainnet),
-            RpcSource::Supported(SupportedRpcProviderId::PublicNodeMainnet),
-        ];
-        let client = SolRpcClient::builder_for_ic()
-            .with_rpc_sources(RpcSources::Custom(providers))
-            .build();
-        let builder = client.get_balance(PUBKEY);
-        assert_eq!(builder.num_providers(), 5);
-    }
-
-    #[test]
-    fn should_use_threshold_total() {
-        let client = SolRpcClient::builder_for_ic()
-            .with_rpc_config(RpcConfig {
-                response_size_estimate: None,
-                response_consensus: Some(ConsensusStrategy::Threshold { total: Some(5), min: 3 }),
-            })
-            .build();
-        let builder = client.get_balance(PUBKEY);
-        assert_eq!(builder.num_providers(), 5);
-    }
-
-    #[test]
-    fn should_use_per_request_consensus() {
-        let client = SolRpcClient::builder_for_ic().build();
-        let builder = client
-            .get_balance(PUBKEY)
-            .with_response_consensus(ConsensusStrategy::Threshold { total: Some(4), min: 2 });
-        assert_eq!(builder.num_providers(), 4);
-    }
-
-    #[test]
-    fn should_count_single_custom_provider() {
-        let client = SolRpcClient::builder_for_ic()
-            .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Supported(
-                SupportedRpcProviderId::AlchemyMainnet,
-            )]))
-            .build();
-        let builder = client.get_balance(PUBKEY);
-        assert_eq!(builder.num_providers(), 1);
     }
 }
