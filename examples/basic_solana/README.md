@@ -26,8 +26,8 @@ the [chain fusion overview](https://internetcomputer.org/docs/building-apps/chai
 
 ## Prerequisites
 
-* [ ] Install the [IC SDK](https://internetcomputer.org/docs/current/developer-docs/setup/install/index.mdx) v0.27.0. If the IC SDK is already installed with an old version, install 0.27.0 with [`dfxvm`](https://internetcomputer.org/docs/building-apps/developer-tools/dev-tools-overview#dfxvm).
-* [ ] Confirm the IC SDK has been installed with the correct version with `dfx --version`.
+* [ ] Install [icp-cli](https://internetcomputer.org/docs/building-apps/developer-tools/dev-tools-overview#icp-cli) v0.1.0 or later.
+* [ ] Confirm icp-cli has been installed with the correct version with `icp --version`.
 * [ ] On **macOS**, an `llvm` version that supports the `wasm32-unknown-unknown` target is required. This is because the `zstd` crate (used, for example, to decode `base64+zstd`-encoded responses from Solana's [`getAccountInfo`](https://solana.com/de/docs/rpc/http/getaccountinfo)) depends on LLVM during compilation. The default LLVM bundled with Xcode does not support `wasm32-unknown-unknown`. To fix this, install the [Homebrew version](https://formulae.brew.sh/formula/llvm), using `brew install llvm`.
 
 > [!NOTE] 
@@ -61,7 +61,7 @@ To deploy the Solana wallet smart contract to the ICP Mainnet, navigate to `exam
 the following command:
 
 ```bash
-dfx deploy --ic
+icp deploy --environment prod
 ```
 
 This deploys a Solana wallet canister to the ICP Mainnet which is configured to interact with the **Solana Devnet** via the SOL RPC
@@ -75,17 +75,17 @@ To deploy the Solana wallet smart contract locally, navigate to `examples/basic_
 following commands:
 
 ```bash
-dfx start --clean --background 
-dfx deploy
+icp network start --background
+icp deploy --environment local
 ```
 
 What this does:
-- `dfx start --clean --background` starts a local instance of the ICP blockchain. 
-- `dfx deploy` deploys a Solana wallet canister as well as a SOL RPC canister, both locally. The Solana wallet canister interacts with
+- `icp network start --background` starts a local instance of the ICP blockchain. 
+- `icp deploy --environment local` deploys a Solana wallet canister as well as a SOL RPC canister, both locally. The Solana wallet canister interacts with
   the Solana Devnet via the local SOL RPC canister.
 
 > [!TIP]
-> To target Solana Mainnet, you will need to change the `init_arg` for the `basic_solana` canister in the `dfx.json` file. To learn more about the initialization arguments, see the `InitArg` type in [`basic_solana.did`](basic_solana.did).
+> To target Solana Mainnet, you will need to change the `init_arg` for the `basic_solana` canister in the `icp.yaml` file. To learn more about the initialization arguments, see the `InitArg` type in [`basic_solana.did`](basic_solana.did).
 
 #### Deploying from ICP Ninja
 
@@ -94,7 +94,7 @@ To deploy the Solana wallet smart contract using ICP Ninja, click on the followi
 [![](https://icp.ninja/assets/open.svg)](https://icp.ninja/editor?g=https://github.com/dfinity/sol-rpc-canister/tree/main/examples/basic_solana/ninja)
 
 > [!TIP]
-> If you downloaded the project from ICP Ninja to run it locally, you’ll need to update the `init_arg` for the `basic_solana` canister in `dfx.json`:
+> If you downloaded the project from ICP Ninja to run it locally, you’ll need to update the `init_arg` for the `basic_solana` canister in `icp.yaml`:
 >
 > - Change the key name from `ed25519_key_name = opt variant { MainnetTestKey1 }` to `ed25519_key_name = opt variant { LocalDevelopment }`.
 > - To use the public Solana Labs RPC endpoint instead of the default RPC providers (which require a valid API key), replace `solana_network = opt variant { Devnet }` with `solana_network = opt variant { Custom = record { url = "https://api.devnet.solana.com"; headers = null } }`, or use the URL for the cluster you want, as documented [here](https://solana.com/docs/references/clusters).
@@ -123,7 +123,7 @@ In the output above, to see the Candid Web UI for your Solana canister, you woul
 Candid file `basic_solana.did`.
 
 > [!IMPORTANT]
-> If running this example locally, you will need to skip the `--ic` flag in all subsequent `dfx` commands.
+> If running this example locally, you will need to skip the `--network ic` flag in all subsequent `icp-cli` commands.
 
 ## Step 2: Generating a Solana account
 
@@ -133,7 +133,7 @@ requested principal. To retrieve your Solana account, you can call the `solana_a
 deployed canister:
 
 ```shell
-dfx canister --ic call basic_solana solana_account
+icp canister --network ic call basic_solana solana_account
 ```
 
 This will return a Solana account such as `("2kqg1tEj59FNe3hSiLH88SySB9D7fUSArum6TP6iHFQY")` that is tied to your
@@ -144,7 +144,7 @@ If you want to send some SOL to someone else, you can also use the above method 
 given their IC principal:
 
 ```shell
-dfx canister --ic call basic_solana solana_account '(opt principal "hkroy-sm7vs-yyjs7-ekppe-qqnwx-hm4zf-n7ybs-titsi-k6e3k-ucuiu-uqe")'
+icp canister --network ic call basic_solana solana_account '(opt principal "hkroy-sm7vs-yyjs7-ekppe-qqnwx-hm4zf-n7ybs-titsi-k6e3k-ucuiu-uqe")'
 ```
 
 This will return a different Solana address as the one above, such as
@@ -170,7 +170,7 @@ the following command:
 > If no principal is provided, the caller's principal is used. In this `basic_solana` example, you could replace `null` with another principal to send SOL on their behalf. This is behaviour you would typically not want in production, as it allows anyone to send SOL from any account to any other account. In production, you would typically want to restrict the `send_sol` endpoint to only allow sending SOL from the caller's account.
 
 ```shell
-dfx canister --ic call basic_solana send_sol '(null, "8HNiduWaBanrBv8c2pgGXZWnpKBdEYuQNHnspqto4yyq", 1)'
+icp canister --network ic call basic_solana send_sol '(null, "8HNiduWaBanrBv8c2pgGXZWnpKBdEYuQNHnspqto4yyq", 1)'
 ```
 
 The `send_sol` endpoint sends SOL by executing the following steps:
@@ -200,14 +200,14 @@ account contains the current value of the durable nonce. To create a nonce accou
 run the following command:
 
 ```shell
-dfx canister --ic call basic_solana create_nonce_account
+icp canister --network ic call basic_solana create_nonce_account
 ```
 
 You can inspect the created nonce account and get the current durable nonce value in a Solana explorer. You can also
 fetch the current value of the durable nonce by running the following command:
 
 ```shell
-dfx canister --ic call basic_solana get_nonce
+icp canister --network ic call basic_solana get_nonce
 ```
 
 To send some SOL using a durable nonce, you can run the following command:
@@ -216,7 +216,7 @@ To send some SOL using a durable nonce, you can run the following command:
 > If no principal is provided, the caller's principal is used. In this `basic_solana` example, you could replace `null` with another principal to send SOL on their behalf. This is behaviour you would typically not want in production, as it allows anyone to send SOL from any account to any other account. In production, you would typically want to restrict the `send_sol_with_durable_nonce` endpoint to only allow sending SOL from the caller's account.
 
 ```shell
-dfx canister --ic call basic_solana send_sol_with_durable_nonce '(null, "8HNiduWaBanrBv8c2pgGXZWnpKBdEYuQNHnspqto4yyq", 1)'
+icp canister --network ic call basic_solana send_sol_with_durable_nonce '(null, "8HNiduWaBanrBv8c2pgGXZWnpKBdEYuQNHnspqto4yyq", 1)'
 ```
 
 The `send_sol_with_durable_nonce` endpoint works similarly to the `send_sol` endpoint, however the instructions included
@@ -252,11 +252,11 @@ account. An ATA is needed for each type of SPL token held by a Solana account.
 We create two new identities, one for the sender and one for the recipient. You can do this by running the following commands:
 
 ```bash
-dfx identity new sender
-dfx identity new recipient
+icp identity new sender
+icp identity new recipient
 ```
 
-We have to make sure the Solana accounts belonging to the new identities created above actually hold SOL to pay for transaction fees. For this, follow the instructions outlined in [Step 2](#step-2-generating-a-solana-account) and [Step 3](#step-3-receiving-sol) for each identity. You can switch between identities using the `dfx identity use <IDENTITY_NAME>` command or specify the identity to use by adding the `--identity <IDENTITY_NAME>` flag to the `dfx` commands.
+We have to make sure the Solana accounts belonging to the new identities created above actually hold SOL to pay for transaction fees. For this, follow the instructions outlined in [Step 2](#step-2-generating-a-solana-account) and [Step 3](#step-3-receiving-sol) for each identity. You can switch between identities using the `icp identity default <IDENTITY_NAME>` command or specify the identity to use by adding the `--identity <IDENTITY_NAME>` flag to the `icp-cli` commands.
 
 To create the ATAs for the sender and
 recipient, you can run the following commands:
@@ -265,10 +265,10 @@ recipient, you can run the following commands:
 > If no principal is provided as the first argument, the caller's principal is used.
 
 ```bash
-dfx identity use sender
-dfx canister --ic call basic_solana create_associated_token_account '(null, "<TOKEN MINT ADDRESS>")'
-dfx identity use recipient
-dfx canister --ic call basic_solana create_associated_token_account '(null, "<TOKEN MINT ADDRESS>")'
+icp identity default sender
+icp canister --network ic call basic_solana create_associated_token_account '(null, "<TOKEN MINT ADDRESS>")'
+icp identity default recipient
+icp canister --network ic call basic_solana create_associated_token_account '(null, "<TOKEN MINT ADDRESS>")'
 ```
 
 This works by sending transactions that instruct the
@@ -284,8 +284,8 @@ can for example get it by running the following command:
 > If no principal is provided as the first argument, the caller's principal is used.
 
 ```bash
-dfx identity use sender
-dfx canister --ic call basic_solana associated_token_account '(null, "<TOKEN MINT ADDRESS>")'
+icp identity default sender
+icp canister --network ic call basic_solana associated_token_account '(null, "<TOKEN MINT ADDRESS>")'
 ```
 
 To transfer some tokens from the sender to the recipient, you can run the following command:
@@ -295,8 +295,8 @@ To transfer some tokens from the sender to the recipient, you can run the follow
 > Make sure to use the `RECIPIENT SOLANA ADDRESS`, not their ATA.
 
 ```bash
-dfx identity use sender
-dfx canister --ic call basic_solana send_spl_token '(null, "<TOKEN MINT ADDRESS>", "<RECIPIENT SOLANA ADDRESS>", <AMOUNT>)'
+icp identity default sender
+icp canister --network ic call basic_solana send_spl_token '(null, "<TOKEN MINT ADDRESS>", "<RECIPIENT SOLANA ADDRESS>", <AMOUNT>)'
 ```
 
 The `send_spl_token` endpoint works similarly to the `send_sol` endpoint, but creates a transaction with the sender and
@@ -308,8 +308,8 @@ running the following commands:
 > If no ATA is provided, it is derived from the caller's principal.
 
 ```bash
-dfx canister --ic call basic_solana get_spl_token_balance '(opt "<SENDER ATA>", "<TOKEN MINT ADDRESS>")'
-dfx canister --ic call basic_solana get_spl_token_balance '(opt "<RECIPIENT ATA>", "<TOKEN MINT ADDRESS>")'
+icp canister --network ic call basic_solana get_spl_token_balance '(opt "<SENDER ATA>", "<TOKEN MINT ADDRESS>")'
+icp canister --network ic call basic_solana get_spl_token_balance '(opt "<RECIPIENT ATA>", "<TOKEN MINT ADDRESS>")'
 ```
 
 ## Conclusion
