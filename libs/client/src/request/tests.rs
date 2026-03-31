@@ -546,19 +546,57 @@ fn block() -> ConfirmedBlock {
     }
 }
 
-mod default_request_cycles {
+mod default_cycles_per_provider {
     use super::*;
 
     #[test]
-    fn should_scale_with_default_providers() {
+    fn should_return_per_provider_cycles_for_get_balance() {
         let client = SolRpcClient::builder_for_ic().build();
         let builder = client.get_balance(PUBKEY);
-        // Default is 3 providers (Equality), so 10B * 3 = 30B
-        assert_eq!(builder.default_request_cycles(), 30_000_000_000);
+        assert_eq!(builder.default_cycles_per_provider(), 10_000_000_000);
     }
 
     #[test]
-    fn should_scale_with_custom_providers() {
+    fn should_return_per_provider_cycles_for_get_block_without_transactions() {
+        let client = SolRpcClient::builder_for_ic().build();
+        let builder = client
+            .get_block(123)
+            .with_transaction_details(TransactionDetails::None)
+            .without_rewards();
+        assert_eq!(builder.default_cycles_per_provider(), 10_000_000_000);
+    }
+
+    #[test]
+    fn should_return_per_provider_cycles_for_get_block_with_signature_transactions() {
+        let client = SolRpcClient::builder_for_ic().build();
+        let builder = client
+            .get_block(123)
+            .with_transaction_details(TransactionDetails::Signatures);
+        assert_eq!(builder.default_cycles_per_provider(), 100_000_000_000);
+    }
+
+    #[test]
+    fn should_return_per_provider_cycles_for_get_block_with_account_transactions() {
+        let client = SolRpcClient::builder_for_ic().build();
+        let builder = client
+            .get_block(123)
+            .with_transaction_details(TransactionDetails::Accounts);
+        assert_eq!(builder.default_cycles_per_provider(), 1_000_000_000_000);
+    }
+}
+
+mod num_providers {
+    use super::*;
+
+    #[test]
+    fn should_default_to_3_for_default_sources() {
+        let client = SolRpcClient::builder_for_ic().build();
+        let builder = client.get_balance(PUBKEY);
+        assert_eq!(builder.num_providers(), 3);
+    }
+
+    #[test]
+    fn should_use_custom_provider_count() {
         let providers = vec![
             RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
             RpcSource::Supported(SupportedRpcProviderId::HeliusMainnet),
@@ -570,12 +608,11 @@ mod default_request_cycles {
             .with_rpc_sources(RpcSources::Custom(providers))
             .build();
         let builder = client.get_balance(PUBKEY);
-        // 5 custom providers, so 10B * 5 = 50B
-        assert_eq!(builder.default_request_cycles(), 50_000_000_000);
+        assert_eq!(builder.num_providers(), 5);
     }
 
     #[test]
-    fn should_scale_with_threshold_consensus() {
+    fn should_use_threshold_total() {
         let client = SolRpcClient::builder_for_ic()
             .with_rpc_config(RpcConfig {
                 response_size_estimate: None,
@@ -583,45 +620,26 @@ mod default_request_cycles {
             })
             .build();
         let builder = client.get_balance(PUBKEY);
-        // Threshold with total=5, so 10B * 5 = 50B
-        assert_eq!(builder.default_request_cycles(), 50_000_000_000);
+        assert_eq!(builder.num_providers(), 5);
     }
 
     #[test]
-    fn should_scale_with_single_custom_provider() {
+    fn should_use_per_request_consensus() {
+        let client = SolRpcClient::builder_for_ic().build();
+        let builder = client
+            .get_balance(PUBKEY)
+            .with_response_consensus(ConsensusStrategy::Threshold { total: Some(4), min: 2 });
+        assert_eq!(builder.num_providers(), 4);
+    }
+
+    #[test]
+    fn should_count_single_custom_provider() {
         let client = SolRpcClient::builder_for_ic()
             .with_rpc_sources(RpcSources::Custom(vec![RpcSource::Supported(
                 SupportedRpcProviderId::AlchemyMainnet,
             )]))
             .build();
         let builder = client.get_balance(PUBKEY);
-        // 1 provider, so 10B * 1 = 10B
-        assert_eq!(builder.default_request_cycles(), 10_000_000_000);
-    }
-
-    #[test]
-    fn should_scale_get_block_with_providers() {
-        let client = SolRpcClient::builder_for_ic()
-            .with_rpc_sources(RpcSources::Custom(vec![
-                RpcSource::Supported(SupportedRpcProviderId::AlchemyMainnet),
-                RpcSource::Supported(SupportedRpcProviderId::HeliusMainnet),
-            ]))
-            .build();
-        let builder = client
-            .get_block(123)
-            .with_transaction_details(TransactionDetails::None)
-            .without_rewards();
-        // 2 providers, TransactionDetails::None + no rewards = 10B per provider, so 10B * 2 = 20B
-        assert_eq!(builder.default_request_cycles(), 20_000_000_000);
-    }
-
-    #[test]
-    fn should_use_per_request_consensus_over_client_default() {
-        let client = SolRpcClient::builder_for_ic().build();
-        let builder = client
-            .get_balance(PUBKEY)
-            .with_response_consensus(ConsensusStrategy::Threshold { total: Some(4), min: 2 });
-        // Per-request consensus overrides: 4 providers, so 10B * 4 = 40B
-        assert_eq!(builder.default_request_cycles(), 40_000_000_000);
+        assert_eq!(builder.num_providers(), 1);
     }
 }

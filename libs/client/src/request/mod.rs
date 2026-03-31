@@ -106,12 +106,13 @@ impl SolRpcEndpoint {
     }
 }
 
-/// Specifies the default number of cycles attached with a request if it was not set.
+/// Specifies the default number of cycles per provider attached with a request if it was not set.
 pub trait DefaultRequestCycles {
-    /// The default number of cycles to attach with this request.
+    /// The default number of cycles per provider to attach with this request.
     ///
-    /// This method will be called just before sending the request and only if the user did not set a number of cycles to attach.
-    fn default_request_cycles(&self) -> u128;
+    /// This value is multiplied by the number of providers before sending the request,
+    /// and only used if the user did not set a number of cycles to attach.
+    fn default_cycles_per_provider(&self) -> u128;
 }
 
 #[derive(Debug, Clone)]
@@ -149,8 +150,8 @@ pub type GetAccountInfoRequestBuilder<R> = RequestBuilder<
 >;
 
 impl<R> DefaultRequestCycles for GetAccountInfoRequestBuilder<R> {
-    fn default_request_cycles(&self) -> u128 {
-        self.default_cycles_for(10_000_000_000)
+    fn default_cycles_per_provider(&self) -> u128 {
+        10_000_000_000
     }
 }
 
@@ -215,8 +216,8 @@ pub type GetBalanceRequestBuilder<R> = RequestBuilder<
 >;
 
 impl<R> DefaultRequestCycles for GetBalanceRequestBuilder<R> {
-    fn default_request_cycles(&self) -> u128 {
-        self.default_cycles_for(10_000_000_000)
+    fn default_cycles_per_provider(&self) -> u128 {
+        10_000_000_000
     }
 }
 
@@ -282,16 +283,15 @@ pub type GetBlockRequestBuilder<R> = RequestBuilder<
 >;
 
 impl<R> DefaultRequestCycles for GetBlockRequestBuilder<R> {
-    fn default_request_cycles(&self) -> u128 {
-        let per_provider = match self.request.params.transaction_details.unwrap_or_default() {
+    fn default_cycles_per_provider(&self) -> u128 {
+        match self.request.params.transaction_details.unwrap_or_default() {
             TransactionDetails::Accounts => 1_000_000_000_000,
             TransactionDetails::Signatures => 100_000_000_000,
             TransactionDetails::None => match self.request.params.rewards {
                 Some(true) | None => 20_000_000_000,
                 Some(false) => 10_000_000_000,
             },
-        };
-        self.default_cycles_for(per_provider)
+        }
     }
 }
 
@@ -379,9 +379,9 @@ pub type GetSignaturesForAddressRequestBuilder<R> = RequestBuilder<
 >;
 
 impl<R> DefaultRequestCycles for GetSignaturesForAddressRequestBuilder<R> {
-    fn default_request_cycles(&self) -> u128 {
+    fn default_cycles_per_provider(&self) -> u128 {
         // TODO XC-338: Check heuristic
-        self.default_cycles_for(2_000_000_000)
+        2_000_000_000
     }
 }
 
@@ -445,11 +445,9 @@ pub type GetSignatureStatusesRequestBuilder<R> = RequestBuilder<
 >;
 
 impl<R> DefaultRequestCycles for GetSignatureStatusesRequestBuilder<R> {
-    fn default_request_cycles(&self) -> u128 {
+    fn default_cycles_per_provider(&self) -> u128 {
         // TODO XC-338: Check heuristic
-        let per_provider =
-            2_000_000_000 + self.request.params.signatures.len() as u128 * 1_000_000;
-        self.default_cycles_for(per_provider)
+        2_000_000_000 + self.request.params.signatures.len() as u128 * 1_000_000
     }
 }
 
@@ -499,8 +497,8 @@ pub type GetSlotRequestBuilder<R> = RequestBuilder<
 >;
 
 impl<R> DefaultRequestCycles for GetSlotRequestBuilder<R> {
-    fn default_request_cycles(&self) -> u128 {
-        self.default_cycles_for(10_000_000_000)
+    fn default_cycles_per_provider(&self) -> u128 {
+        10_000_000_000
     }
 }
 
@@ -553,8 +551,8 @@ pub type GetTokenAccountBalanceRequestBuilder<R> = RequestBuilder<
 >;
 
 impl<R> DefaultRequestCycles for GetTokenAccountBalanceRequestBuilder<R> {
-    fn default_request_cycles(&self) -> u128 {
-        self.default_cycles_for(10_000_000_000)
+    fn default_cycles_per_provider(&self) -> u128 {
+        10_000_000_000
     }
 }
 
@@ -605,8 +603,8 @@ pub type GetTransactionRequestBuilder<R> = RequestBuilder<
 >;
 
 impl<R> DefaultRequestCycles for GetTransactionRequestBuilder<R> {
-    fn default_request_cycles(&self) -> u128 {
-        self.default_cycles_for(10_000_000_000)
+    fn default_cycles_per_provider(&self) -> u128 {
+        10_000_000_000
     }
 }
 
@@ -665,8 +663,8 @@ pub type SendTransactionRequestBuilder<R> = RequestBuilder<
 >;
 
 impl<R> DefaultRequestCycles for SendTransactionRequestBuilder<R> {
-    fn default_request_cycles(&self) -> u128 {
-        self.default_cycles_for(10_000_000_000)
+    fn default_cycles_per_provider(&self) -> u128 {
+        10_000_000_000
     }
 }
 
@@ -727,8 +725,8 @@ pub type JsonRequestBuilder<R> =
     RequestBuilder<R, RpcConfig, String, MultiRpcResult<String>, MultiRpcResult<String>>;
 
 impl<R> DefaultRequestCycles for JsonRequestBuilder<R> {
-    fn default_request_cycles(&self) -> u128 {
-        self.default_cycles_for(10_000_000_000)
+    fn default_cycles_per_provider(&self) -> u128 {
+        10_000_000_000
     }
 }
 
@@ -750,8 +748,8 @@ pub type GetRecentPrioritizationFeesRequestBuilder<R> = RequestBuilder<
 >;
 
 impl<R> DefaultRequestCycles for GetRecentPrioritizationFeesRequestBuilder<R> {
-    fn default_request_cycles(&self) -> u128 {
-        self.default_cycles_for(10_000_000_000)
+    fn default_cycles_per_provider(&self) -> u128 {
+        10_000_000_000
     }
 }
 
@@ -921,7 +919,7 @@ impl<Runtime, Config: SolRpcConfig, Params, CandidOutput, Output>
     RequestBuilder<Runtime, Config, Params, CandidOutput, Output>
 {
     /// Return the number of providers that will be queried for this request.
-    fn num_providers(&self) -> u32 {
+    pub(crate) fn num_providers(&self) -> u32 {
         /// Default number of providers queried when using default RPC sources.
         const DEFAULT_NUM_PROVIDERS: u32 = 3;
 
@@ -938,10 +936,6 @@ impl<Runtime, Config: SolRpcConfig, Params, CandidOutput, Output>
         }
     }
 
-    /// Return the default cycles for this request, given the per-provider base cycles.
-    fn default_cycles_for(&self, per_provider_cycles: u128) -> u128 {
-        per_provider_cycles.saturating_mul(self.num_providers() as u128)
-    }
 }
 
 impl<Runtime, Config: SolRpcConfig + Default, Params, CandidOutput, Output>
@@ -980,7 +974,7 @@ impl<R: Runtime, Config, Params, CandidOutput, Output>
     /// If the request was not successful.
     pub async fn send(self) -> Output
     where
-        Config: CandidType + Send,
+        Config: CandidType + Send + SolRpcConfig,
         Params: CandidType + Send,
         CandidOutput: Into<Output> + CandidType + DeserializeOwned,
         RequestBuilder<R, Config, Params, CandidOutput, Output>: DefaultRequestCycles,
@@ -995,15 +989,15 @@ impl<R: Runtime, Config, Params, CandidOutput, Output>
     /// either the request response or any error that occurs while sending the request.
     pub async fn try_send(self) -> Result<Output, IcError>
     where
-        Config: CandidType + Send,
+        Config: CandidType + Send + SolRpcConfig,
         Params: CandidType + Send,
         CandidOutput: Into<Output> + CandidType + DeserializeOwned,
         RequestBuilder<R, Config, Params, CandidOutput, Output>: DefaultRequestCycles,
     {
-        let cycles = self
-            .request
-            .cycles
-            .unwrap_or_else(|| self.default_request_cycles());
+        let cycles = self.request.cycles.unwrap_or_else(|| {
+            self.default_cycles_per_provider()
+                .saturating_mul(self.num_providers() as u128)
+        });
         self.client
             .try_execute_request::<Config, Params, CandidOutput, Output>(self.request, cycles)
             .await
