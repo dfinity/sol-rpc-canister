@@ -917,7 +917,7 @@ impl<Runtime, Config: SolRpcConfig, Params, CandidOutput, Output>
     RequestBuilder<Runtime, Config, Params, CandidOutput, Output>
 {
     /// Return the number of providers that will be queried for this request.
-    pub(crate) fn num_providers(&self) -> u32 {
+    pub fn num_providers(&self) -> u32 {
         /// Default number of providers queried when using default RPC sources.
         const DEFAULT_NUM_PROVIDERS: u32 = 3;
 

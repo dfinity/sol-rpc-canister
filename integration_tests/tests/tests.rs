@@ -981,7 +981,7 @@ mod cycles_cost_tests {
             expected_cycles_cost: u128,
         ) where
             Runtime: ic_canister_runtime::Runtime,
-            Config: CandidType + Clone + Send,
+            Config: CandidType + Clone + Send + SolRpcConfig,
             Params: CandidType + Clone + Send,
             CandidOutput: CandidType + DeserializeOwned,
             Output: Debug,
@@ -998,6 +998,14 @@ mod cycles_cost_tests {
 
             let cycles_cost = request.clone().request_cost().send().await.unwrap();
             assert_within(cycles_cost, expected_cycles_cost, five_percents);
+
+            let default_cycles = request
+                .default_request_cycles()
+                .saturating_mul(request.num_providers() as u128);
+            assert!(
+                default_cycles >= cycles_cost,
+                "BUG: default cycles ({default_cycles}) are less than the actual cost ({cycles_cost})"
+            );
 
             let cycles_before = setup.sol_rpc_canister_cycles_balance().await;
             // Request with exact cycles amount should succeed
