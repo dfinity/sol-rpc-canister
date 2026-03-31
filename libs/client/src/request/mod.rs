@@ -150,7 +150,7 @@ pub type GetAccountInfoRequestBuilder<R> = RequestBuilder<
 
 impl<R> DefaultRequestCycles for GetAccountInfoRequestBuilder<R> {
     fn default_request_cycles(&self) -> u128 {
-        10_000_000_000
+        self.default_cycles_for(10_000_000_000)
     }
 }
 
@@ -216,7 +216,7 @@ pub type GetBalanceRequestBuilder<R> = RequestBuilder<
 
 impl<R> DefaultRequestCycles for GetBalanceRequestBuilder<R> {
     fn default_request_cycles(&self) -> u128 {
-        10_000_000_000
+        self.default_cycles_for(10_000_000_000)
     }
 }
 
@@ -283,14 +283,15 @@ pub type GetBlockRequestBuilder<R> = RequestBuilder<
 
 impl<R> DefaultRequestCycles for GetBlockRequestBuilder<R> {
     fn default_request_cycles(&self) -> u128 {
-        match self.request.params.transaction_details.unwrap_or_default() {
+        let per_provider = match self.request.params.transaction_details.unwrap_or_default() {
             TransactionDetails::Accounts => 1_000_000_000_000,
             TransactionDetails::Signatures => 100_000_000_000,
             TransactionDetails::None => match self.request.params.rewards {
                 Some(true) | None => 20_000_000_000,
                 Some(false) => 10_000_000_000,
             },
-        }
+        };
+        self.default_cycles_for(per_provider)
     }
 }
 
@@ -379,7 +380,8 @@ pub type GetSignaturesForAddressRequestBuilder<R> = RequestBuilder<
 
 impl<R> DefaultRequestCycles for GetSignaturesForAddressRequestBuilder<R> {
     fn default_request_cycles(&self) -> u128 {
-        2_000_000_000 // TODO XC-338: Check heuristic
+        // TODO XC-338: Check heuristic
+        self.default_cycles_for(2_000_000_000)
     }
 }
 
@@ -445,7 +447,9 @@ pub type GetSignatureStatusesRequestBuilder<R> = RequestBuilder<
 impl<R> DefaultRequestCycles for GetSignatureStatusesRequestBuilder<R> {
     fn default_request_cycles(&self) -> u128 {
         // TODO XC-338: Check heuristic
-        2_000_000_000 + self.request.params.signatures.len() as u128 * 1_000_000
+        let per_provider =
+            2_000_000_000 + self.request.params.signatures.len() as u128 * 1_000_000;
+        self.default_cycles_for(per_provider)
     }
 }
 
@@ -496,7 +500,7 @@ pub type GetSlotRequestBuilder<R> = RequestBuilder<
 
 impl<R> DefaultRequestCycles for GetSlotRequestBuilder<R> {
     fn default_request_cycles(&self) -> u128 {
-        10_000_000_000
+        self.default_cycles_for(10_000_000_000)
     }
 }
 
@@ -550,7 +554,7 @@ pub type GetTokenAccountBalanceRequestBuilder<R> = RequestBuilder<
 
 impl<R> DefaultRequestCycles for GetTokenAccountBalanceRequestBuilder<R> {
     fn default_request_cycles(&self) -> u128 {
-        10_000_000_000
+        self.default_cycles_for(10_000_000_000)
     }
 }
 
@@ -602,7 +606,7 @@ pub type GetTransactionRequestBuilder<R> = RequestBuilder<
 
 impl<R> DefaultRequestCycles for GetTransactionRequestBuilder<R> {
     fn default_request_cycles(&self) -> u128 {
-        10_000_000_000
+        self.default_cycles_for(10_000_000_000)
     }
 }
 
@@ -662,7 +666,7 @@ pub type SendTransactionRequestBuilder<R> = RequestBuilder<
 
 impl<R> DefaultRequestCycles for SendTransactionRequestBuilder<R> {
     fn default_request_cycles(&self) -> u128 {
-        10_000_000_000
+        self.default_cycles_for(10_000_000_000)
     }
 }
 
@@ -724,7 +728,7 @@ pub type JsonRequestBuilder<R> =
 
 impl<R> DefaultRequestCycles for JsonRequestBuilder<R> {
     fn default_request_cycles(&self) -> u128 {
-        10_000_000_000
+        self.default_cycles_for(10_000_000_000)
     }
 }
 
@@ -747,7 +751,7 @@ pub type GetRecentPrioritizationFeesRequestBuilder<R> = RequestBuilder<
 
 impl<R> DefaultRequestCycles for GetRecentPrioritizationFeesRequestBuilder<R> {
     fn default_request_cycles(&self) -> u128 {
-        10_000_000_000
+        self.default_cycles_for(10_000_000_000)
     }
 }
 
@@ -852,6 +856,9 @@ pub trait SolRpcConfig {
 
     /// Return a new RPC config with the given response consensys.
     fn with_response_consensus(self, response_consensus: ConsensusStrategy) -> Self;
+
+    /// Return the response consensus strategy, if set.
+    fn response_consensus(&self) -> Option<&ConsensusStrategy>;
 }
 
 impl SolRpcConfig for RpcConfig {
@@ -867,6 +874,10 @@ impl SolRpcConfig for RpcConfig {
             response_consensus: Some(response_consensus),
             ..self
         }
+    }
+
+    fn response_consensus(&self) -> Option<&ConsensusStrategy> {
+        self.response_consensus.as_ref()
     }
 }
 
@@ -884,6 +895,10 @@ impl SolRpcConfig for GetSlotRpcConfig {
             ..self
         }
     }
+
+    fn response_consensus(&self) -> Option<&ConsensusStrategy> {
+        self.response_consensus.as_ref()
+    }
 }
 
 impl SolRpcConfig for GetRecentPrioritizationFeesRpcConfig {
@@ -895,6 +910,37 @@ impl SolRpcConfig for GetRecentPrioritizationFeesRpcConfig {
     fn with_response_consensus(mut self, response_consensus: ConsensusStrategy) -> Self {
         self.set_response_consensus(response_consensus);
         self
+    }
+
+    fn response_consensus(&self) -> Option<&ConsensusStrategy> {
+        self.response_consensus.as_ref()
+    }
+}
+
+impl<Runtime, Config: SolRpcConfig, Params, CandidOutput, Output>
+    RequestBuilder<Runtime, Config, Params, CandidOutput, Output>
+{
+    /// Return the number of providers that will be queried for this request.
+    fn num_providers(&self) -> u32 {
+        /// Default number of providers queried when using `ConsensusStrategy::Equality`.
+        const DEFAULT_NUM_PROVIDERS: u32 = 3;
+
+        match &self.request.rpc_sources {
+            RpcSources::Custom(providers) => providers.len() as u32,
+            RpcSources::Default(_) => {
+                match self.request.rpc_config.as_ref().and_then(|c| c.response_consensus()) {
+                    Some(ConsensusStrategy::Threshold {
+                        total: Some(total), ..
+                    }) => *total as u32,
+                    _ => DEFAULT_NUM_PROVIDERS,
+                }
+            }
+        }
+    }
+
+    /// Return the default cycles for this request, given the per-provider base cycles.
+    fn default_cycles_for(&self, per_provider_cycles: u128) -> u128 {
+        per_provider_cycles.saturating_mul(self.num_providers() as u128)
     }
 }
 
