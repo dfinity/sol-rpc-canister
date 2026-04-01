@@ -1,4 +1,3 @@
-use crate::request::DefaultRequestCycles;
 use crate::{GetRecentBlockError, RequestBuilder, SolRpcClient, SolRpcEndpoint};
 use serde_json::json;
 use sol_rpc_types::{

@@ -380,7 +380,7 @@ pub type GetSignaturesForAddressRequestBuilder<R> = RequestBuilder<
 
 impl<R> DefaultRequestCycles for GetSignaturesForAddressRequestBuilder<R> {
     fn default_request_cycles(&self) -> u128 {
-        2_000_000_000
+        10_000_000_000
     }
 }
 
