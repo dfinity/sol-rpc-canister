@@ -474,7 +474,7 @@ mod generic_request_tests {
             request: RequestBuilder<Runtime, Config, Params, CandidOutput, Output>,
         ) where
             Runtime: ic_canister_runtime::Runtime,
-            Config: CandidType + Clone + Send,
+            Config: CandidType + Clone + Send + SolRpcConfig,
             Params: CandidType + Clone + Send,
             CandidOutput: Into<Output> + CandidType + DeserializeOwned,
             RequestBuilder<Runtime, Config, Params, CandidOutput, Output>: DefaultRequestCycles,
@@ -536,7 +536,7 @@ mod generic_request_tests {
             request: RequestBuilder<Runtime, Config, Params, CandidOutput, Output>,
         ) where
             Runtime: ic_canister_runtime::Runtime,
-            Config: CandidType + Clone + Send,
+            Config: CandidType + Clone + Send + SolRpcConfig,
             Params: CandidType + Clone + Send,
             CandidOutput: Into<Output> + CandidType + DeserializeOwned,
             RequestBuilder<Runtime, Config, Params, CandidOutput, Output>: DefaultRequestCycles,
