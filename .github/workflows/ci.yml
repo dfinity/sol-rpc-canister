@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: 'Check code'
         run: |
@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: 'Check root Cargo.lock is up to date'
         run: |
@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Cargo doc
         run: |
           cargo doc --workspace --no-deps
@@ -72,14 +72,14 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: 'Docker build'
         run: |
           ./scripts/docker-build
 
       - name: 'Archive artifact'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: sol_rpc_canister.wasm.gz
           path: ./wasms/sol_rpc_canister.wasm.gz
@@ -95,7 +95,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: 'Run unit tests'
         run: cargo test --locked --workspace --exclude basic_solana --exclude sol_rpc_int_tests --exclude sol_rpc_e2e_tests
 
@@ -111,7 +111,7 @@ jobs:
           - local
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: 'Install dfx'
         uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365
@@ -149,15 +149,15 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: 'Download artifacts'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: sol_rpc_canister.wasm.gz
 
       - name: 'Install `ic-wasm`'
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@97a5807a604e12de3a13b52d868ebecaeeea757c # v2.75.4
         with:
           tool: ic-wasm
 
@@ -170,10 +170,10 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: 'Download artifacts'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: sol_rpc_canister.wasm.gz
 
@@ -182,7 +182,7 @@ jobs:
           echo "SOL_RPC_CANISTER_WASM_PATH=$GITHUB_WORKSPACE/sol_rpc_canister.wasm.gz" >> "$GITHUB_ENV"
 
       - name: 'Install PocketIC server'
-        uses: dfinity/pocketic@main
+        uses: dfinity/pocketic@20c33db1aa87cc6ece50857ac632c37acf5e0322 # main
         with:
           pocket-ic-server-version: "12.0.0"
 
@@ -229,10 +229,10 @@ jobs:
       DFX_WARNING: -mainnet_plaintext_identity
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: 'Download artifacts'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: sol_rpc_canister.wasm.gz
 
