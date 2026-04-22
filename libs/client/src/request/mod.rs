@@ -106,11 +106,12 @@ impl SolRpcEndpoint {
     }
 }
 
-/// Specifies the default number of cycles attached with a request if it was not set.
+/// Specifies the default number of cycles per provider attached with a request if it was not set.
 pub trait DefaultRequestCycles {
-    /// The default number of cycles to attach with this request.
+    /// The default number of cycles per provider to attach with this request.
     ///
-    /// This method will be called just before sending the request and only if the user did not set a number of cycles to attach.
+    /// This value is multiplied by the number of providers before sending the request,
+    /// and only used if the user did not set a number of cycles to attach.
     fn default_request_cycles(&self) -> u128;
 }
 
@@ -379,7 +380,7 @@ pub type GetSignaturesForAddressRequestBuilder<R> = RequestBuilder<
 
 impl<R> DefaultRequestCycles for GetSignaturesForAddressRequestBuilder<R> {
     fn default_request_cycles(&self) -> u128 {
-        2_000_000_000 // TODO XC-338: Check heuristic
+        10_000_000_000
     }
 }
 
@@ -444,7 +445,6 @@ pub type GetSignatureStatusesRequestBuilder<R> = RequestBuilder<
 
 impl<R> DefaultRequestCycles for GetSignatureStatusesRequestBuilder<R> {
     fn default_request_cycles(&self) -> u128 {
-        // TODO XC-338: Check heuristic
         2_000_000_000 + self.request.params.signatures.len() as u128 * 1_000_000
     }
 }
@@ -852,6 +852,9 @@ pub trait SolRpcConfig {
 
     /// Return a new RPC config with the given response consensys.
     fn with_response_consensus(self, response_consensus: ConsensusStrategy) -> Self;
+
+    /// Return the response consensus strategy, if set.
+    fn response_consensus(&self) -> Option<&ConsensusStrategy>;
 }
 
 impl SolRpcConfig for RpcConfig {
@@ -867,6 +870,10 @@ impl SolRpcConfig for RpcConfig {
             response_consensus: Some(response_consensus),
             ..self
         }
+    }
+
+    fn response_consensus(&self) -> Option<&ConsensusStrategy> {
+        self.response_consensus.as_ref()
     }
 }
 
@@ -884,6 +891,10 @@ impl SolRpcConfig for GetSlotRpcConfig {
             ..self
         }
     }
+
+    fn response_consensus(&self) -> Option<&ConsensusStrategy> {
+        self.response_consensus.as_ref()
+    }
 }
 
 impl SolRpcConfig for GetRecentPrioritizationFeesRpcConfig {
@@ -895,6 +906,37 @@ impl SolRpcConfig for GetRecentPrioritizationFeesRpcConfig {
     fn with_response_consensus(mut self, response_consensus: ConsensusStrategy) -> Self {
         self.set_response_consensus(response_consensus);
         self
+    }
+
+    fn response_consensus(&self) -> Option<&ConsensusStrategy> {
+        self.response_consensus.as_ref()
+    }
+}
+
+impl<Runtime, Config: SolRpcConfig, Params, CandidOutput, Output>
+    RequestBuilder<Runtime, Config, Params, CandidOutput, Output>
+{
+    /// Return the number of providers that will be queried for this request.
+    pub fn num_providers(&self) -> u32 {
+        /// Default number of providers queried when using default RPC sources.
+        const DEFAULT_NUM_PROVIDERS: u32 = 3;
+
+        match &self.request.rpc_sources {
+            RpcSources::Custom(providers) => providers.len() as u32,
+            RpcSources::Default(_) => {
+                match self
+                    .request
+                    .rpc_config
+                    .as_ref()
+                    .and_then(|c| c.response_consensus())
+                {
+                    Some(ConsensusStrategy::Threshold {
+                        total: Some(total), ..
+                    }) => *total as u32,
+                    _ => DEFAULT_NUM_PROVIDERS,
+                }
+            }
+        }
     }
 }
 
@@ -934,7 +976,7 @@ impl<R: Runtime, Config, Params, CandidOutput, Output>
     /// If the request was not successful.
     pub async fn send(self) -> Output
     where
-        Config: CandidType + Send,
+        Config: CandidType + Send + SolRpcConfig,
         Params: CandidType + Send,
         CandidOutput: Into<Output> + CandidType + DeserializeOwned,
         RequestBuilder<R, Config, Params, CandidOutput, Output>: DefaultRequestCycles,
@@ -949,15 +991,15 @@ impl<R: Runtime, Config, Params, CandidOutput, Output>
     /// either the request response or any error that occurs while sending the request.
     pub async fn try_send(self) -> Result<Output, IcError>
     where
-        Config: CandidType + Send,
+        Config: CandidType + Send + SolRpcConfig,
         Params: CandidType + Send,
         CandidOutput: Into<Output> + CandidType + DeserializeOwned,
         RequestBuilder<R, Config, Params, CandidOutput, Output>: DefaultRequestCycles,
     {
-        let cycles = self
-            .request
-            .cycles
-            .unwrap_or_else(|| self.default_request_cycles());
+        let cycles = self.request.cycles.unwrap_or_else(|| {
+            self.default_request_cycles()
+                .saturating_mul(self.num_providers() as u128)
+        });
         self.client
             .try_execute_request::<Config, Params, CandidOutput, Output>(self.request, cycles)
             .await
