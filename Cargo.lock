@@ -2307,6 +2307,56 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-agent"
+version = "0.47.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fefe511d29d927aa5a2090c2e26e0b72cd0633ab7007927e19aeceb05c2a42b1"
+dependencies = [
+ "arc-swap",
+ "async-channel 2.5.0",
+ "async-lock",
+ "async-trait",
+ "async-watch",
+ "backoff",
+ "bytes",
+ "cached",
+ "candid",
+ "ecdsa",
+ "ed25519-consensus",
+ "elliptic-curve",
+ "futures-util",
+ "hex",
+ "http 1.4.0",
+ "http-body",
+ "http-body-util",
+ "ic-certification",
+ "ic-ed25519",
+ "ic-transport-types 0.47.2",
+ "ic-verify-bls-signature",
+ "ic_principal",
+ "k256",
+ "leb128",
+ "p256",
+ "pem 3.0.6",
+ "pkcs8",
+ "rand 0.10.1",
+ "rangemap",
+ "reqwest 0.13.2",
+ "sec1",
+ "serde",
+ "serde_bytes",
+ "serde_cbor",
+ "serde_repr",
+ "sha2 0.10.9",
+ "stop-token",
+ "thiserror 2.0.18",
+ "time",
+ "tokio",
+ "tower-service",
+ "url",
+]
+
+[[package]]
 name = "ic-agent-canister-runtime"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2314,7 +2364,7 @@ checksum = "69be6dccc56223d9f677b3df4eb3e89aaf50f38fe85edff9d9ff6d5e1a642ed6"
 dependencies = [
  "async-trait",
  "candid",
- "ic-agent",
+ "ic-agent 0.46.2",
  "ic-canister-runtime",
  "ic-error-types",
  "serde",
@@ -2554,6 +2604,24 @@ name = "ic-transport-types"
 version = "0.46.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "26448ff3dd1dc1afbfdd008153b2fde7ab117296e866cd7642c4a0cb9c88e421"
+dependencies = [
+ "candid",
+ "hex",
+ "ic-certification",
+ "leb128",
+ "serde",
+ "serde_bytes",
+ "serde_cbor",
+ "serde_repr",
+ "sha2 0.10.9",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "ic-transport-types"
+version = "0.47.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a46a13c1e36d4ac5db68a84e68f2e9edf7773bea131e915e251709b00f5910d9"
 dependencies = [
  "candid",
  "hex",
@@ -4908,7 +4976,7 @@ version = "1.0.0"
 dependencies = [
  "async-trait",
  "candid",
- "ic-agent",
+ "ic-agent 0.47.2",
  "ic-agent-canister-runtime",
  "ic-canister-runtime",
  "serde_json",
