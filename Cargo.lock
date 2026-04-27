@@ -2483,7 +2483,7 @@ dependencies = [
  "candid",
  "ic-http-types",
  "ic-management-canister-types 0.5.0",
- "pocket-ic",
+ "pocket-ic 12.0.0",
  "regex",
 ]
 
@@ -2505,7 +2505,7 @@ dependencies = [
  "ic-canister-runtime",
  "ic-cdk",
  "ic-error-types",
- "pocket-ic",
+ "pocket-ic 12.0.0",
  "serde",
  "serde_bytes",
  "serde_json",
@@ -2536,6 +2536,24 @@ name = "ic-transport-types"
 version = "0.40.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2e7706e55836e8104c98149ec0796d20d5213fef972ac01b544657d410f1883"
+dependencies = [
+ "candid",
+ "hex",
+ "ic-certification",
+ "leb128",
+ "serde",
+ "serde_bytes",
+ "serde_cbor",
+ "serde_repr",
+ "sha2 0.10.9",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "ic-transport-types"
+version = "0.45.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a775244756a5d97ff19b08071a946a4b4896904e35deb036bf215e80f2e703d"
 dependencies = [
  "candid",
  "hex",
@@ -3674,6 +3692,39 @@ dependencies = [
  "semver",
  "serde",
  "serde_bytes",
+ "serde_cbor",
+ "serde_json",
+ "sha2 0.10.9",
+ "slog",
+ "strum 0.26.3",
+ "strum_macros 0.26.4",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+ "wslpath",
+]
+
+[[package]]
+name = "pocket-ic"
+version = "13.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e30621a12b204880522340df8327930d1b7fdefd784c9fc6093b311440fa0506"
+dependencies = [
+ "backoff",
+ "base64 0.13.1",
+ "candid",
+ "flate2",
+ "hex",
+ "ic-certification",
+ "ic-management-canister-types 0.5.0",
+ "ic-transport-types 0.45.0",
+ "reqwest 0.12.28",
+ "schemars 0.8.22",
+ "semver",
+ "serde",
  "serde_cbor",
  "serde_json",
  "sha2 0.10.9",
@@ -4946,7 +4997,7 @@ dependencies = [
  "ic-pocket-canister-runtime",
  "ic-test-utilities-load-wasm",
  "num-traits",
- "pocket-ic",
+ "pocket-ic 13.0.0",
  "serde",
  "serde_bytes",
  "serde_json",
