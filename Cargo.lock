@@ -4890,7 +4890,7 @@ dependencies = [
  "solana-message",
  "solana-nonce",
  "solana-pubkey 4.2.0",
- "solana-reward-info",
+ "solana-reward-info 6.2.0",
  "solana-sdk-ids",
  "solana-signature",
  "solana-system-interface 3.2.0",
@@ -4996,7 +4996,7 @@ dependencies = [
  "solana-hash 4.3.0",
  "solana-instruction",
  "solana-pubkey 4.2.0",
- "solana-reward-info",
+ "solana-reward-info 6.2.0",
  "solana-signature",
  "solana-transaction",
  "solana-transaction-error",
@@ -5985,6 +5985,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "solana-reward-info"
+version = "6.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc553b782111862cd6c56bdeba696dcba9722a42154ef1248c5a06ca1d983797"
+
+[[package]]
 name = "solana-rpc-client"
 version = "3.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6080,7 +6086,7 @@ dependencies = [
  "solana-commitment-config",
  "solana-fee-calculator",
  "solana-inflation",
- "solana-reward-info",
+ "solana-reward-info 3.0.0",
  "solana-transaction",
  "solana-transaction-error",
  "solana-transaction-status-client-types",
@@ -6596,7 +6602,7 @@ dependencies = [
  "solana-instruction",
  "solana-message",
  "solana-pubkey 3.0.0",
- "solana-reward-info",
+ "solana-reward-info 3.0.0",
  "solana-signature",
  "solana-transaction",
  "solana-transaction-context",
