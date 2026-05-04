@@ -45,7 +45,7 @@ Refer to the [Reproducible Build](#reproducible-build) section for information o
 
 #### Prerequisites:
 
-* [Install](https://internetcomputer.org/docs/building-apps/developer-tools/dev-tools-overview#dfx) `dfx`.
+* [Install](https://internetcomputer.org/docs/building-apps/developer-tools/dev-tools-overview#icp-cli) `icp-cli` (minimum version: v0.1.0).
 * [Cycles wallet](https://internetcomputer.org/docs/building-apps/canister-management/cycles-wallet) with some cycles to pay for requests.
 * Commands are executed in [`canister/prod`](canister/prod).
 
@@ -54,7 +54,7 @@ Refer to the [Reproducible Build](#reproducible-build) section for information o
 To get the last `finalized` slot on Solana Mainnet
 
 ```bash
-dfx canister call --ic sol_rpc --wallet $(dfx identity get-wallet --ic) --with-cycles 2B getSlot \
+icp canister call --network ic sol_rpc --wallet $(icp identity get-wallet --network ic) --with-cycles 2B getSlot \
 '
 (
   variant { Default = variant { Mainnet } },
@@ -112,27 +112,36 @@ Full examples are available in the [examples](examples) folder and additional co
 > [!TIP]
 > When deploying your own instance of the SOL RPC canister, you will need to provide and manage your own API keys for the Solana RPC providers. You can provision these keys with the `updateApiKeys` canister endpoint.
 
-To deploy your own instance of the SOL RPC canister to the IC Mainnet, first add the following to your `dfx.json`:
+To deploy your own instance of the SOL RPC canister to the IC Mainnet, first add the following to your `icp.yaml`:
 
-```json
-{
-  "canisters": {
-    "sol_rpc": {
-      "type": "custom",
-      "candid": "https://github.com/dfinity/sol-rpc-canister/releases/latest/download/sol_rpc_canister.did",
-      "wasm": "https://github.com/dfinity/sol-rpc-canister/releases/latest/download/sol_rpc_canister.wasm.gz",
-      "init_arg": "( record {} )"
-    }
-  }
-}
+```yaml
+canisters:
+  - name: sol_rpc
+    build:
+      steps:
+        - type: remote
+          candid: "https://github.com/dfinity/sol-rpc-canister/releases/latest/download/sol_rpc_canister.did"
+          wasm: "https://github.com/dfinity/sol-rpc-canister/releases/latest/download/sol_rpc_canister.wasm.gz"
+    init_args:
+      sol_rpc: "( record {} )"
+
+networks:
+  - name: ic
+    mode: connected
+    url: https://icp-api.io
+
+environments:
+  - name: prod
+    network: ic
+    canisters: [sol_rpc]
 ```
 
 You can also specify your own `init_args` to configure the SOL RPC canister's behaviour. For this, refer to the [Candid interface](canister/sol_rpc_canister.did) specification.
 
-Finally, run the following command (from the directory containing your `dfx.json`) to deploy the canister on the IC:
+Finally, run the following command (from the directory containing your `icp.yaml`) to deploy the canister on the IC:
 
 ```sh
-dfx deploy --ic sol_rpc
+icp deploy --environment prod
 ```
 
 ### Local deployment
@@ -142,36 +151,40 @@ dfx deploy --ic sol_rpc
 > - **IPv4 HTTP outcalls:** Local development environments allow HTTP requests over IPv4, but the ICP Mainnet only supports IPv6 for HTTP outcalls. For example, Solana Foundation [public RPC endpoints](https://solana.com/docs/references/clusters#solana-public-rpc-endpoints), which are support only IPv4, will work locally but not on Mainnet.
 > - **Single-replica behavior:** Local deployments run on a single replica, while Mainnet uses a replicated, consensus-based model. This can cause calls that work locally to fail on Mainnet due to consensus issues. For instance, calls to [`getLatestBlockhash`](https://solana.com/docs/rpc/http/getlatestblockhash) may succeed locally but fail on Mainnet because Solana’s fast block times can cause discrepancies between replicas during validation.
 
-To deploy a local instance of the SOL RPC canister, first add the following to your `dfx.json` config file:
+To deploy a local instance of the SOL RPC canister, first add the following to your `icp.yaml` config file:
 
-```json
-{
-  "canisters": {
-    "sol_rpc": {
-      "type": "custom",
-      "candid": "https://github.com/dfinity/sol-rpc-canister/releases/latest/download/sol_rpc_canister.did",
-      "wasm": "https://github.com/dfinity/sol-rpc-canister/releases/latest/download/sol_rpc_canister.wasm.gz",
-      "remote": {
-        "id": {
-          "ic": "tghme-zyaaa-aaaar-qarca-cai"
-        }
-      },
-      "init_arg": "( record {} )"
-    }
-  }
-}
+```yaml
+canisters:
+  - name: sol_rpc
+    build:
+      steps:
+        - type: remote
+          candid: "https://github.com/dfinity/sol-rpc-canister/releases/latest/download/sol_rpc_canister.did"
+          wasm: "https://github.com/dfinity/sol-rpc-canister/releases/latest/download/sol_rpc_canister.wasm.gz"
+    init_args:
+      sol_rpc: "( record {} )"
+
+networks:
+  - name: local
+    mode: managed
+    url: http://localhost:4943
+
+environments:
+  - name: local
+    network: local
+    canisters: [sol_rpc]
 ```
 
-You can also specify your own `init_args` to configure the SOL RPC canister's behaviour. For this, refer to the [Candid interface](canister/sol_rpc_canister.did) specification. 
+You can also specify your own `init_args` to configure the SOL RPC canister's behaviour. For this, refer to the [Candid interface](canister/sol_rpc_canister.did) specification.
 
-Finally, run the following commands (from the directory containing your `dfx.json`) to deploy the canister in your local environment:
+Finally, run the following commands (from the directory containing your `icp.yaml`) to deploy the canister in your local environment:
 
 ```sh
 # Start the local replica
-dfx start --background
+icp network start --background
 
 # Locally deploy the `sol_rpc` canister
-dfx deploy sol_rpc
+icp deploy --environment local
 ```
 
 ### Deploying from ICP Ninja
@@ -181,7 +194,7 @@ To deploy the SOL RPC canister together with an example Solana wallet smart cont
 [![](https://icp.ninja/assets/open.svg)](https://icp.ninja/editor?g=https://github.com/dfinity/sol-rpc-canister/tree/main/examples/basic_solana/ninja)
 
 > [!TIP]
-> If you download the project from ICP Ninja to deploy it locally, you will need to change the `init_arg` for the `basic_solana` canister in the `dfx.json` file. Specifically, you will need to change `ed25519_key_name = opt variant { MainnetTestKey1 }` to `ed25519_key_name = opt variant { LocalDevelopment }`. To learn more about the initialization arguments, see the `InitArg` type in [`basic_solana.did`](basic_solana.did).
+> If you download the project from ICP Ninja to deploy it locally, you will need to change the `init_args` for the `basic_solana` canister. Specifically, you will need to change `ed25519_key_name = opt variant { MainnetTestKey1 }` to `ed25519_key_name = opt variant { LocalDevelopment }`. To learn more about the initialization arguments, see the `InitArg` type in [`basic_solana.did`](basic_solana.did).
 
 ## Limitations
 
