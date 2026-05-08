@@ -288,3 +288,52 @@ jobs:
         env:
           DFX_DEPLOY_KEY: ${{ secrets.DFX_DEPLOY_KEY }}
         run: cargo test --locked --package sol_rpc_e2e_tests -- --test-threads 1 --nocapture
+
+  # Single aggregator status check. Configure GitHub branch protection
+  # to require `checks-pass` so that any failing or skipped upstream
+  # job blocks the merge, without having to enumerate every individual
+  # job in the ruleset.
+  checks-pass:
+    # Always run this job!
+    if: always()
+    needs:
+      [
+        lint,
+        check-cargo-lock,
+        cargo-doc,
+        reproducible-build,
+        unit-tests,
+        basic-solana-deployment,
+        check-canister-wasm-endpoints,
+        integration-tests,
+        end-to-end-tests,
+      ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: check lint result
+        if: ${{ needs.lint.result != 'success' }}
+        run: exit 1
+      - name: check check-cargo-lock result
+        if: ${{ needs.check-cargo-lock.result != 'success' }}
+        run: exit 1
+      - name: check cargo-doc result
+        if: ${{ needs.cargo-doc.result != 'success' }}
+        run: exit 1
+      - name: check reproducible-build result
+        if: ${{ needs.reproducible-build.result != 'success' }}
+        run: exit 1
+      - name: check unit-tests result
+        if: ${{ needs.unit-tests.result != 'success' }}
+        run: exit 1
+      - name: check basic-solana-deployment result
+        if: ${{ needs.basic-solana-deployment.result != 'success' }}
+        run: exit 1
+      - name: check check-canister-wasm-endpoints result
+        if: ${{ needs.check-canister-wasm-endpoints.result != 'success' }}
+        run: exit 1
+      - name: check integration-tests result
+        if: ${{ needs.integration-tests.result != 'success' }}
+        run: exit 1
+      - name: check end-to-end-tests result
+        if: ${{ needs.end-to-end-tests.result != 'success' }}
+        run: exit 1
