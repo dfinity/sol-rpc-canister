@@ -310,30 +310,7 @@ jobs:
       ]
     runs-on: ubuntu-latest
     steps:
-      - name: check lint result
-        if: ${{ needs.lint.result != 'success' }}
-        run: exit 1
-      - name: check check-cargo-lock result
-        if: ${{ needs.check-cargo-lock.result != 'success' }}
-        run: exit 1
-      - name: check cargo-doc result
-        if: ${{ needs.cargo-doc.result != 'success' }}
-        run: exit 1
-      - name: check reproducible-build result
-        if: ${{ needs.reproducible-build.result != 'success' }}
-        run: exit 1
-      - name: check unit-tests result
-        if: ${{ needs.unit-tests.result != 'success' }}
-        run: exit 1
-      - name: check basic-solana-deployment result
-        if: ${{ needs.basic-solana-deployment.result != 'success' }}
-        run: exit 1
-      - name: check check-canister-wasm-endpoints result
-        if: ${{ needs.check-canister-wasm-endpoints.result != 'success' }}
-        run: exit 1
-      - name: check integration-tests result
-        if: ${{ needs.integration-tests.result != 'success' }}
-        run: exit 1
-      - name: check end-to-end-tests result
-        if: ${{ needs.end-to-end-tests.result != 'success' }}
-        run: exit 1
+      - run: |
+          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            exit 1
+          fi
