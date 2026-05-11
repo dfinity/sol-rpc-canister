@@ -30,7 +30,7 @@ impl TryFrom<solana_transaction_status_client_types::Reward> for Reward {
             pubkey: reward.pubkey.parse()?,
             lamports: reward.lamports,
             post_balance: reward.post_balance,
-            reward_type: reward.reward_type.map(reward_type_from_status_client),
+            reward_type: reward.reward_type.map(Into::into),
             commission: reward.commission,
         })
     }
@@ -42,7 +42,7 @@ impl From<Reward> for solana_transaction_status_client_types::Reward {
             pubkey: reward.pubkey.to_string(),
             lamports: reward.lamports,
             post_balance: reward.post_balance,
-            reward_type: reward.reward_type.and_then(reward_type_to_status_client),
+            reward_type: reward.reward_type.map(Into::into),
             commission: reward.commission,
         }
     }
@@ -63,9 +63,6 @@ pub enum RewardType {
     /// Reward earned for participating in vote transactions to help reach consensus.
     #[serde(rename = "voting")]
     Voting,
-    /// Reward returned to an account when its stake is deactivated.
-    #[serde(rename = "deactivatedStake")]
-    DeactivatedStake,
 }
 
 impl From<solana_reward_info::RewardType> for RewardType {
@@ -75,7 +72,6 @@ impl From<solana_reward_info::RewardType> for RewardType {
             solana_reward_info::RewardType::Rent => Self::Rent,
             solana_reward_info::RewardType::Staking => Self::Staking,
             solana_reward_info::RewardType::Voting => Self::Voting,
-            solana_reward_info::RewardType::DeactivatedStake => Self::DeactivatedStake,
         }
     }
 }
@@ -87,30 +83,6 @@ impl From<RewardType> for solana_reward_info::RewardType {
             RewardType::Rent => Self::Rent,
             RewardType::Staking => Self::Staking,
             RewardType::Voting => Self::Voting,
-            RewardType::DeactivatedStake => Self::DeactivatedStake,
         }
-    }
-}
-
-fn reward_type_from_status_client(
-    reward_type: solana_reward_info_legacy::RewardType,
-) -> RewardType {
-    match reward_type {
-        solana_reward_info_legacy::RewardType::Fee => RewardType::Fee,
-        solana_reward_info_legacy::RewardType::Rent => RewardType::Rent,
-        solana_reward_info_legacy::RewardType::Staking => RewardType::Staking,
-        solana_reward_info_legacy::RewardType::Voting => RewardType::Voting,
-    }
-}
-
-fn reward_type_to_status_client(
-    reward_type: RewardType,
-) -> Option<solana_reward_info_legacy::RewardType> {
-    match reward_type {
-        RewardType::Fee => Some(solana_reward_info_legacy::RewardType::Fee),
-        RewardType::Rent => Some(solana_reward_info_legacy::RewardType::Rent),
-        RewardType::Staking => Some(solana_reward_info_legacy::RewardType::Staking),
-        RewardType::Voting => Some(solana_reward_info_legacy::RewardType::Voting),
-        RewardType::DeactivatedStake => None,
     }
 }
