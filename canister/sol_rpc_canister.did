@@ -519,7 +519,7 @@ type Reward = record {
   lamports : int64;
   commission : opt nat8;
   pubkey : Pubkey;
-  rewardType : opt variant { fee; rent; voting; staking };
+  rewardType : opt variant { fee; rent; voting; staking; deactivatedStake };
   postBalance : nat64;
 };
 
