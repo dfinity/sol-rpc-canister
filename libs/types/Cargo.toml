@@ -27,6 +27,7 @@ solana-hash = { workspace = true }
 solana-instruction = { workspace = true }
 solana-pubkey = { workspace = true }
 solana-reward-info = { workspace = true }
+solana-reward-info-legacy = { package = "solana-reward-info", version = "3" }
 solana-signature = { workspace = true }
 solana-transaction = { workspace = true, features = ["bincode"] }
 solana-transaction-error = { workspace = true }
