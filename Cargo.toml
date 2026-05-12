@@ -35,7 +35,7 @@ futures = "0.3.32"
 getrandom = { version = "*", default-features = false, features = ["custom"] }
 hex = "0.4.3"
 http = "1.4.0"
-ic-agent = "0.46.2"
+ic-agent = "0.47.2"
 ic-agent-canister-runtime = "0.3.0"
 ic-canister-runtime = "0.2.2"
 ic-cdk = "0.20.0"
