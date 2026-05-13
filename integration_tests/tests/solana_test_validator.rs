@@ -78,7 +78,6 @@ async fn should_get_slot() {
 async fn should_get_recent_prioritization_fees() {
     const BASE_FEE_PER_SIGNATURE_LAMPORTS: u64 = 5000;
     const NUM_TRANSACTIONS: u64 = 10;
-    const SLOT_SAFETY_MARGIN: u64 = 5;
 
     let setup = Setup::new().await;
 
@@ -142,22 +141,27 @@ async fn should_get_recent_prioritization_fees() {
 
     // The local validator continuously produces new slots (~400ms each) while the
     // SOL and ICP queries run sequentially with HTTP latency between them, so the
-    // tail of either response may contain slots the other side did not observe yet.
-    // Restrict the comparison to slots that are guaranteed to be settled on both
-    // sides by trimming a safety margin off the smaller maximum slot.
-    let sol_max_slot = sol_res.iter().map(|f| f.slot).max();
-    let ic_max_slot = ic_res.iter().map(|f| f.slot).max();
-    let settled_max = sol_max_slot
-        .zip(ic_max_slot)
-        .map(|(s, i)| s.min(i).saturating_sub(SLOT_SAFETY_MARGIN));
-    let sol_res: Vec<_> = sol_res
-        .into_iter()
-        .filter(|f| settled_max.is_some_and(|m| f.slot <= m))
-        .collect();
-    let ic_res: Vec<_> = ic_res
-        .into_iter()
-        .filter(|f| settled_max.is_some_and(|m| f.slot <= m))
-        .collect();
+    // tail of either response may contain a slot the other side did not observe
+    // yet. Require both sides to be within a single slot of each other, then
+    // compare only on slots present on both — entries above the smaller maximum
+    // are by construction only on one side.
+    let sol_max_slot = sol_res
+        .iter()
+        .map(|f| f.slot)
+        .max()
+        .expect("SOL results should not be empty");
+    let ic_max_slot = ic_res
+        .iter()
+        .map(|f| f.slot)
+        .max()
+        .expect("ICP results should not be empty");
+    assert!(
+        sol_max_slot.abs_diff(ic_max_slot) < 2,
+        "SOL max slot ({sol_max_slot}) and ICP max slot ({ic_max_slot}) differ by more than 1 slot"
+    );
+    let settled_max = sol_max_slot.min(ic_max_slot);
+    let sol_res: Vec<_> = sol_res.into_iter().filter(|f| f.slot <= settled_max).collect();
+    let ic_res: Vec<_> = ic_res.into_iter().filter(|f| f.slot <= settled_max).collect();
 
     assert_eq!(
         sol_res.len(),
