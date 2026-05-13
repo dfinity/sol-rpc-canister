@@ -15,7 +15,7 @@ bs58 = "0.5.1"
 candid = "0.10.14"
 # Transitive dependency
 # See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
-getrandom = { version = "*", default-features = false, features = ["custom"] }
+getrandom = { version = "0.2", default-features = false, features = ["custom"] }
 ic-canister-runtime = "0.1.2"
 ic-cdk = "0.19.0"
 ic-ed25519 = "0.6.0"
