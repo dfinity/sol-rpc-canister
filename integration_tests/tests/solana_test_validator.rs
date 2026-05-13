@@ -160,8 +160,14 @@ async fn should_get_recent_prioritization_fees() {
         "SOL max slot ({sol_max_slot}) and ICP max slot ({ic_max_slot}) differ by more than 1 slot"
     );
     let settled_max = sol_max_slot.min(ic_max_slot);
-    let sol_res: Vec<_> = sol_res.into_iter().filter(|f| f.slot <= settled_max).collect();
-    let ic_res: Vec<_> = ic_res.into_iter().filter(|f| f.slot <= settled_max).collect();
+    let sol_res: Vec<_> = sol_res
+        .into_iter()
+        .filter(|f| f.slot <= settled_max)
+        .collect();
+    let ic_res: Vec<_> = ic_res
+        .into_iter()
+        .filter(|f| f.slot <= settled_max)
+        .collect();
 
     assert_eq!(
         sol_res.len(),
