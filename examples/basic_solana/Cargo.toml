@@ -15,7 +15,7 @@ bs58 = "0.5.1"
 candid = "0.10.14"
 # Transitive dependency
 # See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
-getrandom = { version = "*", default-features = false, features = ["custom"] }
+getrandom = { version = "0.2", default-features = false, features = ["custom"] }
 ic-canister-runtime = "0.1.2"
 ic-cdk = "0.19.0"
 ic-ed25519 = "0.6.0"
@@ -37,7 +37,7 @@ candid = "0.10.14"
 candid_parser = "0.3.0"
 ic-management-canister-types = "0.5.0"
 ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", tag = "release-2025-01-23_03-04-base" }
-pocket-ic = "12.0.0"
+pocket-ic = "13.0.0"
 solana-client = "3.0.0"
 solana-commitment-config = "3.0.0"
 solana-keypair = "3.0.0"
