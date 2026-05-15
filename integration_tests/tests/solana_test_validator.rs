@@ -139,6 +139,52 @@ async fn should_get_recent_prioritization_fees() {
         )
         .await;
 
+    // The local validator continuously produces new slots (~400ms each) while the
+    // SOL and ICP queries run sequentially with HTTP latency between them, so the
+    // tail of either response may contain a slot the other side did not observe
+    // yet. If the ~150-slot sliding window is at capacity, advancing one slot
+    // between queries also shifts the bottom by one. Require both maxima and
+    // both minima to be within a single slot of each other, then compare only
+    // on the slot range present on both sides.
+    let sol_max_slot = sol_res
+        .iter()
+        .map(|f| f.slot)
+        .max()
+        .expect("SOL results should not be empty");
+    let ic_max_slot = ic_res
+        .iter()
+        .map(|f| f.slot)
+        .max()
+        .expect("ICP results should not be empty");
+    let sol_min_slot = sol_res
+        .iter()
+        .map(|f| f.slot)
+        .min()
+        .expect("SOL results should not be empty");
+    let ic_min_slot = ic_res
+        .iter()
+        .map(|f| f.slot)
+        .min()
+        .expect("ICP results should not be empty");
+    assert!(
+        sol_max_slot.abs_diff(ic_max_slot) < 2,
+        "SOL max slot ({sol_max_slot}) and ICP max slot ({ic_max_slot}) differ by more than 1 slot"
+    );
+    assert!(
+        sol_min_slot.abs_diff(ic_min_slot) < 2,
+        "SOL min slot ({sol_min_slot}) and ICP min slot ({ic_min_slot}) differ by more than 1 slot"
+    );
+    let settled_max = sol_max_slot.min(ic_max_slot);
+    let settled_min = sol_min_slot.max(ic_min_slot);
+    let sol_res: Vec<_> = sol_res
+        .into_iter()
+        .filter(|f| f.slot >= settled_min && f.slot <= settled_max)
+        .collect();
+    let ic_res: Vec<_> = ic_res
+        .into_iter()
+        .filter(|f| f.slot >= settled_min && f.slot <= settled_max)
+        .collect();
+
     assert_eq!(
         sol_res.len(),
         ic_res.len(),
