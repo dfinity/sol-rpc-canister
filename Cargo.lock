@@ -1633,7 +1633,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2486,7 +2486,7 @@ dependencies = [
  "candid",
  "ic-http-types",
  "ic-management-canister-types 0.5.0",
- "pocket-ic",
+ "pocket-ic 13.0.0",
  "regex",
 ]
 
@@ -2508,7 +2508,7 @@ dependencies = [
  "ic-canister-runtime",
  "ic-cdk",
  "ic-error-types",
- "pocket-ic",
+ "pocket-ic 13.0.0",
  "serde",
  "serde_bytes",
  "serde_json",
@@ -3264,7 +3264,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3683,6 +3683,39 @@ name = "pocket-ic"
 version = "13.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e30621a12b204880522340df8327930d1b7fdefd784c9fc6093b311440fa0506"
+dependencies = [
+ "backoff",
+ "base64 0.13.1",
+ "candid",
+ "flate2",
+ "hex",
+ "ic-certification",
+ "ic-management-canister-types 0.5.0",
+ "ic-transport-types 0.45.0",
+ "reqwest 0.12.28",
+ "schemars 0.8.22",
+ "semver",
+ "serde",
+ "serde_cbor",
+ "serde_json",
+ "sha2 0.10.9",
+ "slog",
+ "strum 0.26.3",
+ "strum_macros 0.26.4",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+ "wslpath",
+]
+
+[[package]]
+name = "pocket-ic"
+version = "14.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "30ca4be8aebd68fe9f73cd539f99c5c46f7705fa9a6e4ed2eb1f297518c2ac8f"
 dependencies = [
  "backoff",
  "base64 0.13.1",
@@ -4313,7 +4346,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4371,7 +4404,7 @@ dependencies = [
  "security-framework",
  "security-framework-sys",
  "webpki-root-certs",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4392,7 +4425,7 @@ dependencies = [
  "security-framework",
  "security-framework-sys",
  "webpki-root-certs",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4889,7 +4922,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a766e1110788c36f4fa1c2b71b387a7815aa65f88ce0229841826633d93723e"
 dependencies = [
  "libc",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -5014,7 +5047,7 @@ dependencies = [
  "ic-pocket-canister-runtime",
  "ic-test-utilities-load-wasm",
  "num-traits",
- "pocket-ic",
+ "pocket-ic 14.0.0",
  "serde",
  "serde_bytes",
  "serde_json",
@@ -7020,7 +7053,7 @@ dependencies = [
  "cfg-if",
  "libc",
  "psm",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -7178,7 +7211,7 @@ dependencies = [
  "getrandom 0.4.2",
  "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -8002,7 +8035,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
