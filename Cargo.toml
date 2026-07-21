@@ -65,7 +65,7 @@ serde_with = "3.21.0"
 sol_rpc_client = { version = "6.0.0", path = "libs/client" }
 sol_rpc_types = { version = "3.1.2", path = "libs/types" }
 solana-account = "3.4.0"
-solana-account-decoder-client-types = "3.1.11"
+solana-account-decoder-client-types = "4.1.2"
 solana-client = "3.1.14"
 solana-clock = "3.1.0"
 solana-commitment-config = "3.1.1"
