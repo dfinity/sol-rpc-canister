@@ -102,6 +102,7 @@ jobs:
   basic-solana-deployment:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os:
           - ubuntu-latest
@@ -130,6 +131,9 @@ jobs:
           # The workflow sets RUSTFLAGS=-Dwarnings, which makes cargo ignore the rustflags in
           # .cargo/config.toml; re-add the getrandom wasm backend cfg the canister build needs.
           RUSTFLAGS: '-Dwarnings --cfg getrandom_backend="custom"'
+          # Authenticate icp-cli's GitHub API calls (it fetches the network launcher release when
+          # starting the local network) to avoid the unauthenticated rate limit.
+          ICP_CLI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # On macOS, point the C compiler at Homebrew LLVM so zstd can be built for wasm.
           if [ "$(uname)" = "Darwin" ]; then
