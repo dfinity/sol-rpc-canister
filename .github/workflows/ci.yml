@@ -120,6 +120,10 @@ jobs:
 
       - name: "Deploy locally and smoke test"
         working-directory: examples/basic_solana
+        env:
+          # The workflow sets RUSTFLAGS=-Dwarnings, which makes cargo ignore the rustflags in
+          # .cargo/config.toml; re-add the getrandom wasm backend cfg the canister build needs.
+          RUSTFLAGS: '-Dwarnings --cfg getrandom_backend="custom"'
         run: |
           # solana_account and get_balance reject the anonymous principal, so use a named identity.
           icp identity new ci --storage plaintext
@@ -230,6 +234,16 @@ jobs:
       - name: 'Start Solana test validator'
         run: |
           solana-test-validator &
+          # Wait until the validator's JSON-RPC endpoint is healthy before running the tests,
+          # otherwise the first airdrop can race the validator's startup.
+          for i in $(seq 1 60); do
+            if curl -s http://127.0.0.1:8899 -X POST -H 'content-type: application/json' \
+                 -d '{"jsonrpc":"2.0","id":1,"method":"getHealth"}' | grep -q '"result":"ok"'; then
+              echo "Solana test validator is ready"; exit 0
+            fi
+            echo "Waiting for Solana test validator... ($i)"; sleep 2
+          done
+          echo "❌ Solana test validator did not become ready"; exit 1
 
       - name: 'Set BACKEND_WASM_PATH so the test uses the pre-built canister Wasm'
         run: |
@@ -238,7 +252,11 @@ jobs:
       - name: 'Test basic_solana'
         working-directory: examples/basic_solana/
         run: |
-          cargo build --target wasm32-unknown-unknown --profile canister-release -p backend
+          # The canister (wasm) build needs the getrandom custom backend cfg. The workflow's
+          # RUSTFLAGS=-Dwarnings would otherwise drop the .cargo/config.toml rustflags, so set
+          # it inline for the wasm build only — the host `cargo test` must NOT get this cfg
+          # (host getrandom needs a real backend).
+          RUSTFLAGS='-Dwarnings --cfg getrandom_backend="custom"' cargo build --target wasm32-unknown-unknown --profile canister-release -p backend
           cargo test --locked --package backend
 
   end-to-end-tests:
