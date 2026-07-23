@@ -118,6 +118,12 @@ jobs:
       - name: 'Install candid-extractor'
         run: cargo install candid-extractor@0.1.6 --locked
 
+      # On macOS the `zstd` C dependency is compiled for wasm, which Apple's clang cannot target;
+      # Homebrew LLVM provides a wasm-capable clang (see AR/CC below).
+      - name: 'Install LLVM'
+        if: matrix.os == 'macos-latest'
+        run: brew install llvm
+
       - name: "Deploy locally and smoke test"
         working-directory: examples/basic_solana
         env:
@@ -125,6 +131,11 @@ jobs:
           # .cargo/config.toml; re-add the getrandom wasm backend cfg the canister build needs.
           RUSTFLAGS: '-Dwarnings --cfg getrandom_backend="custom"'
         run: |
+          # On macOS, point the C compiler at Homebrew LLVM so zstd can be built for wasm.
+          if [ "$(uname)" = "Darwin" ]; then
+            export AR="$(brew --prefix llvm)/bin/llvm-ar"
+            export CC="$(brew --prefix llvm)/bin/clang"
+          fi
           # solana_account and get_balance reject the anonymous principal, so use a named identity.
           icp identity new ci --storage plaintext
           icp identity default ci

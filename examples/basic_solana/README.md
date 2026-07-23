@@ -47,6 +47,13 @@ To interact with the endpoints, you have two options:
   npm install -g @icp-sdk/icp-cli @icp-sdk/ic-wasm
   ```
 
+> [!IMPORTANT]
+> On **macOS**, an `llvm` version that supports the `wasm32-unknown-unknown` target is required, because the `zstd` crate (used to decode Solana's `base64+zstd` responses) compiles C code for wasm and Apple's bundled `clang` cannot target it. Install the [Homebrew version](https://formulae.brew.sh/formula/llvm) with `brew install llvm`, and point the C compiler at it before building/deploying:
+> ```bash
+> export AR="$(brew --prefix llvm)/bin/llvm-ar"
+> export CC="$(brew --prefix llvm)/bin/clang"
+> ```
+
 > [!NOTE]
 > If you wish to use this example as a starting point for your own project, make sure you follow the instructions in the [build requirements](https://github.com/dfinity/sol-rpc-canister/blob/main/libs/client/README.md#build-requirements) for the `sol_rpc_client` crate to ensure that your code compiles.
 
