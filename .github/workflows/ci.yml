@@ -102,7 +102,6 @@ jobs:
   basic-solana-deployment:
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
       matrix:
         os:
           - ubuntu-latest
@@ -116,8 +115,13 @@ jobs:
 
       # The @dfinity/rust recipe extracts the canister's Candid interface with
       # candid-extractor (the example has no hand-written .did), so it must be on PATH.
+      # Use cargo-binstall to fetch a prebuilt binary instead of compiling it (~3 min).
+      - name: 'Install cargo-binstall'
+        uses: taiki-e/install-action@97a5807a604e12de3a13b52d868ebecaeeea757c # v2.75.4
+        with:
+          tool: cargo-binstall
       - name: 'Install candid-extractor'
-        run: cargo install candid-extractor@0.1.6 --locked
+        run: cargo binstall --no-confirm candid-extractor@0.1.6
 
       # On macOS the `zstd` C dependency is compiled for wasm, which Apple's clang cannot target;
       # Homebrew LLVM provides a wasm-capable clang (see AR/CC below).
