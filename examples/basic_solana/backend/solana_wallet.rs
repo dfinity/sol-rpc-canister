@@ -42,7 +42,7 @@ impl SolanaAccount {
         sign_message(
             &IcRuntime::default(),
             message,
-            read_state(|s| s.ed25519_key_name()).into(),
+            read_state(|s| crate::ed25519_key_id(s.ed25519_key_name())),
             Some(&self.derivation_path),
         )
         .await
