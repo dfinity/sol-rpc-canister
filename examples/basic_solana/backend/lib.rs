@@ -1,12 +1,22 @@
-use basic_solana::{
-    client, solana_wallet::SolanaWallet, spl::transfer_instruction_with_program_id,
-    state::init_state, validate_caller_not_anonymous, InitArg,
-};
-use candid::{Nat, Principal};
+mod ed25519;
+pub mod solana_wallet;
+pub mod spl;
+pub mod state;
+
+use crate::solana_wallet::SolanaWallet;
+use crate::spl::transfer_instruction_with_program_id;
+use crate::state::{init_state, read_state, State};
+use candid::{CandidType, Nat, Principal};
+use ic_canister_runtime::IcRuntime;
 use ic_cdk::{init, post_upgrade, update};
 use num::ToPrimitive;
+use serde::Deserialize;
 use sol_rpc_client::nonce::nonce_from_account;
-use sol_rpc_types::{GetAccountInfoEncoding, GetAccountInfoParams, TokenAmount};
+use sol_rpc_client::{ed25519::Ed25519KeyId, SolRpcClient};
+use sol_rpc_types::{
+    CommitmentLevel, ConsensusStrategy, GetAccountInfoEncoding, GetAccountInfoParams, RpcEndpoint,
+    RpcSource, RpcSources, SolanaCluster, TokenAmount,
+};
 use solana_hash::Hash;
 use solana_message::Message;
 use solana_pubkey::Pubkey;
@@ -18,14 +28,42 @@ use spl_associated_token_account_interface::{
 };
 use std::str::FromStr;
 
+// The SOL RPC canister ID is injected as PUBLIC_CANISTER_ID:sol_rpc at deploy time:
+//   local: auto-injected by icp-cli after deploying the pre-built sol_rpc canister
+//   ic:    set explicitly in icp.yaml to tghme-zyaaa-aaaar-qarca-cai (shared mainnet SOL RPC)
+//
+// See icp.yaml for the environment configuration.
+fn sol_rpc_id() -> Principal {
+    let id = ic_cdk::api::env_var_value("PUBLIC_CANISTER_ID:sol_rpc");
+    Principal::from_text(&id).expect("invalid PUBLIC_CANISTER_ID:sol_rpc")
+}
+
+pub fn client() -> SolRpcClient<IcRuntime> {
+    let rpc_sources = read_state(|state| state.solana_network().clone()).into();
+    let consensus_strategy = match rpc_sources {
+        RpcSources::Custom(_) => ConsensusStrategy::Equality,
+        RpcSources::Default(_) => ConsensusStrategy::Threshold {
+            min: 2,
+            total: Some(3),
+        },
+    };
+    SolRpcClient::builder(IcRuntime::default(), sol_rpc_id())
+        .with_rpc_sources(rpc_sources)
+        .with_consensus_strategy(consensus_strategy)
+        .with_default_commitment_level(read_state(State::solana_commitment_level))
+        .build()
+}
+
 #[init]
-pub fn init(init_arg: InitArg) {
-    init_state(init_arg)
+pub fn init(maybe_init: Option<InitArg>) {
+    if let Some(init_arg) = maybe_init {
+        init_state(init_arg)
+    }
 }
 
 #[post_upgrade]
-fn post_upgrade(init_arg: Option<InitArg>) {
-    if let Some(init_arg) = init_arg {
+fn post_upgrade(maybe_init: Option<InitArg>) {
+    if let Some(init_arg) = maybe_init {
         init_state(init_arg)
     }
 }
@@ -143,7 +181,7 @@ pub async fn create_nonce_account(owner: Option<Principal>) -> String {
     let message = Message::new_with_blockhash(
         instructions.as_slice(),
         Some(payer.as_ref()),
-        &client.estimate_recent_blockhash().send().await.unwrap(),
+        &recent_blockhash(&client).await,
     );
 
     let signatures = vec![
@@ -191,7 +229,7 @@ pub async fn create_associated_token_account(
     let message = Message::new_with_blockhash(
         &[instruction],
         Some(payer.as_ref()),
-        &client.estimate_recent_blockhash().send().await.unwrap(),
+        &recent_blockhash(&client).await,
     );
 
     let signatures = vec![payer.sign_message(&message).await];
@@ -231,7 +269,7 @@ pub async fn send_sol(owner: Option<Principal>, to: String, amount: Nat) -> Stri
     let message = Message::new_with_blockhash(
         &[instruction],
         Some(payer.as_ref()),
-        &client.estimate_recent_blockhash().send().await.unwrap(),
+        &recent_blockhash(&client).await,
     );
     let signatures = vec![payer.sign_message(&message).await];
     let transaction = Transaction {
@@ -315,7 +353,7 @@ pub async fn send_spl_token(
     let message = Message::new_with_blockhash(
         &[instruction],
         Some(payer.as_ref()),
-        &client.estimate_recent_blockhash().send().await.unwrap(),
+        &recent_blockhash(&client).await,
     );
     let signatures = vec![payer.sign_message(&message).await];
     let transaction = Transaction {
@@ -332,6 +370,19 @@ pub async fn send_spl_token(
         .to_string()
 }
 
+/// Fetches a recent blockhash from the Solana network, used to build transactions.
+async fn recent_blockhash(client: &SolRpcClient<IcRuntime>) -> Hash {
+    let (_slot, block) = client
+        .get_recent_block()
+        .try_send()
+        .await
+        .expect("Call to `getRecentBlock` failed");
+    block
+        .blockhash
+        .parse()
+        .expect("Failed to parse recent blockhash")
+}
+
 async fn get_account_owner(account: &Pubkey) -> Pubkey {
     let owner = client()
         .get_account_info(*account)
@@ -345,23 +396,55 @@ async fn get_account_owner(account: &Pubkey) -> Pubkey {
     Pubkey::from_str(&owner).unwrap()
 }
 
-fn main() {}
-
-#[test]
-fn check_candid_interface_compatibility() {
-    use candid_parser::utils::{service_equal, CandidSource};
-
-    candid::export_service!();
-
-    let new_interface = __export_service();
-
-    // check the public interface against the actual one
-    let old_interface = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
-        .join("basic_solana.did");
-
-    service_equal(
-        CandidSource::Text(dbg!(&new_interface)),
-        CandidSource::File(old_interface.as_path()),
-    )
-    .unwrap();
+#[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq)]
+pub struct InitArg {
+    pub solana_network: Option<SolanaNetwork>,
+    /// Threshold Ed25519 (Schnorr) key name as used by the IC management canister:
+    /// `"test_key_1"` (ICP mainnet testing, also available on the local network) or
+    /// `"key_1"` (ICP mainnet production). Defaults to `"test_key_1"`.
+    pub ed25519_key_name: Option<String>,
+    pub solana_commitment_level: Option<CommitmentLevel>,
 }
+
+#[derive(CandidType, Deserialize, Debug, Default, PartialEq, Eq, Clone)]
+pub enum SolanaNetwork {
+    Mainnet,
+    #[default]
+    Devnet,
+    Custom(RpcEndpoint),
+}
+
+impl From<SolanaNetwork> for RpcSources {
+    fn from(network: SolanaNetwork) -> Self {
+        match network {
+            SolanaNetwork::Mainnet => Self::Default(SolanaCluster::Mainnet),
+            SolanaNetwork::Devnet => Self::Default(SolanaCluster::Devnet),
+            SolanaNetwork::Custom(endpoint) => Self::Custom(vec![RpcSource::Custom(endpoint)]),
+        }
+    }
+}
+
+/// Maps a threshold Ed25519 (Schnorr) key name to the corresponding [`Ed25519KeyId`].
+///
+/// Only the two Internet Computer key names supported by this example are accepted:
+/// `"test_key_1"` (testing, available both on ICP mainnet and locally) and `"key_1"`
+/// (ICP mainnet production). Any other value traps.
+pub fn ed25519_key_id(key_name: &str) -> Ed25519KeyId {
+    match key_name {
+        "test_key_1" => Ed25519KeyId::MainnetTestKey1,
+        "key_1" => Ed25519KeyId::MainnetProdKey1,
+        other => ic_cdk::trap(&format!(
+            "unsupported ed25519 key name {other:?}, expected \"test_key_1\" or \"key_1\""
+        )),
+    }
+}
+
+pub fn validate_caller_not_anonymous() -> Principal {
+    let principal = ic_cdk::api::msg_caller();
+    if principal == Principal::anonymous() {
+        panic!("anonymous principal is not allowed");
+    }
+    principal
+}
+
+ic_cdk::export_candid!();

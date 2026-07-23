@@ -1,5 +1,5 @@
 [![Internet Computer portal](https://img.shields.io/badge/InternetComputer-grey?logo=internet%20computer&style=for-the-badge)](https://internetcomputer.org)
-[![DFinity Forum](https://img.shields.io/badge/help-post%20on%20forum.dfinity.org-blue?style=for-the-badge)](https://forum.dfinity.org/t/sol-rpc-canister/41896)
+[![Dfinity Forum](https://img.shields.io/badge/help-post%20on%20forum.dfinity.org-blue?style=for-the-badge)](https://forum.dfinity.org/t/sol-rpc-canister/41896)
 [![GitHub license](https://img.shields.io/badge/license-Apache%202.0-blue.svg?logo=apache&style=for-the-badge)](LICENSE)
 
 # SOL RPC canister
@@ -15,7 +15,6 @@ Interact with the [Solana](https://solana.com/) blockchain from the [Internet Co
 * [Deployment](#deployment)
   * [Deployment to the IC](#deployment-to-the-ic)
   * [Local deployment](#local-deployment)
-  * [Deploying from ICP Ninja](#deploying-from-icp-ninja)
 * [Limitations](#limitations)
 * [Supported Methods](#supported-methods)
 * [Supported Solana JSON-RPC Providers](#supported-solana-json-rpc-providers)
@@ -37,7 +36,7 @@ Interact with the [Solana](https://solana.com/) blockchain from the [Internet Co
 
 ## Usage
 
-The SOL RPC canister runs on the [fiduciary subnet](https://internetcomputer.org/docs/building-apps/developing-canisters/deploy-specific-subnet#fiduciary-subnets) with the following principal: [`tghme-zyaaa-aaaar-qarca-cai`](https://dashboard.internetcomputer.org/canister/tghme-zyaaa-aaaar-qarca-cai).
+The SOL RPC canister runs on the [fiduciary subnet](https://docs.internetcomputer.org/references/subnet-types/#fiduciary-subnet) with the following principal: [`tghme-zyaaa-aaaar-qarca-cai`](https://dashboard.internetcomputer.org/canister/tghme-zyaaa-aaaar-qarca-cai).
 
 Refer to the [Reproducible Build](#reproducible-build) section for information on how to verify the hash of the deployed WebAssembly module.
 
@@ -174,15 +173,6 @@ dfx start --background
 dfx deploy sol_rpc
 ```
 
-### Deploying from ICP Ninja
-
-To deploy the SOL RPC canister together with an example Solana wallet smart contract using ICP Ninja, click on the following link:
-
-[![](https://icp.ninja/assets/open.svg)](https://icp.ninja/editor?g=https://github.com/dfinity/sol-rpc-canister/tree/main/examples/basic_solana/ninja)
-
-> [!TIP]
-> If you download the project from ICP Ninja to deploy it locally, you will need to change the `init_arg` for the `basic_solana` canister in the `dfx.json` file. Specifically, you will need to change `ed25519_key_name = opt variant { MainnetTestKey1 }` to `ed25519_key_name = opt variant { LocalDevelopment }`. To learn more about the initialization arguments, see the `InitArg` type in [`basic_solana.did`](basic_solana.did).
-
 ## Limitations
 
 The SOL RPC canister reaches the Solana JSON-RPC providers using [HTTPS outcalls](https://internetcomputer.org/https-outcalls) and are therefore subject to the following limitations:
@@ -235,7 +225,7 @@ The table below summarizes the supported endpoints and the necessary changes (if
 
 ## Reproducible Build
 
-The SOL RPC canister supports [reproducible builds](https://internetcomputer.org/docs/current/developer-docs/smart-contracts/test/reproducible-builds):
+The SOL RPC canister supports [reproducible builds](https://docs.internetcomputer.org/guides/canister-management/reproducible-builds):
 
 1. Ensure [Docker](https://www.docker.com/get-started/) is installed on your machine.
 2. Run [`docker-build`](scripts/docker-build) in your terminal.

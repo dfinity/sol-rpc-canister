@@ -1,0 +1,49 @@
+canisters:
+  - name: backend
+    recipe:
+      type: "@dfinity/rust@v3.3.0"
+
+  # sol_rpc is only deployed locally. On ICP mainnet the shared SOL RPC canister
+  # (tghme-zyaaa-aaaar-qarca-cai) is used instead — the ic environment below
+  # restricts deployment to [backend] only and injects its principal via env vars.
+  - name: sol_rpc
+    build:
+      steps:
+        - type: pre-built
+          url: https://github.com/dfinity/sol-rpc-canister/releases/download/sol_rpc_canister-v1.3.0/sol_rpc_canister.wasm.gz
+    # Demo mode lets the locally deployed SOL RPC canister serve requests without
+    # cycle payment, and ShowAll surfaces all log entries — both convenient for
+    # local development. See the InstallArgs type in the SOL RPC canister's Candid
+    # interface for all available options.
+    init_args: "(record { logFilter = opt variant { ShowAll }; mode = opt variant { Demo } })"
+
+environments:
+  # Local: deploys both backend and sol_rpc (pre-built).
+  # icp-cli auto-injects PUBLIC_CANISTER_ID:sol_rpc into the backend after deploying sol_rpc.
+  #
+  # The backend talks to Solana Devnet through a Custom RPC endpoint
+  # (https://api.devnet.solana.com), which the locally deployed SOL RPC canister forwards
+  # requests to. A Custom endpoint is used because the SOL RPC canister's default Devnet
+  # providers require API keys, which a freshly deployed local canister does not have.
+  - name: local
+    network: local
+    init_args:
+      backend: "(opt record { solana_network = opt variant { Custom = record { url = \"https://api.devnet.solana.com\"; headers = null } }; ed25519_key_name = opt \"test_key_1\" })"
+
+  # IC mainnet: deploys only the backend; the shared SOL RPC canister is already running
+  # on ICP mainnet at tghme-zyaaa-aaaar-qarca-cai.
+  #
+  # Default configuration uses Solana Devnet with test_key_1, suitable for development
+  # and testing on ICP mainnet with free Devnet SOL from a faucet.
+  #
+  # For a production deployment on Solana Mainnet, change init_args to:
+  #   "(opt record { solana_network = opt variant { Mainnet }; ed25519_key_name = opt \"key_1\" })"
+  - name: ic
+    network: ic
+    canisters: [backend]
+    init_args:
+      backend: "(opt record { solana_network = opt variant { Devnet }; ed25519_key_name = opt \"test_key_1\" })"
+    settings:
+      backend:
+        environment_variables:
+          "PUBLIC_CANISTER_ID:sol_rpc": "tghme-zyaaa-aaaar-qarca-cai"

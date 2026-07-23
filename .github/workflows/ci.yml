@@ -48,12 +48,12 @@ jobs:
             exit 1
           }
 
-      - name: 'Check ninja Cargo.lock is up to date'
-        working-directory: examples/basic_solana/ninja
+      - name: 'Check basic_solana example Cargo.lock is up to date'
+        working-directory: examples/basic_solana
         run: |
           cargo check --locked || {
-            echo "❌ Ninja Cargo.lock is out of date" 
-            echo "Run 'cargo check' in 'examples/basic_solana/ninja/' and commit the updated 'Cargo.lock'"
+            echo "❌ basic_solana example Cargo.lock is out of date"
+            echo "Run 'cargo check' in 'examples/basic_solana/' and commit the updated 'Cargo.lock'"
             exit 1
           }
 
@@ -97,7 +97,7 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: 'Run unit tests'
-        run: cargo test --locked --workspace --exclude basic_solana --exclude sol_rpc_int_tests --exclude sol_rpc_e2e_tests
+        run: cargo test --locked --workspace --exclude sol_rpc_int_tests --exclude sol_rpc_e2e_tests
 
   basic-solana-deployment:
     runs-on: ${{ matrix.os }}
@@ -106,43 +106,28 @@ jobs:
         os:
           - ubuntu-latest
           - macos-latest
-        deployment:
-          - ninja
-          - local
     steps:
       - name: 'Checkout'
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
-      - name: 'Install dfx'
-        uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365
-        with:
-          dfx-version: "0.27.0"
+      - name: 'Install icp-cli'
+        run: npm install -g @icp-sdk/icp-cli @icp-sdk/ic-wasm
 
-      - name: 'Confirm dfx successful installation'
-        run: dfx --version
-
-      - name: 'Use free Solana RPC provider'
-        if: matrix.deployment == 'ninja'
-        working-directory: examples/basic_solana/${{ matrix.deployment }}
+      - name: "Deploy locally and smoke test"
+        working-directory: examples/basic_solana
         run: |
-          perl -pi -e 's|solana_network = opt variant { Devnet }|solana_network = opt variant { Custom = record { url = \\\"https://api.devnet.solana.com\\\"; headers = null } }|g' dfx.json
-
-      - name: 'Install llvm'
-        if: matrix.os == 'macos-latest'
-        run: |
-          brew install llvm
-
-      - name: "Deploy locally"
-        working-directory: examples/basic_solana/${{ matrix.deployment }}
-        run: |
-          dfx start --clean --background
-          dfx deploy
-          out=$(dfx canister call basic_solana solana_account --output json)
+          # solana_account and get_balance reject the anonymous principal, so use a named identity.
+          icp identity new ci --storage plaintext
+          icp identity default ci
+          icp network start -d
+          icp deploy
+          out=$(icp canister call backend solana_account '(null)')
           echo "$out"
           echo "$out" | grep -Eq "[1-9A-HJ-NP-Za-km-z]{32,44}" || { echo "❌ Call to 'solana_account' failed"; exit 1; }
-          out=$(dfx canister call basic_solana get_balance --output json)
+          out=$(icp canister call backend get_balance '(null)')
           echo "$out"
           echo "$out" | grep -Eq "[0-9]+(_[0-9]+)*" || { echo "❌ Call to 'get_balance' failed"; exit 1; }
+          icp network stop
 
   check-canister-wasm-endpoints:
     needs: [ reproducible-build ]
@@ -204,18 +189,52 @@ jobs:
         run: |
           echo "WALLET_WASM_PATH=$GITHUB_WORKSPACE/wallet.wasm.gz" >> "$GITHUB_ENV"
 
-      - name: 'Set BASIC_SOLANA_WASM_PATH for load_wasm'
+      - name: 'Test sol_rpc_int_tests'
+        run: cargo test --locked --package sol_rpc_int_tests -- --test-threads 2 --nocapture
+
+  # The basic_solana example is a separate workspace and uses a newer PocketIC
+  # (crate 15, which supports canister environment variables) than the rest of the
+  # repository, so it needs its own PocketIC server version and runs as its own job.
+  basic-solana-integration-tests:
+    needs: [ reproducible-build ]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: 'Download artifacts'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: sol_rpc_canister.wasm.gz
+
+      - name: 'Set SOL_RPC_CANISTER_WASM_PATH for load_wasm'
         run: |
-          echo "BASIC_SOLANA_WASM_PATH=$GITHUB_WORKSPACE/examples/basic_solana/target/wasm32-unknown-unknown/canister-release/basic_solana.wasm" >> "$GITHUB_ENV"
+          echo "SOL_RPC_CANISTER_WASM_PATH=$GITHUB_WORKSPACE/sol_rpc_canister.wasm.gz" >> "$GITHUB_ENV"
+
+      - name: 'Install PocketIC server'
+        uses: dfinity/pocketic@20c33db1aa87cc6ece50857ac632c37acf5e0322 # main
+        with:
+          pocket-ic-server-version: "15.0.0"
+
+      - name: 'Install Solana CLI'
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/v${SOLANA_CLI_VERSION}/install)"
+          echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+        shell: bash
+
+      - name: 'Start Solana test validator'
+        run: |
+          solana-test-validator &
+
+      - name: 'Set BACKEND_WASM_PATH so the test uses the pre-built canister Wasm'
+        run: |
+          echo "BACKEND_WASM_PATH=$GITHUB_WORKSPACE/examples/basic_solana/target/wasm32-unknown-unknown/canister-release/backend.wasm" >> "$GITHUB_ENV"
 
       - name: 'Test basic_solana'
         working-directory: examples/basic_solana/
         run: |
-          cargo build --target wasm32-unknown-unknown --no-default-features --profile canister-release 
-          cargo test --locked --package basic_solana
-
-      - name: 'Test sol_rpc_int_tests'
-        run: cargo test --locked --package sol_rpc_int_tests -- --test-threads 2 --nocapture
+          cargo build --target wasm32-unknown-unknown --profile canister-release -p backend
+          cargo test --locked --package backend
 
   end-to-end-tests:
     needs: [ reproducible-build ]
@@ -257,18 +276,6 @@ jobs:
           dfx identity set-wallet --ic --force "${{ env.wallet_canister_id }}"
           dfx wallet balance --ic
 
-      - name: "Deploy basic_solana locally"
-        working-directory: examples/basic_solana/local
-        run: |
-          dfx start --clean --background
-          dfx deploy
-          out=$(dfx canister call basic_solana solana_account --output json)
-          echo "$out"
-          echo "$out" | grep -Eq "[1-9A-HJ-NP-Za-km-z]{32,44}" || { echo "❌ Call to 'solana_account' failed"; exit 1; }
-          out=$(dfx canister call basic_solana get_balance --output json)
-          echo "$out"
-          echo "$out" | grep -Eq "[0-9]+(_[0-9]+)*" || { echo "❌ Call to 'get_balance' failed"; exit 1; }
-
       - name: "Deploy SOL RPC Canister"
         run: |
           wallet="${{ env.wallet_canister_id }}"
@@ -304,6 +311,7 @@ jobs:
         reproducible-build,
         unit-tests,
         basic-solana-deployment,
+        basic-solana-integration-tests,
         check-canister-wasm-endpoints,
         integration-tests,
         end-to-end-tests,
