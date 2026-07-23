@@ -1,0 +1,61 @@
+// [Commitment levels](https://solana.com/docs/rpc#configuring-state-commitment) in Solana,
+// representing finality guarantees of transactions and memory queries.
+type CommitmentLevel = variant {
+  // The transaction is finalized and cannot be rolled back.
+  finalized;
+  // The transaction has been included in a block that has reached 1 confirmation.
+  confirmed;
+  // The transaction is processed by a leader, but may be dropped.
+  processed;
+};
+// # HTTP Header.
+// 
+// Represents a HTTP header.
+// 
+// See [`HttpRequestArgs::headers`] and [`HttpRequestResult::headers`].
+type HttpHeader = record {
+  // Value of the header.
+  value : text;
+  // Name of the header.
+  name : text;
+};
+type InitArg = record {
+  solana_commitment_level : opt CommitmentLevel;
+  // Threshold Ed25519 (Schnorr) key name as used by the IC management canister:
+  // `"test_key_1"` (ICP mainnet testing, also available on the local network) or
+  // `"key_1"` (ICP mainnet production). Defaults to `"test_key_1"`.
+  ed25519_key_name : opt text;
+  solana_network : opt SolanaNetwork;
+};
+// An API defining how to make an HTTP RPC request.
+type RpcEndpoint = record {
+  // The request URL to use when accessing the API.
+  url : text;
+  // The HTTP headers to include in the requests to the API.
+  headers : opt vec HttpHeader;
+};
+type SolanaNetwork = variant { Mainnet; Custom : RpcEndpoint; Devnet };
+// A human-readable representation of a token amount.
+type TokenAmount = record {
+  // Number of decimals configured for token's mint.
+  decimals : nat8;
+  // DEPRECATED: Token amount as a float, accounting for decimals.
+  uiAmount : opt float64;
+  // Token amount as a string, accounting for decimals.
+  uiAmountString : text;
+  // Raw amount of tokens as a string, ignoring decimals.
+  amount : text;
+};
+service : (opt InitArg) -> {
+  associated_token_account : (opt principal, text) -> (text);
+  create_associated_token_account : (opt principal, text) -> (text);
+  create_nonce_account : (opt principal) -> (text);
+  get_balance : (opt text) -> (nat);
+  get_nonce : (opt text) -> (text);
+  get_spl_token_balance : (opt text, text) -> (TokenAmount);
+  nonce_account : (opt principal) -> (text);
+  send_sol : (opt principal, text, nat) -> (text);
+  send_sol_with_durable_nonce : (opt principal, text, nat) -> (text);
+  send_spl_token : (opt principal, text, text, nat) -> (text);
+  solana_account : (opt principal) -> (text);
+}

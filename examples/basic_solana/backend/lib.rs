@@ -448,3 +448,33 @@ pub fn validate_caller_not_anonymous() -> Principal {
 }
 
 ic_cdk::export_candid!();
+
+#[cfg(test)]
+mod tests {
+    /// Guards against unintentional changes to the canister's public Candid interface: fails if
+    /// the committed `backend.did` no longer matches the interface exported by the code. If you
+    /// change the interface on purpose, regenerate it with
+    /// `candid-extractor <backend.wasm> > backend.did`.
+    #[test]
+    fn candid_interface_matches_committed_did() {
+        use candid_parser::utils::{service_equal, CandidSource};
+
+        // `ic_cdk::export_candid!()` (invoked at the crate root) generates `__export_service()`
+        // from the `#[update]` endpoints; reuse it rather than re-running `export_service!` here,
+        // where the endpoints are not in scope.
+        let exported = super::__export_service();
+
+        let committed_did =
+            std::path::PathBuf::from(std::env!("CARGO_MANIFEST_DIR")).join("backend.did");
+        service_equal(
+            CandidSource::Text(&exported),
+            CandidSource::File(committed_did.as_path()),
+        )
+        .unwrap_or_else(|e| {
+            panic!(
+                "backend.did is out of date with the canister interface: {e}\n\
+                 Regenerate it with `candid-extractor <backend.wasm> > backend.did`."
+            )
+        });
+    }
+}
