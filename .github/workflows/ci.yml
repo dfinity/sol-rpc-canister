@@ -113,6 +113,11 @@ jobs:
       - name: 'Install icp-cli'
         run: npm install -g @icp-sdk/icp-cli @icp-sdk/ic-wasm
 
+      # The @dfinity/rust recipe extracts the canister's Candid interface with
+      # candid-extractor (the example has no hand-written .did), so it must be on PATH.
+      - name: 'Install candid-extractor'
+        run: cargo install candid-extractor@0.1.6 --locked
+
       - name: "Deploy locally and smoke test"
         working-directory: examples/basic_solana
         run: |
