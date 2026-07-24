@@ -1,49 +1,6 @@
-[package]
-name = "basic_solana"
-version = "1.0.0"
-edition = "2021"
-include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
-
-[[bin]]
-name = "basic_solana"
-path = "src/main.rs"
-
 [workspace]
-
-[dependencies]
-bs58 = "0.5.1"
-candid = "0.10.14"
-# Transitive dependency
-# See https://forum.dfinity.org/t/module-imports-function-wbindgen-describe-from-wbindgen-placeholder-that-is-not-exported-by-the-runtime/11545/8
-getrandom = { version = "0.2", default-features = false, features = ["custom"] }
-ic-canister-runtime = "0.1.2"
-ic-cdk = "0.19.0"
-ic-ed25519 = "0.6.0"
-num = "0.4.3"
-serde = { version = "1.0.219", features = ["derive"] }
-sol_rpc_client = { version = "4.0.0", features = ["ed25519"] }
-sol_rpc_types = "3.0.0"
-solana-hash = "4.1.0"
-solana-instruction = "3.0.0"
-solana-message = "3.0.0"
-solana-pubkey = { version = "4.0.0", features = ["curve25519"] }
-solana-signature = "3.1.0"
-solana-system-interface = { version = "3.0.0", features = ["bincode"] }
-solana-transaction = { version = "3.0.0", features = ["bincode"] }
-spl-associated-token-account-interface = "2.0.0"
-
-[dev-dependencies]
-candid = "0.10.14"
-candid_parser = "0.3.0"
-ic-management-canister-types = "0.5.0"
-ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", tag = "release-2025-01-23_03-04-base" }
-pocket-ic = "13.0.0"
-solana-client = "3.0.0"
-solana-commitment-config = "3.0.0"
-solana-keypair = "3.0.0"
-solana-program = "3.0.0"
-solana-rpc-client-nonce-utils = "3.0.0"
-solana-signer = "3.0.0"
+members = ["backend"]
+resolver = "2"
 
 [profile.release]
 debug = false

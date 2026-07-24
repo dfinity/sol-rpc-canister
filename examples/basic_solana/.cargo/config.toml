@@ -1,0 +1,8 @@
+# The Solana SDK pulls in `getrandom` (via `rand`) as a transitive dependency.
+# getrandom 0.3 does not support the wasm32-unknown-unknown target out of the box;
+# selecting the "custom" backend lets it compile for canisters. The canister never
+# actually needs randomness at runtime (it uses threshold Ed25519 signing), so no
+# custom implementation is provided — the reference is eliminated by dead-code removal.
+# See https://docs.rs/getrandom/latest/getrandom/#custom-backend
+[target.wasm32-unknown-unknown]
+rustflags = ['--cfg', 'getrandom_backend="custom"']
