@@ -1,8 +1,8 @@
-use basic_solana::{Ed25519KeyName, SolanaNetwork};
+use backend::SolanaNetwork;
 use candid::{
     decode_args, encode_args, utils::ArgumentEncoder, CandidType, Encode, Nat, Principal,
 };
-use ic_management_canister_types::{CanisterId, CanisterSettings};
+use ic_management_canister_types::{CanisterId, CanisterSettings, EnvironmentVariable};
 use pocket_ic::{PocketIc, PocketIcBuilder};
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
@@ -19,7 +19,13 @@ use solana_pubkey::{pubkey, Pubkey};
 use solana_signature::Signature;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
-use std::{env::var, path::PathBuf, sync::Arc, thread, time::Duration};
+use std::{
+    env::{var, var_os},
+    path::PathBuf,
+    sync::Arc,
+    thread,
+    time::Duration,
+};
 
 pub const SENDER: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x42]);
 pub const RECEIVER: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x43]);
@@ -285,18 +291,29 @@ impl Setup {
             Some(Self::DEFAULT_CONTROLLER),
         );
 
-        let basic_solana_canister_id = env.create_canister();
+        // The backend reads the SOL RPC canister ID from the PUBLIC_CANISTER_ID:sol_rpc
+        // canister environment variable (auto-injected by icp-cli when deploying, and set
+        // explicitly here for the test). See `sol_rpc_id` in the backend crate.
+        let basic_solana_canister_id = env.create_canister_with_settings(
+            None,
+            Some(CanisterSettings {
+                environment_variables: Some(vec![EnvironmentVariable {
+                    name: "PUBLIC_CANISTER_ID:sol_rpc".to_string(),
+                    value: sol_rpc_canister_id.to_string(),
+                }]),
+                ..CanisterSettings::default()
+            }),
+        );
         env.add_cycles(basic_solana_canister_id, u64::MAX as u128);
-        let basic_solana_install_args = basic_solana::InitArg {
-            sol_rpc_canister_id: Some(sol_rpc_canister_id),
+        let basic_solana_install_args = backend::InitArg {
             solana_network: Some(SolanaNetwork::Devnet),
-            ed25519_key_name: Some(Ed25519KeyName::MainnetProdKey1),
+            ed25519_key_name: Some("key_1".to_string()),
             solana_commitment_level: Some(CommitmentLevel::Confirmed),
         };
         env.install_canister(
             basic_solana_canister_id,
-            basic_solana_wasm(),
-            Encode!(&basic_solana_install_args).unwrap(),
+            backend_wasm(),
+            Encode!(&Some(basic_solana_install_args)).unwrap(),
             None,
         );
 
@@ -538,18 +555,47 @@ impl Default for Setup {
 
 fn sol_rpc_wasm() -> Vec<u8> {
     ic_test_utilities_load_wasm::load_wasm(
-        PathBuf::from(var("CARGO_MANIFEST_DIR").unwrap()).join("../../canister"),
+        PathBuf::from(var("CARGO_MANIFEST_DIR").unwrap()).join("../../../canister"),
         "sol_rpc_canister",
         &[],
     )
 }
 
-fn basic_solana_wasm() -> Vec<u8> {
-    ic_test_utilities_load_wasm::load_wasm(
-        PathBuf::from(var("CARGO_MANIFEST_DIR").unwrap()).join("."),
-        "basic_solana",
-        &[],
-    )
+/// Loads the `backend` canister Wasm.
+///
+/// `backend` is a `cdylib` (so it can be deployed with icp-cli), which means it has no `bin`
+/// target for `ic_test_utilities_load_wasm::load_wasm` to build. Instead we build the cdylib
+/// ourselves: in CI the pre-built Wasm path is provided via the `BACKEND_WASM_PATH` environment
+/// variable, and locally we compile it from source. The build uses a dedicated target directory
+/// so this nested `cargo build` does not deadlock on the outer `cargo test`'s lock of the main
+/// target directory.
+fn backend_wasm() -> Vec<u8> {
+    if let Some(path) = var_os("BACKEND_WASM_PATH") {
+        return std::fs::read(&path)
+            .unwrap_or_else(|e| panic!("Failed to read BACKEND_WASM_PATH ({path:?}): {e}"));
+    }
+    let manifest_dir = PathBuf::from(var("CARGO_MANIFEST_DIR").unwrap());
+    let target_dir = manifest_dir.join("../target/wasm-cargo-bin");
+    let status = std::process::Command::new(var("CARGO").unwrap_or_else(|_| "cargo".to_string()))
+        .args([
+            "build",
+            "--release",
+            "--target",
+            "wasm32-unknown-unknown",
+            "--package",
+            "backend",
+        ])
+        .arg("--target-dir")
+        .arg(&target_dir)
+        .current_dir(&manifest_dir)
+        .status()
+        .expect("Failed to run `cargo build` for the backend canister");
+    assert!(
+        status.success(),
+        "`cargo build` for the backend canister failed"
+    );
+    let wasm_path = target_dir.join("wasm32-unknown-unknown/release/backend.wasm");
+    std::fs::read(&wasm_path).unwrap_or_else(|e| panic!("Failed to read {wasm_path:?}: {e}"))
 }
 
 pub struct Canister {
