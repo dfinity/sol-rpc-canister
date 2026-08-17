@@ -81,6 +81,12 @@ impl Setup {
         env.install_canister(wallet_canister_id, wallet_wasm(), vec![], Some(controller))
             .await;
 
+        // Advance virtual time after all installs so that subsequent upgrade_canister
+        // calls don't encounter CanisterInstallCodeRateLimited (the rate-limit window
+        // is based on virtual time, and a larger canister WASM consumes more budget).
+        env.advance_time(Duration::from_secs(7200)).await;
+        env.tick().await;
+
         Self {
             env,
             controller,
