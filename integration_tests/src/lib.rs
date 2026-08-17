@@ -92,7 +92,7 @@ impl Setup {
     pub async fn upgrade_canister(&self, args: InstallArgs) {
         self.env.tick().await;
         // Avoid `CanisterInstallCodeRateLimited` error
-        self.env.advance_time(Duration::from_secs(600)).await;
+        self.env.advance_time(Duration::from_secs(1800)).await;
         self.env.tick().await;
         self.env
             .upgrade_canister(
