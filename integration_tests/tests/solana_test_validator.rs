@@ -11,7 +11,8 @@ use sol_rpc_client::SolRpcClient;
 use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetAccountInfoEncoding,
     GetBlockCommitmentLevel, GetTransactionEncoding, InstallArgs, Lamport, OverrideProvider,
-    PrioritizationFee, RegexSubstitution, TransactionDetails, TransactionStatus,
+    PrioritizationFee, RegexSubstitution, SendTransactionEncoding, SendTransactionParams,
+    TransactionDetails, TransactionStatus,
 };
 use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
 use solana_client::rpc_client::{
@@ -26,7 +27,10 @@ use solana_program::{
 };
 use solana_pubkey::{pubkey, Pubkey};
 use solana_rpc_client_api::{
-    config::{RpcBlockConfig, RpcTransactionConfig},
+    config::{
+        RpcBlockConfig, RpcTransactionConfig, TransactionDetails as SolanaTransactionDetails,
+        UiTransactionEncoding,
+    },
     response::{RpcConfirmedTransactionStatusWithSignature, RpcPrioritizationFee},
 };
 use solana_sdk_ids::system_program;
@@ -34,7 +38,6 @@ use solana_signature::Signature;
 use solana_signer::Signer;
 use solana_system_interface::instruction;
 use solana_transaction::Transaction;
-use solana_transaction_status_client_types::UiTransactionEncoding;
 use spl_associated_token_account_interface::{
     address::get_associated_token_address_with_program_id,
     instruction::create_associated_token_account,
@@ -291,12 +294,12 @@ async fn should_get_block() {
                     sol.get_block_with_config(
                         slot,
                         RpcBlockConfig {
-                            transaction_details: Some(solana_transaction_status_client_types::TransactionDetails::Signatures),
+                            transaction_details: Some(SolanaTransactionDetails::Signatures),
                             commitment: Some(commitment_config),
                             ..RpcBlockConfig::default()
                         },
                     )
-                        .expect("Failed to get block")
+                    .expect("Failed to get block")
                 },
                 |ic| async move {
                     ic.get_block(slot)
@@ -310,7 +313,10 @@ async fn should_get_block() {
             )
             .await;
 
-        assert_eq!(sol_res, ic_res);
+        assert_eq!(
+            serde_json::to_value(sol_res).unwrap(),
+            serde_json::to_value(ic_res).unwrap(),
+        );
     }
 
     setup.setup.drop().await;
@@ -353,7 +359,10 @@ async fn should_get_transaction() {
         )
         .await;
 
-    assert_eq!(sol_res, ic_res);
+    assert_eq!(
+        serde_json::to_value(sol_res).unwrap(),
+        serde_json::to_value(ic_res).unwrap(),
+    );
 
     setup.setup.drop().await;
 }
@@ -382,11 +391,19 @@ async fn should_send_transaction() {
         &[&sender],
         blockhash,
     );
+    let params = {
+        use base64::prelude::{Engine, BASE64_STANDARD};
+        let bytes = bincode::serialize(&transaction).expect("Failed to serialize transaction");
+        SendTransactionParams::from_encoded_transaction(
+            BASE64_STANDARD.encode(bytes),
+            SendTransactionEncoding::Base64,
+        )
+    };
 
     // Don't compare the result to the Solana validator since a transaction can only be submitted once.
     let transaction_id = setup
         .icp_client()
-        .send_transaction(transaction)
+        .send_transaction(params)
         .send()
         .await
         .expect_consistent()
@@ -452,8 +469,14 @@ async fn should_get_token_account_balance() {
         let (sol_res, ic_res) = setup
             .compare_client(
                 |sol| {
-                    sol.get_token_account_balance(&account)
-                        .expect("Failed to get token account balance")
+                    let res = sol
+                        .get_token_account_balance(&account)
+                        .expect("Failed to get token account balance");
+                    serde_json::from_value::<UiTokenAmount>(
+                        serde_json::to_value(res)
+                            .expect("Failed to serialize token account balance"),
+                    )
+                    .expect("Failed to deserialize token account balance")
                 },
                 |ic| async move {
                     ic.get_token_account_balance(pubkey)
@@ -540,7 +563,16 @@ async fn should_get_signature_statuses() {
     assert_eq!(
         sol_res
             .into_iter()
-            .map(|maybe_status| maybe_status.map(TransactionStatus::from))
+            .map(|maybe_status| {
+                maybe_status.map(|status| {
+                    TransactionStatus::from(
+                        serde_json::from_value::<
+                            solana_transaction_status_client_types::TransactionStatus,
+                        >(serde_json::to_value(status).unwrap())
+                        .unwrap(),
+                    )
+                })
+            })
             .collect::<Vec<_>>(),
         ic_res
             .into_iter()
@@ -615,17 +647,26 @@ fn from_confirmed_transaction_status_with_signature(
     RpcConfirmedTransactionStatusWithSignature {
         signature: signature.into(),
         slot,
-        err: err.map(Into::into),
+        err: err.map(|e| {
+            let err_4x: solana_transaction_status_client_types::UiTransactionError = e.into();
+            serde_json::from_value(serde_json::to_value(err_4x).unwrap()).unwrap()
+        }),
         memo,
         block_time,
-        confirmation_status: confirmation_status.map(Into::into),
+        confirmation_status: confirmation_status.map(|s| {
+            let status_4x: solana_transaction_status_client_types::TransactionConfirmationStatus =
+                s.into();
+            serde_json::from_value(serde_json::to_value(status_4x).unwrap()).unwrap()
+        }),
     }
 }
 
 fn decode_ui_account(account: UiAccount) -> solana_account::Account {
-    account
-        .decode::<solana_account::Account>()
-        .unwrap_or_else(|| panic!("Failed to decode account"))
+    let account_4x = account
+        .to_account()
+        .unwrap_or_else(|| panic!("Failed to decode account"));
+    serde_json::from_value(serde_json::to_value(account_4x).expect("Failed to serialize account"))
+        .expect("Failed to deserialize account")
 }
 
 pub struct Setup {
