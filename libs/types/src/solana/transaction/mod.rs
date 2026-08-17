@@ -57,6 +57,7 @@ impl From<EncodedConfirmedTransactionWithStatusMeta>
                     transaction.transaction,
                 ),
             block_time: transaction.block_time,
+            transaction_index: None,
         }
     }
 }
@@ -139,6 +140,7 @@ impl From<ConfirmedTransactionStatusWithSignature>
                 .map(solana_transaction_error::TransactionError::from),
             memo: value.memo,
             block_time: value.block_time,
+            index: 0,
         }
     }
 }
