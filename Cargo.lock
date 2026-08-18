@@ -4954,7 +4954,7 @@ dependencies = [
  "serde_tuple",
  "serde_with",
  "sol_rpc_types",
- "solana-account 3.4.0",
+ "solana-account 4.3.2",
  "solana-account-decoder-client-types",
  "solana-clock",
  "solana-pubkey 4.2.0",
@@ -5052,7 +5052,7 @@ dependencies = [
  "sol_rpc_canister",
  "sol_rpc_client",
  "sol_rpc_types",
- "solana-account 3.4.0",
+ "solana-account 4.3.2",
  "solana-account-decoder-client-types",
  "solana-client",
  "solana-commitment-config",
@@ -5111,9 +5111,6 @@ version = "3.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "efc0ed36decb689413b9da5d57f2be49eea5bebb3cf7897015167b0c4336e731"
 dependencies = [
- "serde",
- "serde_bytes",
- "serde_derive",
  "solana-account-info",
  "solana-clock",
  "solana-instruction-error",

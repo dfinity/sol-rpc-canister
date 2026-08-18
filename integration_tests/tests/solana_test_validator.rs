@@ -658,15 +658,14 @@ fn from_confirmed_transaction_status_with_signature(
                 s.into();
             serde_json::from_value(serde_json::to_value(status_4x).unwrap()).unwrap()
         }),
+        transaction_index: None,
     }
 }
 
 fn decode_ui_account(account: UiAccount) -> solana_account::Account {
-    let account_4x = account
+    account
         .to_account()
-        .unwrap_or_else(|| panic!("Failed to decode account"));
-    serde_json::from_value(serde_json::to_value(account_4x).expect("Failed to serialize account"))
-        .expect("Failed to deserialize account")
+        .unwrap_or_else(|| panic!("Failed to decode account"))
 }
 
 pub struct Setup {
