@@ -20,9 +20,9 @@ use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, ConsensusStrategy,
     GetSignaturesForAddressLimit, GetSlotParams, GetTransactionEncoding, HttpOutcallError,
     InstallArgs, InstructionError, LegacyRejectionCode, Mode, MultiRpcResult, PrioritizationFee,
-    ProviderError, RpcAccess, RpcAuth, RpcError, RpcResult, RpcSource, RpcSources, Slot,
-    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TransactionDetails,
-    TransactionError,
+    ProviderError, RpcAccess, RpcAuth, RpcError, RpcResult, RpcSource, RpcSources,
+    SendTransactionParams, Slot, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    TransactionDetails, TransactionError,
 };
 use solana_account_decoder_client_types::{
     token::UiTokenAmount, UiAccount, UiAccountData, UiAccountEncoding,
@@ -457,6 +457,7 @@ mod get_transaction_tests {
                         version: None,
                     },
                     block_time: Some(1_758_792_475),
+                    transaction_index: None,
                 }))
             );
         }
@@ -1978,14 +1979,15 @@ fn assert_within(actual: u128, expected: u128, percentage_error: u8) {
     );
 }
 
-fn some_transaction() -> solana_transaction::Transaction {
+fn some_transaction() -> SendTransactionParams {
     let keypair = solana_keypair::Keypair::new();
-    solana_transaction::Transaction::new_signed_with_payer(
+    let transaction = solana_transaction::Transaction::new_signed_with_payer(
         &[],
         Some(&keypair.pubkey()),
         &[keypair],
         solana_hash::Hash::from_str("4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3").unwrap(),
-    )
+    );
+    SendTransactionParams::try_from(transaction).expect("Failed to serialize transaction")
 }
 
 fn some_signature() -> solana_signature::Signature {
@@ -2091,17 +2093,9 @@ fn get_version_request() -> JsonRpcRequestMatcher {
     JsonRpcRequestMatcher::with_method("getVersion").with_id(0)
 }
 
-fn send_transaction_request(
-    transaction: &solana_transaction::Transaction,
-) -> JsonRpcRequestMatcher {
-    fn serialize_transaction(transaction: &solana_transaction::Transaction) -> String {
-        use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
-        let serialized = bincode::serialize(transaction).expect("Failed to serialize transaction");
-        BASE64_STANDARD.encode(serialized)
-    }
-
+fn send_transaction_request(params: &SendTransactionParams) -> JsonRpcRequestMatcher {
     JsonRpcRequestMatcher::with_method("sendTransaction")
-        .with_params(json!([serialize_transaction(transaction), {"encoding": "base64"}]))
+        .with_params(json!([params.get_transaction(), {"encoding": "base64"}]))
         .with_id(0)
 }
 

@@ -81,6 +81,12 @@ impl Setup {
         env.install_canister(wallet_canister_id, wallet_wasm(), vec![], Some(controller))
             .await;
 
+        // Advance virtual time after all installs so that subsequent upgrade_canister
+        // calls don't encounter CanisterInstallCodeRateLimited (the rate-limit window
+        // is based on virtual time, and a larger canister WASM consumes more budget).
+        env.advance_time(Duration::from_secs(7200)).await;
+        env.tick().await;
+
         Self {
             env,
             controller,
@@ -92,7 +98,7 @@ impl Setup {
     pub async fn upgrade_canister(&self, args: InstallArgs) {
         self.env.tick().await;
         // Avoid `CanisterInstallCodeRateLimited` error
-        self.env.advance_time(Duration::from_secs(600)).await;
+        self.env.advance_time(Duration::from_secs(1800)).await;
         self.env.tick().await;
         self.env
             .upgrade_canister(

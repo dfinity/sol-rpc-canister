@@ -417,6 +417,7 @@ impl<R> SolRpcClient<R> {
     ///               post_balance: 633539232581,
     ///               reward_type: Some(RewardType::Fee),
     ///               commission: None,
+    ///               commission_bps: None,
     ///           }
     ///       ]),
     ///       num_reward_partitions: None,

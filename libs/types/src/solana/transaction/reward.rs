@@ -44,6 +44,7 @@ impl From<Reward> for solana_transaction_status_client_types::Reward {
             post_balance: reward.post_balance,
             reward_type: reward.reward_type.map(Into::into),
             commission: reward.commission,
+            commission_bps: None,
         }
     }
 }
@@ -70,7 +71,8 @@ impl From<solana_reward_info::RewardType> for RewardType {
         match reward_type {
             solana_reward_info::RewardType::Fee => Self::Fee,
             solana_reward_info::RewardType::Rent => Self::Rent,
-            solana_reward_info::RewardType::Staking => Self::Staking,
+            solana_reward_info::RewardType::Staking
+            | solana_reward_info::RewardType::DeactivatedStake => Self::Staking,
             solana_reward_info::RewardType::Voting => Self::Voting,
         }
     }
