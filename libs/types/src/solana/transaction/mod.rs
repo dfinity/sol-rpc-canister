@@ -153,8 +153,8 @@ pub struct TransactionStatus {
     /// The slot the transaction was processed.
     pub slot: u64,
     /// *DEPRECATED*: Transaction status:
-    ///  * [`Ok(())`] - Transaction was successful
-    ///  * [`Err(err)`] - Transaction failed with [`TransactionError`] `err`
+    ///  * `Ok(())` - Transaction was successful
+    ///  * `Err(err)` - Transaction failed with [`TransactionError`] `err`
     pub status: Result<(), TransactionError>,
     /// Error if transaction failed, [`None`] if transaction succeeded.
     pub err: Option<TransactionError>,
