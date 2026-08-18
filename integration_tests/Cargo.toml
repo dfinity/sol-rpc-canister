@@ -35,7 +35,7 @@ solana-pubkey = { workspace = true, features = ["curve25519"] }
 solana-rpc-client-api = { workspace = true }
 solana-signature = { workspace = true }
 solana-signer = { workspace = true }
-solana-transaction = "3.1.0"
+solana-transaction = { workspace = true }
 solana-transaction-status-client-types = { workspace = true }
 spl-associated-token-account-interface = { workspace = true }
 tokio = { workspace = true }
