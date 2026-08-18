@@ -11,7 +11,7 @@ use sol_rpc_client::SolRpcClient;
 use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetAccountInfoEncoding,
     GetBlockCommitmentLevel, GetTransactionEncoding, InstallArgs, Lamport, OverrideProvider,
-    PrioritizationFee, RegexSubstitution, SendTransactionEncoding, SendTransactionParams,
+    PrioritizationFee, RegexSubstitution, SendTransactionParams,
     TransactionDetails, TransactionStatus,
 };
 use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
@@ -391,14 +391,8 @@ async fn should_send_transaction() {
         &[&sender],
         blockhash,
     );
-    let params = {
-        use base64::prelude::{Engine, BASE64_STANDARD};
-        let bytes = bincode::serialize(&transaction).expect("Failed to serialize transaction");
-        SendTransactionParams::from_encoded_transaction(
-            BASE64_STANDARD.encode(bytes),
-            SendTransactionEncoding::Base64,
-        )
-    };
+    let params =
+        SendTransactionParams::try_from(transaction).expect("Failed to serialize transaction");
 
     // Don't compare the result to the Solana validator since a transaction can only be submitted once.
     let transaction_id = setup
@@ -469,14 +463,8 @@ async fn should_get_token_account_balance() {
         let (sol_res, ic_res) = setup
             .compare_client(
                 |sol| {
-                    let res = sol
-                        .get_token_account_balance(&account)
-                        .expect("Failed to get token account balance");
-                    serde_json::from_value::<UiTokenAmount>(
-                        serde_json::to_value(res)
-                            .expect("Failed to serialize token account balance"),
-                    )
-                    .expect("Failed to deserialize token account balance")
+                    sol.get_token_account_balance(&account)
+                        .expect("Failed to get token account balance")
                 },
                 |ic| async move {
                     ic.get_token_account_balance(pubkey)
@@ -563,16 +551,7 @@ async fn should_get_signature_statuses() {
     assert_eq!(
         sol_res
             .into_iter()
-            .map(|maybe_status| {
-                maybe_status.map(|status| {
-                    TransactionStatus::from(
-                        serde_json::from_value::<
-                            solana_transaction_status_client_types::TransactionStatus,
-                        >(serde_json::to_value(status).unwrap())
-                        .unwrap(),
-                    )
-                })
-            })
+            .map(|maybe_status| maybe_status.map(TransactionStatus::from))
             .collect::<Vec<_>>(),
         ic_res
             .into_iter()
@@ -647,17 +626,10 @@ fn from_confirmed_transaction_status_with_signature(
     RpcConfirmedTransactionStatusWithSignature {
         signature: signature.into(),
         slot,
-        err: err.map(|e| {
-            let err_4x: solana_transaction_status_client_types::UiTransactionError = e.into();
-            serde_json::from_value(serde_json::to_value(err_4x).unwrap()).unwrap()
-        }),
+        err: err.map(|e| e.into()),
         memo,
         block_time,
-        confirmation_status: confirmation_status.map(|s| {
-            let status_4x: solana_transaction_status_client_types::TransactionConfirmationStatus =
-                s.into();
-            serde_json::from_value(serde_json::to_value(status_4x).unwrap()).unwrap()
-        }),
+        confirmation_status: confirmation_status.map(|s| s.into()),
         transaction_index: None,
     }
 }

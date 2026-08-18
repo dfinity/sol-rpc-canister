@@ -21,7 +21,7 @@ use sol_rpc_types::{
     GetSignaturesForAddressLimit, GetSlotParams, GetTransactionEncoding, HttpOutcallError,
     InstallArgs, InstructionError, LegacyRejectionCode, Mode, MultiRpcResult, PrioritizationFee,
     ProviderError, RpcAccess, RpcAuth, RpcError, RpcResult, RpcSource, RpcSources,
-    SendTransactionEncoding, SendTransactionParams, Slot, SolanaCluster, SupportedRpcProvider,
+    SendTransactionParams, Slot, SolanaCluster, SupportedRpcProvider,
     SupportedRpcProviderId, TransactionDetails, TransactionError,
 };
 use solana_account_decoder_client_types::{
@@ -1980,7 +1980,6 @@ fn assert_within(actual: u128, expected: u128, percentage_error: u8) {
 }
 
 fn some_transaction() -> SendTransactionParams {
-    use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
     let keypair = solana_keypair::Keypair::new();
     let transaction = solana_transaction::Transaction::new_signed_with_payer(
         &[],
@@ -1988,11 +1987,7 @@ fn some_transaction() -> SendTransactionParams {
         &[keypair],
         solana_hash::Hash::from_str("4Pcj2yJkCYyhnWe8Ze3uK2D2EtesBxhAevweDoTcxXf3").unwrap(),
     );
-    let bytes = bincode::serialize(&transaction).expect("Failed to serialize transaction");
-    SendTransactionParams::from_encoded_transaction(
-        BASE64_STANDARD.encode(bytes),
-        SendTransactionEncoding::Base64,
-    )
+    SendTransactionParams::try_from(transaction).expect("Failed to serialize transaction")
 }
 
 fn some_signature() -> solana_signature::Signature {
