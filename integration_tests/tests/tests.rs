@@ -21,8 +21,8 @@ use sol_rpc_types::{
     GetSignaturesForAddressLimit, GetSlotParams, GetTransactionEncoding, HttpOutcallError,
     InstallArgs, InstructionError, LegacyRejectionCode, Mode, MultiRpcResult, PrioritizationFee,
     ProviderError, RpcAccess, RpcAuth, RpcError, RpcResult, RpcSource, RpcSources,
-    SendTransactionParams, Slot, SolanaCluster, SupportedRpcProvider,
-    SupportedRpcProviderId, TransactionDetails, TransactionError,
+    SendTransactionParams, Slot, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    TransactionDetails, TransactionError,
 };
 use solana_account_decoder_client_types::{
     token::UiTokenAmount, UiAccount, UiAccountData, UiAccountEncoding,

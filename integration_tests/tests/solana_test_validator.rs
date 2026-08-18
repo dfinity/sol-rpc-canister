@@ -11,8 +11,8 @@ use sol_rpc_client::SolRpcClient;
 use sol_rpc_types::{
     CommitmentLevel, ConfirmedTransactionStatusWithSignature, GetAccountInfoEncoding,
     GetBlockCommitmentLevel, GetTransactionEncoding, InstallArgs, Lamport, OverrideProvider,
-    PrioritizationFee, RegexSubstitution, SendTransactionParams,
-    TransactionDetails, TransactionStatus,
+    PrioritizationFee, RegexSubstitution, SendTransactionParams, TransactionDetails,
+    TransactionStatus,
 };
 use solana_account_decoder_client_types::{token::UiTokenAmount, UiAccount};
 use solana_client::rpc_client::{
