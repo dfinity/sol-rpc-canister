@@ -187,6 +187,42 @@ impl GetBlockRequest {
     }
 }
 
+pub type GetMultipleAccountsRequest = MultiRpcRequest<
+    json::GetMultipleAccountsParams,
+    Vec<Option<solana_account_decoder_client_types::UiAccount>>,
+>;
+
+impl GetMultipleAccountsRequest {
+    pub fn get_multiple_accounts<Params: Into<json::GetMultipleAccountsParams>>(
+        rpc_sources: RpcSources,
+        config: RpcConfig,
+        params: Params,
+        now: Timestamp,
+    ) -> Result<Self, ProviderError> {
+        let params = params.into();
+        let consensus_strategy = config.response_consensus.unwrap_or_default();
+        let providers = Providers::new(rpc_sources, consensus_strategy.clone(), now)?;
+        let max_response_bytes = config
+            .response_size_estimate
+            .unwrap_or(Self::response_size_estimate(&params));
+
+        Ok(MultiRpcRequest::new(
+            providers,
+            JsonRpcRequest::new("getMultipleAccounts", params),
+            max_response_bytes,
+            ResponseTransform::GetMultipleAccounts,
+            ReductionStrategy::from(consensus_strategy),
+        ))
+    }
+
+    fn response_size_estimate(params: &json::GetMultipleAccountsParams) -> u64 {
+        const ESTIMATED_BYTES_PER_ACCOUNT: u64 = 512;
+        const ENVELOPE_BYTES: u64 = 128;
+        let accounts_bytes = params.num_accounts() as u64 * ESTIMATED_BYTES_PER_ACCOUNT;
+        DEFAULT_MAX_RESPONSE_BYTES.min(ENVELOPE_BYTES + accounts_bytes + HEADER_SIZE_LIMIT)
+    }
+}
+
 // TODO XC-290: The Solana client returns a vector containing
 //  `solana_rpc_client_api::response::RpcConfirmedTransactionStatusWithSignature`, however this
 //  crate (`solana_rpc_client_api`) cannot currently be used by canister code due to dependency

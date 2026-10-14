@@ -55,20 +55,13 @@ impl From<sol_rpc_types::GetAccountInfoParams> for GetAccountInfoParams {
             data_slice,
             min_context_slot,
         } = params;
-        let config = if commitment.is_none()
-            && encoding.is_none()
-            && data_slice.is_none()
-            && min_context_slot.is_none()
-        {
-            None
-        } else {
-            Some(GetAccountInfoConfig {
-                commitment,
-                encoding,
-                data_slice,
-                min_context_slot,
-            })
-        };
+        let config = GetAccountInfoConfig {
+            commitment,
+            encoding,
+            data_slice,
+            min_context_slot,
+        }
+        .none_if_empty();
         Self { pubkey, config }
     }
 }
@@ -82,6 +75,55 @@ pub struct GetAccountInfoConfig {
     pub data_slice: Option<DataSlice>,
     #[serde(rename = "minContextSlot")]
     pub min_context_slot: Option<u64>,
+}
+
+impl GetAccountInfoConfig {
+    fn none_if_empty(self) -> Option<Self> {
+        let is_empty = self.commitment.is_none()
+            && self.encoding.is_none()
+            && self.data_slice.is_none()
+            && self.min_context_slot.is_none();
+        if is_empty {
+            None
+        } else {
+            Some(self)
+        }
+    }
+}
+
+#[derive(Serialize_tuple, Clone, Debug)]
+pub struct GetMultipleAccountsParams {
+    pubkeys: Vec<Pubkey>,
+    config: Option<GetAccountInfoConfig>,
+}
+
+impl GetMultipleAccountsParams {
+    pub fn num_accounts(&self) -> usize {
+        self.pubkeys.len()
+    }
+}
+
+impl From<sol_rpc_types::GetMultipleAccountsParams> for GetMultipleAccountsParams {
+    fn from(params: sol_rpc_types::GetMultipleAccountsParams) -> Self {
+        let sol_rpc_types::GetMultipleAccountsParams {
+            pubkeys,
+            commitment,
+            encoding,
+            data_slice,
+            min_context_slot,
+        } = params;
+        let config = GetAccountInfoConfig {
+            commitment,
+            encoding,
+            data_slice,
+            min_context_slot,
+        }
+        .none_if_empty();
+        Self {
+            pubkeys: pubkeys.into(),
+            config,
+        }
+    }
 }
 
 #[derive(Serialize_tuple, Clone, Debug)]

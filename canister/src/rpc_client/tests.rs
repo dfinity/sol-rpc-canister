@@ -1,18 +1,18 @@
 use crate::rpc_client::{
-    GetAccountInfoRequest, GetBlockRequest, GetSignatureStatusesRequest,
-    GetSignaturesForAddressRequest, GetSlotRequest, GetTransactionRequest, MultiRpcRequest,
-    SendTransactionRequest,
+    GetAccountInfoRequest, GetBlockRequest, GetMultipleAccountsRequest,
+    GetSignatureStatusesRequest, GetSignaturesForAddressRequest, GetSlotRequest,
+    GetTransactionRequest, MultiRpcRequest, SendTransactionRequest,
 };
 use serde::Serialize;
 use serde_json::json;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
-    GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
-    GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams,
-    GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
-    GetTransactionEncoding, GetTransactionParams, Pubkey, RpcConfig, RpcSources,
-    SendTransactionEncoding, SendTransactionParams, Signature, SolanaCluster, TransactionDetails,
-    VecWithMaxLen,
+    GetBlockCommitmentLevel, GetBlockParams, GetMultipleAccountsParams,
+    GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
+    GetSignatureStatusesParams, GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig,
+    GetTokenAccountBalanceParams, GetTransactionEncoding, GetTransactionParams, Pubkey, RpcConfig,
+    RpcSources, SendTransactionEncoding, SendTransactionParams, Signature, SolanaCluster,
+    TransactionDetails, VecWithMaxLen,
 };
 use solana_pubkey::pubkey;
 use std::str::FromStr;
@@ -60,6 +60,54 @@ mod request_serialization_tests {
             {
                 "commitment": "processed",
                 "encoding": "base58",
+                "dataSlice": { "length": 123, "offset": 8 },
+                "minContextSlot": 456,
+            }]),
+        );
+    }
+
+    #[test]
+    fn should_serialize_get_multiple_accounts_request() {
+        assert_params_eq(
+            GetMultipleAccountsRequest::get_multiple_accounts(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetMultipleAccountsParams::default(),
+                Timestamp::default(),
+            )
+            .unwrap(),
+            json!([[], null]),
+        );
+        assert_params_eq(
+            GetMultipleAccountsRequest::get_multiple_accounts(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetMultipleAccountsParams {
+                    pubkeys: vec![
+                        pubkey!("11111111111111111111111111111111"),
+                        pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"),
+                    ]
+                    .try_into()
+                    .unwrap(),
+                    commitment: Some(CommitmentLevel::Processed),
+                    encoding: Some(GetAccountInfoEncoding::Base64),
+                    data_slice: Some(DataSlice {
+                        length: 123,
+                        offset: 8,
+                    }),
+                    min_context_slot: Some(456),
+                },
+                Timestamp::default(),
+            )
+            .unwrap(),
+            json!([
+            [
+                "11111111111111111111111111111111",
+                "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+            ],
+            {
+                "commitment": "processed",
+                "encoding": "base64",
                 "dataSlice": { "length": 123, "offset": 8 },
                 "minContextSlot": 456,
             }]),
