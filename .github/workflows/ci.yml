@@ -328,6 +328,7 @@ jobs:
 
       - name: "Run examples"
         working-directory: canister/ci
+        shell: bash
         run: ../scripts/examples.sh 2>&1 | tee e2e_examples.log
 
       - name: "Detect inconsistent results"
