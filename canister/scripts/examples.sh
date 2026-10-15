@@ -10,12 +10,14 @@ FLAGS="--network=$NETWORK --identity=$IDENTITY --wallet=$WALLET"
 # List supported JSON-RPC providers
 dfx canister call sol_rpc getProviders $FLAGS || exit 1
 
-# Get the last finalized slot on Mainnet with a 2-out-of-3 strategy
+# Get the last finalized slot on Mainnet with a 1-out-of-3 strategy. The slots reported by
+# different providers often land in adjacent rounding buckets, so requiring agreement would
+# make this example flaky; prefer a stricter threshold where agreement matters.
 GET_SLOT_PARAMS="(
   variant { Default = variant { Mainnet } },
   opt record {
     responseConsensus = opt variant {
-      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+      Threshold = record { min = 1 : nat8; total = opt (3 : nat8) }
     };
     responseSizeEstimate = null;
   },
@@ -26,12 +28,14 @@ GET_SLOT_OUTPUT=$(dfx canister call sol_rpc getSlot "$GET_SLOT_PARAMS" $FLAGS --
 SLOT=$(jq --raw-output '.Consistent.Ok' <<< "$GET_SLOT_OUTPUT")
 
 
-# Get the recent prioritization fees on Mainnet with a 2-out-of-3 strategy for USDC
+# Get the recent prioritization fees on Mainnet with a 1-out-of-3 strategy for USDC. Fees change with
+# every slot, so the replicas querying the same provider often observe different windows and fail to
+# agree among themselves; a stricter threshold would make this example flaky.
 GET_RECENT_PRIORITIZATION_FEES_PARAMS="(
   variant { Default = variant { Mainnet } },
   opt record {
     responseConsensus = opt variant {
-      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+      Threshold = record { min = 1 : nat8; total = opt (3 : nat8) }
     };
     responseSizeEstimate = null;
     maxSlotRoundingError = opt (20 : nat64);
