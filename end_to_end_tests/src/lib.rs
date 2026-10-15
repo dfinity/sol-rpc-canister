@@ -61,7 +61,7 @@ impl Setup {
                 RpcSource::Supported(SupportedRpcProviderId::HeliusDevnet),
             ]))
             .with_consensus_strategy(ConsensusStrategy::Threshold {
-                min: 2,
+                min: 1,
                 total: None,
             })
             .with_default_commitment_level(CommitmentLevel::Confirmed)

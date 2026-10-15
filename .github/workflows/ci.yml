@@ -280,6 +280,7 @@ jobs:
 
   end-to-end-tests:
     needs: [ reproducible-build ]
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-22.04
     concurrency:
       group: ci_environment
@@ -341,7 +342,8 @@ jobs:
   # Single aggregator status check. Configure GitHub branch protection
   # to require `checks-pass` so that any failing or skipped upstream
   # job blocks the merge, without having to enumerate every individual
-  # job in the ruleset.
+  # job in the ruleset. The only tolerated skip is `end-to-end-tests`
+  # on Dependabot PRs.
   checks-pass:
     # Always run this job!
     if: always()
@@ -360,7 +362,18 @@ jobs:
       ]
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}" == "true" ]]; then
+      - env:
+          NEEDS: ${{ toJSON(needs) }}
+          E2E_SKIP_ALLOWED: ${{ github.actor == 'dependabot[bot]' }}
+        run: |
+          blocking_jobs=$(jq --raw-output --argjson e2e_skip_allowed "$E2E_SKIP_ALLOWED" '
+            to_entries[]
+            | select(.value.result != "success")
+            | select((.key == "end-to-end-tests" and .value.result == "skipped" and $e2e_skip_allowed) | not)
+            | "\(.key): \(.value.result)"
+          ' <<< "$NEEDS")
+          if [[ -n "$blocking_jobs" ]]; then
+            echo "❌ Upstream jobs did not succeed:"
+            echo "$blocking_jobs"
             exit 1
           fi

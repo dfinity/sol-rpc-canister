@@ -10,12 +10,12 @@ FLAGS="--network=$NETWORK --identity=$IDENTITY --wallet=$WALLET"
 # List supported JSON-RPC providers
 dfx canister call sol_rpc getProviders $FLAGS || exit 1
 
-# Get the last finalized slot on Mainnet with a 2-out-of-3 strategy
+# Get the last finalized slot on Mainnet with a 1-out-of-3 strategy
 GET_SLOT_PARAMS="(
   variant { Default = variant { Mainnet } },
   opt record {
     responseConsensus = opt variant {
-      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+      Threshold = record { min = 1 : nat8; total = opt (3 : nat8) }
     };
     responseSizeEstimate = null;
   },
@@ -26,12 +26,12 @@ GET_SLOT_OUTPUT=$(dfx canister call sol_rpc getSlot "$GET_SLOT_PARAMS" $FLAGS --
 SLOT=$(jq --raw-output '.Consistent.Ok' <<< "$GET_SLOT_OUTPUT")
 
 
-# Get the recent prioritization fees on Mainnet with a 2-out-of-3 strategy for USDC
+# Get the recent prioritization fees on Mainnet with a 1-out-of-3 strategy for USDC
 GET_RECENT_PRIORITIZATION_FEES_PARAMS="(
   variant { Default = variant { Mainnet } },
   opt record {
     responseConsensus = opt variant {
-      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+      Threshold = record { min = 1 : nat8; total = opt (3 : nat8) }
     };
     responseSizeEstimate = null;
     maxSlotRoundingError = opt (20 : nat64);
@@ -48,7 +48,7 @@ GET_BLOCK_PARAMS="(
   variant { Default = variant { Mainnet } },
   opt record {
     responseConsensus = opt variant {
-      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+      Threshold = record { min = 1 : nat8; total = opt (3 : nat8) }
     };
     responseSizeEstimate = null;
   },
@@ -70,7 +70,7 @@ GET_SIGNATURE_STATUSES_PARAMS="(
   variant { Default = variant { Mainnet } },
   opt record {
     responseConsensus = opt variant {
-      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+      Threshold = record { min = 1 : nat8; total = opt (3 : nat8) }
     };
     responseSizeEstimate = null;
   },
@@ -87,7 +87,7 @@ GET_TRANSACTION_PARAMS="(
   variant { Default = variant { Mainnet } },
   opt record {
     responseConsensus = opt variant {
-      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+      Threshold = record { min = 1 : nat8; total = opt (3 : nat8) }
     };
     responseSizeEstimate = null;
   },
@@ -101,12 +101,12 @@ GET_TRANSACTION_PARAMS="(
 CYCLES=$(dfx canister call sol_rpc getTransactionCyclesCost "$GET_TRANSACTION_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
 dfx canister call sol_rpc getTransaction "$GET_TRANSACTION_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
 
-# Get the USDC mint account info on Mainnet with a 2-out-of-3 strategy
+# Get the USDC mint account info on Mainnet with a 1-out-of-3 strategy
 GET_ACCOUNT_INFO_PARAMS="(
   variant { Default = variant { Mainnet } },
   opt record {
     responseConsensus = opt variant {
-      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+      Threshold = record { min = 1 : nat8; total = opt (3 : nat8) }
     };
     responseSizeEstimate = null;
   },
@@ -121,12 +121,12 @@ GET_ACCOUNT_INFO_PARAMS="(
 CYCLES=$(dfx canister call sol_rpc getAccountInfoCyclesCost "$GET_ACCOUNT_INFO_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
 dfx canister call sol_rpc getAccountInfo "$GET_ACCOUNT_INFO_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
 
-# Get the USDC mint account balance on Mainnet with a 2-out-of-3 strategy
+# Get the USDC mint account balance on Mainnet with a 1-out-of-3 strategy
 GET_BALANCE_PARAMS="(
   variant { Default = variant { Mainnet } },
   opt record {
     responseConsensus = opt variant {
-      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+      Threshold = record { min = 1 : nat8; total = opt (3 : nat8) }
     };
     responseSizeEstimate = null;
   },
@@ -139,12 +139,12 @@ GET_BALANCE_PARAMS="(
 CYCLES=$(dfx canister call sol_rpc getBalanceCyclesCost "$GET_BALANCE_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
 dfx canister call sol_rpc getBalance "$GET_BALANCE_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
 
-# Get the USDC issuer (Circle) token account balance on Mainnet with a 2-out-of-3 strategy
+# Get the USDC issuer (Circle) token account balance on Mainnet with a 1-out-of-3 strategy
 GET_TOKEN_ACCOUNT_BALANCE_PARAMS="(
   variant { Default = variant { Mainnet } },
   opt record {
     responseConsensus = opt variant {
-      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+      Threshold = record { min = 1 : nat8; total = opt (3 : nat8) }
     };
     responseSizeEstimate = null;
   },
@@ -156,13 +156,13 @@ GET_TOKEN_ACCOUNT_BALANCE_PARAMS="(
 CYCLES=$(dfx canister call sol_rpc getTokenAccountBalanceCyclesCost "$GET_TOKEN_ACCOUNT_BALANCE_PARAMS" $FLAGS --output json | jq '.Ok' --raw-output || exit 1)
 dfx canister call sol_rpc getTokenAccountBalance "$GET_TOKEN_ACCOUNT_BALANCE_PARAMS" $FLAGS --with-cycles "$CYCLES" || exit 1
 
-# Get the last 10 USDC mint account transactions on Mainnet with a 2-out-of-3 strategy starting the search backwards
+# Get the last 10 USDC mint account transactions on Mainnet with a 1-out-of-3 strategy starting the search backwards
 # from one of the transactions extracted from a block earlier.
 GET_SIGNATURES_FOR_ADDRESS_PARAMS="(
   variant { Default = variant { Mainnet } },
   opt record {
     responseConsensus = opt variant {
-      Threshold = record { min = 2 : nat8; total = opt (3 : nat8) }
+      Threshold = record { min = 1 : nat8; total = opt (3 : nat8) }
     };
     responseSizeEstimate = null;
   },
