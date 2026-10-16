@@ -72,6 +72,42 @@ pub struct DataSlice {
     pub offset: u32,
 }
 
+/// The parameters for a Solana [`getMultipleAccounts`](https://solana.com/docs/rpc/http/getmultipleaccounts) RPC method call.
+#[derive(Clone, Debug, Default, PartialEq, CandidType, Deserialize, Serialize)]
+pub struct GetMultipleAccountsParams {
+    /// The public keys of the accounts whose info to fetch formatted as base-58 strings
+    /// (up to a maximum of 100).
+    pub pubkeys: VecWithMaxLen<Pubkey, 100>,
+    /// The commitment describes how finalized a block is at that point in time.
+    pub commitment: Option<CommitmentLevel>,
+    /// Encoding format for Account data.
+    pub encoding: Option<GetAccountInfoEncoding>,
+    /// Request a slice of the account's data.
+    #[serde(rename = "dataSlice")]
+    pub data_slice: Option<DataSlice>,
+    /// The minimum slot that the request can be evaluated at.
+    #[serde(rename = "minContextSlot")]
+    pub min_context_slot: Option<Slot>,
+}
+
+impl<P: Into<Pubkey>> TryFrom<Vec<P>> for GetMultipleAccountsParams {
+    type Error = RpcError;
+
+    fn try_from(pubkeys: Vec<P>) -> Result<Self, Self::Error> {
+        Ok(Self {
+            pubkeys: pubkeys
+                .into_iter()
+                .map(Into::into)
+                .collect::<Vec<_>>()
+                .try_into()?,
+            commitment: None,
+            encoding: None,
+            data_slice: None,
+            min_context_slot: None,
+        })
+    }
+}
+
 /// The parameters for a Solana [`getBalance`](https://solana.com/docs/rpc/http/getbalance) RPC method call.
 #[derive(Clone, Debug, PartialEq, CandidType, Deserialize, Serialize)]
 pub struct GetBalanceParams {

@@ -39,6 +39,8 @@ use strum::IntoEnumIterator;
 
 const USDC_PUBLIC_KEY: solana_pubkey::Pubkey =
     pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+const NONCE_ACCOUNT_PUBLIC_KEY: solana_pubkey::Pubkey =
+    pubkey!("8DedqKHx9ogFajbHtRnTM3pPr3MRyVKDtepEpUiaDXX");
 // See: https://internetcomputer.org/docs/references/cycles-cost-formulas#https-outcalls
 const HTTP_OUTCALL_BASE_FEE: u128 = (3_000_000 + 60_000 * 34) * 34;
 
@@ -135,6 +137,48 @@ mod get_account_info_tests {
                 .expect_consistent();
 
             assert_eq!(results, Ok(None));
+        }
+
+        setup.drop().await;
+    }
+}
+
+mod get_multiple_accounts_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn should_get_multiple_accounts() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
+            let mocks = mock_for_ids(
+                get_multiple_accounts_request,
+                get_multiple_accounts_response,
+                offset..=offset + 2,
+            );
+            let client = setup.client(mocks).with_rpc_sources(sources).build();
+
+            let results = client
+                .get_multiple_accounts(&[USDC_PUBLIC_KEY, NONCE_ACCOUNT_PUBLIC_KEY])
+                .unwrap()
+                .send()
+                .await
+                .expect_consistent();
+
+            assert_eq!(
+                results,
+                Ok(vec![
+                    Some(UiAccount {
+                        lamports: 88849814690250,
+                        data: UiAccountData::Binary("1234".to_string(), UiAccountEncoding::Base58),
+                        owner: "11111111111111111111111111111111".to_string(),
+                        executable: false,
+                        rent_epoch: 18446744073709551615,
+                        space: Some(0),
+                    }),
+                    None
+                ])
+            );
         }
 
         setup.drop().await;
@@ -497,6 +541,9 @@ mod generic_request_tests {
                 SolRpcEndpoint::GetAccountInfo => {
                     check(client.get_account_info(USDC_PUBLIC_KEY)).await;
                 }
+                SolRpcEndpoint::GetMultipleAccounts => {
+                    check(client.get_multiple_accounts(&[USDC_PUBLIC_KEY]).unwrap()).await;
+                }
                 SolRpcEndpoint::GetBalance => {
                     check(client.get_balance(USDC_PUBLIC_KEY)).await;
                 }
@@ -568,6 +615,9 @@ mod generic_request_tests {
                 }
                 SolRpcEndpoint::GetAccountInfo => {
                     check(client.get_account_info(USDC_PUBLIC_KEY)).await;
+                }
+                SolRpcEndpoint::GetMultipleAccounts => {
+                    check(client.get_multiple_accounts(&[USDC_PUBLIC_KEY]).unwrap()).await;
                 }
                 SolRpcEndpoint::GetBalance => {
                     check(client.get_balance(USDC_PUBLIC_KEY)).await;
@@ -869,6 +919,9 @@ mod cycles_cost_tests {
                 SolRpcEndpoint::GetAccountInfo => {
                     check(client.get_account_info(USDC_PUBLIC_KEY)).await;
                 }
+                SolRpcEndpoint::GetMultipleAccounts => {
+                    check(client.get_multiple_accounts(&[USDC_PUBLIC_KEY]).unwrap()).await;
+                }
                 SolRpcEndpoint::GetBalance => {
                     check(client.get_balance(USDC_PUBLIC_KEY)).await;
                 }
@@ -933,6 +986,9 @@ mod cycles_cost_tests {
                 }
                 SolRpcEndpoint::GetAccountInfo => {
                     check(client.get_account_info(USDC_PUBLIC_KEY)).await;
+                }
+                SolRpcEndpoint::GetMultipleAccounts => {
+                    check(client.get_multiple_accounts(&[USDC_PUBLIC_KEY]).unwrap()).await;
                 }
                 SolRpcEndpoint::GetBalance => {
                     check(client.get_balance(USDC_PUBLIC_KEY)).await;
@@ -1089,6 +1145,16 @@ mod cycles_cost_tests {
                     )
                     .await;
                 }
+                SolRpcEndpoint::GetMultipleAccounts => {
+                    check(
+                        &setup,
+                        client
+                            .get_multiple_accounts(&[USDC_PUBLIC_KEY, NONCE_ACCOUNT_PUBLIC_KEY])
+                            .unwrap(),
+                        1_807_208_800,
+                    )
+                    .await;
+                }
                 SolRpcEndpoint::GetBalance => {
                     check(&setup, client.get_balance(USDC_PUBLIC_KEY), 1_731_769_600).await;
                 }
@@ -1227,6 +1293,9 @@ mod rpc_config_tests {
                 SolRpcEndpoint::GetAccountInfo => {
                     check(client.get_account_info(USDC_PUBLIC_KEY)).await;
                 }
+                SolRpcEndpoint::GetMultipleAccounts => {
+                    check(client.get_multiple_accounts(&[USDC_PUBLIC_KEY]).unwrap()).await;
+                }
                 SolRpcEndpoint::GetBalance => {
                     check(client.get_balance(USDC_PUBLIC_KEY)).await;
                 }
@@ -1339,6 +1408,20 @@ mod rpc_config_tests {
                         &mut offset,
                         get_account_info_request(),
                         get_account_info_response(),
+                    )
+                    .await;
+                }
+                SolRpcEndpoint::GetMultipleAccounts => {
+                    check(
+                        &setup,
+                        |client| {
+                            client
+                                .get_multiple_accounts(&[USDC_PUBLIC_KEY, NONCE_ACCOUNT_PUBLIC_KEY])
+                                .unwrap()
+                        },
+                        &mut offset,
+                        get_multiple_accounts_request(),
+                        get_multiple_accounts_response(),
                     )
                     .await;
                 }
@@ -2032,6 +2115,18 @@ fn get_account_info_request() -> JsonRpcRequestMatcher {
         .with_id(0)
 }
 
+fn get_multiple_accounts_request() -> JsonRpcRequestMatcher {
+    JsonRpcRequestMatcher::with_method("getMultipleAccounts")
+        .with_params(json!([
+            [
+                USDC_PUBLIC_KEY.to_string(),
+                NONCE_ACCOUNT_PUBLIC_KEY.to_string()
+            ],
+            null
+        ]))
+        .with_id(0)
+}
+
 fn get_balance_request() -> JsonRpcRequestMatcher {
     JsonRpcRequestMatcher::with_method("getBalance")
         .with_params(json!([USDC_PUBLIC_KEY.to_string(), {"commitment": "confirmed", "minContextSlot": 100}]))
@@ -2119,6 +2214,27 @@ fn get_account_info_response() -> JsonRpcResponse {
                 "rentEpoch": 18446744073709551615u64,
                 "space": 0
             }
+        },
+    }))
+}
+
+fn get_multiple_accounts_response() -> JsonRpcResponse {
+    JsonRpcResponse::from(json!({
+        "id": Id::from(ConstantSizeId::ZERO),
+        "jsonrpc": "2.0",
+        "result": {
+            "context": { "apiVersion": "2.0.15", "slot": 341197053 },
+            "value": [
+                {
+                    "data": ["1234", "base58"],
+                    "executable": false,
+                    "lamports": 88849814690250u64,
+                    "owner": "11111111111111111111111111111111",
+                    "rentEpoch": 18446744073709551615u64,
+                    "space": 0
+                },
+                null
+            ]
         },
     }))
 }

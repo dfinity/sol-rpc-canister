@@ -2,7 +2,7 @@ use crate::{GetRecentBlockError, RequestBuilder, SolRpcClient, SolRpcEndpoint};
 use serde_json::json;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
-    GetBlockCommitmentLevel, GetBlockParams, GetSignatureStatusesParams,
+    GetBlockCommitmentLevel, GetBlockParams, GetMultipleAccountsParams, GetSignatureStatusesParams,
     GetSignaturesForAddressParams, GetSlotParams, GetTokenAccountBalanceParams,
     GetTransactionEncoding, GetTransactionParams, SendTransactionEncoding, SendTransactionParams,
     Slot, TransactionDetails,
@@ -48,6 +48,15 @@ fn should_set_correct_commitment_level() {
                 assert_eq!(
                     builder.request.params.commitment,
                     Some(GetBlockCommitmentLevel::Confirmed)
+                );
+            }
+            SolRpcEndpoint::GetMultipleAccounts => {
+                let builder = client_with_commitment_level
+                    .get_multiple_accounts(&[PUBKEY])
+                    .unwrap();
+                assert_eq!(
+                    builder.request.params.commitment,
+                    Some(CommitmentLevel::Confirmed)
                 );
             }
             SolRpcEndpoint::GetRecentPrioritizationFees => {
@@ -161,6 +170,31 @@ fn should_set_request_parameters() {
                     transaction_details: Some(TransactionDetails::Signatures),
                     rewards: Some(false),
                 }),
+            ),
+            SolRpcEndpoint::GetMultipleAccounts => assert_params_eq(
+                client
+                    .get_multiple_accounts(&[PUBKEY])
+                    .unwrap()
+                    .with_commitment(CommitmentLevel::Confirmed)
+                    .with_encoding(GetAccountInfoEncoding::Base64)
+                    .with_data_slice(DataSlice {
+                        length: 1,
+                        offset: 2,
+                    })
+                    .with_min_context_slot(MIN_CONTEXT_SLOT),
+                client
+                    .get_multiple_accounts(&[PUBKEY])
+                    .unwrap()
+                    .with_params(GetMultipleAccountsParams {
+                        pubkeys: vec![PUBKEY].try_into().unwrap(),
+                        commitment: Some(CommitmentLevel::Confirmed),
+                        encoding: Some(GetAccountInfoEncoding::Base64),
+                        data_slice: Some(DataSlice {
+                            length: 1,
+                            offset: 2,
+                        }),
+                        min_context_slot: Some(MIN_CONTEXT_SLOT),
+                    }),
             ),
             SolRpcEndpoint::GetRecentPrioritizationFees => {
                 // No optional request parameters

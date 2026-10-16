@@ -1,18 +1,18 @@
 use crate::rpc_client::{
-    GetAccountInfoRequest, GetBlockRequest, GetSignatureStatusesRequest,
-    GetSignaturesForAddressRequest, GetSlotRequest, GetTransactionRequest, MultiRpcRequest,
-    SendTransactionRequest,
+    GetAccountInfoRequest, GetBlockRequest, GetMultipleAccountsRequest,
+    GetSignatureStatusesRequest, GetSignaturesForAddressRequest, GetSlotRequest,
+    GetTransactionRequest, MultiRpcRequest, SendTransactionRequest,
 };
 use serde::Serialize;
 use serde_json::json;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
-    GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
-    GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams,
-    GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
-    GetTransactionEncoding, GetTransactionParams, Pubkey, RpcConfig, RpcSources,
-    SendTransactionEncoding, SendTransactionParams, Signature, SolanaCluster, TransactionDetails,
-    VecWithMaxLen,
+    GetBlockCommitmentLevel, GetBlockParams, GetMultipleAccountsParams,
+    GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
+    GetSignatureStatusesParams, GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig,
+    GetTokenAccountBalanceParams, GetTransactionEncoding, GetTransactionParams, Pubkey, RpcConfig,
+    RpcSources, SendTransactionEncoding, SendTransactionParams, Signature, SolanaCluster,
+    TransactionDetails, VecWithMaxLen,
 };
 use solana_pubkey::pubkey;
 use std::str::FromStr;
@@ -60,6 +60,54 @@ mod request_serialization_tests {
             {
                 "commitment": "processed",
                 "encoding": "base58",
+                "dataSlice": { "length": 123, "offset": 8 },
+                "minContextSlot": 456,
+            }]),
+        );
+    }
+
+    #[test]
+    fn should_serialize_get_multiple_accounts_request() {
+        assert_params_eq(
+            GetMultipleAccountsRequest::get_multiple_accounts(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetMultipleAccountsParams::default(),
+                Timestamp::default(),
+            )
+            .unwrap(),
+            json!([[], null]),
+        );
+        assert_params_eq(
+            GetMultipleAccountsRequest::get_multiple_accounts(
+                RpcSources::Default(SolanaCluster::Mainnet),
+                RpcConfig::default(),
+                GetMultipleAccountsParams {
+                    pubkeys: vec![
+                        pubkey!("11111111111111111111111111111111"),
+                        pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"),
+                    ]
+                    .try_into()
+                    .unwrap(),
+                    commitment: Some(CommitmentLevel::Processed),
+                    encoding: Some(GetAccountInfoEncoding::Base64),
+                    data_slice: Some(DataSlice {
+                        length: 123,
+                        offset: 8,
+                    }),
+                    min_context_slot: Some(456),
+                },
+                Timestamp::default(),
+            )
+            .unwrap(),
+            json!([
+            [
+                "11111111111111111111111111111111",
+                "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+            ],
+            {
+                "commitment": "processed",
+                "encoding": "base64",
                 "dataSlice": { "length": 123, "offset": 8 },
                 "minContextSlot": 456,
             }]),
@@ -415,5 +463,90 @@ mod request_serialization_tests {
             serde_json::to_value(request.request.params()).unwrap(),
             serialized
         )
+    }
+}
+
+mod response_size_estimate_tests {
+    use super::*;
+    use canhttp::multi::Timestamp;
+
+    #[test]
+    fn should_estimate_get_multiple_accounts_response_size_without_data_slice() {
+        let params = get_multiple_accounts_params(2, None, None);
+
+        assert_eq!(max_response_bytes(RpcConfig::default(), params), 3_200);
+    }
+
+    #[test]
+    fn should_estimate_get_multiple_accounts_response_size_from_data_slice() {
+        for encoding in [
+            None,
+            Some(GetAccountInfoEncoding::Base64),
+            Some(GetAccountInfoEncoding::Base64ZStd),
+        ] {
+            let params = get_multiple_accounts_params(3, Some(1_000), encoding);
+
+            assert_eq!(max_response_bytes(RpcConfig::default(), params), 6_760);
+        }
+    }
+
+    #[test]
+    fn should_estimate_get_multiple_accounts_response_size_with_empty_data_slice() {
+        let params = get_multiple_accounts_params(1, Some(0), None);
+
+        assert_eq!(max_response_bytes(RpcConfig::default(), params), 2_368);
+    }
+
+    #[test]
+    fn should_ignore_data_slice_for_json_parsed_encoding() {
+        let params =
+            get_multiple_accounts_params(1, Some(1_000), Some(GetAccountInfoEncoding::JsonParsed));
+
+        assert_eq!(max_response_bytes(RpcConfig::default(), params), 2_688);
+    }
+
+    #[test]
+    fn should_cap_get_multiple_accounts_response_size_estimate() {
+        let params = get_multiple_accounts_params(100, Some(100_000), None);
+
+        assert_eq!(max_response_bytes(RpcConfig::default(), params), 2_000_000);
+    }
+
+    #[test]
+    fn should_prefer_response_size_estimate_from_config() {
+        let config = RpcConfig {
+            response_size_estimate: Some(777),
+            ..RpcConfig::default()
+        };
+        let params = get_multiple_accounts_params(3, Some(1_000), None);
+
+        assert_eq!(max_response_bytes(config, params), 777);
+    }
+
+    fn max_response_bytes(config: RpcConfig, params: GetMultipleAccountsParams) -> u64 {
+        GetMultipleAccountsRequest::get_multiple_accounts(
+            RpcSources::Default(SolanaCluster::Mainnet),
+            config,
+            params,
+            Timestamp::default(),
+        )
+        .unwrap()
+        .max_response_bytes
+    }
+
+    fn get_multiple_accounts_params(
+        num_accounts: usize,
+        data_slice_length: Option<u32>,
+        encoding: Option<GetAccountInfoEncoding>,
+    ) -> GetMultipleAccountsParams {
+        GetMultipleAccountsParams {
+            pubkeys: vec![pubkey!("11111111111111111111111111111111"); num_accounts]
+                .try_into()
+                .unwrap(),
+            commitment: None,
+            encoding,
+            data_slice: data_slice_length.map(|length| DataSlice { length, offset: 0 }),
+            min_context_slot: None,
+        }
     }
 }
