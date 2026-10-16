@@ -78,6 +78,13 @@ pub struct GetAccountInfoConfig {
 }
 
 impl GetAccountInfoConfig {
+    fn effective_data_slice_length(&self) -> Option<u32> {
+        match self.encoding {
+            Some(GetAccountInfoEncoding::JsonParsed) => None,
+            _ => self.data_slice.as_ref().map(|slice| slice.length),
+        }
+    }
+
     fn none_if_empty(self) -> Option<Self> {
         let is_empty = self.commitment.is_none()
             && self.encoding.is_none()
@@ -100,6 +107,10 @@ pub struct GetMultipleAccountsParams {
 impl GetMultipleAccountsParams {
     pub fn num_accounts(&self) -> usize {
         self.pubkeys.len()
+    }
+
+    pub fn effective_data_slice_length(&self) -> Option<u32> {
+        self.config.as_ref()?.effective_data_slice_length()
     }
 }
 

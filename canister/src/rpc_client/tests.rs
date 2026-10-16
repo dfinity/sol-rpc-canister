@@ -465,3 +465,88 @@ mod request_serialization_tests {
         )
     }
 }
+
+mod response_size_estimate_tests {
+    use super::*;
+    use canhttp::multi::Timestamp;
+
+    #[test]
+    fn should_estimate_get_multiple_accounts_response_size_without_data_slice() {
+        let params = get_multiple_accounts_params(2, None, None);
+
+        assert_eq!(max_response_bytes(RpcConfig::default(), params), 3_200);
+    }
+
+    #[test]
+    fn should_estimate_get_multiple_accounts_response_size_from_data_slice() {
+        for encoding in [
+            None,
+            Some(GetAccountInfoEncoding::Base64),
+            Some(GetAccountInfoEncoding::Base64ZStd),
+        ] {
+            let params = get_multiple_accounts_params(3, Some(1_000), encoding);
+
+            assert_eq!(max_response_bytes(RpcConfig::default(), params), 6_760);
+        }
+    }
+
+    #[test]
+    fn should_estimate_get_multiple_accounts_response_size_with_empty_data_slice() {
+        let params = get_multiple_accounts_params(1, Some(0), None);
+
+        assert_eq!(max_response_bytes(RpcConfig::default(), params), 2_368);
+    }
+
+    #[test]
+    fn should_ignore_data_slice_for_json_parsed_encoding() {
+        let params =
+            get_multiple_accounts_params(1, Some(1_000), Some(GetAccountInfoEncoding::JsonParsed));
+
+        assert_eq!(max_response_bytes(RpcConfig::default(), params), 2_688);
+    }
+
+    #[test]
+    fn should_cap_get_multiple_accounts_response_size_estimate() {
+        let params = get_multiple_accounts_params(100, Some(100_000), None);
+
+        assert_eq!(max_response_bytes(RpcConfig::default(), params), 2_000_000);
+    }
+
+    #[test]
+    fn should_prefer_response_size_estimate_from_config() {
+        let config = RpcConfig {
+            response_size_estimate: Some(777),
+            ..RpcConfig::default()
+        };
+        let params = get_multiple_accounts_params(3, Some(1_000), None);
+
+        assert_eq!(max_response_bytes(config, params), 777);
+    }
+
+    fn max_response_bytes(config: RpcConfig, params: GetMultipleAccountsParams) -> u64 {
+        GetMultipleAccountsRequest::get_multiple_accounts(
+            RpcSources::Default(SolanaCluster::Mainnet),
+            config,
+            params,
+            Timestamp::default(),
+        )
+        .unwrap()
+        .max_response_bytes
+    }
+
+    fn get_multiple_accounts_params(
+        num_accounts: usize,
+        data_slice_length: Option<u32>,
+        encoding: Option<GetAccountInfoEncoding>,
+    ) -> GetMultipleAccountsParams {
+        GetMultipleAccountsParams {
+            pubkeys: vec![pubkey!("11111111111111111111111111111111"); num_accounts]
+                .try_into()
+                .unwrap(),
+            commitment: None,
+            encoding,
+            data_slice: data_slice_length.map(|length| DataSlice { length, offset: 0 }),
+            min_context_slot: None,
+        }
+    }
+}

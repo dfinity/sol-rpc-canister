@@ -216,11 +216,26 @@ impl GetMultipleAccountsRequest {
     }
 
     fn response_size_estimate(params: &json::GetMultipleAccountsParams) -> u64 {
-        const ESTIMATED_BYTES_PER_ACCOUNT: u64 = 512;
         const ENVELOPE_BYTES: u64 = 128;
-        let accounts_bytes = params.num_accounts() as u64 * ESTIMATED_BYTES_PER_ACCOUNT;
+        let accounts_bytes =
+            params.num_accounts() as u64 * Self::estimated_bytes_per_account(params);
         DEFAULT_MAX_RESPONSE_BYTES.min(ENVELOPE_BYTES + accounts_bytes + HEADER_SIZE_LIMIT)
     }
+
+    fn estimated_bytes_per_account(params: &json::GetMultipleAccountsParams) -> u64 {
+        const ESTIMATED_BYTES_PER_ACCOUNT_WITH_FULL_DATA: u64 = 512;
+        const ACCOUNT_METADATA_BYTES: u64 = 192;
+        match params.effective_data_slice_length() {
+            Some(data_length) => {
+                ACCOUNT_METADATA_BYTES + base64_encoded_length(u64::from(data_length))
+            }
+            None => ESTIMATED_BYTES_PER_ACCOUNT_WITH_FULL_DATA,
+        }
+    }
+}
+
+fn base64_encoded_length(num_bytes: u64) -> u64 {
+    num_bytes.div_ceil(3) * 4
 }
 
 // TODO XC-290: The Solana client returns a vector containing
