@@ -19,7 +19,7 @@ use sol_rpc_types::{
     GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams,
     GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
     GetTransactionParams, Lamport, MultiRpcResult, PrioritizationFee, RpcAccess, RpcConfig,
-    RpcResult, RpcSources, SendTransactionParams, Signature, Slot, SupportedRpcProvider,
+    RpcError, RpcResult, RpcSources, SendTransactionParams, Signature, Slot, SupportedRpcProvider,
     SupportedRpcProviderId, TokenAmount, TransactionStatus,
 };
 use std::str::FromStr;
@@ -168,9 +168,21 @@ async fn get_multiple_accounts(
     config: Option<RpcConfig>,
     params: GetMultipleAccountsParams,
 ) -> MultiRpcResult<Vec<Option<AccountInfo>>> {
+    let num_pubkeys = params.pubkeys.len();
     let request =
         MultiRpcRequest::get_multiple_accounts(source, config.unwrap_or_default(), params, now());
-    send_multi(request).await.into()
+    MultiRpcResult::<Vec<Option<AccountInfo>>>::from(send_multi(request).await).and_then(
+        |accounts| {
+            if accounts.len() == num_pubkeys {
+                Ok(accounts)
+            } else {
+                Err(RpcError::ValidationError(format!(
+                    "Expected {num_pubkeys} accounts, but got {}",
+                    accounts.len()
+                )))
+            }
+        },
+    )
 }
 
 #[query(name = "getMultipleAccountsCyclesCost")]

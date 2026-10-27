@@ -183,6 +183,45 @@ mod get_multiple_accounts_tests {
 
         setup.drop().await;
     }
+
+    #[tokio::test]
+    async fn should_not_get_multiple_accounts_when_response_has_wrong_number_of_accounts() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for (sources, offset) in zip(rpc_sources(), (0..).step_by(3)) {
+            let mocks = mock_for_ids(
+                get_multiple_accounts_request,
+                || {
+                    JsonRpcResponse::from(json!({
+                        "id": Id::from(ConstantSizeId::ZERO),
+                        "jsonrpc": "2.0",
+                        "result": {
+                            "context": { "apiVersion": "2.0.15", "slot": 341197053 },
+                            "value": [null]
+                        },
+                    }))
+                },
+                offset..=offset + 2,
+            );
+            let client = setup.client(mocks).with_rpc_sources(sources).build();
+
+            let results = client
+                .get_multiple_accounts(&[USDC_PUBLIC_KEY, NONCE_ACCOUNT_PUBLIC_KEY])
+                .unwrap()
+                .send()
+                .await
+                .expect_consistent();
+
+            assert_eq!(
+                results,
+                Err(RpcError::ValidationError(
+                    "Expected 2 accounts, but got 1".to_string()
+                ))
+            );
+        }
+
+        setup.drop().await;
+    }
 }
 
 mod get_block_tests {
