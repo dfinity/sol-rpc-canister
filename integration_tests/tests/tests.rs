@@ -17,12 +17,12 @@ use sol_rpc_client::{
 };
 use sol_rpc_int_tests::{Setup, DEFAULT_CALLER_TEST_ID};
 use sol_rpc_types::{
-    CommitmentLevel, ConfirmedTransactionStatusWithSignature, ConsensusStrategy,
-    GetSignaturesForAddressLimit, GetSlotParams, GetTransactionEncoding, HttpOutcallError,
-    InstallArgs, InstructionError, LegacyRejectionCode, Mode, MultiRpcResult, PrioritizationFee,
-    ProviderError, RpcAccess, RpcAuth, RpcError, RpcResult, RpcSource, RpcSources, Slot,
-    SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId, TransactionDetails,
-    TransactionError,
+    CommitmentLevel, ConfirmedTransactionStatusWithSignature, ConsensusStrategy, DataSlice,
+    GetAccountInfoEncoding, GetSignaturesForAddressLimit, GetSlotParams, GetTransactionEncoding,
+    HttpOutcallError, InstallArgs, InstructionError, LegacyRejectionCode, Mode, MultiRpcResult,
+    PrioritizationFee, ProviderError, RpcAccess, RpcAuth, RpcError, RpcResult, RpcSource,
+    RpcSources, Slot, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    TransactionDetails, TransactionError,
 };
 use solana_account_decoder_client_types::{
     token::UiTokenAmount, UiAccount, UiAccountData, UiAccountEncoding,
@@ -1055,6 +1055,51 @@ mod cycles_cost_tests {
                 }
                 SolRpcEndpoint::SendTransaction => {
                     check(client.send_transaction(some_transaction())).await;
+                }
+            }
+        }
+
+        setup.drop().await;
+    }
+
+    #[tokio::test]
+    async fn should_attach_enough_default_cycles_for_get_multiple_accounts() {
+        let setup = Setup::new().await.with_mock_api_keys().await;
+
+        for consensus_strategy in [
+            ConsensusStrategy::Equality,
+            ConsensusStrategy::Threshold {
+                total: Some(4),
+                min: 3,
+            },
+        ] {
+            let client = setup
+                .client(MockHttpOutcalls::never())
+                .with_consensus_strategy(consensus_strategy.clone())
+                .build();
+
+            for num_accounts in [1, 100] {
+                let pubkeys = vec![USDC_PUBLIC_KEY; num_accounts];
+                for encoding in [None, Some(GetAccountInfoEncoding::JsonParsed)] {
+                    for data_slice_length in [None, Some(0), Some(1_536), Some(100_000)] {
+                        let mut request = client.get_multiple_accounts(&pubkeys).unwrap();
+                        if let Some(encoding) = encoding.clone() {
+                            request = request.with_encoding(encoding);
+                        }
+                        if let Some(length) = data_slice_length {
+                            request = request.with_data_slice(DataSlice { length, offset: 0 });
+                        }
+
+                        let default_cycles = request.default_request_cycles();
+                        let cycles_cost = request.request_cost().send().await.unwrap();
+
+                        assert!(
+                            default_cycles >= cycles_cost,
+                            "{consensus_strategy:?}, {num_accounts} accounts, encoding {encoding:?}, \
+                            data slice length {data_slice_length:?}: default cycles {default_cycles} \
+                            are less than the cycles cost {cycles_cost}"
+                        );
+                    }
                 }
             }
         }
