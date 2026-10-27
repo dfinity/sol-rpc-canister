@@ -1,4 +1,6 @@
-use crate::{GetRecentBlockError, RequestBuilder, SolRpcClient, SolRpcEndpoint};
+use crate::{
+    DefaultRequestCycles, GetRecentBlockError, RequestBuilder, SolRpcClient, SolRpcEndpoint,
+};
 use serde_json::json;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
@@ -114,6 +116,37 @@ fn should_set_correct_commitment_level() {
             }
         }
     }
+}
+
+#[test]
+fn should_scale_get_multiple_accounts_default_cycles_with_response_size() {
+    let client = SolRpcClient::builder_for_ic().build();
+    let pubkeys = vec![PUBKEY; 100];
+    let default_cycles = |data_slice_length: Option<u32>,
+                          encoding: Option<GetAccountInfoEncoding>| {
+        let mut builder = client.get_multiple_accounts(&pubkeys).unwrap();
+        if let Some(length) = data_slice_length {
+            builder = builder.with_data_slice(DataSlice { length, offset: 0 });
+        }
+        if let Some(encoding) = encoding {
+            builder = builder.with_encoding(encoding);
+        }
+        builder.default_request_cycles()
+    };
+
+    assert_eq!(default_cycles(None, None), 20_240_000_000);
+    assert_eq!(default_cycles(Some(0), None), 13_840_000_000);
+    // About 6.2B cycles per provider call on a 34-node subnet
+    assert_eq!(default_cycles(Some(1_536), None), 54_800_000_000);
+    assert_eq!(
+        default_cycles(None, Some(GetAccountInfoEncoding::JsonParsed)),
+        30_480_000_000
+    );
+    assert_eq!(
+        default_cycles(Some(100_000), None),
+        410_000_000_000,
+        "should be capped at the maximum response size"
+    );
 }
 
 #[test]

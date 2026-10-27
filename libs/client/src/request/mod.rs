@@ -357,8 +357,31 @@ pub type GetMultipleAccountsRequestBuilder<R> = RequestBuilder<
 
 impl<R> DefaultRequestCycles for GetMultipleAccountsRequestBuilder<R> {
     fn default_request_cycles(&self) -> u128 {
-        10_000_000_000 + self.request.params.pubkeys.len() as u128 * 100_000_000
+        // Enough for a few provider calls on a 34-node subnet, at 800 cycles per response byte
+        // and node.
+        const CYCLES_PER_RESPONSE_BYTE: u128 = 200_000;
+        const MAX_RESPONSE_BYTES: u128 = 2_000_000;
+        let params = &self.request.params;
+        let estimated_response_bytes = MAX_RESPONSE_BYTES
+            .min(params.pubkeys.len() as u128 * estimated_bytes_per_account(params));
+        10_000_000_000 + estimated_response_bytes * CYCLES_PER_RESPONSE_BYTE
     }
+}
+
+// Mirrors the per-account response size estimate of the SOL RPC canister.
+fn estimated_bytes_per_account(params: &GetMultipleAccountsParams) -> u128 {
+    const ESTIMATED_BYTES_PER_ACCOUNT_WITH_FULL_DATA: u128 = 512;
+    const ESTIMATED_BYTES_PER_JSON_PARSED_ACCOUNT: u128 = 1_024;
+    const ACCOUNT_METADATA_BYTES: u128 = 192;
+    let sliced_account_bytes = params
+        .data_slice
+        .as_ref()
+        .map(|slice| ACCOUNT_METADATA_BYTES + u128::from(slice.length).div_ceil(3) * 4);
+    if params.encoding == Some(GetAccountInfoEncoding::JsonParsed) {
+        return ESTIMATED_BYTES_PER_JSON_PARSED_ACCOUNT
+            .max(sliced_account_bytes.unwrap_or_default());
+    }
+    sliced_account_bytes.unwrap_or(ESTIMATED_BYTES_PER_ACCOUNT_WITH_FULL_DATA)
 }
 
 impl<R> GetMultipleAccountsRequestBuilder<R> {
