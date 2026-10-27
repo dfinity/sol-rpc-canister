@@ -336,6 +336,31 @@ type MultiGetAccountInfoResult = variant {
     Inconsistent : vec record { RpcSource; GetAccountInfoResult };
 };
 
+// The parameters for a call to the `getMultipleAccounts` Solana RPC method.
+type GetMultipleAccountsParams = record {
+  // The public keys of the accounts to query, as base-58 encoded strings (up to a maximum of 100).
+  pubkeys: vec Pubkey;
+  // The commitment describes how finalized a block is at that point in time.
+  commitment: opt CommitmentLevel;
+  // Encoding format for the account data.
+  encoding: opt GetAccountInfoEncoding;
+  // Request a slice of the account data.
+  dataSlice: opt DataSlice;
+  // The minimum slot that the request can be evaluated at.
+  minContextSlot: opt Slot;
+};
+
+// Represents the result of a call to the `getMultipleAccounts` Solana RPC method.
+// The `Ok` variant contains one entry per requested public key, in the same order as the request.
+// If a requested account doesn't exist, the corresponding entry will be null.
+type GetMultipleAccountsResult = variant { Ok : vec opt AccountInfo; Err : RpcError };
+
+// Represents an aggregated result from multiple RPC calls to the `getMultipleAccounts` Solana RPC method.
+type MultiGetMultipleAccountsResult = variant {
+    Consistent : GetMultipleAccountsResult;
+    Inconsistent : vec record { RpcSource; GetMultipleAccountsResult };
+};
+
 // The parameters for a Solana `getBalance` RPC method call.
 type GetBalanceParams = record {
   // Pubkey of account to query, as base-58 encoded string.
@@ -912,6 +937,10 @@ service : (InstallArgs,) -> {
   // Call the Solana `getBlock` RPC method and return the resulting block.
   getBlock : (RpcSources, opt RpcConfig, GetBlockParams) -> (MultiGetBlockResult);
   getBlockCyclesCost : (RpcSources, opt RpcConfig, GetBlockParams) -> (RequestCostResult) query;
+
+  // Call the Solana `getMultipleAccounts` RPC method and return the resulting account infos.
+  getMultipleAccounts : (RpcSources, opt RpcConfig, GetMultipleAccountsParams) -> (MultiGetMultipleAccountsResult);
+  getMultipleAccountsCyclesCost : (RpcSources, opt RpcConfig, GetMultipleAccountsParams) -> (RequestCostResult) query;
 
   // Call the Solana `getRecentPrioritizationFees` RPC method and return the resulting slot.
   getRecentPrioritizationFees : (RpcSources, opt GetRecentPrioritizationFeesRpcConfig, opt GetRecentPrioritizationFeesParams) -> (MultiGetRecentPrioritizationFeesResult);

@@ -9,12 +9,12 @@ use sol_rpc_types::{
     AccountInfo, CommitmentLevel, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
     ConsensusStrategy, DataSlice, EncodedConfirmedTransactionWithStatusMeta,
     GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams, GetBlockCommitmentLevel,
-    GetBlockParams, GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
-    GetSignatureStatusesParams, GetSignaturesForAddressLimit, GetSignaturesForAddressParams,
-    GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams, GetTransactionEncoding,
-    GetTransactionParams, Lamport, MultiRpcResult, NonZeroU8, PrioritizationFee, RoundingError,
-    RpcConfig, RpcError, RpcResult, RpcSource, RpcSources, SendTransactionParams, Signature, Slot,
-    TokenAmount, TransactionDetails, TransactionStatus,
+    GetBlockParams, GetMultipleAccountsParams, GetRecentPrioritizationFeesParams,
+    GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams, GetSignaturesForAddressLimit,
+    GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
+    GetTransactionEncoding, GetTransactionParams, Lamport, MultiRpcResult, NonZeroU8,
+    PrioritizationFee, RoundingError, RpcConfig, RpcError, RpcResult, RpcSource, RpcSources,
+    SendTransactionParams, Signature, Slot, TokenAmount, TransactionDetails, TransactionStatus,
 };
 use solana_account_decoder_client_types::token::UiTokenAmount;
 use solana_transaction_status_client_types::UiConfirmedBlock;
@@ -52,6 +52,8 @@ pub enum SolRpcEndpoint {
     GetBalance,
     /// `getBlock` endpoint.
     GetBlock,
+    /// `getMultipleAccounts` endpoint.
+    GetMultipleAccounts,
     /// `getRecentPrioritizationFees` endpoint.
     GetRecentPrioritizationFees,
     /// `getSignaturesForAddress` endpoint.
@@ -77,6 +79,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetAccountInfo => "getAccountInfo",
             SolRpcEndpoint::GetBalance => "getBalance",
             SolRpcEndpoint::GetBlock => "getBlock",
+            SolRpcEndpoint::GetMultipleAccounts => "getMultipleAccounts",
             SolRpcEndpoint::GetRecentPrioritizationFees => "getRecentPrioritizationFees",
             SolRpcEndpoint::GetSignatureStatuses => "getSignatureStatuses",
             SolRpcEndpoint::GetSignaturesForAddress => "getSignaturesForAddress",
@@ -94,6 +97,7 @@ impl SolRpcEndpoint {
             SolRpcEndpoint::GetAccountInfo => "getAccountInfoCyclesCost",
             SolRpcEndpoint::GetBalance => "getBalanceCyclesCost",
             SolRpcEndpoint::GetBlock => "getBlockCyclesCost",
+            SolRpcEndpoint::GetMultipleAccounts => "getMultipleAccountsCyclesCost",
             SolRpcEndpoint::GetRecentPrioritizationFees => "getRecentPrioritizationFeesCyclesCost",
             SolRpcEndpoint::GetSignaturesForAddress => "getSignaturesForAddressCyclesCost",
             SolRpcEndpoint::GetSignatureStatuses => "getSignatureStatusesCyclesCost",
@@ -319,6 +323,89 @@ impl<R> GetBlockRequestBuilder<R> {
     /// Change the `rewards` parameter for a `getBlock` request to `false`.
     pub fn without_rewards(mut self) -> Self {
         self.request.params.rewards = Some(false);
+        self
+    }
+}
+
+#[derive(Debug, Clone, Default, From)]
+pub struct GetMultipleAccountsRequest(GetMultipleAccountsParams);
+
+impl SolRpcRequest for GetMultipleAccountsRequest {
+    type Config = RpcConfig;
+    type Params = GetMultipleAccountsParams;
+    type CandidOutput = MultiRpcResult<Vec<Option<AccountInfo>>>;
+    type Output = MultiRpcResult<Vec<Option<solana_account_decoder_client_types::UiAccount>>>;
+
+    fn endpoint(&self) -> SolRpcEndpoint {
+        SolRpcEndpoint::GetMultipleAccounts
+    }
+
+    fn params(self, default_commitment_level: Option<CommitmentLevel>) -> Self::Params {
+        let mut params = self.0;
+        set_default(default_commitment_level, &mut params.commitment);
+        params
+    }
+}
+
+pub type GetMultipleAccountsRequestBuilder<R> = RequestBuilder<
+    R,
+    RpcConfig,
+    GetMultipleAccountsParams,
+    MultiRpcResult<Vec<Option<AccountInfo>>>,
+    MultiRpcResult<Vec<Option<solana_account_decoder_client_types::UiAccount>>>,
+>;
+
+impl<R> DefaultRequestCycles for GetMultipleAccountsRequestBuilder<R> {
+    fn default_request_cycles(&self) -> u128 {
+        // Enough for a few provider calls on a 34-node subnet, at 800 cycles per response byte
+        // and node.
+        const CYCLES_PER_RESPONSE_BYTE: u128 = 200_000;
+        const MAX_RESPONSE_BYTES: u128 = 2_000_000;
+        let params = &self.request.params;
+        let estimated_response_bytes = MAX_RESPONSE_BYTES
+            .min(params.pubkeys.len() as u128 * estimated_bytes_per_account(params));
+        10_000_000_000 + estimated_response_bytes * CYCLES_PER_RESPONSE_BYTE
+    }
+}
+
+// Mirrors the per-account response size estimate of the SOL RPC canister.
+fn estimated_bytes_per_account(params: &GetMultipleAccountsParams) -> u128 {
+    const ESTIMATED_BYTES_PER_ACCOUNT_WITH_FULL_DATA: u128 = 512;
+    const ESTIMATED_BYTES_PER_JSON_PARSED_ACCOUNT: u128 = 1_024;
+    const ACCOUNT_METADATA_BYTES: u128 = 192;
+    let sliced_account_bytes = params
+        .data_slice
+        .as_ref()
+        .map(|slice| ACCOUNT_METADATA_BYTES + u128::from(slice.length).div_ceil(3) * 4);
+    if params.encoding == Some(GetAccountInfoEncoding::JsonParsed) {
+        return ESTIMATED_BYTES_PER_JSON_PARSED_ACCOUNT
+            .max(sliced_account_bytes.unwrap_or_default());
+    }
+    sliced_account_bytes.unwrap_or(ESTIMATED_BYTES_PER_ACCOUNT_WITH_FULL_DATA)
+}
+
+impl<R> GetMultipleAccountsRequestBuilder<R> {
+    /// Change the `commitment` parameter for a `getMultipleAccounts` request.
+    pub fn with_commitment(mut self, commitment: impl Into<CommitmentLevel>) -> Self {
+        self.request.params.commitment = Some(commitment.into());
+        self
+    }
+
+    /// Change the `encoding` parameter for a `getMultipleAccounts` request.
+    pub fn with_encoding(mut self, encoding: impl Into<GetAccountInfoEncoding>) -> Self {
+        self.request.params.encoding = Some(encoding.into());
+        self
+    }
+
+    /// Change the `dataSlice` parameter for a `getMultipleAccounts` request.
+    pub fn with_data_slice(mut self, data_slice: impl Into<DataSlice>) -> Self {
+        self.request.params.data_slice = Some(data_slice.into());
+        self
+    }
+
+    /// Change the `minContextSlot` parameter for a `getMultipleAccounts` request.
+    pub fn with_min_context_slot(mut self, slot: Slot) -> Self {
+        self.request.params.min_context_slot = Some(slot);
         self
     }
 }

@@ -15,11 +15,12 @@ use sol_rpc_canister::{
 use sol_rpc_types::{
     AccountInfo, ConfirmedBlock, ConfirmedTransactionStatusWithSignature,
     EncodedConfirmedTransactionWithStatusMeta, GetAccountInfoParams, GetBalanceParams,
-    GetBlockParams, GetRecentPrioritizationFeesParams, GetRecentPrioritizationFeesRpcConfig,
-    GetSignatureStatusesParams, GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig,
-    GetTokenAccountBalanceParams, GetTransactionParams, Lamport, MultiRpcResult, PrioritizationFee,
-    RpcAccess, RpcConfig, RpcResult, RpcSources, SendTransactionParams, Signature, Slot,
-    SupportedRpcProvider, SupportedRpcProviderId, TokenAmount, TransactionStatus,
+    GetBlockParams, GetMultipleAccountsParams, GetRecentPrioritizationFeesParams,
+    GetRecentPrioritizationFeesRpcConfig, GetSignatureStatusesParams,
+    GetSignaturesForAddressParams, GetSlotParams, GetSlotRpcConfig, GetTokenAccountBalanceParams,
+    GetTransactionParams, Lamport, MultiRpcResult, PrioritizationFee, RpcAccess, RpcConfig,
+    RpcError, RpcResult, RpcSources, SendTransactionParams, Signature, Slot, SupportedRpcProvider,
+    SupportedRpcProviderId, TokenAmount, TransactionStatus,
 };
 use std::str::FromStr;
 
@@ -157,6 +158,43 @@ async fn get_block_cycles_cost(
         return Ok(0);
     }
     MultiRpcRequest::get_block(source, config.unwrap_or_default(), params, now())?
+        .cycles_cost()
+        .await
+}
+
+#[update(name = "getMultipleAccounts", guard = "require_base_http_outcall_fee")]
+async fn get_multiple_accounts(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: GetMultipleAccountsParams,
+) -> MultiRpcResult<Vec<Option<AccountInfo>>> {
+    let num_pubkeys = params.pubkeys.len();
+    let request =
+        MultiRpcRequest::get_multiple_accounts(source, config.unwrap_or_default(), params, now());
+    MultiRpcResult::<Vec<Option<AccountInfo>>>::from(send_multi(request).await).and_then(
+        |accounts| {
+            if accounts.len() == num_pubkeys {
+                Ok(accounts)
+            } else {
+                Err(RpcError::ValidationError(format!(
+                    "Expected {num_pubkeys} accounts, but got {}",
+                    accounts.len()
+                )))
+            }
+        },
+    )
+}
+
+#[query(name = "getMultipleAccountsCyclesCost")]
+async fn get_multiple_accounts_cycles_cost(
+    source: RpcSources,
+    config: Option<RpcConfig>,
+    params: GetMultipleAccountsParams,
+) -> RpcResult<u128> {
+    if read_state(State::is_demo_mode_active) {
+        return Ok(0);
+    }
+    MultiRpcRequest::get_multiple_accounts(source, config.unwrap_or_default(), params, now())?
         .cycles_cost()
         .await
 }

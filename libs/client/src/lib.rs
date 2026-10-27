@@ -132,13 +132,14 @@ mod request;
 
 use crate::request::{
     GetAccountInfoRequest, GetAccountInfoRequestBuilder, GetBalanceRequest,
-    GetBalanceRequestBuilder, GetBlockRequest, GetBlockRequestBuilder,
-    GetRecentPrioritizationFeesRequest, GetRecentPrioritizationFeesRequestBuilder,
-    GetSignatureStatusesRequest, GetSignatureStatusesRequestBuilder,
-    GetSignaturesForAddressRequest, GetSignaturesForAddressRequestBuilder, GetSlotRequest,
-    GetSlotRequestBuilder, GetTokenAccountBalanceRequest, GetTokenAccountBalanceRequestBuilder,
-    GetTransactionRequest, GetTransactionRequestBuilder, JsonRequest, JsonRequestBuilder,
-    SendTransactionRequest, SendTransactionRequestBuilder,
+    GetBalanceRequestBuilder, GetBlockRequest, GetBlockRequestBuilder, GetMultipleAccountsRequest,
+    GetMultipleAccountsRequestBuilder, GetRecentPrioritizationFeesRequest,
+    GetRecentPrioritizationFeesRequestBuilder, GetSignatureStatusesRequest,
+    GetSignatureStatusesRequestBuilder, GetSignaturesForAddressRequest,
+    GetSignaturesForAddressRequestBuilder, GetSlotRequest, GetSlotRequestBuilder,
+    GetTokenAccountBalanceRequest, GetTokenAccountBalanceRequestBuilder, GetTransactionRequest,
+    GetTransactionRequestBuilder, JsonRequest, JsonRequestBuilder, SendTransactionRequest,
+    SendTransactionRequestBuilder,
 };
 use candid::{CandidType, Principal};
 pub use ic_canister_runtime::IcError;
@@ -150,9 +151,10 @@ pub use request::{
 use serde::de::DeserializeOwned;
 use sol_rpc_types::{
     CommitmentLevel, ConsensusStrategy, GetAccountInfoParams, GetBalanceParams, GetBlockParams,
-    GetRecentPrioritizationFeesParams, GetSignatureStatusesParams, GetSignaturesForAddressParams,
-    GetTokenAccountBalanceParams, GetTransactionParams, Pubkey, RpcConfig, RpcResult, RpcSources,
-    SendTransactionParams, SolanaCluster, SupportedRpcProvider, SupportedRpcProviderId,
+    GetMultipleAccountsParams, GetRecentPrioritizationFeesParams, GetSignatureStatusesParams,
+    GetSignaturesForAddressParams, GetTokenAccountBalanceParams, GetTransactionParams, Pubkey,
+    RpcConfig, RpcResult, RpcSources, SendTransactionParams, SolanaCluster, SupportedRpcProvider,
+    SupportedRpcProviderId,
 };
 use std::{fmt::Debug, sync::Arc};
 
@@ -357,6 +359,87 @@ impl<R> SolRpcClient<R> {
     /// ```
     pub fn get_balance(&self, params: impl Into<GetBalanceParams>) -> GetBalanceRequestBuilder<R> {
         RequestBuilder::new(self.clone(), GetBalanceRequest::new(params.into()))
+    }
+
+    /// Call `getMultipleAccounts` on the SOL RPC canister.
+    ///
+    /// Unless a `dataSlice` is requested, the default response size estimate assumes small
+    /// accounts (roughly 240 bytes of data or less with `base64` encoding). For larger accounts,
+    /// request a data slice with [`GetMultipleAccountsRequestBuilder::with_data_slice`] or set the
+    /// estimate explicitly with [`RequestBuilder::with_response_size_estimate`]. Otherwise, the
+    /// response may exceed the estimate, and the request is retried with a larger limit, which
+    /// takes longer and costs more cycles.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster};
+    /// use solana_pubkey::pubkey;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use sol_rpc_client::fixtures::usdc_account;
+    /// # use sol_rpc_types::MultiRpcResult;
+    /// let client = SolRpcClient::builder_for_ic()
+    /// #   .with_stub_response(MultiRpcResult::Consistent(Ok(vec![Some(usdc_account()), None])))
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let accounts = client
+    ///     .get_multiple_accounts(&[
+    ///         pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"),
+    ///         pubkey!("8DedqKHx9ogFajbHtRnTM3pPr3MRyVKDtepEpUiaDXX"),
+    ///     ])
+    ///     .expect("Invalid `getMultipleAccounts` request parameters")
+    ///     .send()
+    ///     .await
+    ///     .expect_consistent()
+    ///     .unwrap();
+    ///
+    /// assert_eq!(accounts.len(), 2);
+    /// assert_eq!(
+    ///     accounts[0].as_ref().map(|account| account.owner.clone()),
+    ///     Some("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA".to_string())
+    /// );
+    /// assert_eq!(accounts[1], None);
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// The number of public keys that can be passed to
+    /// [`getMultipleAccounts`](https://solana.com/de/docs/rpc/http/getmultipleaccounts)
+    /// is limited to 100. More public keys result in an error.
+    ///
+    /// ```rust
+    /// use assert_matches::assert_matches;
+    /// use solana_pubkey::Pubkey;
+    /// use sol_rpc_client::SolRpcClient;
+    /// use sol_rpc_types::{RpcSources, SolanaCluster, RpcError};
+    ///
+    /// let client = SolRpcClient::builder_for_ic()
+    ///     .with_rpc_sources(RpcSources::Default(SolanaCluster::Mainnet))
+    ///     .build();
+    ///
+    /// let too_many_pubkeys: Vec<Pubkey> = (0..101).map(|_| Pubkey::new_unique()).collect();
+    ///
+    /// let err = client.get_multiple_accounts(&too_many_pubkeys).unwrap_err();
+    /// assert_matches!(err, RpcError::ValidationError(_));
+    /// ```
+    pub fn get_multiple_accounts<'a, I>(
+        &self,
+        pubkeys: I,
+    ) -> RpcResult<GetMultipleAccountsRequestBuilder<R>>
+    where
+        I: IntoIterator<Item = &'a solana_pubkey::Pubkey>,
+    {
+        let pubkeys = pubkeys.into_iter().collect::<Vec<_>>();
+        Ok(RequestBuilder::new(
+            self.clone(),
+            GetMultipleAccountsRequest::from(GetMultipleAccountsParams::try_from(pubkeys)?),
+        ))
     }
 
     /// Call `getBlock` on the SOL RPC canister.
