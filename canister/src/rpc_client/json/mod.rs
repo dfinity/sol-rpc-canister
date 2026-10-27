@@ -78,13 +78,6 @@ pub struct GetAccountInfoConfig {
 }
 
 impl GetAccountInfoConfig {
-    fn effective_data_slice_length(&self) -> Option<u32> {
-        match self.encoding {
-            Some(GetAccountInfoEncoding::JsonParsed) => None,
-            _ => self.data_slice.as_ref().map(|slice| slice.length),
-        }
-    }
-
     fn none_if_empty(self) -> Option<Self> {
         let is_empty = self.commitment.is_none()
             && self.encoding.is_none()
@@ -109,8 +102,17 @@ impl GetMultipleAccountsParams {
         self.pubkeys.len()
     }
 
-    pub fn effective_data_slice_length(&self) -> Option<u32> {
-        self.config.as_ref()?.effective_data_slice_length()
+    pub fn data_slice_length(&self) -> Option<u32> {
+        Some(self.config.as_ref()?.data_slice.as_ref()?.length)
+    }
+
+    pub fn is_json_parsed(&self) -> bool {
+        matches!(
+            self.config
+                .as_ref()
+                .and_then(|config| config.encoding.as_ref()),
+            Some(GetAccountInfoEncoding::JsonParsed)
+        )
     }
 }
 

@@ -363,6 +363,13 @@ impl<R> SolRpcClient<R> {
 
     /// Call `getMultipleAccounts` on the SOL RPC canister.
     ///
+    /// Unless a `dataSlice` is requested, the default response size estimate assumes small
+    /// accounts (roughly 240 bytes of data or less with `base64` encoding). For larger accounts,
+    /// request a data slice with [`GetMultipleAccountsRequestBuilder::with_data_slice`] or set the
+    /// estimate explicitly with [`RequestBuilder::with_response_size_estimate`]. Otherwise, the
+    /// response may exceed the estimate, and the request is retried with a larger limit, which
+    /// takes longer and costs more cycles.
+    ///
     /// # Examples
     ///
     /// ```rust

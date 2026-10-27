@@ -498,11 +498,89 @@ mod response_size_estimate_tests {
     }
 
     #[test]
-    fn should_ignore_data_slice_for_json_parsed_encoding() {
-        let params =
-            get_multiple_accounts_params(1, Some(1_000), Some(GetAccountInfoEncoding::JsonParsed));
+    fn should_estimate_json_parsed_response_size() {
+        for (data_slice_length, expected) in
+            [(None, 3_200), (Some(10), 3_200), (Some(1_000), 3_704)]
+        {
+            let params = get_multiple_accounts_params(
+                1,
+                data_slice_length,
+                Some(GetAccountInfoEncoding::JsonParsed),
+            );
 
-        assert_eq!(max_response_bytes(RpcConfig::default(), params), 2_688);
+            assert_eq!(max_response_bytes(RpcConfig::default(), params), expected);
+        }
+    }
+
+    #[test]
+    fn should_estimate_enough_for_json_parsed_delegated_token_accounts() {
+        // Response headers observed from api.mainnet-beta.solana.com for a `getMultipleAccounts` call.
+        const OBSERVED_RESPONSE_HEADER_BYTES: usize = 790;
+        // Wrapped SOL token account with a delegate, as returned by mainnet for `jsonParsed`.
+        let account = json!({
+            "data": {
+                "parsed": {
+                    "info": {
+                        "delegate": "7WtiMmrj78s8SkpYiorgSt2U7gGcFU2xwBUsc6F9FrMS",
+                        "delegatedAmount": {
+                            "amount": "18446735971620572066",
+                            "decimals": 9,
+                            "uiAmount": 18446735971.62057,
+                            "uiAmountString": "18446735971.620572066"
+                        },
+                        "isNative": true,
+                        "mint": "So11111111111111111111111111111111111111112",
+                        "owner": "77777nPhGvFUVAj6uq8MGyLneBt4SMwCScYZDzzztdsa",
+                        "rentExemptReserve": {
+                            "amount": "1488440",
+                            "decimals": 9,
+                            "uiAmount": 0.00148844,
+                            "uiAmountString": "0.00148844"
+                        },
+                        "state": "initialized",
+                        "tokenAmount": {
+                            "amount": "178829707191",
+                            "decimals": 9,
+                            "uiAmount": 178.829707191,
+                            "uiAmountString": "178.829707191"
+                        }
+                    },
+                    "type": "account"
+                },
+                "program": "spl-token",
+                "space": 165
+            },
+            "executable": false,
+            "lamports": 178831195631u64,
+            "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+            "rentEpoch": 18446744073709551615u64,
+            "space": 165
+        });
+
+        for num_accounts in [1, 10, 50, 100] {
+            let body = json!({
+                "jsonrpc": "2.0",
+                "id": 0,
+                "result": {
+                    "context": { "apiVersion": "3.0.6", "slot": 341197053 },
+                    "value": vec![account.clone(); num_accounts]
+                }
+            })
+            .to_string();
+            let response_bytes = (body.len() + OBSERVED_RESPONSE_HEADER_BYTES) as u64;
+            let params = get_multiple_accounts_params(
+                num_accounts,
+                None,
+                Some(GetAccountInfoEncoding::JsonParsed),
+            );
+
+            let estimate = max_response_bytes(RpcConfig::default(), params);
+
+            assert!(
+                response_bytes <= estimate,
+                "{num_accounts} accounts: response of {response_bytes} bytes exceeds estimate of {estimate} bytes"
+            );
+        }
     }
 
     #[test]

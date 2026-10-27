@@ -224,13 +224,17 @@ impl GetMultipleAccountsRequest {
 
     fn estimated_bytes_per_account(params: &json::GetMultipleAccountsParams) -> u64 {
         const ESTIMATED_BYTES_PER_ACCOUNT_WITH_FULL_DATA: u64 = 512;
+        const ESTIMATED_BYTES_PER_JSON_PARSED_ACCOUNT: u64 = 1_024;
         const ACCOUNT_METADATA_BYTES: u64 = 192;
-        match params.effective_data_slice_length() {
-            Some(data_length) => {
-                ACCOUNT_METADATA_BYTES + base64_encoded_length(u64::from(data_length))
-            }
-            None => ESTIMATED_BYTES_PER_ACCOUNT_WITH_FULL_DATA,
+        let sliced_account_bytes = params.data_slice_length().map(|data_length| {
+            ACCOUNT_METADATA_BYTES + base64_encoded_length(u64::from(data_length))
+        });
+        if params.is_json_parsed() {
+            // Accounts that cannot be parsed fall back to base64 encoding with the slice applied.
+            return ESTIMATED_BYTES_PER_JSON_PARSED_ACCOUNT
+                .max(sliced_account_bytes.unwrap_or_default());
         }
+        sliced_account_bytes.unwrap_or(ESTIMATED_BYTES_PER_ACCOUNT_WITH_FULL_DATA)
     }
 }
 
