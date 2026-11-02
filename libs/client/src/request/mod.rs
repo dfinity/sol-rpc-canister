@@ -361,9 +361,17 @@ impl<R> DefaultRequestCycles for GetMultipleAccountsRequestBuilder<R> {
         // and node.
         const CYCLES_PER_RESPONSE_BYTE: u128 = 200_000;
         const MAX_RESPONSE_BYTES: u128 = 2_000_000;
-        let params = &self.request.params;
-        let estimated_response_bytes = MAX_RESPONSE_BYTES
-            .min(params.pubkeys.len() as u128 * estimated_bytes_per_account(params));
+        let estimated_response_bytes = MAX_RESPONSE_BYTES.min(
+            self.request
+                .rpc_config
+                .as_ref()
+                .and_then(|config| config.response_size_estimate)
+                .map(u128::from)
+                .unwrap_or_else(|| {
+                    let params = &self.request.params;
+                    params.pubkeys.len() as u128 * estimated_bytes_per_account(params)
+                }),
+        );
         10_000_000_000 + estimated_response_bytes * CYCLES_PER_RESPONSE_BYTE
     }
 }

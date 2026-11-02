@@ -1080,6 +1080,13 @@ mod cycles_cost_tests {
 
             for num_accounts in [1, 100] {
                 let pubkeys = vec![USDC_PUBLIC_KEY; num_accounts];
+                let mut requests = vec![(
+                    "response size estimate 1_000_000".to_string(),
+                    client
+                        .get_multiple_accounts(&pubkeys)
+                        .unwrap()
+                        .with_response_size_estimate(1_000_000),
+                )];
                 for encoding in [None, Some(GetAccountInfoEncoding::JsonParsed)] {
                     for data_slice_length in [None, Some(0), Some(1_536), Some(100_000)] {
                         let mut request = client.get_multiple_accounts(&pubkeys).unwrap();
@@ -1089,17 +1096,24 @@ mod cycles_cost_tests {
                         if let Some(length) = data_slice_length {
                             request = request.with_data_slice(DataSlice { length, offset: 0 });
                         }
-
-                        let default_cycles = request.default_request_cycles();
-                        let cycles_cost = request.request_cost().send().await.unwrap();
-
-                        assert!(
-                            default_cycles >= cycles_cost,
-                            "{consensus_strategy:?}, {num_accounts} accounts, encoding {encoding:?}, \
-                            data slice length {data_slice_length:?}: default cycles {default_cycles} \
-                            are less than the cycles cost {cycles_cost}"
-                        );
+                        requests.push((
+                            format!(
+                                "encoding {encoding:?}, data slice length {data_slice_length:?}"
+                            ),
+                            request,
+                        ));
                     }
+                }
+
+                for (description, request) in requests {
+                    let default_cycles = request.default_request_cycles();
+                    let cycles_cost = request.request_cost().send().await.unwrap();
+
+                    assert!(
+                        default_cycles >= cycles_cost,
+                        "{consensus_strategy:?}, {num_accounts} accounts, {description}: default \
+                        cycles {default_cycles} are less than the cycles cost {cycles_cost}"
+                    );
                 }
             }
         }
