@@ -79,10 +79,16 @@ pub struct GetAccountInfoConfig {
 
 impl GetAccountInfoConfig {
     fn none_if_empty(self) -> Option<Self> {
-        let is_empty = self.commitment.is_none()
-            && self.encoding.is_none()
-            && self.data_slice.is_none()
-            && self.min_context_slot.is_none();
+        let Self {
+            commitment,
+            encoding,
+            data_slice,
+            min_context_slot,
+        } = &self;
+        let is_empty = commitment.is_none()
+            && encoding.is_none()
+            && data_slice.is_none()
+            && min_context_slot.is_none();
         if is_empty {
             None
         } else {

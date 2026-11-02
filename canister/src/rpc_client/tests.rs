@@ -112,6 +112,50 @@ mod request_serialization_tests {
                 "minContextSlot": 456,
             }]),
         );
+        for (params, expected_config) in [
+            (
+                GetMultipleAccountsParams {
+                    commitment: Some(CommitmentLevel::Confirmed),
+                    ..GetMultipleAccountsParams::default()
+                },
+                json!({ "commitment": "confirmed" }),
+            ),
+            (
+                GetMultipleAccountsParams {
+                    encoding: Some(GetAccountInfoEncoding::Base64),
+                    ..GetMultipleAccountsParams::default()
+                },
+                json!({ "encoding": "base64" }),
+            ),
+            (
+                GetMultipleAccountsParams {
+                    data_slice: Some(DataSlice {
+                        length: 123,
+                        offset: 8,
+                    }),
+                    ..GetMultipleAccountsParams::default()
+                },
+                json!({ "dataSlice": { "length": 123, "offset": 8 } }),
+            ),
+            (
+                GetMultipleAccountsParams {
+                    min_context_slot: Some(456),
+                    ..GetMultipleAccountsParams::default()
+                },
+                json!({ "minContextSlot": 456 }),
+            ),
+        ] {
+            assert_params_eq(
+                GetMultipleAccountsRequest::get_multiple_accounts(
+                    RpcSources::Default(SolanaCluster::Mainnet),
+                    RpcConfig::default(),
+                    params,
+                    Timestamp::default(),
+                )
+                .unwrap(),
+                json!([[], expected_config]),
+            );
+        }
     }
 
     #[test]
