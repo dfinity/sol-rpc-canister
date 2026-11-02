@@ -102,6 +102,28 @@ impl From<MultiRpcResult<Option<UiAccount>>> for MultiRpcResult<Option<AccountIn
     }
 }
 
+impl From<MultiRpcResult<Vec<Option<AccountInfo>>>> for MultiRpcResult<Vec<Option<UiAccount>>> {
+    fn from(result: MultiRpcResult<Vec<Option<AccountInfo>>>) -> Self {
+        result.map(|accounts| {
+            accounts
+                .into_iter()
+                .map(|maybe_account| maybe_account.map(UiAccount::from))
+                .collect()
+        })
+    }
+}
+
+impl From<MultiRpcResult<Vec<Option<UiAccount>>>> for MultiRpcResult<Vec<Option<AccountInfo>>> {
+    fn from(result: MultiRpcResult<Vec<Option<UiAccount>>>) -> Self {
+        result.map(|accounts| {
+            accounts
+                .into_iter()
+                .map(|maybe_account| maybe_account.map(AccountInfo::from))
+                .collect()
+        })
+    }
+}
+
 impl From<MultiRpcResult<Option<ConfirmedBlock>>> for MultiRpcResult<Option<UiConfirmedBlock>> {
     fn from(result: MultiRpcResult<Option<ConfirmedBlock>>) -> Self {
         result.map(|maybe_block| maybe_block.map(|block| block.into()))

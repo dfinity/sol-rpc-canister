@@ -25,6 +25,8 @@ pub enum ResponseTransform {
     GetBalance,
     #[n(2)]
     GetBlock,
+    #[n(11)]
+    GetMultipleAccounts,
     #[n(3)]
     GetRecentPrioritizationFees {
         #[cbor(n(0), with = "crate::rpc_client::cbor::rounding_error")]
@@ -94,6 +96,12 @@ impl ResponseTransform {
                     Value::Null => None,
                     value => Some(value),
                 });
+            }
+            Self::GetMultipleAccounts => {
+                canonicalize_response::<SolanaRpcResult<Vec<Option<Value>>>, Vec<Option<Value>>>(
+                    body_bytes,
+                    ignore_context,
+                );
             }
             Self::GetRecentPrioritizationFees {
                 max_slot_rounding_error,

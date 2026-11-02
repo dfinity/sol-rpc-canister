@@ -1,8 +1,10 @@
-use crate::{GetRecentBlockError, RequestBuilder, SolRpcClient, SolRpcEndpoint};
+use crate::{
+    DefaultRequestCycles, GetRecentBlockError, RequestBuilder, SolRpcClient, SolRpcEndpoint,
+};
 use serde_json::json;
 use sol_rpc_types::{
     CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
-    GetBlockCommitmentLevel, GetBlockParams, GetSignatureStatusesParams,
+    GetBlockCommitmentLevel, GetBlockParams, GetMultipleAccountsParams, GetSignatureStatusesParams,
     GetSignaturesForAddressParams, GetSlotParams, GetTokenAccountBalanceParams,
     GetTransactionEncoding, GetTransactionParams, SendTransactionEncoding, SendTransactionParams,
     Slot, TransactionDetails,
@@ -48,6 +50,15 @@ fn should_set_correct_commitment_level() {
                 assert_eq!(
                     builder.request.params.commitment,
                     Some(GetBlockCommitmentLevel::Confirmed)
+                );
+            }
+            SolRpcEndpoint::GetMultipleAccounts => {
+                let builder = client_with_commitment_level
+                    .get_multiple_accounts(&[PUBKEY])
+                    .unwrap();
+                assert_eq!(
+                    builder.request.params.commitment,
+                    Some(CommitmentLevel::Confirmed)
                 );
             }
             SolRpcEndpoint::GetRecentPrioritizationFees => {
@@ -108,6 +119,37 @@ fn should_set_correct_commitment_level() {
 }
 
 #[test]
+fn should_scale_get_multiple_accounts_default_cycles_with_response_size() {
+    let client = SolRpcClient::builder_for_ic().build();
+    let pubkeys = vec![PUBKEY; 100];
+    let default_cycles = |data_slice_length: Option<u32>,
+                          encoding: Option<GetAccountInfoEncoding>| {
+        let mut builder = client.get_multiple_accounts(&pubkeys).unwrap();
+        if let Some(length) = data_slice_length {
+            builder = builder.with_data_slice(DataSlice { length, offset: 0 });
+        }
+        if let Some(encoding) = encoding {
+            builder = builder.with_encoding(encoding);
+        }
+        builder.default_request_cycles()
+    };
+
+    assert_eq!(default_cycles(None, None), 20_240_000_000);
+    assert_eq!(default_cycles(Some(0), None), 13_840_000_000);
+    // About 6.2B cycles per provider call on a 34-node subnet
+    assert_eq!(default_cycles(Some(1_536), None), 54_800_000_000);
+    assert_eq!(
+        default_cycles(None, Some(GetAccountInfoEncoding::JsonParsed)),
+        30_480_000_000
+    );
+    assert_eq!(
+        default_cycles(Some(100_000), None),
+        410_000_000_000,
+        "should be capped at the maximum response size"
+    );
+}
+
+#[test]
 fn should_set_request_parameters() {
     let client = SolRpcClient::builder_for_ic().build();
 
@@ -161,6 +203,31 @@ fn should_set_request_parameters() {
                     transaction_details: Some(TransactionDetails::Signatures),
                     rewards: Some(false),
                 }),
+            ),
+            SolRpcEndpoint::GetMultipleAccounts => assert_params_eq(
+                client
+                    .get_multiple_accounts(&[PUBKEY])
+                    .unwrap()
+                    .with_commitment(CommitmentLevel::Confirmed)
+                    .with_encoding(GetAccountInfoEncoding::Base64)
+                    .with_data_slice(DataSlice {
+                        length: 1,
+                        offset: 2,
+                    })
+                    .with_min_context_slot(MIN_CONTEXT_SLOT),
+                client
+                    .get_multiple_accounts(&[PUBKEY])
+                    .unwrap()
+                    .with_params(GetMultipleAccountsParams {
+                        pubkeys: vec![PUBKEY].try_into().unwrap(),
+                        commitment: Some(CommitmentLevel::Confirmed),
+                        encoding: Some(GetAccountInfoEncoding::Base64),
+                        data_slice: Some(DataSlice {
+                            length: 1,
+                            offset: 2,
+                        }),
+                        min_context_slot: Some(MIN_CONTEXT_SLOT),
+                    }),
             ),
             SolRpcEndpoint::GetRecentPrioritizationFees => {
                 // No optional request parameters

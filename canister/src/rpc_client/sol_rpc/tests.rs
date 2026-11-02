@@ -125,6 +125,105 @@ mod normalization_tests {
         );
     }
 
+    #[test]
+    fn should_normalize_get_multiple_accounts_response() {
+        assert_normalized(
+            &ResponseTransform::GetMultipleAccounts,
+            r#"{
+                "context": { "apiVersion": "2.0.15", "slot": 341197053 },
+                "value": [
+                    {
+                        "data": ["1234", "base58"],
+                        "executable": false,
+                        "lamports": 88849814690250,
+                        "owner": "11111111111111111111111111111111",
+                        "rentEpoch": 18446744073709551615,
+                        "space": 0
+                    },
+                    null
+                ]
+            }"#,
+            json!([
+                {
+                    "data": ["1234", "base58"],
+                    "executable": false,
+                    "lamports": 88849814690250u64,
+                    "owner": "11111111111111111111111111111111",
+                    "rentEpoch": 18446744073709551615u64,
+                    "space": 0
+                },
+                null
+            ]),
+        );
+        assert_normalized_equal(
+            &ResponseTransform::GetMultipleAccounts,
+            r#"{
+                "context": { "apiVersion": "2.0.15", "slot": 341197053 },
+                "value": [{
+                    "data": ["1234", "base58"],
+                    "executable": false,
+                    "lamports": 88849814690250,
+                    "owner": "11111111111111111111111111111111",
+                    "rentEpoch": 18446744073709551615,
+                    "space": 0
+                }]
+            }"#,
+            r#"{
+                "context": { "apiVersion": "2.0.15", "slot": 341197053 },
+                "value": [{
+                    "space": 0,
+                    "rentEpoch": 18446744073709551615,
+                    "executable": false,
+                    "lamports": 88849814690250,
+                    "data": ["1234", "base58"],
+                    "owner": "11111111111111111111111111111111"
+                }]
+            }"#,
+        );
+        assert_normalized_not_equal(
+            &ResponseTransform::GetMultipleAccounts,
+            r#"{ "context": { "slot": 341197053 }, "value": [null, null] }"#,
+            r#"{ "context": { "slot": 341197053 }, "value": [null] }"#,
+        );
+    }
+
+    proptest! {
+        #[test]
+        fn should_ignore_get_multiple_accounts_response_context(slot1: u64, slot2: u64) {
+            let accounts = json!([
+                {
+                    "data": ["1234", "base58"],
+                    "executable": false,
+                    "lamports": 88849814690250u64,
+                    "owner": "11111111111111111111111111111111",
+                    "rentEpoch": 18446744073709551615u64,
+                    "space": 0
+                },
+                null
+            ]);
+            assert_normalized_equal(
+                &ResponseTransform::GetMultipleAccounts,
+                json!({
+                    "context": { "apiVersion": "2.0.15", "slot": slot1 },
+                    "value": accounts
+                }).to_string(),
+                json!({
+                    "context": { "apiVersion": "2.1.9", "slot": slot2 },
+                    "value": accounts
+                }).to_string(),
+            );
+        }
+    }
+
+    #[test]
+    fn should_normalize_empty_get_multiple_accounts_response() {
+        assert_normalized(
+            &ResponseTransform::GetMultipleAccounts,
+            r#"{"context": { "apiVersion": "2.0.15", "slot": 341197053 }, "value": []}"#,
+            json!([]),
+        );
+    }
+
     proptest! {
         #[test]
         fn should_normalize_send_transaction_response(transaction_id in "[1-9A-HJ-NP-Za-km-z]+") {
@@ -442,6 +541,9 @@ mod normalization_tests {
             ResponseTransformDiscriminants::GetAccountInfo => ResponseTransform::GetAccountInfo,
             ResponseTransformDiscriminants::GetBalance => ResponseTransform::GetBalance,
             ResponseTransformDiscriminants::GetBlock => ResponseTransform::GetBlock,
+            ResponseTransformDiscriminants::GetMultipleAccounts => {
+                ResponseTransform::GetMultipleAccounts
+            }
             ResponseTransformDiscriminants::GetRecentPrioritizationFees => {
                 ResponseTransform::GetRecentPrioritizationFees {
                     max_slot_rounding_error: RoundingError::default(),

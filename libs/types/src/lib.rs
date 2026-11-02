@@ -34,9 +34,10 @@ pub use solana::{
     account::{AccountData, AccountEncoding, AccountInfo, ParsedAccount},
     request::{
         CommitmentLevel, DataSlice, GetAccountInfoEncoding, GetAccountInfoParams, GetBalanceParams,
-        GetBlockCommitmentLevel, GetBlockParams, GetRecentPrioritizationFeesParams,
-        GetSignatureStatusesParams, GetSignaturesForAddressLimit, GetSignaturesForAddressParams,
-        GetSlotParams, GetTokenAccountBalanceParams, GetTransactionEncoding, GetTransactionParams,
+        GetBlockCommitmentLevel, GetBlockParams, GetMultipleAccountsParams,
+        GetRecentPrioritizationFeesParams, GetSignatureStatusesParams,
+        GetSignaturesForAddressLimit, GetSignaturesForAddressParams, GetSlotParams,
+        GetTokenAccountBalanceParams, GetTransactionEncoding, GetTransactionParams,
         SendTransactionEncoding, SendTransactionParams, TransactionDetails,
     },
     transaction::{

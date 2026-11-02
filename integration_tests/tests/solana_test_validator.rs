@@ -272,6 +272,39 @@ async fn should_not_get_account_info() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn should_get_multiple_accounts() {
+    let setup = Setup::new().await;
+    let pubkeys = [system_program::id(), Pubkey::new_unique()];
+
+    let (sol_res, ic_res) = setup
+        .compare_client(
+            |sol| {
+                sol.get_multiple_accounts_with_commitment(&pubkeys, CommitmentConfig::confirmed())
+                    .expect("Failed to get accounts")
+                    .value
+            },
+            |ic| async move {
+                ic.get_multiple_accounts(&pubkeys)
+                    .unwrap()
+                    .with_encoding(GetAccountInfoEncoding::Base64)
+                    .send()
+                    .await
+                    .expect_consistent()
+                    .unwrap_or_else(|e| panic!("`getMultipleAccounts` call failed: {e}"))
+                    .into_iter()
+                    .map(|maybe_account| maybe_account.map(decode_ui_account))
+                    .collect::<Vec<_>>()
+            },
+        )
+        .await;
+
+    assert_matches!(sol_res.as_slice(), [Some(_), None]);
+    assert_eq!(sol_res, ic_res);
+
+    setup.setup.drop().await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn should_get_block() {
     let setup = Setup::new().await;
 

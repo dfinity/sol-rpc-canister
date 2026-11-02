@@ -1,9 +1,42 @@
 use crate::{
-    GetRecentPrioritizationFeesParams, GetSignatureStatusesParams, GetSignaturesForAddressParams,
+    GetMultipleAccountsParams, GetRecentPrioritizationFeesParams, GetSignatureStatusesParams,
+    GetSignaturesForAddressParams,
 };
 use proptest::proptest;
 use serde::Deserialize;
 use serde_json::json;
+
+mod get_multiple_accounts_params_tests {
+    use super::*;
+
+    proptest! {
+        #[test]
+        fn should_deserialize(size in 0..100) {
+            let params = json!({
+                "pubkeys": vec!["EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"; size as usize]
+            });
+
+            let result = GetMultipleAccountsParams::deserialize(&params);
+
+            assert!(result.is_ok());
+        }
+    }
+
+    #[test]
+    fn should_not_deserialize() {
+        let params = json!({
+            "pubkeys": vec!["EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"; 100 + 1]
+        });
+
+        let result = GetMultipleAccountsParams::deserialize(&params);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.err().unwrap().to_string().as_str(),
+            "Validation error: Expected at most 100 items, but got 101"
+        );
+    }
+}
 
 mod get_signature_statuses_params_tests {
     use super::*;
