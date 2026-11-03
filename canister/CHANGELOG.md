@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-11-03
+
+### Added
+
+- Add support for `getMultipleAccounts` ([#394](https://github.com/dfinity/sol-rpc-canister/pull/394))
+
+### Changed
+
+- Upgrade various dependencies ([#309](https://github.com/dfinity/sol-rpc-canister/pull/309), [#331](https://github.com/dfinity/sol-rpc-canister/pull/331), [#344](https://github.com/dfinity/sol-rpc-canister/pull/344), [#356](https://github.com/dfinity/sol-rpc-canister/pull/356), [#367](https://github.com/dfinity/sol-rpc-canister/pull/367), [#379](https://github.com/dfinity/sol-rpc-canister/pull/379) and [#393](https://github.com/dfinity/sol-rpc-canister/pull/393))
+- Bump Rust to 1.97.1 ([#385](https://github.com/dfinity/sol-rpc-canister/pull/385))
+
 ## [1.3.2] - 2026-03-30
 
 ### Changed
@@ -93,6 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set `maxSupportedTransactionVersion` to zero for end-to-end tests ([#85](https://github.com/dfinity/sol-rpc-canister/pull/85))
 - End-to-end tests ([#20](https://github.com/dfinity/sol-rpc-canister/pull/20) and [#45](https://github.com/dfinity/sol-rpc-canister/pull/45))
 
+[1.4.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_canister-v1.3.2..sol_rpc_canister-v1.4.0
 [1.3.2]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_canister-v1.3.1..sol_rpc_canister-v1.3.2
 [1.3.1]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_canister-v1.3.0..sol_rpc_canister-v1.3.1
 [1.3.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_canister-v1.2.0...sol_rpc_canister-v1.3.0

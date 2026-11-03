@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.0.0] - 2026-11-03
+
+### Added
+
+- Add support for `getMultipleAccounts` ([#394](https://github.com/dfinity/sol-rpc-canister/pull/394))
+
+### Changed
+
+- **BREAKING:** Add `SolRpcEndpoint::GetMultipleAccounts` variant ([#394](https://github.com/dfinity/sol-rpc-canister/pull/394))
+- Upgrade various dependencies ([#309](https://github.com/dfinity/sol-rpc-canister/pull/309), [#331](https://github.com/dfinity/sol-rpc-canister/pull/331), [#344](https://github.com/dfinity/sol-rpc-canister/pull/344), [#356](https://github.com/dfinity/sol-rpc-canister/pull/356), [#367](https://github.com/dfinity/sol-rpc-canister/pull/367), [#379](https://github.com/dfinity/sol-rpc-canister/pull/379) and [#393](https://github.com/dfinity/sol-rpc-canister/pull/393))
+
 ## [6.0.0] - 2026-03-30
 
 ### Changed
@@ -99,6 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use a default commitment level for requests made by the client ([#77](https://github.com/dfinity/sol-rpc-canister/pull/77))
 - Add Rust documentation tests for the client ([#65](https://github.com/dfinity/sol-rpc-canister/pull/65))
 
+[7.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_client-v6.0.0..sol_rpc_client-v7.0.0
 [6.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_client-v5.0.0..sol_rpc_client-v6.0.0
 [5.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_client-v4.0.0..sol_rpc_client-v5.0.0
 [4.0.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_client-v3.0.0..sol_rpc_client-v4.0.0
