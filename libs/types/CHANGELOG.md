@@ -9,13 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add support for getMultipleAccounts ([#394](https://github.com/dfinity/sol-rpc-canister/pull/394))
+- Add support for `getMultipleAccounts` ([#394](https://github.com/dfinity/sol-rpc-canister/pull/394))
 
 ### Changed
 
-- Bump Rust to 1.97.1 ([#385](https://github.com/dfinity/sol-rpc-canister/pull/385))
-
-[3.2.0]: https://github.com/dfinity/sol-rpc-canister/compare/3.1.2..3.2.0
+- Upgrade various dependencies ([#309](https://github.com/dfinity/sol-rpc-canister/pull/309), [#331](https://github.com/dfinity/sol-rpc-canister/pull/331), [#344](https://github.com/dfinity/sol-rpc-canister/pull/344), [#356](https://github.com/dfinity/sol-rpc-canister/pull/356), [#367](https://github.com/dfinity/sol-rpc-canister/pull/367), [#379](https://github.com/dfinity/sol-rpc-canister/pull/379) and [#393](https://github.com/dfinity/sol-rpc-canister/pull/393)). Notably, `strum` is bumped to v0.28.
 
 ## [3.1.2] - 2026-03-30
 
@@ -89,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add logging ([#13](https://github.com/dfinity/sol-rpc-canister/pull/13))
 - Add support for override providers for local testing ([#12](https://github.com/dfinity/sol-rpc-canister/pull/12))
 
+[3.2.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_types-v3.1.2..sol_rpc_types-v3.2.0
 [3.1.2]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_types-v3.1.1..sol_rpc_types-v3.1.2
 [3.1.1]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_types-v3.1.0..sol_rpc_types-v3.1.1
 [3.1.0]: https://github.com/dfinity/sol-rpc-canister/compare/sol_rpc_types-v3.0.0..sol_rpc_types-v3.1.0
